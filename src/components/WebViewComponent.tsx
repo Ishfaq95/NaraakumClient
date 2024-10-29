@@ -94,7 +94,7 @@ const WebViewComponent = ({uri}: any) => {
       data,
       fileName,
     } = JSON.parse(event.nativeEvent.data);
-    console.log('eventHandler', eventHandler, data);
+    // console.log('eventHandler', eventHandler, data);
     if (eventHandler == 'download') {
       let isPermissionGrandted = await getStoragePermission();
       if (isPermissionGrandted) {
@@ -262,14 +262,23 @@ const WebViewComponent = ({uri}: any) => {
   const downloadPDFFromBase64 = async (base64: string, fileName: any) => {
     const base64String = base64;
     const base64Data = base64String.split(',')[1]; // Remove data URL prefix if present
-    const filePath = `${RNFetchBlob.fs.dirs.DownloadDir}/${fileName}.pdf`;
+    let filePath=null;
+     
+    if(Platform.OS=='ios'){
+      filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/${fileName}.pdf`;
+    }else{
+      filePath = `${RNFetchBlob.fs.dirs.DownloadDir}/${fileName}.pdf`;
+    }
     const uniqueFilePath = await getUniqueFilePath(filePath);
-
+    
     RNFetchBlob.fs
       .writeFile(uniqueFilePath, base64Data, 'base64')
       .then(async () => {
         setLoading(false);
         Alert.alert('File downloaded successfully.');
+        if(Platform.OS=='ios'){
+        RNFetchBlob.ios.previewDocument(filePath); // Preview the downloaded document on iOS
+        }
       })
       .catch(error => {
         setLoading(false);
