@@ -1,13 +1,41 @@
+import useMutationHook from '../Network/useMutationHook';
 import WebViewComponent from '../components/WebViewComponent';
 import React, { useEffect } from 'react';
 import { Alert, BackHandler, SafeAreaView, StyleSheet, PermissionsAndroid, Platform } from 'react-native';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import { useDispatch, useSelector } from 'react-redux';
+import { getReminderListFromApi, isTokenExpired } from '../shared/services/service';
+import { setToken } from '../shared/redux/reducers/userReducer';
+import { GetReminderList } from '../Network/GetReminderList';
 
 
 const HomeScreen = () => {
+  const dispatch = useDispatch();
+  const {expiresAt} = useSelector((state: any) => state.root.user);
+  const {mutate, isSuccess, isError, data, isLoading} = useMutationHook(
+    '/authValidator/token',
+    'POST',
+    true,
+  );
+
+  const GetTokenForAPI = async () => {
+    if (expiresAt==undefined || isTokenExpired(expiresAt)) {
+      mutate({
+        grant_type: '7a6b79797d65786e',
+        apikey:
+          '333b394f3c3f4c3d27484b3e4c273e3f383d27323d393c274f394f383c3a3e4e4f493b3b',
+        platformId: '3b',
+      });
+    }else{
+      getReminderListFromApi()
+    }
+  };
+
+ 
 
   useEffect(() => {
-    requestCameraAndAudioPermission()
+    GetTokenForAPI();
+    requestCameraAndAudioPermission();
     const backAction = () => {
       Alert.alert('Hold on!', 'Are you sure you want to close the app?', [
         {
@@ -15,7 +43,7 @@ const HomeScreen = () => {
           onPress: () => null,
           style: 'cancel',
         },
-        { text: 'YES', onPress: () => BackHandler.exitApp() },
+        {text: 'YES', onPress: () => BackHandler.exitApp()},
       ]);
       return true;
     };
@@ -25,8 +53,23 @@ const HomeScreen = () => {
       backAction,
     );
 
-    return () => backHandler?.remove();
+    return () => backHandler.remove();
   }, []);
+
+  useEffect(() => {
+    if (isSuccess) {
+      const tokenData = JSON.stringify(data);
+      const sessionToken = {
+        token: data.access_token,
+        expiresAt: data.expires,
+      };
+      dispatch(setToken(sessionToken));
+      getReminderListFromApi()
+    }
+    if (isError) {
+      console.log('getting token error');
+    }
+  }, [isSuccess, isError]);
 
   const requestiOSPermissions = async () => {
     const cameraPermission = await request(PERMISSIONS.IOS.CAMERA);

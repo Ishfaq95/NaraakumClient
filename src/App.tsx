@@ -13,6 +13,8 @@ import SplashScreen from 'react-native-splash-screen'
 import { Platform, Text, View } from 'react-native';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import AlarmListener from './components/AlarmListener';
+import { QueryClientProvider } from '@tanstack/react-query';
+import queryClient from './Network/queryClient';
 
 const App = () => {
 
@@ -63,11 +65,13 @@ const App = () => {
     <Provider store={store}>
       <PersistGate persistor={persistor}>
         <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
           <NavigationContainer ref={navigationRef}>
             <Routes />
             <NotificationsCenter />
             {Platform.OS=='android' && <AlarmListener />}
           </NavigationContainer>
+          </QueryClientProvider>
         </SafeAreaProvider>
       </PersistGate>
     </Provider>

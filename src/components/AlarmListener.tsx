@@ -10,8 +10,8 @@ const AlarmListener = () => {
     // Listen for the "AlarmEvent" emitted from the native side
     const eventEmitter = new NativeEventEmitter(NativeModules.AlarmModule);
    
-    const subscription = eventEmitter.addListener('AlarmEvent', (message) => {
-      navigation.navigate(ROUTES.AlarmScreen, { message });
+    const subscription = eventEmitter.addListener('AlarmEvent', (data) => {
+      navigation.navigate(ROUTES.AlarmScreen, { data });
     });
 
     // Clean up the listener on unmount

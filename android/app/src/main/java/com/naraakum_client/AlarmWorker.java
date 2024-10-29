@@ -20,7 +20,10 @@ public class AlarmWorker extends Worker {
     public Result doWork() {
         Log.d("AlarmWorker", "Alarm triggered by WorkManager!");
 
-        String message = getInputData().getString("message");
+        String NotificationBody = getInputData().getString("NotificationBody");
+        String Subject = getInputData().getString("Subject");
+        String ReminderDate = getInputData().getString("ReminderDate");
+        String VideoSDKMeetingId = getInputData().getString("VideoSDKMeetingId");
 
         // Use PowerManager to keep the device awake
         PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
@@ -29,7 +32,10 @@ public class AlarmWorker extends Worker {
 
         // Send a broadcast to AlarmReceiver to handle the alarm even if the app is killed
         Intent intent = new Intent(getApplicationContext(), com.naraakum_patient.AlarmReceiver.class);
-        intent.putExtra("message", message);
+        intent.putExtra("NotificationBody", NotificationBody);
+        intent.putExtra("Subject", Subject);
+        intent.putExtra("ReminderDate", ReminderDate);
+        intent.putExtra("VideoSDKMeetingId", VideoSDKMeetingId);
         getApplicationContext().sendBroadcast(intent);
 
         wakeLock.release();

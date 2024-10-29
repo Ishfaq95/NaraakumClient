@@ -3,12 +3,15 @@ import messaging from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 import PushNotification from 'react-native-push-notification';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import { getReminderListFromApi } from '../shared/services/service';
 
 // Register background handler
 messaging().setBackgroundMessageHandler(async remoteMessage => {
     // Extract notification data
     const { title, body }:any = remoteMessage.notification;
-    console.log('i am called in killed state',title)
+    if(title=="تم تقديم طلب جديد"){
+      getReminderListFromApi()
+    }
     // Display the notification
     PushNotification.localNotification({
         channelId: "channel-id", // Channel ID for the notification
@@ -50,6 +53,9 @@ const NotificationsCenter = () => {
 
             let title = parsedData.notification?.title;
             let body = parsedData.notification?.body;
+            if(title=="تم تقديم طلب جديد"){
+              getReminderListFromApi()
+            }
 
             Alert.alert(title, body);
         });

@@ -32,30 +32,21 @@ public class AlarmModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void scheduleAlarm(int seconds, String message,int bookingId,String timeLeft) {
+    public void scheduleAlarm(int seconds, String NotificationBody,String Subject,int reminderId,String ReminderDate,String VideoSDKMeetingId) {
+
         Data inputData = new Data.Builder()
-                .putString("message", message)
+                .putString("NotificationBody", NotificationBody)
+                .putString("Subject", Subject)
+                .putString("ReminderDate", ReminderDate)
+                .putString("VideoSDKMeetingId", VideoSDKMeetingId)
                 .build();
 
-        //   Data inputData = new Data.Builder()
-        //         .putString(Tags.ALARM_TITLE, title)
-        //         .putString(Tags.ALARM_MESSAGE, body)
-        //         .putString(Tags.CP_ID, cpId)
-        //         .putString(Tags.CP_NAME, cpName)
-        //         .putString(Tags.BOOKING_ID, bookingId)
-        //         .putString(Tags.APPOINTMENT_TIME, appointmentTime)
-        //         .putString(Tags.REMINDER_TIME, reminderTime)
-        //         .putBoolean(Tags.TIME_REACHED, timeLeft.equals("0"))
-        //         .putString(Tags.CALL_TYPE, callType)
-        //         .build();
-
-        
             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(com.naraakum_patient.AlarmWorker.class)
-                    .setInitialDelay(seconds, TimeUnit.SECONDS).addTag(bookingId + timeLeft)
+                    .setInitialDelay(seconds, TimeUnit.SECONDS).addTag(reminderId + "Reminder")
                     .setInputData(inputData)
                     .build();
-                    
-            if (!isWorkWithTagRunning(bookingId + timeLeft)) {
+
+            if (!isWorkWithTagRunning(reminderId + "Reminder")) {
                 WorkManager.getInstance(reactContext).enqueue(workRequest);
             }
     }

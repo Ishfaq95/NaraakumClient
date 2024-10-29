@@ -14,6 +14,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {setTopic} from '../shared/redux/reducers/userReducer';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
+import { getReminderListFromApi } from '../shared/services/service';
 
 const WebViewComponent = ({uri}: any) => {
   const dispatch = useDispatch();
@@ -130,6 +131,7 @@ const WebViewComponent = ({uri}: any) => {
       const userInfo = data;
       setUserInformation(userInfo);
       subsribeTopic(userInfo.id);
+      getReminderListFromApi()
     }
 
     if (url && url.includes('OnlineSessionRoom')) {

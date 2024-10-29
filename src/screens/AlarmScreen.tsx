@@ -1,5 +1,5 @@
 import {useNavigation, useRoute} from '@react-navigation/native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,78 @@ import {
   Image,
   Button,
   TouchableOpacity,
+  NativeModules,
 } from 'react-native';
 import { ROUTES } from '../shared/utils/routes';
+import moment from 'moment-timezone';
+
+
+
+const { AlarmModule } = NativeModules;
 
 const AlarmScreen = () => {
   const route = useRoute();
   const navigation=useNavigation()
-  const {message} = route.params; // Get the message from the navigation params
-  console.log('message', message);
+  const Data = route.params; // Get the message from the navigation params
+  const [description,setDescription]=useState('')
+  const [remainingTime, setRemainingTime] = useState('');
+
+  const NotificationBody=Data?.data?.NotificationBody
+  const ReminderDate=Data?.data?.ReminderDate
+  const Subject=Data?.data?.Subject
+
+  useEffect(()=>{
+    getDescription()
+  },[NotificationBody,ReminderDate])
+
+  const calculateRemainingTime = () => {
+    // const localDate = moment.utc(ReminderDate).local(); // Convert UTC to local date
+    const localDate = moment(ReminderDate)
+    const currentDate = moment(); // Current local date and time
+    const duration = moment.duration(localDate.diff(currentDate)); // Difference between event date and current date
+
+    // Calculate hours, minutes, and seconds
+    const hours = Math.floor(duration.asHours()); // Get total hours
+    const minutes = Math.floor(duration.minutes()); // Get remaining minutes
+    const seconds = Math.floor(duration.seconds()); // Get remaining seconds
+
+    // Update remaining time string
+    setRemainingTime(`${hours}:${minutes}:${seconds}`);
+  };
+
+  useEffect(() => {
+    // Calculate the remaining time when the component mounts
+    calculateRemainingTime();
+
+    // Set an interval to update the countdown every second
+    const interval = setInterval(() => {
+      calculateRemainingTime();
+    }, 1000);
+
+    // Clear the interval when the component unmounts
+    return () => clearInterval(interval);
+  }, [ReminderDate]);
+
+
+  const getDescription=()=>{
+    if(NotificationBody && ReminderDate){
+      replaceUTCWithLocalDate(NotificationBody,ReminderDate)
+    }
+  }
 
   const onPressButton=()=>{
+    // AlarmModule.scheduleAlarm(30,"لديك جلسة قادمة في {0} بتوقيت UTC . الرجاء عدم نسيان الانضمام للجلسة.","تذكير بالجلسة القادمة",1001,"2024-10-29T20:00:00.000Z","h13f-r2kv-l2wn")
     navigation.navigate(ROUTES.Home)
+  }
+
+  function replaceUTCWithLocalDate(message, utcDate) {
+    // Convert UTC date to local mobile date
+    const localDate = moment.utc(utcDate).local().format('YYYY-MM-DD HH:mm:ss');
+  
+    // Replace {0} in the message with the local date
+    const updatedMessage = message.replace('{0}', localDate);
+  
+    setDescription( updatedMessage);
   }
 
   return (
@@ -61,17 +122,16 @@ const AlarmScreen = () => {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <Text style={styles.title}>Reminder for upcoming Appointment</Text>
-          <Text style={styles.subtitle}>You have an upcoming session on</Text>
+          <Text style={styles.title}>{Subject}</Text>
         </View>
 
         {/* Appointment Time */}
         <View style={styles.timeBox}>
-          <Text style={styles.time}>04:00 PM</Text>
-          <Text style={styles.date}>21/10/2024</Text>
+          <Text style={styles.time}>Time Left</Text>
+          <Text style={styles.date}>{remainingTime}</Text>
         </View>
 
-        <Text style={styles.note}>Please don’t forget to join the session</Text>
+        <Text style={styles.note}>{description}</Text>
 
         {/* OK Button */}
         <TouchableOpacity onPress={onPressButton} style={styles.okButton}>
@@ -132,13 +192,14 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   time: {
+    fontSize: 16,
+    color: '#6B6B6B',
+  },
+  date: {
+    
     fontSize: 24,
     fontWeight: '700',
     color: '#2B2B2B',
-  },
-  date: {
-    fontSize: 16,
-    color: '#6B6B6B',
   },
   note: {
     fontSize: 14,
