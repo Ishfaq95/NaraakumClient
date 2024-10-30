@@ -42,17 +42,20 @@
 	<string>App needs access to the camera for file uploads.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>App needs access to store files in the Documents folder.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>App needs access to the microphone.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>We need access to add files to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>App needs access to the photo library to save downloaded files.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>We need permission to send you notifications.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need access to your location for better service recommendations.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+    	<string>fetch</string>
 	</array>
 	<key>UIDeviceFamily</key>
 	<array>

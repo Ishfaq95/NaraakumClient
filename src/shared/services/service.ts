@@ -1,5 +1,7 @@
 import { NativeModules, Platform } from "react-native";
 import { GetReminderList } from "../../Network/GetReminderList";
+import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import moment from 'moment-timezone';
 
 const { AlarmModule } = NativeModules;
 
@@ -16,6 +18,15 @@ export const isTokenExpired = (expiresAt:any) => {
       if(getSeconds>0){
         if(Platform.OS=='android'){
           AlarmModule.scheduleAlarm(getSeconds,item.NotificationBody,item.Subject,Number(item.Id),item.ReminderDate,item.VideoSDKMeetingId)
+        }else{
+          console.log('ios',item)
+          PushNotificationIOS.addNotificationRequest({
+            id: 'naraakum',
+            title: 'Reminder',
+            body: 'Your upcoming appointment',
+            userInfo: item,
+            fireDate: moment.utc(item.ReminderDate).local().toDate(), // Convert to local Date object
+          });
         }
       }
     })

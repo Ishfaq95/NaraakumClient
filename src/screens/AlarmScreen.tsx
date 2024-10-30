@@ -8,9 +8,12 @@ import {
   Button,
   TouchableOpacity,
   NativeModules,
+  Platform,
+  SafeAreaView,
 } from 'react-native';
 import { ROUTES } from '../shared/utils/routes';
 import moment from 'moment-timezone';
+import PushNotificationIOS from '@react-native-community/push-notification-ios';
 
 
 
@@ -22,18 +25,21 @@ const AlarmScreen = () => {
   const Data = route.params; // Get the message from the navigation params
   const [description,setDescription]=useState('')
   const [remainingTime, setRemainingTime] = useState('');
+  const [reminderDate, setReminderDate] = useState('');
 
-  const NotificationBody=Data?.data?.NotificationBody
-  const ReminderDate=Data?.data?.ReminderDate
-  const Subject=Data?.data?.Subject
+  // const NotificationBody=Data?.data?.NotificationBody
+  // const ReminderDate=Data?.data?.ReminderDate
+  // const Subject=Data?.data?.Subject
+  // const value=Data?.data
+  // console.log("Data",value?.data)
 
   useEffect(()=>{
     getDescription()
-  },[NotificationBody,ReminderDate])
+  },[Data?.data])
 
   const calculateRemainingTime = () => {
-    // const localDate = moment.utc(ReminderDate).local(); // Convert UTC to local date
-    const localDate = moment(ReminderDate)
+    const localDate = moment.utc(reminderDate).local(); // Convert UTC to local date
+    // const localDate = moment(ReminderDate)
     const currentDate = moment(); // Current local date and time
     const duration = moment.duration(localDate.diff(currentDate)); // Difference between event date and current date
 
@@ -57,32 +63,42 @@ const AlarmScreen = () => {
 
     // Clear the interval when the component unmounts
     return () => clearInterval(interval);
-  }, [ReminderDate]);
+  }, [Data?.data]);
 
 
   const getDescription=()=>{
-    if(NotificationBody && ReminderDate){
-      replaceUTCWithLocalDate(NotificationBody,ReminderDate)
+    const ReminderData=Data?.data
+    if(Platform.OS==='ios'){
+      setReminderDate(ReminderData?.data?.ReminderDate)
+      replaceUTCWithLocalDate(ReminderData?.data?.NotificationBody,ReminderData?.data?.ReminderDate,ReminderData?.data?.Subject);
+    }else{
+      replaceUTCWithLocalDate(ReminderData?.NotificationBody,ReminderData?.ReminderDate,ReminderData?.Subject);
     }
   }
 
   const onPressButton=()=>{
+    
+   
+  
     // AlarmModule.scheduleAlarm(30,"لديك جلسة قادمة في {0} بتوقيت UTC . الرجاء عدم نسيان الانضمام للجلسة.","تذكير بالجلسة القادمة",1001,"2024-10-29T20:00:00.000Z","h13f-r2kv-l2wn")
-    navigation.navigate(ROUTES.Home)
+    // navigation.navigate(ROUTES.Home)
   }
 
-  function replaceUTCWithLocalDate(message, utcDate) {
+
+
+  function replaceUTCWithLocalDate(message, utcDate,subject) {
     // Convert UTC date to local mobile date
     const localDate = moment.utc(utcDate).local().format('YYYY-MM-DD HH:mm:ss');
   
     // Replace {0} in the message with the local date
     const updatedMessage = message.replace('{0}', localDate);
+    const updatedDescription=`${updatedMessage} ${subject}`
   
-    setDescription( updatedMessage);
+    setDescription( updatedDescription);
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Logo */}
       <View style={{marginTop: 25}}>
         <Image
@@ -122,7 +138,7 @@ const AlarmScreen = () => {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <Text style={styles.title}>{Subject}</Text>
+          <Text style={styles.title}>تذكير للموعد القادم</Text>
         </View>
 
         {/* Appointment Time */}
@@ -138,7 +154,7 @@ const AlarmScreen = () => {
           <Text style={styles.okButtonText}>OK</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
