@@ -1,4 +1,4 @@
-import { Alert, AppRegistry } from 'react-native';
+import { Alert, AppRegistry, Platform } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 import PushNotification from 'react-native-push-notification';
@@ -38,7 +38,9 @@ const NotificationsCenter = () => {
             }
             
         
+           if(Platform.OS=='ios'){
             notification.finish(PushNotificationIOS.FetchResult.NoData);
+           }
           },
           permissions: {
             alert: true,
@@ -48,6 +50,16 @@ const NotificationsCenter = () => {
           popInitialNotification: false,
           requestPermissions: false,
         });
+
+        PushNotification.createChannel(
+            {
+              channelId: "channel-id", // Set the same ID used in notifications
+              channelName: "Notification Channel", // Channel name
+              importance: PushNotification.Importance.HIGH,
+              vibrate: true,
+            },
+            (created) => console.log(`createChannel returned '${created}'`) // Callback to check if the channel was created successfully
+          );
 
         // Handle the app opening from a background state
         messaging().onNotificationOpenedApp(remoteMessage => {
@@ -99,15 +111,17 @@ const NotificationsCenter = () => {
             }
         });
 
-        PushNotificationIOS.requestPermissions().then((data) => {
-            console.log('PushNotificationIOS permissions:', data);
-        });
-
-        // Listener for handling notifications in the foreground
-        const notificationListener = PushNotificationIOS.addEventListener('notification', (notification) => {
-            console.log('Foreground Notification:', notification);
-            handleNotification(notification, 'foreground');
-        });
+        if(Platform.OS=='ios'){
+            PushNotificationIOS.requestPermissions().then((data) => {
+                console.log('PushNotificationIOS permissions:', data);
+            });
+    
+            // Listener for handling notifications in the foreground
+            const notificationListener = PushNotificationIOS.addEventListener('notification', (notification) => {
+                console.log('Foreground Notification:', notification);
+                handleNotification(notification, 'foreground');
+            });
+        }
 
         return () => {
             // notificationListener.remove(); // Cleanup the listener on unmount
