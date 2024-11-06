@@ -77,7 +77,28 @@ const AlarmScreen = () => {
   }
 
   const onPressButton=()=>{
+    // const currentDate = new Date();
     
+    // const localDate = moment.utc(currentDate).local().toDate();
+    // const fireDate = new Date(localDate.getTime() + 10 * 1000);
+    // console.log('fireDate',currentDate)
+    // PushNotificationIOS.addNotificationRequest({
+    //   id: 'naraakum',
+    //   title: 'Reminder',
+    //   body: 'Your upcoming appointment',
+    //   userInfo: {
+    //     "CatNotificationPlatformId": 6,
+    //     "CreatedDate": "2024-10-28T11:16:00.000Z",
+    //     "Id": "9364",
+    //     "NotificationBody": "لديك جلسة قادمة في {0} بتوقيت UTC . الرجاء عدم نسيان الانضمام للجلسة.",
+    //     "ReceiverId": "1059",
+    //     "ReminderDate": "2024-10-30T16:46:00.000Z",
+    //     "Subject": "تذكير بالجلسة القادمة",
+    //     "TaskId": 2160,
+    //     "VideoSDKMeetingId": "h13f-r2kv-l2wn"
+    //   },
+    //   fireDate: fireDate, // Convert to local Date object
+    // });
    
   
     // AlarmModule.scheduleAlarm(30,"لديك جلسة قادمة في {0} بتوقيت UTC . الرجاء عدم نسيان الانضمام للجلسة.","تذكير بالجلسة القادمة",1001,"2024-10-29T20:00:00.000Z","h13f-r2kv-l2wn")
@@ -91,7 +112,7 @@ const AlarmScreen = () => {
     const localDate = moment.utc(utcDate).local().format('YYYY-MM-DD HH:mm:ss');
   
     // Replace {0} in the message with the local date
-    const updatedMessage = message.replace('{0}', localDate);
+    const updatedMessage = message?.replace('{0}', localDate);
     const updatedDescription=`${updatedMessage} ${subject}`
   
     setDescription( updatedDescription);

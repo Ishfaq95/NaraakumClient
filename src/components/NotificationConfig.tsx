@@ -33,7 +33,7 @@ const NotificationsCenter = () => {
             console.log("LOCAL NOTIFICATION ==>", notification);
 
             // Handle the notification
-            if(notification?.data?.data?.title === "Reminder") {
+            if(notification?.title === "Reminder") {
               navigation.navigate(ROUTES.AlarmScreen, { data: notification });
             }
             
