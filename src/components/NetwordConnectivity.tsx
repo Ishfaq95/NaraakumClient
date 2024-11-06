@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNetInfo } from "@react-native-community/netinfo";
+import { useNavigation } from "@react-navigation/native";
+import { ROUTES } from "../shared/utils/routes";
 
 export const Connectivity = () => {
   const netInfo = useNetInfo();
   const [didMount, setDidMount] = useState(false);
   const [previousConnection, setPreviousConnection] = useState(null);
+  const navigation=useNavigation()
 
   useEffect(() => {
     setDidMount(true);
@@ -14,13 +17,9 @@ export const Connectivity = () => {
     if (didMount) {
       if (netInfo.isConnected !== previousConnection) {
         if (!netInfo.isConnected) {
-        //   dispatch(setNetworkConnectivity(false));
-        //   Alert.alert(
-        //     "Connectivity issue",
-        //     "You are not connected to the internet"
-        //   );
+          navigation.navigate(ROUTES.NetworkError)
         } else {
-        //   dispatch(setNetworkConnectivity(true));
+          navigation.navigate(ROUTES.Home)
         }
         setPreviousConnection(netInfo.isConnected);
       }

@@ -10,6 +10,7 @@ import messaging from '@react-native-firebase/messaging';
 import Routes from './routes/index';
 import NotificationsCenter from './components/NotificationConfig';
 import SplashScreen from 'react-native-splash-screen'
+import { Connectivity } from './components/NetwordConnectivity';
 
 const App = () => {
 
@@ -37,6 +38,7 @@ const App = () => {
           <NavigationContainer ref={navigationRef}>
             <Routes />
             <NotificationsCenter />
+            <Connectivity />
           </NavigationContainer>
         </SafeAreaProvider>
       </PersistGate>
