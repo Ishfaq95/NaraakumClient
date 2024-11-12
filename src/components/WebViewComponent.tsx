@@ -317,6 +317,14 @@ const WebViewComponent = ({uri}: any) => {
         return false;
       }
     }
+  }
+  const handleLoadError = (event: any) => {
+    setLoading(false)
+    setReloadWebView(true)
+    setTimeout(() => {
+      setReloadWebView(false)
+    }, 100);
+    // Alert.alert('Something went wrong. Please try again.')
   };
 
   const requestiOSPermissions = async () => {
@@ -335,10 +343,6 @@ const WebViewComponent = ({uri}: any) => {
     }
   };
 
-  const handleLoadError = (event: any) => {
-    setLoading(false);
-    Alert.alert('Something went wrong. Please try again.');
-  };
 
   const onNavigationStateChange = (url: any) => {
     console.log('url.url==>', url.url);

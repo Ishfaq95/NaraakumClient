@@ -13,6 +13,7 @@ import SplashScreen from 'react-native-splash-screen'
 import { Platform, Text, View } from 'react-native';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import AlarmListener from './components/AlarmListener';
+import { Connectivity } from './components/NetwordConnectivity';
 
 const App = () => {
 
@@ -67,6 +68,7 @@ const App = () => {
             <Routes />
             <NotificationsCenter />
             {Platform.OS=='android' && <AlarmListener />}
+            <Connectivity />
           </NavigationContainer>
         </SafeAreaProvider>
       </PersistGate>
