@@ -37,21 +37,21 @@
         <true/>
     </dict>
     <key>NSAppleMusicUsageDescription</key>
-    <string>We need access to your media library to play audio files.</string>
+    <string>Access to your media library is required to play audio files within the app.</string>
     <key>NSCameraUsageDescription</key>
-    <string>App needs access to the camera for file uploads.</string>
+    <string>Camera access is needed to allow you to capture images or videos for file uploads within the app.</string>
     <key>NSDocumentsFolderUsageDescription</key>
-    <string>App needs access to store files in the Documents folder.</string>
+    <string>We need access to the Documents folder to securely store and manage files within the app.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string></string>
+    <string>Location access is necessary while using the app to enable location-based features like navigation and personalized content.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>App needs access to the microphone.</string>
+    <string>Microphone access is required to allow audio recording features within the app.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>We need access to add files to your photo library.</string>
+    <string>We need access to your photo library to save media files generated in the app directly to your device.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>App needs access to the photo library to save downloaded files.</string>
+    <string>Access to your photo library is required to allow the app to view and select photos or videos for use within the app.</string>
     <key>NSDocumentsDirectory</key>
-    <string>Permission to store files</string>
+    <string>Access is needed to store and manage files within the app’s Documents directory.</string>
     <key>UIBackgroundModes</key>
     <array>
         <string>fetch</string>
