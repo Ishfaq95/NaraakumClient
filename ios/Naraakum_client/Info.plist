@@ -2,84 +2,91 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleDisplayName</key>
-    <string>Naraakum Client</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>$(PRODUCT_NAME)</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>$(MARKETING_VERSION)</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleVersion</key>
-    <string>$(CURRENT_PROJECT_VERSION)</string>
-    <key>LSApplicationQueriesSchemes</key>
-    <array>
-        <string>http</string>
-        <string>https</string>
-    </array>
-    <key>LSRequiresIPhoneOS</key>
-    <true/>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-        <key>NSAllowsLocalNetworking</key>
-        <true/>
-    </dict>
-    <key>NSAppleMusicUsageDescription</key>
-    <string>Access to your media library is required to play audio files within the app.</string>
-    <key>NSCameraUsageDescription</key>
-    <string>Camera access is needed to allow you to capture images or videos for file uploads within the app.</string>
-    <key>NSDocumentsFolderUsageDescription</key>
-    <string>We need access to the Documents folder to securely store and manage files within the app.</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Location access is necessary while using the app to enable location-based features like navigation and personalized content.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>Microphone access is required to allow audio recording features within the app.</string>
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>We need access to your photo library to save media files generated in the app directly to your device.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>Access to your photo library is required to allow the app to view and select photos or videos for use within the app.</string>
-    <key>NSDocumentsDirectory</key>
-    <string>Access is needed to store and manage files within the app’s Documents directory.</string>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>fetch</string>
-        <string>remote-notification</string>
-    </array>
-    <key>UIDeviceFamily</key>
-    <array>
-        <integer>1</integer>
-        <integer>2</integer>
-    </array>
-    <key>UILaunchStoryboardName</key>
-    <string>LaunchScreen.storyboard</string>
-    <key>UIRequiredDeviceCapabilities</key>
-    <array>
-        <string>arm64</string>
-    </array>
-    <key>UIRequiresFullScreen</key>
-    <true/>
-    <key>UIStatusBarStyle</key>
-    <string></string>
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UIViewControllerBasedStatusBarAppearance</key>
-    <false/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>NARAAKUM - نرعاكم</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>http</string>
+		<string>https</string>
+	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Access to your media library is required to manage and play audio recordings related to patient complaints or other medical data within the app.</string>
+
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is needed to capture images of medical reports and other relevant files for uploading and managing patient records.</string>
+
+	<key>NSDocumentsDirectory</key>
+	<string>Access is required to store and manage medical reports and other patient-related files securely within the app’s Documents directory.</string>
+
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Access to the Documents folder is needed to securely store, retrieve, and manage medical reports and patient records within the app.</string>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location access while using the app is necessary to share the doctor's current location with patients for real-time tracking and improved services.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access is required to enable voice-to-text functionality in input fields and to record patient complaints for better medical care documentation.</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Access to your photo library is needed to save images of medical reports or other patient-related files directly to your device for future reference.</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Access to your photo library is required to select images of medical reports and other files for uploading and managing patient records within the app.</string>
+
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+		<integer>2</integer>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen.storyboard</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>UIStatusBarStyle</key>
+	<string></string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>
-
