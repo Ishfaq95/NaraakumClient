@@ -47,33 +47,39 @@ const WebViewComponent = ({ uri }: any) => {
     }
   }
 
-  const INJECTED_JAVASCRIPT = `
-  (function() {
-    function logToReactNative(message) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ log: message }));
-    }
-
-    // Function to send token and user info to React Native app
-    function sendTokenAndUserInfoToReactNativeApp() {
-      var token = NK.Common.webAPIAccessToken;
-      var userInfo = NK.Common.getLoggedInUser();
-      var data = { token: token };
-      if (userInfo) {
-        data.userInfo = userInfo;
+  const injectedJavaScript = `
+    (function() {
+      // Helper function to log messages to React Native
+      function logToReactNative(message) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ log: message }));
       }
-       window.ReactNativeWebView.postMessage(JSON.stringify(data));
-    }
 
-    // Overwrite window.open to send the full URL and query params to React Native app
-    window.open = function(url) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ url: url}));
-    };
+      // Function to send token and user info to React Native app
+      function sendTokenAndUserInfoToReactNativeApp() {
+        try {
+          var token = NK.Common.webAPIAccessToken;
+          var userInfo = NK.Common.getLoggedInUser();
+          var data = { token: token };
+          if (userInfo) {
+            data.userInfo = userInfo;
+          }
+          window.ReactNativeWebView.postMessage(JSON.stringify(data));
+        } catch (error) {
+          logToReactNative("Error in sendTokenAndUserInfoToReactNativeApp: " + error.message);
+        }
+      }
 
-    // Call the function to send token and user info immediately
-    sendTokenAndUserInfoToReactNativeApp();
-  })();
-  true;
-`;
+      // Overwrite window.open to send the full URL and query params to React Native app
+      window.open = function(url) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ url: url }));
+      };
+
+      // Call the function to send token and user info immediately
+      sendTokenAndUserInfoToReactNativeApp();
+    })();
+    true;
+  `;
+
   const getFileNameFromUrl = (url: any) => {
     // Split the URL by '/'
     const parts = url.split('/');
@@ -82,6 +88,7 @@ const WebViewComponent = ({ uri }: any) => {
   };
 
   const handleMessage = async (event: any) => {
+    console.log('event',event)
     const { url, userInfo, event: eventHandler, data, fileName } = JSON.parse(event.nativeEvent.data);
    
     if (eventHandler == 'download') {
@@ -116,7 +123,7 @@ const WebViewComponent = ({ uri }: any) => {
 
     if (url && url.includes('OnlineSessionRoom')) {
       // let urlComplete = `https://staging.innotech-sa.com${url}`;
-      // let urlComplete = `https://dev2.innotech-sa.com${url}`;
+      // let urlComplete = `https://dvx.innotech-sa.com${url}`;
       let urlComplete = `https://nkapps.innotech-sa.com${url}`;
       
       const redirectUrl = getDeepLink();
@@ -250,6 +257,13 @@ const WebViewComponent = ({ uri }: any) => {
     setLatestUrl(url.url)
   }
 
+  const handleLoadEnd = () => {
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(injectedJavaScript);
+    }
+  };
+
+
   return (
     <View style={styles.container}>
       <View style={styles.webviewContainer}>
@@ -259,33 +273,35 @@ const WebViewComponent = ({ uri }: any) => {
             name={'BallSpinFadeLoader'}
             color={'green'}
           />
-        </View>:<WebView
-          source={{ uri: currentUrl }}
-          useWebKit={true}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={true}
-          cacheEnabled={true}
-          cacheMode={'LOAD_CACHE_ELSE_NETWORK'}
-          onLoadStart={() => {
-            setLoading(true);
-          }}
-          onLoadEnd={() => {
-            setLoading(false);
-          }}
-          mediaPlaybackRequiresUserAction={false}
-          allowsInlineMediaPlayback={true}
-          // originWhitelist={['*']}
-          userAgent={Platform.OS === 'android' ? 'Chrome/18.0.1025.133 Mobile Safari/535.19' : 'AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75'}
-          originWhitelist={["https://*", "http://*", "file://*", "sms://*"]}
-          geolocationEnabled={true}
-          javaScriptEnabledAndroid={true}
-          injectedJavaScript={INJECTED_JAVASCRIPT}
-          onMessage={handleMessage}
-          onError={handleLoadError}
-          onNavigationStateChange={onNavigationStateChange}
-          style={styles.webview}
-        />}
+        </View>:
+        <WebView
+        ref={webViewRef}
+        source={{ uri: currentUrl }}
+        useWebKit={true}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        cacheEnabled={false}
+        onLoadStart={() => setLoading(true)}
+        onLoadEnd={() => {
+          setLoading(false);
+          handleLoadEnd();
+        }}
+        mediaPlaybackRequiresUserAction={false}
+        allowsInlineMediaPlayback={true}
+        setSupportMultipleWindows={true} // Enable multiple windows on Android
+        // userAgent={Platform.OS === 'android' ? 'Chrome/18.0.1025.133 Mobile Safari/535.19' : 'AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75'}
+        userAgent={Platform.OS === 'android' ? 'Mozilla/5.0 (Linux; Android 10; Mobile; rv:79.0) Gecko/79.0 Firefox/79.0' : 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15'}
+        originWhitelist={["https://*", "http://*", "file://*", "sms://*"]}
+        geolocationEnabled={true}
+        javaScriptEnabledAndroid={true}
+        injectedJavaScript={injectedJavaScript}
+        onMessage={handleMessage}
+        onError={handleLoadError}
+        onNavigationStateChange={onNavigationStateChange}
+        style={styles.webview}
+      />
+        }
       </View>
       {loading && (
         <View style={styles.loader}>
