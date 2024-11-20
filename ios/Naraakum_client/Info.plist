@@ -38,28 +38,20 @@
 	</dict>
 	<key>NSAppleMusicUsageDescription</key>
 	<string>Access to your media library is required to manage and play audio recordings related to patient complaints or other medical data within the app.</string>
-
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is needed to capture images of medical reports and other relevant files for uploading and managing patient records.</string>
-
 	<key>NSDocumentsDirectory</key>
 	<string>Access is required to store and manage medical reports and other patient-related files securely within the app’s Documents directory.</string>
-
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>Access to the Documents folder is needed to securely store, retrieve, and manage medical reports and patient records within the app.</string>
-
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Location access while using the app is necessary to share the doctor's current location with patients for real-time tracking and improved services.</string>
-
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is required to enable voice-to-text functionality in input fields and to record patient complaints for better medical care documentation.</string>
-
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Access to your photo library is needed to save images of medical reports or other patient-related files directly to your device for future reference.</string>
-
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Access to your photo library is required to select images of medical reports and other files for uploading and managing patient records within the app.</string>
-
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
