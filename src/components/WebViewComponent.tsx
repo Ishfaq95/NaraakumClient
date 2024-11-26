@@ -249,7 +249,6 @@ const WebViewComponent = ({ uri }: any) => {
     setTimeout(() => {
       setReloadWebView(false)
     }, 100);
-    // Alert.alert('Something went wrong. Please try again.')
   };
 
   const onNavigationStateChange=(url:any)=>{
