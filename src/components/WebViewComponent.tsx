@@ -53,33 +53,39 @@ const WebViewComponent = ({uri}: any) => {
     }
   };
 
-  const INJECTED_JAVASCRIPT = `
-  (function() {
-    function logToReactNative(message) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ log: message }));
-    }
-
-    // Function to send token and user info to React Native app
-    function sendTokenAndUserInfoToReactNativeApp() {
-      var token = NK.Common.webAPIAccessToken;
-      var userInfo = NK.Common.getLoggedInUser();
-      var data = { token: token };
-      if (userInfo) {
-        data.userInfo = userInfo;
+  const injectedJavaScript = `
+    (function() {
+      // Helper function to log messages to React Native
+      function logToReactNative(message) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ log: message }));
       }
-       window.ReactNativeWebView.postMessage(JSON.stringify(data));
-    }
 
-    // Overwrite window.open to send the full URL and query params to React Native app
-    window.open = function(url) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ url: url}));
-    };
+      // Function to send token and user info to React Native app
+      function sendTokenAndUserInfoToReactNativeApp() {
+        try {
+          var token = NK.Common.webAPIAccessToken;
+          var userInfo = NK.Common.getLoggedInUser();
+          var data = { token: token };
+          if (userInfo) {
+            data.userInfo = userInfo;
+          }
+          window.ReactNativeWebView.postMessage(JSON.stringify(data));
+        } catch (error) {
+          logToReactNative("Error in sendTokenAndUserInfoToReactNativeApp: " + error.message);
+        }
+      }
 
-    // Call the function to send token and user info immediately
-    sendTokenAndUserInfoToReactNativeApp();
-  })();
-  true;
-`;
+      // Overwrite window.open to send the full URL and query params to React Native app
+      window.open = function(url) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ url: url }));
+      };
+
+      // Call the function to send token and user info immediately
+      sendTokenAndUserInfoToReactNativeApp();
+    })();
+    true;
+  `;
+
   const getFileNameFromUrl = (url: any) => {
     // Split the URL by '/'
     const parts = url.split('/');
@@ -88,13 +94,8 @@ const WebViewComponent = ({uri}: any) => {
   };
 
   const handleMessage = async (event: any) => {
-    const {
-      url,
-      event: eventHandler,
-      data,
-      fileName,
-    } = JSON.parse(event.nativeEvent.data);
-    // console.log('eventHandler', eventHandler, data);
+    const { url, userInfo, event: eventHandler, data, fileName } = JSON.parse(event.nativeEvent.data);
+   
     if (eventHandler == 'download') {
       let isPermissionGrandted = await getStoragePermission();
       if (isPermissionGrandted) {
@@ -324,7 +325,6 @@ const WebViewComponent = ({uri}: any) => {
     setTimeout(() => {
       setReloadWebView(false)
     }, 100);
-    // Alert.alert('Something went wrong. Please try again.')
   };
 
   const requestiOSPermissions = async () => {
@@ -348,6 +348,13 @@ const WebViewComponent = ({uri}: any) => {
     console.log('url.url==>', url.url);
     setLatestUrl(url.url);
   };
+
+  const handleLoadEnd = () => {
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(injectedJavaScript);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -387,8 +394,8 @@ const WebViewComponent = ({uri}: any) => {
             originWhitelist={['*']}
             geolocationEnabled={true}
             javaScriptEnabledAndroid={true}
-            injectedJavaScript={INJECTED_JAVASCRIPT}
-            injectedJavaScriptBeforeContentLoaded={INJECTED_JAVASCRIPT}
+            injectedJavaScript={injectedJavaScript}
+            injectedJavaScriptBeforeContentLoaded={injectedJavaScript}
             onMessage={handleMessage}
             onError={handleLoadError}
             onNavigationStateChange={onNavigationStateChange}

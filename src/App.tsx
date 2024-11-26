@@ -14,6 +14,8 @@ import { Platform, Text, View } from 'react-native';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import AlarmListener from './components/AlarmListener';
 import { Connectivity } from './components/NetwordConnectivity';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import queryClient from './Network/queryClient';
 
 const App = () => {
 
@@ -62,17 +64,19 @@ const App = () => {
 
   return (
     <Provider store={store}>
-      <PersistGate persistor={persistor}>
-        <SafeAreaProvider>
+    <PersistGate persistor={persistor}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
           <NavigationContainer ref={navigationRef}>
             <Routes />
             <NotificationsCenter />
             {Platform.OS=='android' && <AlarmListener />}
             <Connectivity />
           </NavigationContainer>
-        </SafeAreaProvider>
-      </PersistGate>
-    </Provider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </PersistGate>
+  </Provider>
   );
 };
 
