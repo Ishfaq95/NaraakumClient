@@ -1,10 +1,11 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   StyleSheet,
   View,
   Alert,
   Platform,
   PermissionsAndroid,
+  AppState,
 } from 'react-native';
 import LoaderKit from 'react-native-loader-kit';
 import {WebView} from 'react-native-webview';
@@ -136,7 +137,8 @@ const WebViewComponent = ({uri}: any) => {
     if (url && url.includes('OnlineSessionRoom')) {
       // let urlComplete = `https://staging.innotech-sa.com${url}`;
       // let urlComplete = `https://dvx.innotech-sa.com${url}`;
-      let urlComplete = `https://nkapps.innotech-sa.com${url}`;
+      // let urlComplete = `https://nkapps.innotech-sa.com${url}`;
+      let urlComplete = `https://naraakum.com${url}`;
 
       const redirectUrl = getDeepLink();
 
@@ -346,6 +348,11 @@ const WebViewComponent = ({uri}: any) => {
 
   const onNavigationStateChange = (url: any) => {
     console.log('url.url==>', url.url);
+    if(isNonSocialMediaUrl(url.url)){
+      setLatestUrl(url.url);
+    }else{
+      setLoading(false)
+    }
     setLatestUrl(url.url);
   };
 
@@ -355,6 +362,47 @@ const WebViewComponent = ({uri}: any) => {
     }
   };
 
+  const isNonSocialMediaUrl = (url: string): boolean => {
+    const socialMediaDomains = [
+      'youtube.com',
+      'youtu.be',
+      'x.com',
+      'facebook.com',
+      'twitter.com',
+      'instagram.com',
+      'tiktok.com',
+      'linkedin.com',
+      'snapchat.com',
+      'pinterest.com',
+      'reddit.com',
+    ];
+  
+    const lowerCaseUrl = url.toLowerCase();
+  
+    // Use stricter domain matching by extracting the host
+    const match = lowerCaseUrl.match(/https?:\/\/(www\.)?([^\/]+)/);
+    const domain = match ? match[2] : null;
+  
+    // Check if the extracted domain matches any social media domain
+    return !socialMediaDomains.some((socialDomain) => domain?.includes(socialDomain));
+  };
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState) => {
+        console.log('App State changed to:', nextAppState);
+        if(nextAppState=='inactive'){
+         setLoading(false) 
+        }
+    };
+
+    // Add event listener
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    // Clean up the event listener on unmount
+    return () => {
+        subscription.remove();
+    };
+}, []);
 
   return (
     <View style={styles.container}>
