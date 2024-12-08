@@ -95,20 +95,25 @@ const WebViewComponent = ({uri}: any) => {
   };
 
   const handleMessage = async (event: any) => {
-    const { url, userInfo, event: eventHandler, data, fileName } = JSON.parse(event.nativeEvent.data);
-   
+    const {
+      url,
+      userInfo,
+      event: eventHandler,
+      data,
+      fileName,
+    } = JSON.parse(event.nativeEvent.data);
+
     if (eventHandler == 'download') {
       let isPermissionGrandted = await getStoragePermission();
       if (isPermissionGrandted) {
         setLoading(true);
         let pdfUrl = data;
         let fileName = getFileNameFromUrl(pdfUrl);
-        if(Platform.OS === 'ios'){
+        if (Platform.OS === 'ios') {
           downloadFIleForIOS(pdfUrl, fileName);
-        }else{
+        } else {
           downloadFile(pdfUrl, fileName);
         }
-        
       } else {
         showAlert(
           'Allow Media Access.',
@@ -142,7 +147,6 @@ const WebViewComponent = ({uri}: any) => {
 
       const redirectUrl = getDeepLink();
 
-      console.log('urlCompleteurlComplete', urlComplete);
       try {
         if (await InAppBrowser.isAvailable()) {
           // const result = await InAppBrowser.open(urlComplete, {
@@ -156,13 +160,13 @@ const WebViewComponent = ({uri}: any) => {
           //     endExit: 'slide_out_right',
           //   },
           // });
-          const result = await InAppBrowser.open(urlComplete,  {
+          const result = await InAppBrowser.open(urlComplete, {
             forceCloseOnRedirection: false,
             showInRecents: true,
             showTitle: true,
             enableUrlBarHiding: true,
             enableDefaultShare: false,
-            modalPresentationStyle:'overFullScreen',
+            modalPresentationStyle: 'overFullScreen',
 
             ephemeralWebSession: false,
             enableBarCollapsing: true,
@@ -265,22 +269,22 @@ const WebViewComponent = ({uri}: any) => {
   const downloadPDFFromBase64 = async (base64: string, fileName: any) => {
     const base64String = base64;
     const base64Data = base64String.split(',')[1]; // Remove data URL prefix if present
-    let filePath=null;
-     
-    if(Platform.OS=='ios'){
+    let filePath = null;
+
+    if (Platform.OS == 'ios') {
       filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/${fileName}.pdf`;
-    }else{
+    } else {
       filePath = `${RNFetchBlob.fs.dirs.DownloadDir}/${fileName}.pdf`;
     }
     const uniqueFilePath = await getUniqueFilePath(filePath);
-    
+
     RNFetchBlob.fs
       .writeFile(uniqueFilePath, base64Data, 'base64')
       .then(async () => {
         setLoading(false);
         Alert.alert('File downloaded successfully.');
-        if(Platform.OS=='ios'){
-        RNFetchBlob.ios.previewDocument(filePath); // Preview the downloaded document on iOS
+        if (Platform.OS == 'ios') {
+          RNFetchBlob.ios.previewDocument(filePath); // Preview the downloaded document on iOS
         }
       })
       .catch(error => {
@@ -320,12 +324,12 @@ const WebViewComponent = ({uri}: any) => {
         return false;
       }
     }
-  }
+  };
   const handleLoadError = (event: any) => {
-    setLoading(false)
-    setReloadWebView(true)
+    setLoading(false);
+    setReloadWebView(true);
     setTimeout(() => {
-      setReloadWebView(false)
+      setReloadWebView(false);
     }, 100);
   };
 
@@ -345,13 +349,11 @@ const WebViewComponent = ({uri}: any) => {
     }
   };
 
-
   const onNavigationStateChange = (url: any) => {
-    console.log('url.url==>', url.url);
-    if(isNonSocialMediaUrl(url.url)){
+    if (isNonSocialMediaUrl(url.url)) {
       setLatestUrl(url.url);
-    }else{
-      setLoading(false)
+    } else {
+      setLoading(false);
     }
     setLatestUrl(url.url);
   };
@@ -376,33 +378,38 @@ const WebViewComponent = ({uri}: any) => {
       'pinterest.com',
       'reddit.com',
     ];
-  
+
     const lowerCaseUrl = url.toLowerCase();
-  
+
     // Use stricter domain matching by extracting the host
     const match = lowerCaseUrl.match(/https?:\/\/(www\.)?([^\/]+)/);
     const domain = match ? match[2] : null;
-  
+
     // Check if the extracted domain matches any social media domain
-    return !socialMediaDomains.some((socialDomain) => domain?.includes(socialDomain));
+    return !socialMediaDomains.some(socialDomain =>
+      domain?.includes(socialDomain),
+    );
   };
 
   useEffect(() => {
-    const handleAppStateChange = (nextAppState) => {
-        console.log('App State changed to:', nextAppState);
-        if(nextAppState=='inactive'){
-         setLoading(false) 
-        }
+    const handleAppStateChange = nextAppState => {
+      console.log('App State changed to:', nextAppState);
+      if (nextAppState == 'inactive') {
+        setLoading(false);
+      }
     };
 
     // Add event listener
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
 
     // Clean up the event listener on unmount
     return () => {
-        subscription.remove();
+      subscription.remove();
     };
-}, []);
+  }, []);
 
   return (
     <View style={styles.container}>
