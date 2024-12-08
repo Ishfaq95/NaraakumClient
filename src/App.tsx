@@ -10,11 +10,40 @@ import messaging from '@react-native-firebase/messaging';
 import Routes from './routes/index';
 import NotificationsCenter from './components/NotificationConfig';
 import SplashScreen from 'react-native-splash-screen'
+import { Platform, Text, View } from 'react-native';
+import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import AlarmListener from './components/AlarmListener';
 import { Connectivity } from './components/NetwordConnectivity';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import queryClient from './Network/queryClient';
 
 const App = () => {
+
+  useEffect(() => {
+    const type = 'notification';
+    PushNotificationIOS.addEventListener(type, onRemoteNotification);
+    return () => {
+      PushNotificationIOS.removeEventListener(type);
+    };
+  });
+
+  const onRemoteNotification = (notification:any) => {
+    const actionIdentifier = notification.getActionIdentifier();
+    console.log('notificationnotification',notification)
+
+    if (actionIdentifier === 'open') {
+      // Perform action based on open action
+    }
+
+    if (actionIdentifier === 'text') {
+      // Text that of user input.
+      const userText = notification.getUserText();
+      // Perform action based on textinput action
+    }
+    // Use the appropriate result based on what you needed to do for this notification
+    const result = PushNotificationIOS.FetchResult.NoData;
+    notification.finish(result);
+  };
 
   useEffect(() => {
     setTimeout(()=>{
@@ -41,6 +70,8 @@ const App = () => {
           <NavigationContainer ref={navigationRef}>
             <Routes />
             <NotificationsCenter />
+            {Platform.OS=='android' && <AlarmListener />}
+            <Connectivity />
           </NavigationContainer>
         </QueryClientProvider>
       </SafeAreaProvider>

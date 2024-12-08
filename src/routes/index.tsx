@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ROUTES } from '../shared/utils/routes';
 import React from 'react';
 import HomeScreen from '../screens/Home';
+import AlarmScreen from '../screens/AlarmScreen';
 import NetworkErrorScreen from '../screens/NetworkScreen';
 
 const Stack = createNativeStackNavigator();
@@ -11,6 +12,7 @@ const AuthStack = () => {
     <>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
+        <Stack.Screen name={ROUTES.AlarmScreen} component={AlarmScreen} />
         <Stack.Screen name={ROUTES.NetworkError} component={NetworkErrorScreen} />
       </Stack.Navigator>
     </>
