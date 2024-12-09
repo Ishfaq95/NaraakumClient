@@ -424,38 +424,32 @@ const WebViewComponent = ({uri}: any) => {
           </View>
         ) : (
           <WebView
-            source={{uri: currentUrl}}
-            useWebKit={true}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            startInLoadingState={true}
-            cacheEnabled={false}
-            cacheMode={'LOAD_CACHE_ELSE_NETWORK'}
-            onLoadStart={() => {
-              setLoading(true);
-            }}
-            onLoadEnd={() => {
-              setLoading(false);
-            }}
-            mediaPlaybackRequiresUserAction={false}
-            allowsInlineMediaPlayback={true}
-            // originWhitelist={['*']}
-            userAgent={
-              Platform.OS === 'android'
-                ? 'Mozilla/5.0 (Linux; Android 10; Mobile; rv:79.0) Gecko/79.0 Firefox/79.0'
-                : 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15'
-            }
-            // originWhitelist={["https://*", "http://*", "file://*", "sms://*"]}
-            originWhitelist={['*']}
-            geolocationEnabled={true}
-            javaScriptEnabledAndroid={true}
-            injectedJavaScript={injectedJavaScript}
-            injectedJavaScriptBeforeContentLoaded={injectedJavaScript}
-            onMessage={handleMessage}
-            onError={handleLoadError}
-            onNavigationStateChange={onNavigationStateChange}
-            style={styles.webview}
-          />
+        ref={webViewRef}
+        source={{ uri: currentUrl }}
+        useWebKit={true}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        cacheEnabled={false}
+        onLoadStart={() => setLoading(true)}
+        onLoadEnd={() => {
+          setLoading(false);
+          handleLoadEnd();
+        }}
+        mediaPlaybackRequiresUserAction={false}
+        allowsInlineMediaPlayback={true}
+        setSupportMultipleWindows={true} // Enable multiple windows on Android
+        // userAgent={Platform.OS === 'android' ? 'Chrome/18.0.1025.133 Mobile Safari/535.19' : 'AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75'}
+        userAgent={Platform.OS === 'android' ? 'Mozilla/5.0 (Linux; Android 10; Mobile; rv:79.0) Gecko/79.0 Firefox/79.0' : 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15'}
+        originWhitelist={["https://*", "http://*", "file://*", "sms://*"]}
+        geolocationEnabled={true}
+        javaScriptEnabledAndroid={true}
+        injectedJavaScript={injectedJavaScript}
+        onMessage={handleMessage}
+        onError={handleLoadError}
+        onNavigationStateChange={onNavigationStateChange}
+        style={styles.webview}
+      />
         )}
       </View>
       {loading && (
