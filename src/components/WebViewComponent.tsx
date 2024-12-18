@@ -6,6 +6,7 @@ import {
   Platform,
   PermissionsAndroid,
   AppState,
+  Linking,
 } from 'react-native';
 import LoaderKit from 'react-native-loader-kit';
 import {WebView} from 'react-native-webview';
@@ -29,10 +30,9 @@ const WebViewComponent = ({uri}: any) => {
   const sleep = (timeout: number) =>
     new Promise<void>(resolve => setTimeout(resolve, timeout));
 
-  console.log('topic', topic);
   const subsribeTopic = (Id: any) => {
     const topicName = `patient_${Id}`;
-    console.log('topicName', topicName);
+    
     if (topic) {
       if (topic != topicName) {
         messaging()
@@ -46,7 +46,6 @@ const WebViewComponent = ({uri}: any) => {
           .then(() => {});
       }
     } else {
-      console.log('subscribe');
       dispatch(setTopic(topicName));
       messaging()
         .subscribeToTopic(topicName)
@@ -341,10 +340,8 @@ const WebViewComponent = ({uri}: any) => {
       photoLibraryPermission === RESULTS.GRANTED &&
       mediaLibraryPermission === RESULTS.GRANTED
     ) {
-      console.log('All necessary permissions granted');
       return true;
     } else {
-      console.log('Some permissions were denied');
       return false;
     }
   };
@@ -355,7 +352,6 @@ const WebViewComponent = ({uri}: any) => {
     } else {
       setLoading(false);
     }
-    setLatestUrl(url.url);
   };
 
   const handleLoadEnd = () => {
@@ -380,20 +376,22 @@ const WebViewComponent = ({uri}: any) => {
     ];
 
     const lowerCaseUrl = url.toLowerCase();
-
-    // Use stricter domain matching by extracting the host
-    const match = lowerCaseUrl.match(/https?:\/\/(www\.)?([^\/]+)/);
-    const domain = match ? match[2] : null;
-
+    if(lowerCaseUrl.includes('www.facebook.com') ) {
+      Linking.openURL(lowerCaseUrl);
+      return false;
+    }else{
+      const match = lowerCaseUrl.match(/https?:\/\/(www\.)?([^\/]+)/);
+      const domain = match ? match[2] : null;
     // Check if the extracted domain matches any social media domain
     return !socialMediaDomains.some(socialDomain =>
       domain?.includes(socialDomain),
     );
+    }
+    
   };
 
   useEffect(() => {
     const handleAppStateChange = nextAppState => {
-      console.log('App State changed to:', nextAppState);
       if (nextAppState == 'inactive') {
         setLoading(false);
       }

@@ -14,7 +14,6 @@ const AlarmScreen = () => {
   const route = useRoute();
   const navigation=useNavigation()
   const {message} = route.params; // Get the message from the navigation params
-  console.log('message', message);
 
   const onPressButton=()=>{
     navigation.navigate(ROUTES.Home)
