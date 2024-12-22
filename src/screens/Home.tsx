@@ -6,11 +6,17 @@ import useMutationHook from '../Network/useMutationHook';
 import {isTokenExpired} from '../shared/services/service';
 import { Alert, BackHandler, SafeAreaView, StyleSheet, PermissionsAndroid, Platform, Linking, AppState } from 'react-native';
 import { setToken } from '../shared/redux/reducers/userReducer';
+import { crashlyticsService } from '../shared/services/crashlytics/crashlytics.service';
 
 const HomeScreen = () => {
   const dispatch = useDispatch();
   const {expiresAt,appVersionCode} = useSelector((state: any) => state.root.user);
   const [appState, setAppState] = useState(AppState.currentState);
+
+  useEffect(() => {
+    crashlyticsService.logMessage('Home screen mounted');
+}, []);
+
   const {mutate, isSuccess, isError, data, isLoading} = useMutationHook(
     '/authValidator/token',
     'POST',
