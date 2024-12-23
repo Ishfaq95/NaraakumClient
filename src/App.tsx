@@ -18,7 +18,6 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import queryClient from './Network/queryClient';
 import {CrashlyticsErrorBoundary} from './components/CrashlyticsErrorBoundary';
 import {CrashlyticsProvider} from './components/CrashlyticsProvider';
-import { testCrashlytics } from './screens/crashLoged';
 
 const App = () => {
   useEffect(() => {
@@ -70,10 +69,10 @@ const App = () => {
           <QueryClientProvider client={queryClient}>
             <CrashlyticsErrorBoundary>
               <CrashlyticsProvider
-                userId="user123"
+                userId="user"
                 customKeys={{
-                  appVersion: '1.0.0',
-                  environment: __DEV__ ? 'development' : 'production',
+                  appVersion: '1.0.2',
+                  environment: 'production',
                 }}>
                 <NavigationContainer ref={navigationRef}>
                   <Routes />
