@@ -7,12 +7,13 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.23.1",
-    "@react-native-community/push-notification-ios": "^1.11.0",
     "@react-native-community/netinfo": "^11.4.1",
+    "@react-native-community/push-notification-ios": "^1.11.0",
     "@react-native-firebase/app": "^20.1.0",
     "@react-native-firebase/messaging": "^20.1.0",
     "@react-native-firebase/crashlytics": "^20.1.0",
@@ -22,6 +23,7 @@
     "@tanstack/react-query": "^5.61.3",
     "axios": "^1.7.2",
     "babel-plugin-module-resolver": "^5.0.2",
+    "patch-package": "^8.0.0",
     "qs": "^6.13.1",
     "react": "18.2.0",
     "react-native": "0.74.2",
