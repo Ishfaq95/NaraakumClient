@@ -194,8 +194,6 @@ const HomeScreen = () => {
         const granted = await PermissionsAndroid.requestMultiple([
           PermissionsAndroid.PERMISSIONS.CAMERA,
           PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
           PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
           PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
@@ -205,8 +203,6 @@ const HomeScreen = () => {
         if (
           granted['android.permission.CAMERA'] === PermissionsAndroid.RESULTS.GRANTED &&
           granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED &&
-          granted['android.permission.READ_MEDIA_IMAGES'] === PermissionsAndroid.RESULTS.GRANTED &&
-          granted['android.permission.READ_MEDIA_VIDEO'] === PermissionsAndroid.RESULTS.GRANTED &&
           granted['android.permission.READ_MEDIA_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED
         ) {
         } else {
