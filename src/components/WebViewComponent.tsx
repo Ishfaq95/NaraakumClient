@@ -13,13 +13,15 @@ import {WebView} from 'react-native-webview';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import messaging from '@react-native-firebase/messaging';
 import {useDispatch, useSelector} from 'react-redux';
-import {setTopic} from '../shared/redux/reducers/userReducer';
+import {setTopic, setUser} from '../shared/redux/reducers/userReducer';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
+import useMutationHook from '../Network/useMutationHook';
+import PushNotification from 'react-native-push-notification';
 
 const WebViewComponent = ({uri}: any) => {
   const dispatch = useDispatch();
-  const {topic} = useSelector((state: any) => state.root.user);
+  const {topic, user} = useSelector((state: any) => state.root.user);
   const [loading, setLoading] = useState(true);
   const [currentUrl, setCurrentUrl] = useState(uri);
   const [userInformation, setUserInformation] = useState('');
@@ -30,9 +32,69 @@ const WebViewComponent = ({uri}: any) => {
   const sleep = (timeout: number) =>
     new Promise<void>(resolve => setTimeout(resolve, timeout));
 
+  const {
+    mutate: getSystemNotificationFN,
+    isSuccess: isSuccessSystemNotification,
+    isError: isErrorSystemNotifiction,
+    data: SystemNotificationList,
+    isLoading: isLoadingSystemNotification,
+  } = useMutationHook('reminders/GetSystemReminderList', 'POST');
+
+  useEffect(() => {
+    if (isSuccessSystemNotification) {
+      PushNotification.cancelAllLocalNotifications();
+      scheduleNotification(SystemNotificationList?.ReminderList);
+    }
+    if (isErrorSystemNotifiction) {
+    }
+  }, [isSuccessSystemNotification, isErrorSystemNotifiction]);
+
+  const scheduleNotification = (notificationList: any) => {
+    notificationList.map((item: any, index: any) => {
+      const data = item;
+      // Convert UTC date string to local Date object
+      const localDate = new Date(data.ReminderDate); // Date object auto-adjusts to local timezone
+
+      // Optional: skip past dates
+      if (localDate <= new Date()) {
+        console.log(`Skipping past notification with id: ${data.Id}`);
+        return;
+      }
+
+      const reminderObj = {
+        ...item,
+        notificationFrom: 'reminder',
+      };
+
+      PushNotification.localNotificationSchedule({
+        id: data.Id,
+        title: data.Subject,
+        message: data.NotificationBody,
+        date: localDate,
+        // date: new Date(Date.now() + 60 * 1000),
+        playSound: true,
+        soundName: 'default',
+        userInfo: reminderObj,
+        allowWhileIdle: true, // important for background
+      });
+    });
+
+    PushNotification.getScheduledLocalNotifications(notifs => {
+      console.log('Currently Scheduled Notifications:', notifs.length);
+    });
+  };
+
+  useEffect(() => {
+    if (user) {
+      getSystemNotificationFN({
+        UserloginInfo: user.id,
+      });
+    }
+  }, [user]);
+
   const subsribeTopic = (Id: any) => {
     const topicName = `patient_${Id}`;
-    
+
     if (topic) {
       if (topic != topicName) {
         messaging()
@@ -136,13 +198,14 @@ const WebViewComponent = ({uri}: any) => {
       const userInfo = data;
       setUserInformation(userInfo);
       subsribeTopic(userInfo.id);
+      dispatch(setUser(userInfo));
     }
 
     if (url && url.includes('OnlineSessionRoom')) {
       // let urlComplete = `https://staging.innotech-sa.com${url}`;
-      // let urlComplete = `https://dvx.innotech-sa.com${url}`;
+      let urlComplete = `https://dvx.innotech-sa.com${url}`;
       // let urlComplete = `https://nkapps.innotech-sa.com${url}`;
-      let urlComplete = `https://naraakum.com${url}`;
+      // let urlComplete = `https://naraakum.com${url}`;
 
       const redirectUrl = getDeepLink();
 
@@ -376,18 +439,17 @@ const WebViewComponent = ({uri}: any) => {
     ];
 
     const lowerCaseUrl = url.toLowerCase();
-    if(lowerCaseUrl.includes('www.facebook.com') ) {
+    if (lowerCaseUrl.includes('www.facebook.com')) {
       Linking.openURL(lowerCaseUrl);
       return false;
-    }else{
+    } else {
       const match = lowerCaseUrl.match(/https?:\/\/(www\.)?([^\/]+)/);
       const domain = match ? match[2] : null;
-    // Check if the extracted domain matches any social media domain
-    return !socialMediaDomains.some(socialDomain =>
-      domain?.includes(socialDomain),
-    );
+      // Check if the extracted domain matches any social media domain
+      return !socialMediaDomains.some(socialDomain =>
+        domain?.includes(socialDomain),
+      );
     }
-    
   };
 
   useEffect(() => {
