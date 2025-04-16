@@ -121,9 +121,14 @@ dependencies {
     implementation project(':react-native-push-notification')
     // implementation project(':react-native-file-viewer')
     implementation project(':react-native-splash-screen')
-    implementation "androidx.work:work-runtime-ktx:2.7.1"
+    implementation "androidx.work:work-runtime-ktx:2.8.1"
 
      implementation 'com.google.firebase:firebase-crashlytics:18.2.13'
+     implementation("androidx.browser:browser") {
+        version {
+            strictly("1.8.0")
+        }
+    }
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

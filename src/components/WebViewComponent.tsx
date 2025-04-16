@@ -12,13 +12,21 @@ import {WebView} from 'react-native-webview';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import messaging from '@react-native-firebase/messaging';
 import {useDispatch, useSelector} from 'react-redux';
-import {setTopic} from '../shared/redux/reducers/userReducer';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
+import {setTopic, setUser} from '../shared/redux/reducers/userReducer';
+import useMutationHook from '../Network/useMutationHook';
+import PushNotification from 'react-native-push-notification';
+import notifee, {
+  AndroidImportance,
+  EventType,
+  TimestampTrigger,
+  TriggerType,
+} from '@notifee/react-native';
 
 const WebViewComponent = ({uri}: any) => {
   const dispatch = useDispatch();
-  const {topic} = useSelector((state: any) => state.root.user);
+  const {topic, user} = useSelector((state: any) => state.root.user);
   const [loading, setLoading] = useState(true);
   const [currentUrl, setCurrentUrl] = useState(uri);
   const [userInformation, setUserInformation] = useState('');
@@ -29,7 +37,149 @@ const WebViewComponent = ({uri}: any) => {
   const sleep = (timeout: number) =>
     new Promise<void>(resolve => setTimeout(resolve, timeout));
 
-  console.log('topic', topic);
+  const {
+    mutate: getSystemNotificationFN,
+    isSuccess: isSuccessSystemNotification,
+    isError: isErrorSystemNotifiction,
+    data: SystemNotificationList,
+    isLoading: isLoadingSystemNotification,
+  } = useMutationHook('reminders/GetSystemReminderList', 'POST');
+
+  useEffect(() => {
+    if (isSuccessSystemNotification) {
+      PushNotification.cancelAllLocalNotifications();
+      
+      scheduleNotification(SystemNotificationList?.ReminderList);
+    }
+    if (isErrorSystemNotifiction) {
+    }
+  }, [isSuccessSystemNotification, isErrorSystemNotifiction]);
+
+  const scheduleNotification = async (notificationList: any[]) => {
+    await notifee.cancelAllNotifications();
+    
+    try {
+  
+      for (const item of notificationList) {
+        const localDate = new Date(item.ReminderDate);
+  
+        const trigger: TimestampTrigger = {
+          type: TriggerType.TIMESTAMP,
+          timestamp: localDate.getTime(), // cleaner and safer
+        };
+  
+        await notifee.createTriggerNotification(
+          {
+            id: `reminder-${item.Id}`,
+            title: item.Subject || 'Reminder',
+            body: item.NotificationBody || 'You have a reminder',
+            android: {
+              channelId: 'default',
+              pressAction: {
+                id: 'default',
+              },
+            },
+            data: {
+                CatNotificationPlatformId: item.CatNotificationPlatformId,
+                CreatedDate: item.CreatedDate,
+                Id:item.Id,
+                NotificationBody: item.NotificationBody,
+                ReceiverId: item.ReceiverId,
+                ReminderDate: item.ReminderDate,
+                SchedulingDate: item.SchedulingDate,
+                SchedulingTime: item.SchedulingTime,
+                Subject: item.Subject,
+                TaskId: item.TaskId,
+                VideoSDKMeetingId: item.VideoSDKMeetingId || "Not Found",
+              notificationFrom: 'reminder',
+            },
+          },
+          trigger
+        );
+      }
+  
+      const notifeeNotifs = await notifee.getTriggerNotifications();
+      console.log('✅ Notifee Scheduled Notifications:', notifeeNotifs);
+    } catch (error) {
+      console.error('🔥 Error scheduling notifications:', error);
+    }
+  };
+
+  // const scheduleNotification = async (notificationList: any) => {
+  //   notificationList.map(async (item: any, index: any) => {
+  //     const data = item;
+  //     // Convert UTC date string to local Date object
+  //     const localDate = new Date(data.ReminderDate); // Date object auto-adjusts to local timezone
+
+  //     // Optional: skip past dates
+  //     if (localDate <= new Date()) {
+  //       console.log(`Skipping past notification with id: ${data.Id}`);
+  //       return;
+  //     }
+
+  //     const reminderObj = {
+  //       ...item,
+  //       notificationFrom: 'reminder',
+  //     };
+
+  //     const date = new Date(Date.now());
+  //     date.setMinutes(date.getMinutes() + 1); // 1 minute from now
+
+  //     const trigger: TimestampTrigger = {
+  //       type: TriggerType.TIMESTAMP,
+  //       timestamp: date.getTime(),
+  //       repeatFrequency: undefined,
+  //     };
+
+  //     if (index == 0) {
+  //       await notifee.createTriggerNotification(
+  //         {
+  //           title: 'New Offer 🎁',
+  //           body: 'Tap to view your special offer!',
+  //           android: {
+  //             channelId: 'default',
+  //             pressAction: {
+  //               id: 'default',
+  //             },
+  //           },
+  //           // 👇 Attach your custom data here
+  //           data: {
+  //             type: 'promo',
+  //             itemId: '12345',
+  //           },
+  //         },
+  //         trigger,
+  //       );
+  //       // PushNotification.localNotificationSchedule({
+  //       //   channelId: "com.naraakm.naraakumPatient",
+  //       //   id: data.Id,
+  //       //   title: data.Subject,
+  //       //   message: data.NotificationBody,
+  //       //   // date: localDate,
+  //       //   date: new Date(Date.now() + 60 * 1000),
+  //       //   playSound: true,
+  //       //   soundName: 'default',
+  //       //   userInfo: reminderObj,
+  //       //   allowWhileIdle: true, // important for background
+  //       // });
+  //     }
+  //   });
+
+  //   const notifications = await notifee.getTriggerNotifications();
+  //   console.log('notification list', notifications);
+  //   PushNotification.getScheduledLocalNotifications(notifs => {
+  //     console.log('Currently Scheduled Notifications:', notifs);
+  //   });
+  // };
+
+  useEffect(() => {
+    if (user) {
+      getSystemNotificationFN({
+        UserloginInfo: user.id,
+      });
+    }
+  }, [user]);
+
   const subsribeTopic = (Id: any) => {
     const topicName = `patient_${Id}`;
     console.log('topicName', topicName);
@@ -137,13 +287,14 @@ const WebViewComponent = ({uri}: any) => {
       const userInfo = data;
       setUserInformation(userInfo);
       subsribeTopic(userInfo.id);
+      dispatch(setUser(userInfo));
     }
 
     if (url && url.includes('OnlineSessionRoom')) {
       // let urlComplete = `https://staging.innotech-sa.com${url}`;
-      // let urlComplete = `https://dvx.innotech-sa.com${url}`;
+      let urlComplete = `https://dvx.innotech-sa.com${url}`;
       // let urlComplete = `https://nkapps.innotech-sa.com${url}`;
-      let urlComplete = `https://naraakum.com${url}`;
+      // let urlComplete = `https://naraakum.com${url}`;
 
       const redirectUrl = getDeepLink();
 
@@ -308,8 +459,8 @@ const WebViewComponent = ({uri}: any) => {
       ]);
 
       if (
-        (granted['android.permission.READ_MEDIA_AUDIO'] ===
-            PermissionsAndroid.RESULTS.GRANTED) ||
+        granted['android.permission.READ_MEDIA_AUDIO'] ===
+          PermissionsAndroid.RESULTS.GRANTED ||
         granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
           PermissionsAndroid.RESULTS.GRANTED
       ) {
@@ -418,32 +569,36 @@ const WebViewComponent = ({uri}: any) => {
           </View>
         ) : (
           <WebView
-        ref={webViewRef}
-        source={{ uri: currentUrl }}
-        useWebKit={true}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        startInLoadingState={true}
-        cacheEnabled={false}
-        onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => {
-          setLoading(false);
-          handleLoadEnd();
-        }}
-        mediaPlaybackRequiresUserAction={false}
-        allowsInlineMediaPlayback={true}
-        setSupportMultipleWindows={true} // Enable multiple windows on Android
-        // userAgent={Platform.OS === 'android' ? 'Chrome/18.0.1025.133 Mobile Safari/535.19' : 'AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75'}
-        userAgent={Platform.OS === 'android' ? 'Mozilla/5.0 (Linux; Android 10; Mobile; rv:79.0) Gecko/79.0 Firefox/79.0' : 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15'}
-        originWhitelist={["https://*", "http://*", "file://*", "sms://*"]}
-        geolocationEnabled={true}
-        javaScriptEnabledAndroid={true}
-        injectedJavaScript={injectedJavaScript}
-        onMessage={handleMessage}
-        onError={handleLoadError}
-        onNavigationStateChange={onNavigationStateChange}
-        style={styles.webview}
-      />
+            ref={webViewRef}
+            source={{uri: currentUrl}}
+            useWebKit={true}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={true}
+            cacheEnabled={false}
+            onLoadStart={() => setLoading(true)}
+            onLoadEnd={() => {
+              setLoading(false);
+              handleLoadEnd();
+            }}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback={true}
+            setSupportMultipleWindows={true} // Enable multiple windows on Android
+            // userAgent={Platform.OS === 'android' ? 'Chrome/18.0.1025.133 Mobile Safari/535.19' : 'AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75'}
+            userAgent={
+              Platform.OS === 'android'
+                ? 'Mozilla/5.0 (Linux; Android 10; Mobile; rv:79.0) Gecko/79.0 Firefox/79.0'
+                : 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15'
+            }
+            originWhitelist={['https://*', 'http://*', 'file://*', 'sms://*']}
+            geolocationEnabled={true}
+            javaScriptEnabledAndroid={true}
+            injectedJavaScript={injectedJavaScript}
+            onMessage={handleMessage}
+            onError={handleLoadError}
+            onNavigationStateChange={onNavigationStateChange}
+            style={styles.webview}
+          />
         )}
       </View>
       {loading && (

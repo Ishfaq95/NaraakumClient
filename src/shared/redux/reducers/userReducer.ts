@@ -24,6 +24,9 @@ export const userReducer = createSlice({
     setTopic: (state, action) => {
       state.topic = action.payload;
     },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
     setToken:(state = initialState, action)=>{
       return {
         ...state,
@@ -34,5 +37,5 @@ export const userReducer = createSlice({
   },
 });
 
-export const {setTopic,setToken } = userReducer.actions;
+export const {setTopic,setToken,setUser } = userReducer.actions;
 export default userReducer.reducer;

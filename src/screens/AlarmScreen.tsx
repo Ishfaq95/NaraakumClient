@@ -1,5 +1,5 @@
 import {useNavigation, useRoute} from '@react-navigation/native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -7,20 +7,77 @@ import {
   Image,
   Button,
   TouchableOpacity,
+  SafeAreaView,
 } from 'react-native';
-import { ROUTES } from '../shared/utils/routes';
-
+import {ROUTES} from '../shared/utils/routes';
+ 
 const AlarmScreen = () => {
   const route = useRoute();
-  const navigation=useNavigation()
-  const {message} = route.params; 
-
-  const onPressButton=()=>{
-    navigation.navigate(ROUTES.Home)
-  }
-
+  const navigation = useNavigation();
+  const {data} = route.params;
+  const [string1, setString1] = useState('');
+  const [string2, setString2] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+ 
+  const onPressButton = () => {
+    navigation.navigate(ROUTES.Home);
+  };
+ 
+  console.log('data', data);
+ 
+  useEffect(() => {
+    if (data) {
+      makeStringToShow(data);
+    }
+  }, [route.params]);
+ 
+  const convertUtcToLocal = (utcTime: string) => {
+    const [hours, minutes, seconds] = utcTime.split(':').map(Number);
+ 
+    // Create a UTC date (today's date with given time in UTC)
+    const utcDate = new Date();
+    utcDate.setUTCHours(hours, minutes, seconds, 0);
+ 
+    // Convert to local string in AM/PM format
+    return utcDate.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+ 
+  const makeStringToShow = (data: any) => {
+    // console.log('data', data);
+    const timeString = data.SchedulingTime;
+    const formattedTime = convertUtcToLocal(timeString);
+ 
+    setTime(formattedTime);
+ 
+    // Format date (e.g., 21/10/2024)
+    const dateString = data.SchedulingDate;
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.getMonth() + 1; // Months are 0-based
+    const year = date.getFullYear();
+    const formattedDate = `${day < 10 ? '0' : ''}${day}/${
+      month < 10 ? '0' : ''
+    }${month}/${year}`;
+ 
+    setDate(formattedDate);
+ 
+    // Set string1 and string2
+    const stringArray = data.NotificationBody.split('.');
+    const string1 = stringArray[0].replace('{0}', '');
+    const string2 = stringArray[1];
+ 
+    setString1(string1);
+    setString2(string2);
+    console.log('stringArray', stringArray);
+  };
+ 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Logo */}
       <View style={{marginTop: 25}}>
         <Image
@@ -29,7 +86,7 @@ const AlarmScreen = () => {
           resizeMode="contain"
         />
       </View>
-
+ 
       {/* Reminder Section */}
       <View style={styles.reminderBox}>
         <View
@@ -60,27 +117,27 @@ const AlarmScreen = () => {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <Text style={styles.title}>Reminder for upcoming Appointment</Text>
-          <Text style={styles.subtitle}>You have an upcoming session on</Text>
+          <Text style={styles.title}>{data.Subject}</Text>
+          <Text style={styles.subtitle}>{string1}</Text>
         </View>
-
+ 
         {/* Appointment Time */}
         <View style={styles.timeBox}>
-          <Text style={styles.time}>04:00 PM</Text>
-          <Text style={styles.date}>21/10/2024</Text>
+          <Text style={styles.time}>{time}</Text>
+          <Text style={styles.date}>{date}</Text>
         </View>
-
-        <Text style={styles.note}>Please don’t forget to join the session</Text>
-
+ 
+        <Text style={styles.note}>{string2}</Text>
+ 
         {/* OK Button */}
         <TouchableOpacity onPress={onPressButton} style={styles.okButton}>
           <Text style={styles.okButtonText}>OK</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
-
+ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -157,5 +214,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
+ 
 export default AlarmScreen;
