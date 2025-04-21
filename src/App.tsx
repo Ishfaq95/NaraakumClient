@@ -19,6 +19,7 @@ import queryClient from './Network/queryClient';
 import {CrashlyticsErrorBoundary} from './components/CrashlyticsErrorBoundary';
 import { CrashlyticsProvider } from './components/CrashlyticsProvider';
 import crashlytics from '@react-native-firebase/crashlytics';
+import { initializeI18Next } from './utils/language/i18nextConfig';
 
 const App = () => {
   useEffect(() => {
@@ -28,6 +29,11 @@ const App = () => {
       PushNotificationIOS.removeEventListener(type);
     };
   });
+
+  useEffect(() => {
+    // Initialize i18n with the default language
+    initializeI18Next();
+  }, []);
 
   const onRemoteNotification = (notification: any) => {
     const actionIdentifier = notification.getActionIdentifier();

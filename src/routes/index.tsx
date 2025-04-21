@@ -4,6 +4,9 @@ import React from 'react';
 import HomeScreen from '../screens/Home';
 import AlarmScreen from '../screens/AlarmScreen';
 import NetworkErrorScreen from '../screens/NetworkScreen';
+import PreViewScreen from '../screens/VideoSDK/preViewScreen';
+import VideoCallScreen from '../screens/VideoSDK/VideoCallScreen';
+import meeting from '../screens/meeting';
 
 const Stack = createNativeStackNavigator();
 
@@ -14,6 +17,11 @@ const AuthStack = () => {
         <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
         <Stack.Screen name={ROUTES.AlarmScreen} component={AlarmScreen} />
         <Stack.Screen name={ROUTES.NetworkError} component={NetworkErrorScreen} />
+
+        <Stack.Screen name={ROUTES.preViewCall} component={PreViewScreen} />
+      
+      <Stack.Screen name={ROUTES.VideoCallScreen} component={VideoCallScreen} />
+      <Stack.Screen name={ROUTES.Meeting} component={meeting} />
       </Stack.Navigator>
     </>
   );

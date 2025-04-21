@@ -123,6 +123,8 @@ dependencies {
     implementation project(':react-native-splash-screen')
     implementation "androidx.work:work-runtime-ktx:2.8.1"
 
+    implementation project(':rnwebrtc')
+
      implementation 'com.google.firebase:firebase-crashlytics:18.2.13'
      implementation("androidx.browser:browser") {
         version {
