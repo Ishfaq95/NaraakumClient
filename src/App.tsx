@@ -12,7 +12,6 @@ import NotificationsCenter from './components/NotificationConfig';
 import SplashScreen from 'react-native-splash-screen';
 import {Button, Platform, Text, View} from 'react-native';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import AlarmListener from './components/AlarmListener';
 import {Connectivity} from './components/NetwordConnectivity';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import queryClient from './Network/queryClient';
@@ -77,7 +76,6 @@ const App = () => {
                 <NavigationContainer ref={navigationRef}>
                   <Routes />
                   <NotificationsCenter />
-                  {Platform.OS == 'android' && <AlarmListener />}
                   <Connectivity />
                 </NavigationContainer>
               </CrashlyticsProvider>
