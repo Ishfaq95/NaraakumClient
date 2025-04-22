@@ -18,6 +18,12 @@ import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
 import useMutationHook from '../Network/useMutationHook';
 import PushNotification from 'react-native-push-notification';
+import notifee, {
+  AndroidImportance,
+  EventType,
+  TimestampTrigger,
+  TriggerType,
+} from '@notifee/react-native';
 
 const WebViewComponent = ({uri}: any) => {
   const dispatch = useDispatch();
@@ -43,13 +49,18 @@ const WebViewComponent = ({uri}: any) => {
   useEffect(() => {
     if (isSuccessSystemNotification) {
       PushNotification.cancelAllLocalNotifications();
-      scheduleNotification(SystemNotificationList?.ReminderList);
+
+      if (Platform.OS === 'ios') {
+        scheduleNotificationIOS(SystemNotificationList?.ReminderList);
+      } else {
+        scheduleNotificationAndroid(SystemNotificationList?.ReminderList);
+      }
     }
     if (isErrorSystemNotifiction) {
     }
   }, [isSuccessSystemNotification, isErrorSystemNotifiction]);
 
-  const scheduleNotification = (notificationList: any) => {
+  const scheduleNotificationIOS = (notificationList: any) => {
     notificationList.map((item: any, index: any) => {
       const data = item;
       // Convert UTC date string to local Date object
@@ -82,6 +93,55 @@ const WebViewComponent = ({uri}: any) => {
     PushNotification.getScheduledLocalNotifications(notifs => {
       console.log('Currently Scheduled Notifications:', notifs.length);
     });
+  };
+
+  const scheduleNotificationAndroid = async (notificationList: any) => {
+    await notifee.cancelAllNotifications();
+
+    try {
+      for (const item of notificationList) {
+        const localDate = new Date(item.ReminderDate);
+
+        const trigger: TimestampTrigger = {
+          type: TriggerType.TIMESTAMP,
+          timestamp: localDate.getTime(), // cleaner and safer
+        };
+
+        await notifee.createTriggerNotification(
+          {
+            id: `reminder-${item.Id}`,
+            title: item.Subject || 'Reminder',
+            body: item.NotificationBody || 'You have a reminder',
+            android: {
+              channelId: 'default',
+              pressAction: {
+                id: 'default',
+              },
+            },
+            data: {
+              CatNotificationPlatformId: item.CatNotificationPlatformId,
+              CreatedDate: item.CreatedDate,
+              Id: item.Id,
+              NotificationBody: item.NotificationBody,
+              ReceiverId: item.ReceiverId,
+              ReminderDate: item.ReminderDate,
+              SchedulingDate: item.SchedulingDate,
+              SchedulingTime: item.SchedulingTime,
+              Subject: item.Subject,
+              TaskId: item.TaskId,
+              VideoSDKMeetingId: item.VideoSDKMeetingId || 'Not Found',
+              notificationFrom: 'reminder',
+            },
+          },
+          trigger,
+        );
+      }
+
+      const notifeeNotifs = await notifee.getTriggerNotifications();
+      console.log('✅ Notifee Scheduled Notifications:', notifeeNotifs);
+    } catch (error) {
+      console.error('🔥 Error scheduling notifications:', error);
+    }
   };
 
   useEffect(() => {
@@ -364,20 +424,14 @@ const WebViewComponent = ({uri}: any) => {
       return requestiOSPermissions();
     } else {
       const granted = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
       ]);
 
       if (
-        (granted['android.permission.READ_MEDIA_IMAGES'] ===
-          PermissionsAndroid.RESULTS.GRANTED &&
-          granted['android.permission.READ_MEDIA_VIDEO'] ===
-            PermissionsAndroid.RESULTS.GRANTED &&
-          granted['android.permission.READ_MEDIA_AUDIO'] ===
-            PermissionsAndroid.RESULTS.GRANTED) ||
+        granted['android.permission.READ_MEDIA_AUDIO'] ===
+          PermissionsAndroid.RESULTS.GRANTED ||
         granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
           PermissionsAndroid.RESULTS.GRANTED
       ) {
@@ -439,7 +493,7 @@ const WebViewComponent = ({uri}: any) => {
     ];
 
     const lowerCaseUrl = url.toLowerCase();
-    if (lowerCaseUrl.includes('www.facebook.com')) {
+    if (lowerCaseUrl.includes('www.facebook.com') && Platform.OS == 'ios') {
       Linking.openURL(lowerCaseUrl);
       return false;
     } else {
@@ -482,7 +536,7 @@ const WebViewComponent = ({uri}: any) => {
               color={'green'}
             />
           </View>
-        ) : (
+        ) : Platform.OS === 'ios' ? (
           <WebView
             source={{uri: currentUrl}}
             useWebKit={true}
@@ -501,9 +555,7 @@ const WebViewComponent = ({uri}: any) => {
             allowsInlineMediaPlayback={true}
             // originWhitelist={['*']}
             userAgent={
-              Platform.OS === 'android'
-                ? 'Chrome/18.0.1025.133 Mobile Safari/535.19'
-                : 'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75 Mobile/14E5239e Safari/602.1'
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75 Mobile/14E5239e Safari/602.1'
             }
             // originWhitelist={["https://*", "http://*", "file://*", "sms://*"]}
             originWhitelist={['*']}
@@ -511,6 +563,36 @@ const WebViewComponent = ({uri}: any) => {
             javaScriptEnabledAndroid={true}
             injectedJavaScript={injectedJavaScript}
             injectedJavaScriptBeforeContentLoaded={injectedJavaScript}
+            onMessage={handleMessage}
+            onError={handleLoadError}
+            onNavigationStateChange={onNavigationStateChange}
+            style={styles.webview}
+          />
+        ) : (
+          <WebView
+            ref={webViewRef}
+            source={{uri: currentUrl}}
+            useWebKit={true}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={true}
+            cacheEnabled={false}
+            onLoadStart={() => setLoading(true)}
+            onLoadEnd={() => {
+              setLoading(false);
+              handleLoadEnd();
+            }}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback={true}
+            setSupportMultipleWindows={true} // Enable multiple windows on Android
+            // userAgent={Platform.OS === 'android' ? 'Chrome/18.0.1025.133 Mobile Safari/535.19' : 'AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75'}
+            userAgent={
+              'Mozilla/5.0 (Linux; Android 10; Mobile; rv:79.0) Gecko/79.0 Firefox/79.0'
+            }
+            originWhitelist={['https://*', 'http://*', 'file://*', 'sms://*']}
+            geolocationEnabled={true}
+            javaScriptEnabledAndroid={true}
+            injectedJavaScript={injectedJavaScript}
             onMessage={handleMessage}
             onError={handleLoadError}
             onNavigationStateChange={onNavigationStateChange}

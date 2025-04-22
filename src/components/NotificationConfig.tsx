@@ -1,10 +1,16 @@
-import {Alert, AppRegistry, Platform} from 'react-native';
+import {Alert, AppRegistry, PermissionsAndroid, Platform} from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import {useEffect} from 'react';
 import PushNotification from 'react-native-push-notification';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import {useNavigation} from '@react-navigation/native';
 import {ROUTES} from '../shared/utils/routes';
+import notifee, {
+  AndroidImportance,
+  EventType,
+  TimestampTrigger,
+  TriggerType,
+} from '@notifee/react-native';
 
 const createChannel = () => {
   PushNotification.createChannel(
@@ -21,8 +27,52 @@ const createChannel = () => {
   );
 };
 
+const createNotificationChannel = async () => {
+  await notifee.createChannel({
+    id: 'default', // 👈 Always use same ID
+    name: 'Default Channel',
+    sound: 'default', // optional
+    importance: AndroidImportance.HIGH,
+  });
+};
+
 const NotificationsCenter = () => {
   const navigation = useNavigation();
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      createNotificationChannel();
+      requestPermissions();
+      setupForegroundHandler();
+    }
+  }, []);
+
+  const requestPermissions = async () => {
+    if (Platform.OS === 'android') {
+      const permission = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      );
+      console.log('Notification permission:', permission);
+    }
+  };
+
+  const setupForegroundHandler = () => {
+    const unsubscribe = notifee.onForegroundEvent(({type, detail}) => {
+      switch (type) {
+        case EventType.DELIVERED:
+          if (detail?.notification?.data?.notificationFrom == 'reminder') {
+            handleNavigationFromNotification(detail?.notification?.data);
+          }
+          break;
+        case EventType.PRESS:
+          if (detail?.notification?.data?.notificationFrom == 'reminder') {
+            handleNavigationFromNotification(detail?.notification?.data);
+          }
+          break;
+      }
+    });
+    return () => unsubscribe();
+  };
 
   useEffect(() => {
     // For iOS, we need to request permission to display notifications
@@ -66,6 +116,12 @@ const NotificationsCenter = () => {
       },
       popInitialNotification: true,
       requestPermissions: true,
+
+      permissions: {
+        alert: true,
+        badge: true,
+        sound: true,
+      },
     });
 
     // Handle the app opening from a background state
