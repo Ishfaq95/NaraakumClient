@@ -224,7 +224,11 @@ const WebViewComponent = ({uri}: any) => {
       fileName,
     } = JSON.parse(event.nativeEvent.data);
 
-    if (eventHandler == 'download') {
+    if (eventHandler == 'orderSuccess') {
+      getSystemNotificationFN({
+        UserloginInfo: user.id,
+      });
+    } else if (eventHandler == 'download') {
       let isPermissionGrandted = await getStoragePermission();
       if (isPermissionGrandted) {
         setLoading(true);
