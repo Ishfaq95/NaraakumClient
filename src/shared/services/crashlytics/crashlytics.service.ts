@@ -27,7 +27,7 @@ class CrashlyticsService {
 
             await crashlytics().setCrashlyticsCollectionEnabled(true);
             
-            // if (_DEV_) {
+            // if (__DEV__) {
             //     await crashlytics().setCustomKey('debug_mode', 'enabled');
             //     console.log('Crashlytics initialized in debug mode');
             // }
