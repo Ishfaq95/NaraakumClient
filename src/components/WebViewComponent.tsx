@@ -228,6 +228,10 @@ const WebViewComponent = ({uri}: any) => {
 
     if (eventHandler == 'joinMeeting') {
       navigation.navigate(ROUTES.preViewCall, {Data: data});
+    } else if (eventHandler == 'orderSuccess') {
+      getSystemNotificationFN({
+        UserloginInfo: user.id,
+      });
     } else if (eventHandler == 'download') {
       let isPermissionGrandted = await getStoragePermission();
       if (isPermissionGrandted) {
