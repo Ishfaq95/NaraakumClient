@@ -23,8 +23,6 @@ const AlarmScreen = () => {
     navigation.navigate(ROUTES.Home);
   };
 
-  console.log('data', data);
-
   useEffect(() => {
     if (data) {
       makeStringToShow(data);
@@ -46,7 +44,6 @@ const AlarmScreen = () => {
     });
   };
   const makeStringToShow = (data: any) => {
-    // console.log('data', data);
     const timeString = data.SchedulingTime;
     const formattedTime = convertUtcToLocal(timeString);
 
@@ -70,7 +67,6 @@ const AlarmScreen = () => {
     const string2 = stringArray[1];
     setString1(string1);
     setString2(string2);
-    console.log('stringArray', stringArray);
   };
   return (
     <SafeAreaView style={styles.container}>

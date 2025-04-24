@@ -13,6 +13,7 @@ import {
   Platform,
   Linking,
   AppState,
+  Text,
 } from 'react-native';
 import {setToken} from '../shared/redux/reducers/userReducer';
 import {crashlyticsService} from '../shared/services/crashlytics/crashlytics.service';

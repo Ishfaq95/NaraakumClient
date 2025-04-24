@@ -1,5 +1,5 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ROUTES } from '../shared/utils/routes';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {ROUTES} from '../shared/utils/routes';
 import React from 'react';
 import HomeScreen from '../screens/Home';
 import AlarmScreen from '../screens/AlarmScreen';
@@ -13,15 +13,21 @@ const Stack = createNativeStackNavigator();
 const AuthStack = () => {
   return (
     <>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{headerShown: false}}>
         <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
         <Stack.Screen name={ROUTES.AlarmScreen} component={AlarmScreen} />
-        <Stack.Screen name={ROUTES.NetworkError} component={NetworkErrorScreen} />
+        <Stack.Screen
+          name={ROUTES.NetworkError}
+          component={NetworkErrorScreen}
+        />
 
         <Stack.Screen name={ROUTES.preViewCall} component={PreViewScreen} />
-      
-      <Stack.Screen name={ROUTES.VideoCallScreen} component={VideoCallScreen} />
-      <Stack.Screen name={ROUTES.Meeting} component={meeting} />
+
+        <Stack.Screen
+          name={ROUTES.VideoCallScreen}
+          component={VideoCallScreen}
+        />
+        <Stack.Screen name={ROUTES.Meeting} component={meeting} />
       </Stack.Navigator>
     </>
   );

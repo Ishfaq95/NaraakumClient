@@ -36,7 +36,6 @@ const App = () => {
 
   const onRemoteNotification = (notification: any) => {
     const actionIdentifier = notification.getActionIdentifier();
-    console.log('notificationnotification', notification);
 
     if (actionIdentifier === 'open') {
       // Perform action based on open action

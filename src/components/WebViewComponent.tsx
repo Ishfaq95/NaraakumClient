@@ -71,7 +71,6 @@ const WebViewComponent = ({uri}: any) => {
 
       // Optional: skip past dates
       if (localDate <= new Date()) {
-        console.log(`Skipping past notification with id: ${data.Id}`);
         return;
       }
 
@@ -93,9 +92,7 @@ const WebViewComponent = ({uri}: any) => {
       });
     });
 
-    PushNotification.getScheduledLocalNotifications(notifs => {
-      console.log('Currently Scheduled Notifications:', notifs.length);
-    });
+    PushNotification.getScheduledLocalNotifications(notifs => {});
   };
 
   const scheduleNotificationAndroid = async (notificationList: any) => {
@@ -140,10 +137,7 @@ const WebViewComponent = ({uri}: any) => {
       }
 
       const notifeeNotifs = await notifee.getTriggerNotifications();
-      console.log('✅ Notifee Scheduled Notifications:', notifeeNotifs);
-    } catch (error) {
-      console.error('🔥 Error scheduling notifications:', error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {

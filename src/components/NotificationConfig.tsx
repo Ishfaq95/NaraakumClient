@@ -83,7 +83,6 @@ const NotificationsCenter = () => {
           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
         if (enabled) {
-          console.log('Authorization status:', authStatus);
         }
       }
     };
@@ -94,9 +93,7 @@ const NotificationsCenter = () => {
       createChannel();
     }
     PushNotification.configure({
-      onRegister: function (token) {
-        console.log('TOKEN:', token);
-      },
+      onRegister: function (token) {},
       onNotification: function (notification) {
         try {
           const data = notification?.data; // No need to stringify
