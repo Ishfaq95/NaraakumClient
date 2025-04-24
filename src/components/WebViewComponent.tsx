@@ -26,6 +26,7 @@ import notifee, {
 } from '@notifee/react-native';
 import {ROUTES} from '../shared/utils/routes';
 import {useNavigation} from '@react-navigation/native';
+import WebSocketService from './WebSocketService';
 
 const WebViewComponent = ({uri}: any) => {
   const dispatch = useDispatch();
@@ -37,6 +38,7 @@ const WebViewComponent = ({uri}: any) => {
   const [latestUrl, setLatestUrl] = useState('');
   const webViewRef = useRef(null);
   const navigation = useNavigation();
+  const webSocketService = WebSocketService.getInstance();
 
   const sleep = (timeout: number) =>
     new Promise<void>(resolve => setTimeout(resolve, timeout));
@@ -148,6 +150,17 @@ const WebViewComponent = ({uri}: any) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      const presence = 1;
+      const communicationKey = user.communicationKey;
+      const UserId = user.id;
+      webSocketService.connect(presence, communicationKey, UserId);
+    } else {
+      webSocketService.disconnect();
+    }
+  }, [user]);
+
   const subsribeTopic = (Id: any) => {
     const topicName = `patient_${Id}`;
 
@@ -219,6 +232,11 @@ const WebViewComponent = ({uri}: any) => {
       data,
       fileName,
     } = JSON.parse(event.nativeEvent.data);
+
+    if (eventHandler == 'logout') {
+      dispatch(setUser(null));
+      webSocketService.disconnect();
+    }
 
     if (eventHandler == 'joinMeeting') {
       navigation.navigate(ROUTES.preViewCall, {Data: data});

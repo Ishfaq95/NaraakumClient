@@ -1,14 +1,13 @@
-import {View, Text, StyleSheet} from 'react-native';
+// ChatMessageRender.js
 import React from 'react';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {useSelector} from 'react-redux';
 
 const ChatMessageRender = ({item}: any) => {
-  const {user} = useSelector((state: any) => state.root.user);
-  const isOwnMessage = (message: any) => {
-    return message?.SenderId == user.id;
-  };
+  const {user} = useSelector(state => state.root.user);
+  const isOwnMessage = item.SenderId == user.id;
 
-  const formattedTime = dateString => {
+  const formattedTime = (dateString: any) => {
     let date = new Date(dateString);
     let year = date.getFullYear();
     let month = date.getMonth() + 1; // Months are zero-indexed
@@ -28,33 +27,36 @@ const ChatMessageRender = ({item}: any) => {
     return strTime;
   };
 
-  const renderMessageStatus = (message: any) => {
-    // if (isOwnMessage(message)) {
-    //   switch (message.status) {
-    //     case 'sending':
-    //       return <Text style={styles.statusText}>✓</Text>;
-    //     case 'delivered':
-    //       return <SingleTickIcon width={14} height={14} color="#8a8a8a" />;
-    //     case 'read':
-    //       return <BlueTick width={14} height={14} />;
-    //     default:
-    //       return null;
-    //   }
-    // }
-    return null;
+  // Determine message status indicator
+  const getStatusIndicator = () => {
+    if (!isOwnMessage) return null;
+
+    // if (item.status === 'Failed') {
+    //   return <Text style={styles.statusFailed}>Failed</Text>;
+    // } else if (socketStatus?.isPending) {
+    //   return <Text style={styles.statusPending}>Sending...</Text>;
+    // } else
+    if (item.status == 'Seen') {
+      return <Text style={styles.statusSeen}>Read</Text>;
+    } else if (item.status == 'Delivered') {
+      return <Text style={styles.statusDelivered}>Delivered</Text>;
+    } else {
+      return <Text style={styles.statusSent}>Sent</Text>;
+    }
   };
 
   return (
     <View
       style={[
         styles.messageBubble,
-        isOwnMessage(item) ? styles.ownMessage : styles.otherMessage,
-        item.isSeen === 'sending' && styles.sendingMessage,
+        isOwnMessage ? styles.ownMessage : styles.otherMessage,
+        // socketStatus?.isPending && styles.pendingMessage,
+        // socketStatus?.isFailed && styles.failedMessage,
       ]}>
       <Text
         style={[
           styles.messageText,
-          isOwnMessage(item) ? styles.ownMessageText : styles.otherMessageText,
+          isOwnMessage ? styles.ownMessageText : styles.otherMessageText,
         ]}>
         {item.Text}
       </Text>
@@ -62,11 +64,11 @@ const ChatMessageRender = ({item}: any) => {
         <Text
           style={[
             styles.timestamp,
-            isOwnMessage(item) ? styles.ownTimestamp : styles.otherTimestamp,
+            isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp,
           ]}>
           {formattedTime(item.DateTime)}
         </Text>
-        {/* {renderMessageStatus(item)} */}
+        {getStatusIndicator()}
       </View>
     </View>
   );
@@ -211,6 +213,34 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  statusFailed: {
+    color: '#FF4C4C', // red
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  statusPending: {
+    color: '#FFA500', // orange
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  statusSeen: {
+    color: '#4CAF50', // green
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  statusDelivered: {
+    color: '#2196F3', // blue
+    fontSize: 12,
+    marginTop: 4,
+  },
+  statusSent: {
+    color: '#9E9E9E', // grey
+    fontSize: 12,
+    marginTop: 4,
   },
 });
 

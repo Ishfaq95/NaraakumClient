@@ -1,4 +1,4 @@
-// ChatScreen.js - Common chat component to be used with video call
+// ChatScreen.js - Chat component with WebSocket integration
 
 import React, {useState, useEffect, useRef} from 'react';
 import {
@@ -11,11 +11,13 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  AppState,
 } from 'react-native';
 import useMutationHook from '../../Network/useMutationHook';
 import {getMessagesList} from '../../Network/getMessagesList';
 import {useSelector} from 'react-redux';
 import ChatMessageRender from './ChatMessageRender';
+import WebSocketService from '../../components/WebSocketService';
 
 const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
   const [messages, setMessages] = useState([]);
@@ -29,18 +31,159 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [appState, setAppState] = useState(AppState.currentState);
 
   const flatListRef = useRef(null);
   const listContentOffsetY = useRef(0);
   const oldContentHeight = useRef(0);
-  const newContentHeight = useRef(0);
+  const socketService = useRef(WebSocketService.getInstance());
+  const messagesEndRef = useRef(null);
 
-  // Fetch previous messages and set up socket listeners
+  // Handle app state changes
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      setAppState(nextAppState);
+
+      // Handle reconnection when app comes to foreground
+      if (
+        appState.match(/inactive|background/) &&
+        nextAppState === 'active' &&
+        user?.userinfo?.CommunicationKey
+      ) {
+        initializeSocket();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState, user]);
+
+  // Initialize socket connection
+  const initializeSocket = async () => {
+    console.log('user val', user);
+    try {
+      if (user?.communicationKey && user?.id) {
+        await socketService.current.connect(
+          1, // Presence value (1 for online)
+          user?.communicationKey,
+          user?.id,
+        );
+        setSocketConnected(true);
+
+        // Set up socket message handler
+        setupSocketListeners();
+      }
+    } catch (err) {
+      console.error('Socket connection error:', err);
+      setSocketConnected(false);
+    }
+  };
+
+  // Set up socket event listeners
+  const setupSocketListeners = () => {
+    // We need to extend the WebSocketService to handle these events
+    // This adds functionality to the existing WebSocketService
+
+    // First, get a reference to the actual WebSocket instance
+    const socket = socketService.current.getSocket();
+
+    if (socket) {
+      // Override the onmessage handler to handle chat messages
+      const originalOnMessage = socket.onmessage;
+
+      socket.onmessage = async event => {
+        // Still call the original handler if it exists
+        if (originalOnMessage) {
+          originalOnMessage(event);
+        }
+
+        const socketEvent = JSON.parse(event.data);
+
+        if (socketEvent.Command === 76) {
+          updateMessageStatus('Sent', 'Delivered');
+        } else if (socketEvent.Command === 73) {
+          updateMessageStatus('Delivered', 'Seen');
+        } else if (socketEvent.Command === 56) {
+          const parsedData = JSON.parse(socketEvent.Message);
+
+          const messageType = parsedData.MessageType;
+
+          if (messageType == 'Text') {
+            const newMessageObj = {
+              Id: Math.random().toString(36).substr(2, 9), // Temporary ID until server response
+              SenderId: socketEvent.FromUser,
+              Text: parsedData.Text,
+              FilePath: null,
+              Type: 'Text',
+              DateTime: new Date().toISOString(),
+              status: 'Seen',
+            };
+
+            setMessages(prevMessages => [...prevMessages, newMessageObj]);
+            sendReadReceipt();
+            console.log('flatListRef', flatListRef?.current);
+            flatListRef?.current?.scrollToEnd({animated: true});
+          }
+        }
+      };
+    }
+  };
+
+  // Send read receipt when message is displayed
+  const sendReadReceipt = () => {
+    if (socketConnected) {
+      const socketEvent = {
+        ConnectionMode: 1,
+        Command: 72,
+        FromUser: {Id: user.id},
+        Conversation: {
+          ConversationId: mongoConverstionId,
+          SenderId: mongoReceiverId,
+          ReceiverId: mongoSenderId,
+        },
+        Message: JSON.stringify({
+          ConversationId: mongoConverstionId,
+          SenderId: mongoReceiverId,
+          ReceiverId: mongoSenderId,
+        }),
+        timestamp: new Date().toISOString(),
+      };
+
+      socketService.current.sendMessage(socketEvent);
+    }
+  };
+
+  // Update message status in state
+  const updateMessageStatus = (findStatus, setStatusVal) => {
+    setMessages(prevMessages =>
+      prevMessages.map(msg =>
+        msg.status === findStatus ? {...msg, status: setStatusVal} : msg,
+      ),
+    );
+  };
+
+  // Initial setup - Connect to socket and fetch messages
   useEffect(() => {
     setLoading(true);
+
+    // Initialize WebSocket connection
+    initializeSocket();
+
+    // Fetch previous messages
     fetchPreviousMessages(1).finally(() => setLoading(false));
+
+    // Cleanup function for component unmount
+    return () => {
+      // Don't disconnect globally, just remove listeners
+      if (socketService.current.getSocket()) {
+        socketService.current.getSocket().onmessage = null;
+      }
+    };
   }, []);
 
+  // Fetch previous messages
   const fetchPreviousMessages = async (page = 1) => {
     if (!hasMoreMessages && page !== 1) return;
     if (isFetchingMore) return; // Prevent multiple simultaneous requests
@@ -88,7 +231,7 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
               : null,
           Type: item.content.type,
           DateTime: item.createdAt,
-          isSeen: item.readByRecipient.status,
+          status: item.readByRecipient?.status,
         };
         tempMessagesArray.push(message);
       });
@@ -97,6 +240,7 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
 
       if (page === 1) {
         setMessages(tempMessagesArray); // fresh load
+        sendReadReceipt();
       } else {
         // Save layout measurements before updating
         if (flatListRef.current) {
@@ -119,31 +263,76 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
     }
   };
 
+  // Send a message through WebSocket
   const sendMessage = () => {
-    if (messageText.trim() === '') return;
+    if (messageText.trim() === '' || !socketConnected || !mongoConverstionId)
+      return;
 
-    // You need to define messageData before using it
+    // Create message data
     const messageData = {
-      Id: Date.now().toString(), // Temporary ID until server response
-      SenderId: senderId,
+      Id: Math.random().toString(36).substr(2, 9), // Temporary ID until server response
+      SenderId: user.id,
       Text: messageText,
       FilePath: null,
-      Type: 'text',
+      Type: 'Text',
       DateTime: new Date().toISOString(),
-      isSeen: false,
+      status: 'Sent',
     };
 
+    // Add to local state immediately (optimistic UI)
     setMessages(prevMessages => [...prevMessages, messageData]);
+
+    // Prepare WebSocket message event
+    const socketEvent = {
+      Id: messageData.Id,
+      ConnectionMode: 1,
+      Command: 70,
+      FromUser: {Id: user.id},
+      ToUserList: [{Id: 685}],
+      Message: JSON.stringify({
+        Text: messageText,
+        FilePath: null,
+        CatFileTypeId: 0,
+        MessageType: 'Text',
+      }),
+      timestamp: new Date().toISOString(),
+    };
+
+    // Send via WebSocket
+    socketService.current
+      .sendMessage(socketEvent)
+      .then(response => {
+        // Mark message as sent
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.Id === messageData.Id
+              ? {...msg, isSent: true, isPending: false}
+              : msg,
+          ),
+        );
+      })
+      .catch(err => {
+        console.error('Failed to send message:', err);
+        // Mark message as failed
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.Id === messageData.Id
+              ? {...msg, isFailed: true, isPending: false}
+              : msg,
+          ),
+        );
+      });
 
     // Clear input
     setMessageText('');
   };
 
+  // Check if message is from current user
   const isOwnMessage = (message: any) => {
     return message.SenderId === senderId;
   };
 
-  // Handle scroll to bottom only for new messages sent by user
+  // Handle scroll to bottom when new messages arrive
   useEffect(() => {
     if (messages.length > 0 && flatListRef.current && !isFetchingMore) {
       flatListRef.current.scrollToEnd({animated: true});
@@ -174,6 +363,11 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
     if (offsetY < 20 && hasMoreMessages && !isFetchingMore) {
       fetchPreviousMessages(pageNumber);
     }
+  };
+
+  // View for rendering individual messages
+  const renderMessage = ({item}: any) => {
+    return <ChatMessageRender item={item} />;
   };
 
   if (loading) {
@@ -210,7 +404,12 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.chatTitle}>Chat</Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.chatTitle}>Chat</Text>
+          {!socketConnected && (
+            <Text style={styles.connectionStatus}>Offline</Text>
+          )}
+        </View>
         <View style={styles.headerPlaceholder} />
       </View>
 
@@ -229,8 +428,8 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
         onScroll={handleScroll}
         onContentSizeChange={onContentSizeChange}
         scrollEventThrottle={16}
-        renderItem={({item}) => <ChatMessageRender item={item} />}
-        inverted={false} // Make sure this is false since we're using standard order
+        renderItem={renderMessage}
+        inverted={false}
         onEndReachedThreshold={0.1}
       />
 
@@ -246,10 +445,11 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
         <TouchableOpacity
           style={[
             styles.sendButton,
-            messageText.trim() === '' && styles.sendButtonDisabled,
+            (messageText.trim() === '' || !socketConnected) &&
+              styles.sendButtonDisabled,
           ]}
           onPress={sendMessage}
-          disabled={messageText.trim() === ''}>
+          disabled={messageText.trim() == '' || !socketConnected}>
           <Text style={styles.sendButtonText}>Send</Text>
         </TouchableOpacity>
       </View>
@@ -315,6 +515,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#2a2a2a',
   },
+  headerContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  connectionStatus: {
+    color: '#ff4d4d',
+    fontSize: 12,
+    marginTop: 2,
+  },
   backButton: {
     padding: 5,
   },
@@ -350,6 +559,9 @@ const styles = StyleSheet.create({
   },
   sendingMessage: {
     opacity: 0.7,
+  },
+  failedMessage: {
+    backgroundColor: '#ff4d4d',
   },
   messageText: {
     fontSize: 16,
