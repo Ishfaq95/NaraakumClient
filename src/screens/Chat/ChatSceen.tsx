@@ -12,6 +12,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   AppState,
+  Keyboard,
+  Dimensions,
 } from 'react-native';
 import useMutationHook from '../../Network/useMutationHook';
 import {getMessagesList} from '../../Network/getMessagesList';
@@ -19,26 +21,58 @@ import {useSelector} from 'react-redux';
 import ChatMessageRender from './ChatMessageRender';
 import WebSocketService from '../../components/WebSocketService';
 
-const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
-  const [messages, setMessages] = useState([]);
+interface Message {
+  Id: string;
+  SenderId: string;
+  Text: string;
+  FilePath: string | null;
+  Type: string;
+  DateTime: string;
+  status: string;
+  isSent?: boolean;
+  isPending?: boolean;
+  isFailed?: boolean;
+}
+
+interface ScrollEvent {
+  nativeEvent: {
+    contentOffset: {
+      y: number;
+    };
+  };
+}
+
+const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const {user} = useSelector((state: any) => state.root.user);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [mongoSenderId, setMongoSenderId] = useState(null);
-  const [mongoReceiverId, setMongoReceiverId] = useState(null);
-  const [mongoConverstionId, setMongoConverstionId] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [mongoSenderId, setMongoSenderId] = useState<string | null>(null);
+  const [mongoReceiverId, setMongoReceiverId] = useState<string | null>(null);
+  const [mongoConverstionId, setMongoConverstionId] = useState<string | null>(
+    null,
+  );
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [appState, setAppState] = useState(AppState.currentState);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [lastScrollPosition, setLastScrollPosition] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const firstVisibleMessageIndex = useRef<number | null>(null);
+  const firstVisibleMessageOffset = useRef<number | null>(null);
+  const lastMessageIndex = useRef<number | null>(null);
 
-  const flatListRef = useRef(null);
+  const flatListRef = useRef<FlatList<Message>>(null);
   const listContentOffsetY = useRef(0);
   const oldContentHeight = useRef(0);
   const socketService = useRef(WebSocketService.getInstance());
   const messagesEndRef = useRef(null);
+  const screenHeight = useRef<number>(0);
 
   // Handle app state changes
   useEffect(() => {
@@ -172,30 +206,76 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
     initializeSocket();
 
     // Fetch previous messages
-    fetchPreviousMessages(1).finally(() => setLoading(false));
+    fetchPreviousMessages(1).finally(() => {
+      setLoading(false);
+      // Scroll to bottom after initial messages are loaded
+      setTimeout(() => {
+        if (flatListRef.current) {
+          flatListRef.current.scrollToEnd({animated: false});
+        }
+      }, 100);
+    });
 
     // Cleanup function for component unmount
     return () => {
-      // Don't disconnect globally, just remove listeners
       if (socketService.current.getSocket()) {
         socketService.current.getSocket().onmessage = null;
       }
     };
   }, []);
 
+  useEffect(() => {
+    // Get screen height when component mounts
+    const getScreenHeight = () => {
+      const windowHeight = Dimensions.get('window').height;
+      screenHeight.current = windowHeight;
+    };
+    getScreenHeight();
+  }, []);
+
+  // Track scroll position
+  const handleScroll = (event: ScrollEvent) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    listContentOffsetY.current = offsetY;
+    setLastScrollPosition(offsetY);
+    setIsScrolling(true);
+
+    // Clear any existing timeout
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    // Set a new timeout to detect when scrolling stops
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+
+    // Only trigger pagination if we're near the top and not already loading
+    if (
+      offsetY < 20 &&
+      hasMoreMessages &&
+      !isLoadingMore &&
+      !isFetchingMore &&
+      !isScrolling
+    ) {
+      fetchPreviousMessages(pageNumber);
+    }
+  };
+
   // Fetch previous messages
   const fetchPreviousMessages = async (page = 1) => {
     if (!hasMoreMessages && page !== 1) return;
-    if (isFetchingMore) return; // Prevent multiple simultaneous requests
+    if (isFetchingMore || isLoadingMore || isScrolling) return;
 
-    if (page > 1) setIsFetchingMore(true); // optional loader for "load more"
+    setIsLoadingMore(true);
+    if (page > 1) setIsFetchingMore(true);
 
     try {
       const messages = await getMessagesList({
-        PatientId: 1059,
-        CareProviderId: 685,
+        PatientId: patientId,
+        CareProviderId: serviceProviderId,
         PageNumber: page,
-        PageSize: 10,
+        PageSize: 20,
       });
 
       const data = messages?.Data || [];
@@ -217,10 +297,10 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
         }
       }
 
-      let tempMessagesArray: any = [];
+      let tempMessagesArray: Message[] = [];
 
       data.map((item: any) => {
-        let message = {
+        let message: Message = {
           Id: item._id,
           SenderId: item.senderDetails?.userlogininfoId,
           Text: item.content?.text,
@@ -239,18 +319,13 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
       const reversedMessages = tempMessagesArray.reverse();
 
       if (page === 1) {
-        setMessages(tempMessagesArray); // fresh load
+        setMessages(tempMessagesArray);
         sendReadReceipt();
       } else {
-        // Save layout measurements before updating
-        if (flatListRef.current) {
-          oldContentHeight.current =
-            flatListRef.current._listRef._totalCellLength || 0;
-        }
-        setMessages(prevMessages => [...tempMessagesArray, ...prevMessages]); // prepend older messages
+        setMessages(prevMessages => [...tempMessagesArray, ...prevMessages]);
       }
 
-      if (data.length < 10) {
+      if (data.length < 20) {
         setHasMoreMessages(false);
       } else {
         setPageNumber(prev => prev + 1);
@@ -259,7 +334,26 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
       console.error('messages list error', error);
       setError('Failed to load messages. Please try again.');
     } finally {
+      setIsLoadingMore(false);
       setIsFetchingMore(false);
+    }
+  };
+
+  // Handle maintaining scroll position when loading older messages
+  const onContentSizeChange = (width: number, height: number) => {
+    if (isFetchingMore && flatListRef.current) {
+      const newContentHeight = height;
+      const heightDifference = newContentHeight - oldContentHeight.current;
+
+      // Only adjust scroll if we're not at the bottom
+      if (listContentOffsetY.current > 0) {
+        flatListRef.current.scrollToOffset({
+          offset: heightDifference + lastScrollPosition,
+          animated: false,
+        });
+      }
+
+      oldContentHeight.current = newContentHeight;
     }
   };
 
@@ -270,7 +364,7 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
 
     // Create message data
     const messageData = {
-      Id: Math.random().toString(36).substr(2, 9), // Temporary ID until server response
+      Id: Math.random().toString(36).substr(2, 9),
       SenderId: user.id,
       Text: messageText,
       FilePath: null,
@@ -282,13 +376,20 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
     // Add to local state immediately (optimistic UI)
     setMessages(prevMessages => [...prevMessages, messageData]);
 
+    // Scroll to bottom after adding new message
+    setTimeout(() => {
+      if (flatListRef.current) {
+        flatListRef.current.scrollToEnd({animated: true});
+      }
+    }, 100);
+
     // Prepare WebSocket message event
     const socketEvent = {
       Id: messageData.Id,
       ConnectionMode: 1,
       Command: 70,
       FromUser: {Id: user.id},
-      ToUserList: [{Id: 685}],
+      ToUserList: [{Id: serviceProviderId}],
       Message: JSON.stringify({
         Text: messageText,
         FilePath: null,
@@ -302,7 +403,6 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
     socketService.current
       .sendMessage(socketEvent)
       .then(response => {
-        // Mark message as sent
         setMessages(prevMessages =>
           prevMessages.map(msg =>
             msg.Id === messageData.Id
@@ -313,7 +413,6 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
       })
       .catch(err => {
         console.error('Failed to send message:', err);
-        // Mark message as failed
         setMessages(prevMessages =>
           prevMessages.map(msg =>
             msg.Id === messageData.Id
@@ -323,52 +422,78 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
         );
       });
 
-    // Clear input
     setMessageText('');
   };
 
   // Check if message is from current user
   const isOwnMessage = (message: any) => {
-    return message.SenderId === senderId;
+    return message.SenderId === patientId;
   };
 
-  // Handle scroll to bottom when new messages arrive
+  // Handle new incoming messages
   useEffect(() => {
-    if (messages.length > 0 && flatListRef.current && !isFetchingMore) {
-      flatListRef.current.scrollToEnd({animated: true});
-    }
-  }, [messages.length]);
+    if (messages.length > 0 && !isFetchingMore) {
+      const lastMessage = messages[messages.length - 1];
+      const isNewMessage =
+        Date.now() - new Date(lastMessage.DateTime).getTime() < 5000;
 
-  // Handle maintaining scroll position when loading older messages
-  const onContentSizeChange = (width, height) => {
-    // Only adjust scroll if we're loading older messages (not on first load or new messages)
-    if (isFetchingMore && flatListRef.current && oldContentHeight.current > 0) {
-      const heightDifference = height - oldContentHeight.current;
-      flatListRef.current.scrollToOffset({
-        offset: heightDifference,
-        animated: false,
-      });
+      if (isNewMessage) {
+        setTimeout(() => {
+          if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({animated: true});
+          }
+        }, 100);
+      }
     }
-    // Reset the height reference
-    oldContentHeight.current = height;
-  };
-
-  // Track scroll position
-  const handleScroll = event => {
-    // Check if user has scrolled near the top to load more messages
-    const offsetY = event.nativeEvent.contentOffset.y;
-    listContentOffsetY.current = offsetY;
-
-    // If user is near top and we're not already fetching, fetch more messages
-    if (offsetY < 20 && hasMoreMessages && !isFetchingMore) {
-      fetchPreviousMessages(pageNumber);
-    }
-  };
+  }, [messages.length, isFetchingMore]);
 
   // View for rendering individual messages
   const renderMessage = ({item}: any) => {
     return <ChatMessageRender item={item} />;
   };
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+        // Force scroll to bottom when keyboard appears
+        setTimeout(() => {
+          if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({animated: true});
+          }
+        }, 100);
+      },
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false);
+      },
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  // Handle scroll to bottom when keyboard is shown
+  useEffect(() => {
+    if (keyboardVisible && flatListRef.current) {
+      flatListRef.current.scrollToEnd({animated: true});
+    }
+  }, [keyboardVisible]);
+
+  // Cleanup scroll timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -398,8 +523,9 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
   return (
     <KeyboardAvoidingView
       style={styles.containerChat}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+      enabled>
       <View style={styles.chatHeader}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
           <Text style={styles.backButtonText}>Back</Text>
@@ -424,13 +550,34 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
         ref={flatListRef}
         data={messages}
         keyExtractor={item => item.Id.toString()}
-        contentContainerStyle={styles.messagesContainer}
+        contentContainerStyle={[
+          styles.messagesContainer,
+          {paddingBottom: keyboardVisible ? 100 : 20},
+        ]}
         onScroll={handleScroll}
         onContentSizeChange={onContentSizeChange}
         scrollEventThrottle={16}
         renderItem={renderMessage}
         inverted={false}
-        onEndReachedThreshold={0.1}
+        onEndReachedThreshold={0.5}
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: 10,
+        }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
+        onScrollToIndexFailed={() => {
+          if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({animated: false});
+          }
+        }}
+        automaticallyAdjustContentInsets={false}
+        contentInset={{bottom: 0}}
+        contentInsetAdjustmentBehavior="never"
       />
 
       <View style={styles.inputContainer}>
@@ -441,6 +588,14 @@ const ChatScreen = ({senderId, receiverId, onBackPress}: any) => {
           placeholder="Type a message"
           placeholderTextColor="#8a8a8a"
           multiline
+          onFocus={() => {
+            // Force scroll to bottom when input is focused
+            setTimeout(() => {
+              if (flatListRef.current) {
+                flatListRef.current.scrollToEnd({animated: true});
+              }
+            }, 100);
+          }}
         />
         <TouchableOpacity
           style={[

@@ -358,8 +358,8 @@ const VideoCallScreen = ({
           <View style={styles.fullView}>
             {/* Use our common ChatScreen component here */}
             <ChatScreen
-              senderId={'1059'}
-              receiverId={'685'}
+              patientId={Data?.Data?.patientId}
+              serviceProviderId={Data?.Data?.serviceProviderId}
               onBackPress={() => setMessageClicked(false)}
             />
 
