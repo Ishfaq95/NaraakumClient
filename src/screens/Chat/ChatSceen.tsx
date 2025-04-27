@@ -66,13 +66,25 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
   const firstVisibleMessageIndex = useRef<number | null>(null);
   const firstVisibleMessageOffset = useRef<number | null>(null);
   const lastMessageIndex = useRef<number | null>(null);
-
+  const [lastLoadedMessagesCount, setLastLoadedMessagesCount] = useState(0);
+  const previousMessagesLength = useRef(0);
   const flatListRef = useRef<FlatList<Message>>(null);
   const listContentOffsetY = useRef(0);
   const oldContentHeight = useRef(0);
   const socketService = useRef(WebSocketService.getInstance());
   const messagesEndRef = useRef(null);
   const screenHeight = useRef<number>(0);
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+    minimumViewTime: 300,
+  });
+
+  const onViewableItemsChanged = useRef(({viewableItems}) => {
+    if (viewableItems.length > 0) {
+      firstVisibleMessageIndex.current = viewableItems[0].index;
+    }
+  });
 
   // Handle app state changes
   useEffect(() => {
@@ -237,54 +249,47 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
   const handleScroll = (event: ScrollEvent) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     listContentOffsetY.current = offsetY;
-    setLastScrollPosition(offsetY);
-    setIsScrolling(true);
 
-    // Clear any existing timeout
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-    }
+    // Only load more when very close to the top and not already loading
+    if (offsetY < 20 && hasMoreMessages && !isLoadingMore && !isFetchingMore) {
+      // Clear existing timeout
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
 
-    // Set a new timeout to detect when scrolling stops
-    scrollTimeout.current = setTimeout(() => {
-      setIsScrolling(false);
-    }, 150);
-
-    // Only trigger pagination if we're near the top and not already loading
-    if (
-      offsetY < 20 &&
-      hasMoreMessages &&
-      !isLoadingMore &&
-      !isFetchingMore &&
-      !isScrolling
-    ) {
-      fetchPreviousMessages(pageNumber);
+      // Set new timeout to prevent multiple calls
+      scrollTimeout.current = setTimeout(() => {
+        // Store the current messages length before loading more
+        previousMessagesLength.current = messages.length;
+        fetchPreviousMessages(pageNumber);
+      }, 300);
     }
   };
 
   // Fetch previous messages
   const fetchPreviousMessages = async (page = 1) => {
     if (!hasMoreMessages && page !== 1) return;
-    if (isFetchingMore || isLoadingMore || isScrolling) return;
+    if (isFetchingMore || isLoadingMore) return;
 
     setIsLoadingMore(true);
     if (page > 1) setIsFetchingMore(true);
 
     try {
-      const messages = await getMessagesList({
+      const messagesResponse = await getMessagesList({
         PatientId: patientId,
         CareProviderId: serviceProviderId,
         PageNumber: page,
         PageSize: 20,
       });
 
-      const data = messages?.Data || [];
+      const data = messagesResponse?.Data || [];
 
       if (data.length === 0) {
         setHasMoreMessages(false);
         return;
       }
 
+      // Your existing ID setup code
       if (page === 1) {
         if (data[0]?.senderDetails?.userlogininfoId === user.id) {
           setMongoSenderId(data[0]?.senderId);
@@ -299,7 +304,7 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
 
       let tempMessagesArray: Message[] = [];
 
-      data.map((item: any) => {
+      data.forEach((item: any) => {
         let message: Message = {
           Id: item._id,
           SenderId: item.senderDetails?.userlogininfoId,
@@ -319,10 +324,11 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
       const reversedMessages = tempMessagesArray.reverse();
 
       if (page === 1) {
-        setMessages(tempMessagesArray);
+        setMessages(reversedMessages);
         sendReadReceipt();
       } else {
-        setMessages(prevMessages => [...tempMessagesArray, ...prevMessages]);
+        // Add new messages to the beginning
+        setMessages(prevMessages => [...reversedMessages, ...prevMessages]);
       }
 
       if (data.length < 20) {
@@ -334,26 +340,45 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
       console.error('messages list error', error);
       setError('Failed to load messages. Please try again.');
     } finally {
-      setIsLoadingMore(false);
-      setIsFetchingMore(false);
+      // Add a delay before resetting loading states
+      setTimeout(() => {
+        setIsLoadingMore(false);
+        setIsFetchingMore(false);
+      }, 100);
+    }
+  };
+
+  const safeScrollToIndex = index => {
+    try {
+      if (flatListRef.current && index >= 0 && index < messages.length) {
+        flatListRef.current.scrollToIndex({
+          index,
+          animated: false,
+          viewOffset: 0,
+        });
+      }
+    } catch (error) {
+      console.log('Error during scrollToIndex:', error);
+      // Fallback
+      if (flatListRef.current) {
+        flatListRef.current.scrollToOffset({
+          offset: 0,
+          animated: false,
+        });
+      }
     }
   };
 
   // Handle maintaining scroll position when loading older messages
   const onContentSizeChange = (width: number, height: number) => {
-    if (isFetchingMore && flatListRef.current) {
-      const newContentHeight = height;
-      const heightDifference = newContentHeight - oldContentHeight.current;
+    // When we've loaded more messages and need to maintain position
+    if (isFetchingMore && previousMessagesLength.current > 0) {
+      const newMessagesCount = messages.length - previousMessagesLength.current;
 
-      // Only adjust scroll if we're not at the bottom
-      if (listContentOffsetY.current > 0) {
-        flatListRef.current.scrollToOffset({
-          offset: heightDifference + lastScrollPosition,
-          animated: false,
-        });
+      if (newMessagesCount > 0) {
+        // Use safeScrollToIndex instead of direct scrollToIndex
+        safeScrollToIndex(newMessagesCount);
       }
-
-      oldContentHeight.current = newContentHeight;
     }
   };
 
@@ -432,11 +457,13 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
 
   // Handle new incoming messages
   useEffect(() => {
-    if (messages.length > 0 && !isFetchingMore) {
+    if (messages.length > 0 && !isFetchingMore && !isLoadingMore) {
       const lastMessage = messages[messages.length - 1];
       const isNewMessage =
-        Date.now() - new Date(lastMessage.DateTime).getTime() < 5000;
+        Date.now() - new Date(lastMessage.DateTime).getTime() < 5000 &&
+        lastMessage.SenderId === user.id;
 
+      // Auto-scroll to bottom for new messages from current user
       if (isNewMessage) {
         setTimeout(() => {
           if (flatListRef.current) {
@@ -445,7 +472,7 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
         }, 100);
       }
     }
-  }, [messages.length, isFetchingMore]);
+  }, [messages.length, isFetchingMore, isLoadingMore]);
 
   // View for rendering individual messages
   const renderMessage = ({item}: any) => {
@@ -556,30 +583,25 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
         ]}
         onScroll={handleScroll}
         onContentSizeChange={onContentSizeChange}
-        scrollEventThrottle={16}
+        scrollEventThrottle={32}
         renderItem={renderMessage}
         inverted={false}
-        onEndReachedThreshold={0.5}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-          autoscrollToTopThreshold: 10,
-        }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        removeClippedSubviews={true}
+        removeClippedSubviews={false}
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={10}
-        onScrollToIndexFailed={() => {
-          if (flatListRef.current) {
-            flatListRef.current.scrollToEnd({animated: false});
-          }
+        onScrollToIndexFailed={info => {
+          console.log('Failed to scroll to index', info);
+          // Use a safe fallback
+          setTimeout(() => {
+            if (messages.length > 0) {
+              safeScrollToIndex(info.index);
+            }
+          }, 100);
         }}
-        automaticallyAdjustContentInsets={false}
-        contentInset={{bottom: 0}}
-        contentInsetAdjustmentBehavior="never"
       />
-
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
