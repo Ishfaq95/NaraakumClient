@@ -361,6 +361,7 @@ const VideoCallScreen = ({
               patientId={Data?.Data?.patientId}
               serviceProviderId={Data?.Data?.serviceProviderId}
               onBackPress={() => setMessageClicked(false)}
+              displayName={displayName}
             />
 
             {/* Keep the mini video view on top of chat */}

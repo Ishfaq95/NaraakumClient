@@ -362,7 +362,7 @@ const PreViewScreen = ({navigation, route}: any) => {
               <Text
                 style={
                   I18nManager.isRTL
-                    ? {fontSize: 15, fontWeight: '500'}
+                    ? {fontSize: 15, fontWeight: '500', color: 'black'}
                     : {paddingLeft: 10, fontSize: 15, fontWeight: '500'}
                 }>
                 {t('video')}
@@ -397,7 +397,7 @@ const PreViewScreen = ({navigation, route}: any) => {
                 <MicIcon />
               </View>
 
-              <Text style={{fontSize: 15, fontWeight: '500'}}>
+              <Text style={{fontSize: 15, fontWeight: '500', color: 'black'}}>
                 {t('microphone')}
               </Text>
             </View>

@@ -1,49 +1,481 @@
 // ChatMessageRender.js
-import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import {useSelector} from 'react-redux';
+import MessageSentIcon from '../../assets/icons/MessageSent';
+import MessageDeliveredIcon from '../../assets/icons/MessageDelivered';
+import MessageSeenIcon from '../../assets/icons/MessageSeen';
+import DocumentIcon from '../../assets/icons/DocumentIcon';
+import DocumentIconBlack from '../../assets/icons/DocumentIconBlack';
+import RNFS from 'react-native-fs';
+import {Alert} from 'react-native';
+import RNFetchBlob from 'rn-fetch-blob';
+import {MediaBaseURL} from '../../Network/axiosInstance';
+import DownloadIcon from '../../assets/icons/DownloadIcon';
+import DownloadIconBlack from '../../assets/icons/DownloadIconBlack';
+import Sound from 'react-native-sound';
+import VoiceNoteIcon from '../../assets/icons/VoiceNoteIcon';
+import VoiceNoteIconBlack from '../../assets/icons/VoiceNoteIconBlack';
 
-const ChatMessageRender = ({item}: any) => {
-  const {user} = useSelector(state => state.root.user);
+interface RootState {
+  root: {
+    user: {
+      user: {
+        id: string;
+      };
+    };
+  };
+}
+
+interface Message {
+  SenderId: string;
+  Text: string;
+  FilePath: string;
+  Type: string;
+  DateTime: string;
+  status: string;
+}
+
+const ChatMessageRender = ({item}: {item: Message}) => {
+  const {user} = useSelector((state: RootState) => state.root.user);
   const isOwnMessage = item.SenderId == user.id;
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [sound, setSound] = useState<Sound | null>(null);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
 
-  const formattedTime = (dateString: any) => {
-    let date = new Date(dateString);
-    let year = date.getFullYear();
-    let month = date.getMonth() + 1; // Months are zero-indexed
-    let day = date.getDate();
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.release();
+      }
+    };
+  }, [sound]);
+
+  const formattedTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
     let hours = date.getHours();
-    let minutes = date.getMinutes();
-    let ampm = hours >= 12 ? 'PM' : 'AM';
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    minutes = minutes < 10 ? '0' + minutes : minutes;
+    hours = hours ? hours : 12;
 
-    // Format month and day to ensure two digits
-    month = month < 10 ? '0' + month : month;
-    day = day < 10 ? '0' + day : day;
-
-    let strTime = `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
-    return strTime;
+    return `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
   };
 
   // Determine message status indicator
   const getStatusIndicator = () => {
     if (!isOwnMessage) return null;
 
-    // if (item.status === 'Failed') {
-    //   return <Text style={styles.statusFailed}>Failed</Text>;
-    // } else if (socketStatus?.isPending) {
-    //   return <Text style={styles.statusPending}>Sending...</Text>;
-    // } else
     if (item.status == 'Seen') {
-      return <Text style={styles.statusSeen}>Read</Text>;
+      return <MessageSeenIcon />;
     } else if (item.status == 'Delivered') {
-      return <Text style={styles.statusDelivered}>Delivered</Text>;
+      return <MessageDeliveredIcon />;
     } else {
-      return <Text style={styles.statusSent}>Sent</Text>;
+      return <MessageSentIcon />;
     }
   };
+
+  const downloadFileFromChat = (url: string) => {
+    if (isDownloading) return;
+
+    setIsDownloading(true);
+    const fileURL = `${MediaBaseURL}${url}`;
+    let fileName = getFileNameFromUrl(fileURL);
+    if (Platform.OS === 'ios') {
+      downloadFIleForIOS(fileURL, fileName);
+    } else {
+      downloadFile(fileURL, fileName);
+    }
+  };
+
+  const getFileNameFromUrl = (url: string) => {
+    // Split the URL by '/'
+    const parts = url.split('/');
+    // Get the last part, which is the filename
+    return parts.pop();
+  };
+
+  const downloadFIleForIOS = (url: string, fileName: string) => {
+    const {config, fs} = RNFetchBlob;
+    const DocumentDir = fs.dirs.DocumentDir;
+    const filePath = `${DocumentDir}/${fileName}`;
+
+    config({
+      fileCache: true,
+      path: filePath,
+    })
+      .fetch('GET', url)
+      .then(res => {
+        Alert.alert(
+          'File downloaded successfully',
+          'The file is saved to your device.',
+        );
+        RNFetchBlob.ios.previewDocument(filePath);
+      })
+      .catch(error => {
+        Alert.alert('File downloading error.');
+      })
+      .finally(() => {
+        setIsDownloading(false);
+      });
+  };
+
+  const downloadFile = (url: string, fileName: string) => {
+    const {config, fs} = RNFetchBlob;
+    const DownloadDir = fs.dirs.DownloadDir;
+    const filePath = `${DownloadDir}/${fileName}`;
+
+    config({
+      fileCache: true,
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        mediaScannable: true,
+        title: fileName,
+        path: filePath,
+      },
+    })
+      .fetch('GET', url)
+      .then(res => {
+        Alert.alert('File downloaded successfully');
+      })
+      .catch(error => {
+        Alert.alert('File downloading error.');
+      })
+      .finally(() => {
+        setIsDownloading(false);
+      });
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const cleanUrl = (url: string) => {
+    return url.split('^')[0];
+  };
+
+  const playVoiceNote = (url: string) => {
+    console.log('Starting playVoiceNote with URL:', url);
+
+    if (isPlaying) {
+      console.log('Currently playing, stopping...');
+      sound?.stop();
+      setIsPlaying(false);
+      progressAnim.setValue(0);
+      setCurrentTime(0);
+      return;
+    }
+
+    if (sound) {
+      console.log('Using existing sound instance');
+      sound.play(success => {
+        if (success) {
+          console.log('Successfully played existing sound');
+          setIsPlaying(false);
+          progressAnim.setValue(0);
+          setCurrentTime(0);
+        } else {
+          console.error('Failed to play existing sound');
+          Alert.alert('Error', 'Failed to play voice note');
+          setIsPlaying(false);
+        }
+      });
+      setIsPlaying(true);
+      return;
+    }
+
+    const cleanFileURL = cleanUrl(url);
+    console.log('Cleaned URL:', cleanFileURL);
+    console.log('Initializing new Sound instance...');
+
+    // Enable playback in silence mode
+    Sound.setCategory('Playback');
+    console.log('Set Sound category to Playback');
+
+    // For iOS, we need to download the file first
+    if (Platform.OS === 'ios') {
+      console.log('iOS platform detected, downloading file first');
+      const fileName = getFileNameFromUrl(cleanFileURL);
+      const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+      console.log('Downloading to:', filePath);
+
+      RNFS.downloadFile({
+        fromUrl: cleanFileURL,
+        toFile: filePath,
+        background: true,
+        begin: res => {
+          console.log('Download started:', res);
+        },
+        progress: res => {
+          console.log('Download progress:', res);
+        },
+      })
+        .promise.then(() => {
+          console.log('File downloaded successfully to:', filePath);
+
+          const voiceNote = new Sound(filePath, '', error => {
+            if (error) {
+              console.error('Error loading voice note:', error);
+              console.error('Error details:', {
+                message: error.message,
+                code: error.code,
+                domain: error.domain,
+              });
+              Alert.alert(
+                'Error',
+                'Failed to load voice note. Please try again.',
+              );
+              return;
+            }
+
+            const duration = voiceNote.getDuration();
+            console.log('Voice note loaded successfully:', {
+              duration,
+              numberOfChannels: voiceNote.getNumberOfChannels(),
+              volume: voiceNote.getVolume(),
+            });
+
+            setDuration(duration);
+
+            // Set volume to maximum
+            voiceNote.setVolume(1.0);
+            console.log('Set volume to maximum');
+
+            voiceNote.play(success => {
+              if (success) {
+                console.log('Voice note played successfully');
+                setIsPlaying(false);
+                progressAnim.setValue(0);
+                setCurrentTime(0);
+              } else {
+                console.error('Failed to play voice note');
+                Alert.alert(
+                  'Error',
+                  'Failed to play voice note. Please try again.',
+                );
+                setIsPlaying(false);
+              }
+            });
+            setIsPlaying(true);
+          });
+          setSound(voiceNote);
+        })
+        .catch(error => {
+          console.error('Error downloading file:', error);
+          Alert.alert(
+            'Error',
+            'Failed to download voice note. Please try again.',
+          );
+        });
+    } else {
+      // Android implementation remains the same
+      const voiceNote = new Sound(cleanFileURL, undefined, error => {
+        if (error) {
+          console.error('Error loading voice note:', error);
+          console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            domain: error.domain,
+          });
+          Alert.alert('Error', 'Failed to load voice note. Please try again.');
+          return;
+        }
+
+        const duration = voiceNote.getDuration();
+        console.log('Voice note loaded successfully:', {
+          duration,
+          numberOfChannels: voiceNote.getNumberOfChannels(),
+          volume: voiceNote.getVolume(),
+        });
+
+        setDuration(duration);
+
+        // Set volume to maximum
+        voiceNote.setVolume(1.0);
+        console.log('Set volume to maximum');
+
+        voiceNote.play(success => {
+          if (success) {
+            console.log('Voice note played successfully');
+            setIsPlaying(false);
+            progressAnim.setValue(0);
+            setCurrentTime(0);
+          } else {
+            console.error('Failed to play voice note');
+            Alert.alert(
+              'Error',
+              'Failed to play voice note. Please try again.',
+            );
+            setIsPlaying(false);
+          }
+        });
+        setIsPlaying(true);
+      });
+      setSound(voiceNote);
+    }
+  };
+
+  useEffect(() => {
+    if (isPlaying && sound) {
+      const interval = setInterval(() => {
+        sound.getCurrentTime(seconds => {
+          setCurrentTime(seconds);
+          const progress = seconds / duration;
+          progressAnim.setValue(progress);
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying, sound, duration, progressAnim]);
+
+  if (item.Type === 'FilePath' && item.FilePath) {
+    return (
+      <TouchableOpacity
+        onPress={() => !isDownloading && downloadFileFromChat(item.FilePath)}
+        disabled={isDownloading}
+        style={[
+          styles.messageBubble,
+          isOwnMessage ? styles.ownMessage : styles.otherMessage,
+          isDownloading && styles.disabledMessage,
+        ]}>
+        <View style={styles.fileBox}>
+          {isOwnMessage ? <DocumentIcon /> : <DocumentIconBlack />}
+          <Text style={styles.fileName} numberOfLines={1}>
+            {getFileNameFromUrl(item.FilePath)}
+          </Text>
+        </View>
+        <View style={styles.messageFooter}>
+          <View style={styles.downloadIconContainer}>
+            {isDownloading ? (
+              <ActivityIndicator
+                size="small"
+                color={isOwnMessage ? 'white' : 'black'}
+              />
+            ) : isOwnMessage ? (
+              <DownloadIcon />
+            ) : (
+              <DownloadIconBlack />
+            )}
+          </View>
+          <Text
+            style={[
+              styles.timestamp,
+              isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp,
+            ]}>
+            {formattedTime(item.DateTime)}
+          </Text>
+          {getStatusIndicator()}
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
+  if (item.Type === 'VoiceNote' && item.FilePath) {
+    return (
+      <TouchableOpacity
+        onPress={() => playVoiceNote(item.FilePath)}
+        style={[
+          styles.messageBubble,
+          isOwnMessage ? styles.ownMessage : styles.otherMessage,
+          styles.voiceNoteBubble,
+        ]}>
+        <View style={styles.voiceNoteContainer}>
+          <Text
+            style={[
+              styles.voiceNoteDuration,
+              isOwnMessage && styles.ownVoiceNoteDuration,
+            ]}>
+            {formatTime(currentTime)}
+          </Text>
+          <View style={styles.voiceNoteControls}>
+            <View style={styles.progressContainer}>
+              <View
+                style={[
+                  styles.progressBar,
+                  {
+                    backgroundColor: isOwnMessage
+                      ? 'rgba(255, 255, 255, 0.2)'
+                      : 'rgba(0, 0, 0, 0.1)',
+                  },
+                ]}>
+                <Animated.View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: progressAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0%', '100%'],
+                      }),
+                    },
+                    isOwnMessage && styles.ownProgressFill,
+                  ]}
+                />
+              </View>
+            </View>
+            <View
+              style={[
+                styles.playButton,
+                isPlaying && styles.playingButton,
+                {
+                  backgroundColor: isOwnMessage
+                    ? 'rgba(255, 255, 255, 0.2)'
+                    : 'rgba(0, 0, 0, 0.1)',
+                },
+                isPlaying && {
+                  backgroundColor: isOwnMessage
+                    ? 'rgba(255, 255, 255, 0.3)'
+                    : 'rgba(0, 0, 0, 0.2)',
+                },
+              ]}>
+              <View
+                style={[
+                  styles.playIcon,
+                  isPlaying && styles.pauseIcon,
+                  {
+                    borderLeftColor: isOwnMessage ? 'white' : 'black',
+                    borderTopColor: 'transparent',
+                    borderBottomColor: 'transparent',
+                  },
+                  isPlaying && {
+                    borderLeftColor: isOwnMessage ? 'white' : 'black',
+                    borderRightColor: isOwnMessage ? 'white' : 'black',
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        </View>
+        <View style={styles.messageFooter}>
+          <Text
+            style={[
+              styles.timestamp,
+              isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp,
+            ]}>
+            {formattedTime(item.DateTime)}
+          </Text>
+          {getStatusIndicator()}
+        </View>
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <View
@@ -102,7 +534,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#0084ff',
+    backgroundColor: '#23a2a4',
     padding: 10,
     borderRadius: 5,
   },
@@ -122,7 +554,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   backButtonText: {
-    color: '#0084ff',
+    color: '#23a2a4',
     fontSize: 16,
   },
   chatTitle: {
@@ -145,11 +577,11 @@ const styles = StyleSheet.create({
   },
   ownMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#0084ff',
+    backgroundColor: '#23a2a4',
   },
   otherMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'white',
   },
   sendingMessage: {
     opacity: 0.7,
@@ -161,13 +593,16 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   otherMessageText: {
-    color: 'white',
+    color: 'black',
   },
   messageFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
     marginTop: 3,
+    gap: 4,
+    position: 'relative',
+    paddingLeft: 30,
   },
   timestamp: {
     fontSize: 10,
@@ -177,7 +612,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
   },
   otherTimestamp: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'black',
   },
   statusText: {
     fontSize: 12,
@@ -205,7 +640,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     paddingHorizontal: 15,
     borderRadius: 20,
-    backgroundColor: '#0084ff',
+    backgroundColor: '#23a2a4',
   },
   sendButtonDisabled: {
     backgroundColor: '#313131',
@@ -241,6 +676,109 @@ const styles = StyleSheet.create({
     color: '#9E9E9E', // grey
     fontSize: 12,
     marginTop: 4,
+  },
+  fileBox: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  fileName: {
+    color: 'black',
+    marginTop: 8,
+    marginBottom: 12,
+    fontSize: 14,
+  },
+  downloadIconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+  },
+  disabledMessage: {
+    opacity: 0.5,
+  },
+  voiceNoteBubble: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    width: '70%',
+    maxWidth: 280,
+  },
+  voiceNoteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  voiceNoteControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  playButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+    backgroundColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  playingButton: {
+    // backgroundColor is now handled inline
+  },
+  playIcon: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 16,
+    borderTopWidth: 12,
+    borderBottomWidth: 12,
+    marginLeft: 0,
+    marginRight: 4,
+  },
+  pauseIcon: {
+    width: 16,
+    height: 24,
+    borderWidth: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    marginLeft: 0,
+    marginRight: 0,
+  },
+  progressContainer: {
+    flex: 1,
+    maxWidth: 200,
+  },
+  progressBar: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: 'black',
+  },
+  ownProgressFill: {
+    backgroundColor: 'white',
+  },
+  voiceNoteDuration: {
+    fontSize: 14,
+    color: 'black',
+    fontWeight: '600',
+    marginRight: 12,
+  },
+  ownVoiceNoteDuration: {
+    color: 'white',
   },
 });
 

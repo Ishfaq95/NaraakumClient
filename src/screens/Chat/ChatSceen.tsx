@@ -14,12 +14,25 @@ import {
   AppState,
   Keyboard,
   Dimensions,
+  Alert,
 } from 'react-native';
 import useMutationHook from '../../Network/useMutationHook';
 import {getMessagesList} from '../../Network/getMessagesList';
 import {useSelector} from 'react-redux';
 import ChatMessageRender from './ChatMessageRender';
 import WebSocketService from '../../components/WebSocketService';
+import RightArrowWhiteIcon from '../../assets/icons/RightArrowWhite';
+import SendIcon from '../../assets/icons/SendIcon';
+import ClipIcon from '../../assets/icons/ClipIcon';
+import DocumentIcon from '../../assets/icons/DocumentIcon';
+import VoiceNoteIcon from '../../assets/icons/VoiceNoteIcon';
+import {launchImageLibrary} from 'react-native-image-picker';
+import DocumentPicker from 'react-native-document-picker';
+import FilePicker from 'react-native-file-picker';
+import {BaseURL} from '../../Network/axiosInstance';
+import Sound from 'react-native-sound';
+import RNFS from 'react-native-fs';
+import {store} from '../../shared/redux/store';
 
 interface Message {
   Id: string;
@@ -42,7 +55,12 @@ interface ScrollEvent {
   };
 }
 
-const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
+const ChatScreen = ({
+  patientId,
+  serviceProviderId,
+  onBackPress,
+  displayName,
+}: any) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const {user} = useSelector((state: any) => state.root.user);
@@ -74,6 +92,13 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
   const socketService = useRef(WebSocketService.getInstance());
   const messagesEndRef = useRef(null);
   const screenHeight = useRef<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [currentlyPlayingVoice, setCurrentlyPlayingVoice] = useState<
+    string | null
+  >(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentSound, setCurrentSound] = useState<Sound | null>(null);
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
@@ -305,6 +330,10 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
       let tempMessagesArray: Message[] = [];
 
       data.forEach((item: any) => {
+        console.log(
+          'item.senderDetails?.userlogininfoId',
+          item.senderDetails?.userlogininfoId,
+        );
         let message: Message = {
           Id: item._id,
           SenderId: item.senderDetails?.userlogininfoId,
@@ -522,6 +551,236 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
     };
   }, []);
 
+  const handleFileSelection = async () => {
+    try {
+      console.log('Starting file selection...');
+
+      const pickerResult = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+      });
+
+      console.log('Picker result:', pickerResult);
+
+      if (!pickerResult) {
+        console.log('No file selected');
+        return;
+      }
+
+      const file = {
+        uri: pickerResult.uri,
+        type: pickerResult.type || 'application/octet-stream',
+        name: pickerResult.name,
+        size: pickerResult.size,
+      };
+
+      console.log('Selected file:', file);
+
+      await uploadFile(file, pickerResult);
+    } catch (err) {
+      console.error('File selection error:', err);
+
+      if (DocumentPicker.isCancel(err)) {
+        console.log('User cancelled file picker');
+        return;
+      }
+
+      if (err instanceof Error) {
+        Alert.alert(
+          'Error',
+          `Failed to select file: ${err.message}. Please try again.`,
+        );
+      } else {
+        Alert.alert('Error', 'Failed to select file. Please try again.');
+      }
+    }
+  };
+
+  const uploadFile = async (file: any, pickerResult: any) => {
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      let url = 'https://hhcmedia.innotech-sa.com/api/common/upload';
+      let ResourceCategoryId = '2';
+
+      let fileType = file.name.split('.').pop();
+      if (fileType == 'pdf' || fileType == 'PDF') ResourceCategoryId = '4';
+      else if (
+        fileType == 'jpg' ||
+        fileType == 'jpeg' ||
+        fileType == 'gif' ||
+        fileType == 'png' ||
+        fileType == 'JPG' ||
+        fileType == 'JPEG' ||
+        fileType == 'GIF' ||
+        fileType == 'PNG'
+      )
+        ResourceCategoryId = '1';
+
+      const formData = new FormData();
+      // Create file object that matches backend expectations
+      const fileData = {
+        uri: file.uri,
+        type: file.type || 'application/octet-stream',
+        name: file.name,
+      };
+
+      // Append file with the exact field name expected by backend
+      formData.append('file', fileData);
+      formData.append('UserType', user.catUserTypeId);
+      formData.append('Id', user.id);
+      formData.append('ResourceCategory', ResourceCategoryId);
+      formData.append('ResourceType', '9');
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Accept: 'application/json',
+          Authorization: `Bearer ${store.getState().root.user.mediaToken}`,
+        },
+      });
+
+      console.log('Upload response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed with status:', response.status);
+        console.error('Error response:', errorText);
+
+        if (response.status === 504) {
+          throw new Error('Server took too long to respond. Please try again.');
+        }
+
+        throw new Error(
+          `Upload failed with status ${response.status}: ${errorText}`,
+        );
+      }
+
+      const responseData = await response.json();
+      console.log('Upload successful:', responseData);
+
+      if (responseData.ResponseStatus?.STATUSCODE === '200') {
+        // Add the file message to the chat
+        const newMessage: Message = {
+          Id: responseData.Data?.id || Math.random().toString(36).substr(2, 9),
+          SenderId: user.id,
+          Text: file.name,
+          FilePath: responseData.Data?.AbsolutePath || responseData.Data?.Path,
+          Type: 'FilePath',
+          DateTime: new Date().toISOString(),
+          status: 'Sent',
+        };
+
+        setMessages(prevMessages => [...prevMessages, newMessage]);
+
+        // Scroll to bottom after adding new message
+        setTimeout(() => {
+          if (flatListRef.current) {
+            flatListRef.current.scrollToEnd({animated: true});
+          }
+        }, 100);
+      } else {
+        throw new Error(
+          responseData.ResponseStatus?.MESSAGE || 'Upload failed',
+        );
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      Alert.alert(
+        'Upload Failed',
+        error instanceof Error
+          ? error.message
+          : 'Failed to upload file. Please try again.',
+      );
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const playVoiceNote = async (filePath: string) => {
+    try {
+      // Stop any currently playing sound
+      if (currentSound) {
+        currentSound.stop();
+        currentSound.release();
+      }
+
+      // Create a temporary file path
+      const tempFilePath = `${RNFS.CachesDirectoryPath}/temp_voice_note.mp3`;
+
+      // Download the file
+      const response = await fetch(filePath);
+      const blob = await response.blob();
+      const base64Data = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+
+      // Write the file
+      await RNFS.writeFile(tempFilePath, base64Data, 'base64');
+
+      // Initialize the sound
+      const sound = new Sound(tempFilePath, '', error => {
+        if (error) {
+          console.error('Failed to load the sound', error);
+          return;
+        }
+
+        // Play the sound
+        sound.play(success => {
+          if (success) {
+            console.log('Successfully finished playing');
+          } else {
+            console.log('Playback failed due to audio decoding errors');
+          }
+          sound.release();
+          setIsPlaying(false);
+          setCurrentlyPlayingVoice(null);
+        });
+
+        setIsPlaying(true);
+        setCurrentlyPlayingVoice(filePath);
+        setCurrentSound(sound);
+      });
+    } catch (error) {
+      console.error('Error playing voice note:', error);
+      Alert.alert('Error', 'Failed to play voice note. Please try again.');
+    }
+  };
+
+  const stopVoiceNote = () => {
+    if (currentSound) {
+      currentSound.stop();
+      currentSound.release();
+      setIsPlaying(false);
+      setCurrentlyPlayingVoice(null);
+      setCurrentSound(null);
+    }
+  };
+
+  const downloadFile = async (filePath: string, fileName: string) => {
+    try {
+      const downloadDest = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+
+      const response = await fetch(filePath);
+      const blob = await response.blob();
+      const base64Data = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+
+      await RNFS.writeFile(downloadDest, base64Data, 'base64');
+      Alert.alert('Success', 'File downloaded successfully!');
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      Alert.alert('Error', 'Failed to download file. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -551,14 +810,14 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
     <KeyboardAvoidingView
       style={styles.containerChat}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 30}
       enabled>
       <View style={styles.chatHeader}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Back</Text>
+          <RightArrowWhiteIcon />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.chatTitle}>Chat</Text>
+          <Text style={styles.chatTitle}>{displayName}</Text>
           {!socketConnected && (
             <Text style={styles.connectionStatus}>Offline</Text>
           )}
@@ -611,7 +870,6 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
           placeholderTextColor="#8a8a8a"
           multiline
           onFocus={() => {
-            // Force scroll to bottom when input is focused
             setTimeout(() => {
               if (flatListRef.current) {
                 flatListRef.current.scrollToEnd({animated: true});
@@ -620,6 +878,20 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
           }}
         />
         <TouchableOpacity
+          style={styles.attachButton}
+          onPress={handleFileSelection}
+          disabled={isUploading}>
+          <ClipIcon />
+        </TouchableOpacity>
+        {isUploading && (
+          <View style={styles.progressContainer}>
+            <ActivityIndicator size="small" color="#0084ff" />
+            <Text style={styles.progressText}>
+              {Math.round(uploadProgress)}%
+            </Text>
+          </View>
+        )}
+        <TouchableOpacity
           style={[
             styles.sendButton,
             (messageText.trim() === '' || !socketConnected) &&
@@ -627,7 +899,7 @@ const ChatScreen = ({patientId, serviceProviderId, onBackPress}: any) => {
           ]}
           onPress={sendMessage}
           disabled={messageText.trim() == '' || !socketConnected}>
-          <Text style={styles.sendButtonText}>Send</Text>
+          <SendIcon />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -774,6 +1046,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: '#2a2a2a',
+    alignItems: 'center',
   },
   input: {
     flex: 1,
@@ -784,12 +1057,18 @@ const styles = StyleSheet.create({
     color: 'white',
     backgroundColor: '#313131',
     maxHeight: 100,
+    marginRight: 8,
+  },
+  attachButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 8,
+    marginRight: 8,
   },
   sendButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 10,
-    paddingHorizontal: 15,
+    padding: 8,
     borderRadius: 20,
     backgroundColor: '#0084ff',
   },
@@ -799,6 +1078,63 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  progressText: {
+    color: 'white',
+    marginLeft: 4,
+    fontSize: 12,
+  },
+  voiceNoteContainer: {
+    marginVertical: 5,
+    padding: 10,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 15,
+    maxWidth: '80%',
+  },
+  voiceNoteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+  },
+  voiceNoteIndicator: {
+    marginLeft: 8,
+  },
+  voiceNoteText: {
+    color: 'white',
+    marginLeft: 8,
+  },
+  fileContainer: {
+    marginVertical: 5,
+    padding: 10,
+  },
+  fileBox: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 15,
+    padding: 15,
+    alignItems: 'center',
+    maxWidth: '80%',
+    alignSelf: 'center',
+  },
+  fileName: {
+    color: 'white',
+    marginTop: 8,
+    marginBottom: 12,
+    fontSize: 14,
+  },
+  downloadButton: {
+    backgroundColor: '#0084ff',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  downloadText: {
+    color: 'white',
+    fontSize: 14,
   },
 });
 
