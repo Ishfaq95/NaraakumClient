@@ -1,6 +1,6 @@
 // ChatScreen.js - Chat component with WebSocket integration
 
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   Text,
@@ -21,11 +21,13 @@ import {getMessagesList} from '../../Network/getMessagesList';
 import {useSelector} from 'react-redux';
 import ChatMessageRender from './ChatMessageRender';
 import WebSocketService from '../../components/WebSocketService';
-import RightArrowWhiteIcon from '../../assets/icons/RightArrowWhite';
-import SendIcon from '../../assets/icons/SendIcon';
-import ClipIcon from '../../assets/icons/ClipIcon';
-import DocumentIcon from '../../assets/icons/DocumentIcon';
-import VoiceNoteIcon from '../../assets/icons/VoiceNoteIcon';
+import {
+  RightArrowWhite as RightArrowWhiteIcon,
+  SendIcon,
+  ClipIcon,
+  DocumentIcon,
+  VoiceNoteIcon
+} from '../../assets/icons';
 import {launchImageLibrary} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import FilePicker from 'react-native-file-picker';
@@ -36,15 +38,15 @@ import {store} from '../../shared/redux/store';
 
 interface Message {
   Id: string;
-  SenderId: string;
   Text: string;
-  FilePath: string | null;
-  Type: string;
+  SenderId: string;
+  ReceiverId: string;
   DateTime: string;
   status: string;
-  isSent?: boolean;
-  isPending?: boolean;
-  isFailed?: boolean;
+  FilePath?: string | null;
+  FileType?: string | null;
+  FileName?: string | null;
+  FileSize?: number | null;
 }
 
 interface ScrollEvent {
@@ -55,12 +57,50 @@ interface ScrollEvent {
   };
 }
 
+interface ViewableItems {
+  viewableItems: Array<{
+    index: number;
+    item: Message;
+  }>;
+}
+
+interface WebSocketEvent {
+  data: string;
+}
+
+interface WebSocketResponse {
+  status: string;
+  message?: string;
+}
+
+interface WebSocketError {
+  message: string;
+  code?: string;
+}
+
+interface WebSocketService {
+  connect: (mode: number, communicationKey: string, userId: string) => Promise<void>;
+  disconnect: () => void;
+  getSocket: () => WebSocket | null;
+  sendMessage: (message: any) => Promise<WebSocketResponse>;
+  getInstance: () => WebSocketService;
+}
+
 const ChatScreen = ({
   patientId,
   serviceProviderId,
   onBackPress,
   displayName,
-}: any) => {
+  onNewMessage,
+  onConversationIds,
+}: {
+  patientId: string;
+  serviceProviderId: string;
+  onBackPress: () => void;
+  displayName: string;
+  onNewMessage?: () => void;
+  onConversationIds?: (ids: { conversationId: string; senderId: string; receiverId: string }) => void;
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const {user} = useSelector((state: any) => state.root.user);
@@ -120,7 +160,7 @@ const ChatScreen = ({
       if (
         appState.match(/inactive|background/) &&
         nextAppState === 'active' &&
-        user?.userinfo?.CommunicationKey
+        user?.communicationKey
       ) {
         initializeSocket();
       }
@@ -133,7 +173,6 @@ const ChatScreen = ({
 
   // Initialize socket connection
   const initializeSocket = async () => {
-    console.log('user val', user);
     try {
       if (user?.communicationKey && user?.id) {
         await socketService.current.connect(
@@ -141,6 +180,8 @@ const ChatScreen = ({
           user?.communicationKey,
           user?.id,
         );
+
+        console.log('socketConnected')
         setSocketConnected(true);
 
         // Set up socket message handler
@@ -153,78 +194,81 @@ const ChatScreen = ({
   };
 
   // Set up socket event listeners
-  const setupSocketListeners = () => {
-    // We need to extend the WebSocketService to handle these events
-    // This adds functionality to the existing WebSocketService
+  const setupSocketListeners = useCallback(() => {
+    if (!socketService.current) return;
 
-    // First, get a reference to the actual WebSocket instance
     const socket = socketService.current.getSocket();
+    if (!socket) return;
 
-    if (socket) {
-      // Override the onmessage handler to handle chat messages
-      const originalOnMessage = socket.onmessage;
-
-      socket.onmessage = async event => {
-        // Still call the original handler if it exists
-        if (originalOnMessage) {
-          originalOnMessage(event);
-        }
-
+    socket.onmessage = async event => {
+      try {
         const socketEvent = JSON.parse(event.data);
-
+        
         if (socketEvent.Command === 76) {
           updateMessageStatus('Sent', 'Delivered');
         } else if (socketEvent.Command === 73) {
           updateMessageStatus('Delivered', 'Seen');
         } else if (socketEvent.Command === 56) {
           const parsedData = JSON.parse(socketEvent.Message);
-
           const messageType = parsedData.MessageType;
 
-          if (messageType == 'Text') {
+          if (messageType === 'Text' || messageType === 'FilePath') {
             const newMessageObj = {
-              Id: Math.random().toString(36).substr(2, 9), // Temporary ID until server response
+              Id: Math.random().toString(36).substr(2, 9),
               SenderId: socketEvent.FromUser,
               Text: parsedData.Text,
-              FilePath: null,
-              Type: 'Text',
+              FilePath: messageType === 'FilePath' ? parsedData.FilePath : null,
+              Type: messageType,
               DateTime: new Date().toISOString(),
               status: 'Seen',
             };
 
             setMessages(prevMessages => [...prevMessages, newMessageObj]);
-            sendReadReceipt();
-            console.log('flatListRef', flatListRef?.current);
+            
+            // Send read receipt immediately for new messages
+            if (socketConnected) {
+              const readReceiptEvent = {
+                ConnectionMode: 1,
+                Command: 72,
+                FromUser: {Id: user.id},
+                Conversation: {
+                  ConversationId: mongoConverstionId,
+                  SenderId: mongoSenderId,
+                  ReceiverId: mongoReceiverId,
+                },
+                Message: JSON.stringify({
+                  ConversationId: mongoConverstionId,
+                  SenderId: mongoSenderId,
+                  ReceiverId: mongoReceiverId,
+                }),
+                timestamp: new Date().toISOString(),
+              };
+
+              socketService.current.sendMessage(readReceiptEvent);
+            }
+
             flatListRef?.current?.scrollToEnd({animated: true});
+            
+            // Notify parent component about new message
+            // onNewMessage?.();?
           }
         }
-      };
-    }
-  };
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    };
+  }, [user.id, mongoConverstionId, mongoSenderId, mongoReceiverId, socketConnected, onNewMessage]);
 
-  // Send read receipt when message is displayed
-  const sendReadReceipt = () => {
-    if (socketConnected) {
-      const socketEvent = {
-        ConnectionMode: 1,
-        Command: 72,
-        FromUser: {Id: user.id},
-        Conversation: {
-          ConversationId: mongoConverstionId,
-          SenderId: mongoReceiverId,
-          ReceiverId: mongoSenderId,
-        },
-        Message: JSON.stringify({
-          ConversationId: mongoConverstionId,
-          SenderId: mongoReceiverId,
-          ReceiverId: mongoSenderId,
-        }),
-        timestamp: new Date().toISOString(),
-      };
-
-      socketService.current.sendMessage(socketEvent);
-    }
-  };
+  // Clean up socket listeners
+  useEffect(() => {
+    setupSocketListeners();
+    return () => {
+      const socket = socketService.current?.getSocket();
+      if (socket) {
+        socket.onmessage = null;
+      }
+    };
+  }, [setupSocketListeners]);
 
   // Update message status in state
   const updateMessageStatus = (findStatus, setStatusVal) => {
@@ -316,7 +360,7 @@ const ChatScreen = ({
 
       // Your existing ID setup code
       if (page === 1) {
-        if (data[0]?.senderDetails?.userlogininfoId === user.id) {
+        if (data[0]?.senderDetails?.userlogininfoId != user.id) {
           setMongoSenderId(data[0]?.senderId);
           setMongoReceiverId(data[0]?.receiverId);
           setMongoConverstionId(data[0]?.conversationId);
@@ -325,15 +369,19 @@ const ChatScreen = ({
           setMongoReceiverId(data[0]?.senderId);
           setMongoConverstionId(data[0]?.conversationId);
         }
+
+        // Pass conversation IDs to parent
+        onConversationIds?.({
+          conversationId: data[0]?.conversationId,
+          senderId: data[0]?.senderDetails?.userlogininfoId != user.id ? data[0]?.senderId : data[0]?.receiverId,
+          receiverId: data[0]?.senderDetails?.userlogininfoId != user.id ? data[0]?.receiverId : data[0]?.senderId,
+        });
       }
 
       let tempMessagesArray: Message[] = [];
 
       data.forEach((item: any) => {
-        console.log(
-          'item.senderDetails?.userlogininfoId',
-          item.senderDetails?.userlogininfoId,
-        );
+        
         let message: Message = {
           Id: item._id,
           SenderId: item.senderDetails?.userlogininfoId,
@@ -354,9 +402,9 @@ const ChatScreen = ({
 
       if (page === 1) {
         setMessages(reversedMessages);
-        sendReadReceipt();
       } else {
         // Add new messages to the beginning
+        console.log('messages', messages.length );
         setMessages(prevMessages => [...reversedMessages, ...prevMessages]);
       }
 
@@ -369,11 +417,8 @@ const ChatScreen = ({
       console.error('messages list error', error);
       setError('Failed to load messages. Please try again.');
     } finally {
-      // Add a delay before resetting loading states
-      setTimeout(() => {
-        setIsLoadingMore(false);
-        setIsFetchingMore(false);
-      }, 100);
+      setIsLoadingMore(false);
+      setIsFetchingMore(false);
     }
   };
 
@@ -387,7 +432,6 @@ const ChatScreen = ({
         });
       }
     } catch (error) {
-      console.log('Error during scrollToIndex:', error);
       // Fallback
       if (flatListRef.current) {
         flatListRef.current.scrollToOffset({
@@ -443,7 +487,7 @@ const ChatScreen = ({
       ConnectionMode: 1,
       Command: 70,
       FromUser: {Id: user.id},
-      ToUserList: [{Id: serviceProviderId}],
+      ToUserList: [{Id: patientId}],
       Message: JSON.stringify({
         Text: messageText,
         FilePath: null,
@@ -553,16 +597,19 @@ const ChatScreen = ({
 
   const handleFileSelection = async () => {
     try {
-      console.log('Starting file selection...');
 
-      const pickerResult = await DocumentPicker.pick({
+      const pickresult = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
 
-      console.log('Picker result:', pickerResult);
+      let pickerResult = null;
+      if(Platform.OS === 'ios'){
+        pickerResult = pickresult;
+      }else{
+        pickerResult = pickresult[0];
+      }
 
       if (!pickerResult) {
-        console.log('No file selected');
         return;
       }
 
@@ -573,14 +620,11 @@ const ChatScreen = ({
         size: pickerResult.size,
       };
 
-      console.log('Selected file:', file);
-
       await uploadFile(file, pickerResult);
     } catch (err) {
       console.error('File selection error:', err);
 
       if (DocumentPicker.isCancel(err)) {
-        console.log('User cancelled file picker');
         return;
       }
 
@@ -637,11 +681,9 @@ const ChatScreen = ({
         headers: {
           'Content-Type': 'multipart/form-data',
           Accept: 'application/json',
-          Authorization: `Bearer ${store.getState().root.user.mediaToken}`,
+          Authorization: `Bearer${store.getState().root.user.mediaToken}`,
         },
       });
-
-      console.log('Upload response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -658,7 +700,6 @@ const ChatScreen = ({
       }
 
       const responseData = await response.json();
-      console.log('Upload successful:', responseData);
 
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
         // Add the file message to the chat
@@ -673,6 +714,44 @@ const ChatScreen = ({
         };
 
         setMessages(prevMessages => [...prevMessages, newMessage]);
+
+        const socketEvent = {
+          Id: newMessage.Id,
+          ConnectionMode: 1,
+          Command: 70,
+          FromUser: {Id: user.id},
+          ToUserList: [{Id: patientId}],
+          Message: JSON.stringify({
+            Text: messageText,
+            FilePath: responseData.Data?.AbsolutePath || responseData.Data?.Path,
+            CatFileTypeId: 0,
+            MessageType: 'FilePath',
+          }),
+          timestamp: new Date().toISOString(),
+        };
+    
+        // Send via WebSocket
+        socketService.current
+          .sendMessage(socketEvent)
+          .then(response => {
+            setMessages(prevMessages =>
+              prevMessages.map(msg =>
+                msg.Id === newMessage.Id
+                  ? {...msg, isSent: true, isPending: false}
+                  : msg,
+              ),
+            );
+          })
+          .catch(err => {
+            console.error('Failed to send message:', err);
+            setMessages(prevMessages =>
+              prevMessages.map(msg =>
+                msg.Id === newMessage.Id
+                  ? {...msg, isFailed: true, isPending: false}
+                  : msg,
+              ),
+            );
+          });
 
         // Scroll to bottom after adding new message
         setTimeout(() => {
@@ -848,18 +927,17 @@ const ChatScreen = ({
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         removeClippedSubviews={false}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-        initialNumToRender={10}
-        onScrollToIndexFailed={info => {
-          console.log('Failed to scroll to index', info);
-          // Use a safe fallback
-          setTimeout(() => {
-            if (messages.length > 0) {
-              safeScrollToIndex(info.index);
-            }
-          }, 100);
-        }}
+        maxToRenderPerBatch={20}
+        windowSize={20}
+        initialNumToRender={20}
+        // onScrollToIndexFailed={info => {
+        //   // Use a safe fallback
+        //   setTimeout(() => {
+        //     if (messages.length > 0) {
+        //       safeScrollToIndex(info.index);
+        //     }
+        //   }, 100);
+        // }}
       />
       <View style={styles.inputContainer}>
         <TextInput

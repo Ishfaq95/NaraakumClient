@@ -363,7 +363,7 @@ const PreViewScreen = ({navigation, route}: any) => {
                 style={
                   I18nManager.isRTL
                     ? {fontSize: 15, fontWeight: '500', color: 'black'}
-                    : {paddingLeft: 10, fontSize: 15, fontWeight: '500'}
+                    : {paddingLeft: 10, fontSize: 15, fontWeight: '500',color: 'black'}
                 }>
                 {t('video')}
               </Text>

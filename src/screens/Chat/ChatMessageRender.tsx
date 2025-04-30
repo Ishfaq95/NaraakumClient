@@ -25,15 +25,6 @@ import Sound from 'react-native-sound';
 import VoiceNoteIcon from '../../assets/icons/VoiceNoteIcon';
 import VoiceNoteIconBlack from '../../assets/icons/VoiceNoteIconBlack';
 
-interface RootState {
-  root: {
-    user: {
-      user: {
-        id: string;
-      };
-    };
-  };
-}
 
 interface Message {
   SenderId: string;
@@ -45,7 +36,7 @@ interface Message {
 }
 
 const ChatMessageRender = ({item}: {item: Message}) => {
-  const {user} = useSelector((state: RootState) => state.root.user);
+  const {user} = useSelector((state: any) => state.root.user);
   const isOwnMessage = item.SenderId == user.id;
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -81,11 +72,11 @@ const ChatMessageRender = ({item}: {item: Message}) => {
     if (!isOwnMessage) return null;
 
     if (item.status == 'Seen') {
-      return <MessageSeenIcon />;
+      return <MessageSeenIcon color="#59de6a" />;
     } else if (item.status == 'Delivered') {
-      return <MessageDeliveredIcon />;
+      return <MessageDeliveredIcon color="#888" />;
     } else {
-      return <MessageSentIcon />;
+      return <MessageSentIcon color="#888" />;
     }
   };
 
