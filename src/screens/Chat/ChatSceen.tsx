@@ -889,7 +889,7 @@ const ChatScreen = ({
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0084ff" />
-        <Text style={styles.loadingText}>Loading messages...</Text>
+        <Text style={styles.loadingText}>جارٍ تحميل الرسائل...</Text>
       </View>
     );
   }
