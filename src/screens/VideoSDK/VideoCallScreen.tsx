@@ -21,6 +21,7 @@ import {
   KeyboardAvoidingView,
   FlatList,
   TextInput,
+  I18nManager,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import MicIconWithCircle from '../../assets/icons/MicIconWithCircle';
@@ -250,8 +251,13 @@ const VideoCallScreen = ({
         dragPosition.setValue({x: 0, y: 0});
       },
       onPanResponderMove: (event, gestureState) => {
-        const newX = gestureState.dx + dragPosition.x._offset;
-        const newY = gestureState.dy + dragPosition.y._offset;
+        const isRTL = I18nManager.isRTL;
+
+        // Calculate new position based on RTL
+        const newX = isRTL
+          ? dragPosition.x._offset - gestureState.dx
+          : dragPosition.x._offset + gestureState.dx;
+        const newY = dragPosition.y._offset + gestureState.dy;
 
         // Ensure the small video stays within the screen bounds
         const clampedX = Math.max(
@@ -260,7 +266,7 @@ const VideoCallScreen = ({
         );
         const clampedY = Math.max(
           0,
-          Math.min(newY, SCREEN_HEIGHT - 60 - SMALL_VIDEO_HEIGHT - 20), // Adjusted to ensure it doesn't go beyond the screen.
+          Math.min(newY, SCREEN_HEIGHT - 60 - SMALL_VIDEO_HEIGHT - 20),
         );
 
         dragPosition.setValue({
