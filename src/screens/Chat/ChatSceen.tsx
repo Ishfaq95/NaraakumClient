@@ -26,7 +26,7 @@ import {
   SendIcon,
   ClipIcon,
   DocumentIcon,
-  VoiceNoteIcon
+  VoiceNoteIcon,
 } from '../../assets/icons';
 import {launchImageLibrary} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
@@ -35,6 +35,7 @@ import {BaseURL} from '../../Network/axiosInstance';
 import Sound from 'react-native-sound';
 import RNFS from 'react-native-fs';
 import {store} from '../../shared/redux/store';
+import RightArrowIcon from '../../assets/icons/RightArrow';
 
 interface Message {
   Id: string;
@@ -79,7 +80,11 @@ interface WebSocketError {
 }
 
 interface WebSocketService {
-  connect: (mode: number, communicationKey: string, userId: string) => Promise<void>;
+  connect: (
+    mode: number,
+    communicationKey: string,
+    userId: string,
+  ) => Promise<void>;
   disconnect: () => void;
   getSocket: () => WebSocket | null;
   sendMessage: (message: any) => Promise<WebSocketResponse>;
@@ -99,7 +104,11 @@ const ChatScreen = ({
   onBackPress: () => void;
   displayName: string;
   onNewMessage?: () => void;
-  onConversationIds?: (ids: { conversationId: string; senderId: string; receiverId: string }) => void;
+  onConversationIds?: (ids: {
+    conversationId: string;
+    senderId: string;
+    receiverId: string;
+  }) => void;
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -181,7 +190,7 @@ const ChatScreen = ({
           user?.id,
         );
 
-        console.log('socketConnected')
+        console.log('socketConnected');
         setSocketConnected(true);
 
         // Set up socket message handler
@@ -203,7 +212,7 @@ const ChatScreen = ({
     socket.onmessage = async event => {
       try {
         const socketEvent = JSON.parse(event.data);
-        
+
         if (socketEvent.Command === 76) {
           updateMessageStatus('Sent', 'Delivered');
         } else if (socketEvent.Command === 73) {
@@ -224,7 +233,7 @@ const ChatScreen = ({
             };
 
             setMessages(prevMessages => [...prevMessages, newMessageObj]);
-            
+
             // Send read receipt immediately for new messages
             if (socketConnected) {
               const readReceiptEvent = {
@@ -248,7 +257,7 @@ const ChatScreen = ({
             }
 
             flatListRef?.current?.scrollToEnd({animated: true});
-            
+
             // Notify parent component about new message
             // onNewMessage?.();?
           }
@@ -257,7 +266,14 @@ const ChatScreen = ({
         console.error('Error processing WebSocket message:', error);
       }
     };
-  }, [user.id, mongoConverstionId, mongoSenderId, mongoReceiverId, socketConnected, onNewMessage]);
+  }, [
+    user.id,
+    mongoConverstionId,
+    mongoSenderId,
+    mongoReceiverId,
+    socketConnected,
+    onNewMessage,
+  ]);
 
   // Clean up socket listeners
   useEffect(() => {
@@ -373,15 +389,20 @@ const ChatScreen = ({
         // Pass conversation IDs to parent
         onConversationIds?.({
           conversationId: data[0]?.conversationId,
-          senderId: data[0]?.senderDetails?.userlogininfoId != user.id ? data[0]?.senderId : data[0]?.receiverId,
-          receiverId: data[0]?.senderDetails?.userlogininfoId != user.id ? data[0]?.receiverId : data[0]?.senderId,
+          senderId:
+            data[0]?.senderDetails?.userlogininfoId != user.id
+              ? data[0]?.senderId
+              : data[0]?.receiverId,
+          receiverId:
+            data[0]?.senderDetails?.userlogininfoId != user.id
+              ? data[0]?.receiverId
+              : data[0]?.senderId,
         });
       }
 
       let tempMessagesArray: Message[] = [];
 
       data.forEach((item: any) => {
-        
         let message: Message = {
           Id: item._id,
           SenderId: item.senderDetails?.userlogininfoId,
@@ -404,7 +425,7 @@ const ChatScreen = ({
         setMessages(reversedMessages);
       } else {
         // Add new messages to the beginning
-        console.log('messages', messages.length );
+        console.log('messages', messages.length);
         setMessages(prevMessages => [...reversedMessages, ...prevMessages]);
       }
 
@@ -487,7 +508,7 @@ const ChatScreen = ({
       ConnectionMode: 1,
       Command: 70,
       FromUser: {Id: user.id},
-      ToUserList: [{Id: patientId}],
+      ToUserList: [{Id: serviceProviderId}],
       Message: JSON.stringify({
         Text: messageText,
         FilePath: null,
@@ -597,16 +618,17 @@ const ChatScreen = ({
 
   const handleFileSelection = async () => {
     try {
-
       const pickresult = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
 
+      console.log('pickresult', pickresult);
+
       let pickerResult = null;
-      if(Platform.OS === 'ios'){
+      if (Platform.OS === 'ios') {
         pickerResult = pickresult;
-      }else{
-        pickerResult = pickresult[0];
+      } else {
+        pickerResult = pickresult;
       }
 
       if (!pickerResult) {
@@ -720,16 +742,17 @@ const ChatScreen = ({
           ConnectionMode: 1,
           Command: 70,
           FromUser: {Id: user.id},
-          ToUserList: [{Id: patientId}],
+          ToUserList: [{Id: serviceProviderId}],
           Message: JSON.stringify({
             Text: messageText,
-            FilePath: responseData.Data?.AbsolutePath || responseData.Data?.Path,
+            FilePath:
+              responseData.Data?.AbsolutePath || responseData.Data?.Path,
             CatFileTypeId: 0,
             MessageType: 'FilePath',
           }),
           timestamp: new Date().toISOString(),
         };
-    
+
         // Send via WebSocket
         socketService.current
           .sendMessage(socketEvent)
@@ -893,13 +916,14 @@ const ChatScreen = ({
       enabled>
       <View style={styles.chatHeader}>
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-          <RightArrowWhiteIcon />
+          {/* <RightArrowWhiteIcon /> */}
+          <RightArrowIcon color="white" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.chatTitle}>{displayName}</Text>
-          {!socketConnected && (
+          {/* {!socketConnected && (
             <Text style={styles.connectionStatus}>Offline</Text>
-          )}
+          )} */}
         </View>
         <View style={styles.headerPlaceholder} />
       </View>
