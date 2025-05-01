@@ -131,6 +131,7 @@ dependencies {
             strictly("1.8.0")
         }
     }
+    implementation 'com.airbnb.android:lottie:6.1.0'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

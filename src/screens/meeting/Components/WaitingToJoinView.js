@@ -1,7 +1,7 @@
 import { ROBOTO_FONTS } from "../../../styles/fonts";
 import { convertRFValue } from "../../../styles/spacing";
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, View ,ActivityIndicator} from "react-native";
 import colors from "../../../styles/colors";
 // import Lottie from "lottie-react-native";
 import joining_animation from "../../../assets/animation/joining_lottie.json";
@@ -16,6 +16,7 @@ export default function WaitingToJoinView() {
         width: "100%",
       }}
     >
+      <ActivityIndicator size="large" color={colors.primary[100]} />
       {/* <Lottie
         source={joining_animation}
         autoPlay
@@ -33,7 +34,7 @@ export default function WaitingToJoinView() {
           marginTop: 28,
         }}
       >
-        Creating a room
+        انتظر من فضلك
       </Text>
     </View>
   );

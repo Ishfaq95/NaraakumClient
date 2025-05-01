@@ -8,6 +8,7 @@
 #import "RNSplashScreen.h"
 #import <FirebaseCore/FirebaseCore.h>
 #import <FirebaseCrashlytics/FirebaseCrashlytics.h>
+#import <React/RCTI18nUtil.h>
 
 @implementation AppDelegate
 
@@ -18,6 +19,9 @@
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{};
 
+  // Configure RTL
+  [[RCTI18nUtil sharedInstance] allowRTL:YES];
+  [[RCTI18nUtil sharedInstance] forceRTL:YES];
   
   [FIRApp configure];
 
@@ -75,6 +79,5 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
   [RNCPushNotificationIOS didReceiveRemoteNotification:userInfo];
   completionHandler(UNNotificationPresentationOptionSound | UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge);
 }
-
 
 @end

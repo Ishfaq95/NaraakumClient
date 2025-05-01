@@ -363,7 +363,12 @@ const PreViewScreen = ({navigation, route}: any) => {
                 style={
                   I18nManager.isRTL
                     ? {fontSize: 15, fontWeight: '500', color: 'black'}
-                    : {paddingLeft: 10, fontSize: 15, fontWeight: '500',color: 'black'}
+                    : {
+                        paddingLeft: 10,
+                        fontSize: 15,
+                        fontWeight: '500',
+                        color: 'black',
+                      }
                 }>
                 {t('video')}
               </Text>
@@ -445,7 +450,7 @@ const PreViewScreen = ({navigation, route}: any) => {
             backgroundColor: '#32A3A4',
           }}>
           <Text style={{fontSize: 14, fontWeight: '400', color: 'white'}}>
-            Join Now
+            {t('join_now')}
           </Text>
         </TouchableOpacity>
       </View>

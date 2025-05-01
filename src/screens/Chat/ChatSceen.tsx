@@ -1,6 +1,7 @@
 // ChatScreen.js - Chat component with WebSocket integration
 
 import React, {useState, useEffect, useRef, useCallback} from 'react';
+import {useTranslation} from 'react-i18next';
 import {
   View,
   Text,
@@ -110,6 +111,7 @@ const ChatScreen = ({
     receiverId: string;
   }) => void;
 }) => {
+  const {t} = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const {user} = useSelector((state: any) => state.root.user);
@@ -965,12 +967,13 @@ const ChatScreen = ({
       />
       <View style={styles.inputContainer}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, {textAlign: 'right'}]}
           value={messageText}
           onChangeText={setMessageText}
-          placeholder="Type a message"
+          placeholder={t('write_message')}
           placeholderTextColor="#8a8a8a"
           multiline
+          textAlignVertical="center"
           onFocus={() => {
             setTimeout(() => {
               if (flatListRef.current) {

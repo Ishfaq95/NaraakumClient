@@ -54,6 +54,7 @@ import WebSocketService from '../../components/WebSocketService';
 import {useSelector} from 'react-redux';
 import DocumentIcon from '../../assets/icons/DocumentIcon';
 import DocumentViewScreen from './DocumentViewScreen';
+import {useTranslation} from 'react-i18next';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const SMALL_VIDEO_WIDTH = 140;
@@ -104,6 +105,7 @@ const VideoCallScreen = ({
   const participantIds = [...participants.keys()];
   const [documentUrl, setDocumentUrl] = useState('');
   const participantCount = participantIds ? participantIds.length : null;
+  const {t} = useTranslation();
 
   const {webcamOn, webcamStream, setQuality, isLocal} = useParticipant(
     participantIds[0],
@@ -389,7 +391,7 @@ const VideoCallScreen = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                <Text style={styles.sessionText}>Session Time Left</Text>
+                <Text style={styles.sessionText}>{t('session_time_left')}</Text>
               </View>
               <View style={{paddingHorizontal: 15}}>
                 <Text style={styles.timerText}>
@@ -501,13 +503,13 @@ const VideoCallScreen = ({
                   style={styles.smallControlButton}>
                   <FlipCameraIcon width={24} height={24} />
                 </TouchableOpacity>
-              </View>
-              <View style={styles.hangUpContainer}>
+
                 <TouchableOpacity
                   onPress={onPressHangUp}
                   style={[styles.controlButton, styles.hangUpButton]}>
                   <HangUpIcon />
                 </TouchableOpacity>
+                <View style={{width: '15%'}} />
               </View>
             </View>
           </View>
@@ -694,10 +696,19 @@ const styles = StyleSheet.create({
   },
   controlsRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    paddingLeft: 40,
+    paddingHorizontal: '10%',
+  },
+  leftSpace: {
+    flex: 1,
+  },
+  centerSpace: {
+    flex: 1,
+  },
+  rightSpace: {
+    flex: 1,
   },
   controlButton: {
     width: 60,
@@ -884,6 +895,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+    zIndex: 2,
   },
 });
 
