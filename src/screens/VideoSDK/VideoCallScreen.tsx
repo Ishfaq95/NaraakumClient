@@ -22,6 +22,7 @@ import {
   FlatList,
   TextInput,
   I18nManager,
+  Modal,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import MicIconWithCircle from '../../assets/icons/MicIconWithCircle';
@@ -142,6 +143,11 @@ const VideoCallScreen = ({
   const [messageClicked, setMessageClicked] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [documentClicked, setDocumentClicked] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState({
+    heading: '',
+    detail: '',
+  });
 
   // Add WebSocket message handler
   useEffect(() => {
@@ -207,16 +213,34 @@ const VideoCallScreen = ({
 
   const calculateRemainingTime = () => {
     const time = new Date(sessionStartTime);
-
     const endTime = new Date(sessionEndTime);
     const now = new Date();
-    const timeLeft = endTime - now; // in milliseconds
+    const timeLeft = endTime.getTime() - now.getTime(); // in milliseconds
 
     if (timeLeft > 0) {
       setRemainingTime(timeLeft);
+
+      // Show modal at 1 minute remaining
+      if (timeLeft <= 60000 && timeLeft > 59000) {
+        setModalContent({
+          heading: 'سيتم إنهاء المكالمة خلال 01 دقيقة',
+          detail: '',
+        });
+        setModalVisible(true);
+      }
+
+      // Show modal at 15 seconds remaining
+      if (timeLeft <= 15000 && timeLeft > 14000) {
+        setModalContent({
+          heading: 'سيتم إنهاء المكالمة خلال 15 ثانية',
+          detail: '',
+        });
+        setModalVisible(true);
+      }
     } else {
-      //   clearInterval(timer); // stop the timer when time is up
       setRemainingTime(0);
+      // End the call when time is up
+      onPressHangUp();
     }
   };
 
@@ -239,8 +263,6 @@ const VideoCallScreen = ({
   }, [sessionStartTime]);
 
   const dragPosition = useRef(new Animated.ValueXY()).current;
-  const [micOn, setMicOn] = useState(true);
-  const [videoOn, setVideoOn] = useState(true);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -375,6 +397,10 @@ const VideoCallScreen = ({
   const toggleDocumentScreen = useCallback(() => {
     setDocumentClicked(prev => !prev);
   }, []);
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -517,11 +543,10 @@ const VideoCallScreen = ({
             <TouchableOpacity
               onPress={() => {
                 toggleMic();
-                setMicOn(!micOn);
               }}
               activeOpacity={1}
               style={styles.iconButton}>
-              {micOn ? (
+              {localMicOn ? (
                 <MicIconWithCircle height={35} width={35} />
               ) : (
                 <MicIconOff />
@@ -531,10 +556,9 @@ const VideoCallScreen = ({
               activeOpacity={1}
               onPress={() => {
                 toggleWebcam();
-                setVideoOn(!videoOn);
               }}
               style={styles.iconButton}>
-              {videoOn ? <CameraIconWithCircle /> : <CameraIconOff />}
+              {localWebcamOn ? <CameraIconWithCircle /> : <CameraIconOff />}
             </TouchableOpacity>
             <TouchableOpacity
               onPress={toggleChatScreen}
@@ -586,13 +610,12 @@ const VideoCallScreen = ({
                 activeOpacity={1}
                 onPress={() => {
                   toggleMic();
-                  setMicOn(!micOn);
                 }}
                 style={[
                   styles.miniControlButton,
-                  !micOn && styles.miniControlButtonOff,
+                  !localMicOn && styles.miniControlButtonOff,
                 ]}>
-                {micOn ? (
+                {localMicOn ? (
                   <MicIconWithCircle height={22} width={22} />
                 ) : (
                   <MicIconOff height={22} width={22} />
@@ -602,13 +625,12 @@ const VideoCallScreen = ({
                 activeOpacity={1}
                 onPress={() => {
                   toggleWebcam();
-                  setVideoOn(!videoOn);
                 }}
                 style={[
                   styles.miniControlButton,
-                  !videoOn && styles.miniControlButtonOff,
+                  !localWebcamOn && styles.miniControlButtonOff,
                 ]}>
-                {videoOn ? (
+                {localWebcamOn ? (
                   <CameraIconWithCircle height={22} width={22} />
                 ) : (
                   <CameraIconOff height={22} width={22} />
@@ -624,6 +646,24 @@ const VideoCallScreen = ({
           </Animated.View>
         </View>
       )}
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={handleModalClose}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalHeading}>{modalContent.heading}</Text>
+            <Text style={styles.modalDetail}>{modalContent.detail}</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleModalClose}>
+              <Text style={styles.modalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -896,6 +936,50 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#2B3034',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalHeading: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+  },
+  modalDetail: {
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: '#5568FE',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
