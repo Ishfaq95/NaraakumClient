@@ -57,6 +57,7 @@ import DocumentIcon from '../../assets/icons/DocumentIcon';
 import DocumentViewScreen from './DocumentViewScreen';
 import {useTranslation} from 'react-i18next';
 import {WEBSITE_URL} from '../../shared/utils/constants';
+import {SendNotificationForMeeting} from '../../Network/sendNotificationForMeeting';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const SMALL_VIDEO_WIDTH = 140;
@@ -104,8 +105,8 @@ const VideoCallScreen = ({
   const navigation = useNavigation();
   const [remainingTime, setRemainingTime] = useState(0);
   const [messageText, setMessageText] = useState('');
-  const participantIds = [...participants.keys()];
-  const [documentUrl, setDocumentUrl] = useState('');
+  const [participantIds, setParticipantIds] = useState<string[]>([]);
+  const notificationSentRef = useRef(false);
   const participantCount = participantIds ? participantIds.length : null;
   const {t} = useTranslation();
 
@@ -115,13 +116,42 @@ const VideoCallScreen = ({
   );
 
   useEffect(() => {
-    if (Data?.Data) {
-      console.log('Data?.Data', Data?.Data?.VisitData);
-      setDocumentUrl(
-        `${WEBSITE_URL}ServiceProvider/AddVisitRecord?visitData=${Data?.Data?.VisitData}`,
-      );
+    // Update participantIds whenever participants change
+    const ids = [...participants.keys()];
+    setParticipantIds(ids);
+  }, [participants]);
+
+  useEffect(() => {
+    if (
+      Data?.Data &&
+      participantIds.length === 1 &&
+      !notificationSentRef.current
+    ) {
+      console.log('Sending notification...');
+      notificationSentRef.current = true;
+      sendFCMToOtherParticipants();
     }
-  }, [Data]);
+  }, [Data, participantIds]);
+
+  const sendFCMToOtherParticipants = async () => {
+    const reciverId = `serviceprovider_${Data?.Data?.serviceProviderId}`;
+    let data = {
+      notificationFrom: 'JoinMeeting',
+      toUserId: Data?.Data?.patientId,
+      sessionStartTime: Data?.Data?.sessionStartTime,
+      bookingId: Data?.Data?.bookingId,
+      patientProfileId: Data?.Data?.patientProfileId,
+      meetingId: Data?.Data?.meetingId,
+      Name: Data?.Data?.displayName,
+      displayName: Data?.Data?.Name,
+      sessionEndTime: Data?.Data?.sessionEndTime,
+      patientId: Data?.Data?.patientId,
+      VisitData: Data?.Data?.VisitData,
+      serviceProviderId: Data?.Data?.serviceProviderId,
+    };
+
+    const response = await SendNotificationForMeeting(reciverId, data);
+  };
 
   const {score} = useParticipantStat({
     participantId: participantIds[0],
