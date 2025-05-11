@@ -32,11 +32,11 @@ import {
 import {launchImageLibrary} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import FilePicker from 'react-native-file-picker';
-import {BaseURL} from '../../Network/axiosInstance';
 import Sound from 'react-native-sound';
 import RNFS from 'react-native-fs';
 import {store} from '../../shared/redux/store';
 import RightArrowIcon from '../../assets/icons/RightArrow';
+import {MediaBaseURL} from '../../shared/utils/constants';
 
 interface Message {
   Id: string;
@@ -667,7 +667,7 @@ const ChatScreen = ({
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      let url = 'https://hhcmedia.innotech-sa.com/api/common/upload';
+      let url = `${MediaBaseURL}common/upload`;
       let ResourceCategoryId = '2';
 
       let fileType = file.name.split('.').pop();
@@ -726,12 +726,13 @@ const ChatScreen = ({
       const responseData = await response.json();
 
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
+        console.log('responseData', responseData.Data?.Path);
         // Add the file message to the chat
         const newMessage: Message = {
           Id: responseData.Data?.id || Math.random().toString(36).substr(2, 9),
           SenderId: user.id,
           Text: file.name,
-          FilePath: responseData.Data?.AbsolutePath || responseData.Data?.Path,
+          FilePath: responseData.Data?.Path || responseData.Data?.AbsolutePath,
           Type: 'FilePath',
           DateTime: new Date().toISOString(),
           status: 'Sent',
@@ -748,7 +749,7 @@ const ChatScreen = ({
           Message: JSON.stringify({
             Text: messageText,
             FilePath:
-              responseData.Data?.AbsolutePath || responseData.Data?.Path,
+              responseData.Data?.Path || responseData.Data?.AbsolutePath,
             CatFileTypeId: 0,
             MessageType: 'FilePath',
           }),

@@ -18,7 +18,7 @@ import {
 import {setToken, setMediaToken} from '../shared/redux/reducers/userReducer';
 import {crashlyticsService} from '../shared/services/crashlytics/crashlytics.service';
 import {store} from '../shared/redux/store';
-import {MediaBaseURL} from '../Network/axiosInstance';
+import {WEBSITE_URL, MediaBaseURL} from '../shared/utils/constants';
 
 const HomeScreen = () => {
   const dispatch = useDispatch();
@@ -278,10 +278,7 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* <WebViewComponent uri="https://staging.innotech-sa.com/naraakum/Web/Web/Index" /> */}
-      <WebViewComponent uri="https://dvx.innotech-sa.com/HHC/web/Web/Index" />
-      {/* <WebViewComponent uri="https://nkapps.innotech-sa.com/" />  */}
-      {/* <WebViewComponent uri="https://naraakum.com/" />  */}
+      <WebViewComponent uri={WEBSITE_URL} />
     </SafeAreaView>
   );
 };

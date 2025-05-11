@@ -105,6 +105,10 @@ const NotificationsCenter = () => {
           // Ensure handleNavigationFromNotification is called with correct data
           if (data?.notificationFrom == 'reminder') {
             handleNavigationFromNotification(data);
+          } else if (data?.notificationFrom == 'JoinMeeting') {
+            navigation.navigate(ROUTES.preViewCall, {
+              Data: data,
+            });
           }
           notification.finish(PushNotificationIOS.FetchResult.NoData);
         } catch (error) {}
@@ -125,6 +129,10 @@ const NotificationsCenter = () => {
       if (Platform.OS === 'ios') {
         if (remoteMessage?.data?.notificationFrom == 'reminder') {
           handleNavigationFromNotification(remoteMessage.data);
+        } else if (remoteMessage?.data?.notificationFrom == 'JoinMeeting') {
+          navigation.navigate(ROUTES.preViewCall, {
+            Data: remoteMessage?.data,
+          });
         }
       }
     });
@@ -143,7 +151,15 @@ const NotificationsCenter = () => {
       let title = parsedData.notification?.title;
       let body = parsedData.notification?.body;
 
-      Alert.alert(title, body);
+      const notificationFrom = parsedData?.data?.notificationFrom;
+
+      if (notificationFrom == 'JoinMeeting') {
+        navigation.navigate(ROUTES.preViewCall, {
+          Data: parsedData?.data,
+        });
+      } else {
+        Alert.alert(title, body);
+      }
 
       // if (Platform.OS === 'ios') {
       //   // This is the critical part that will show the notification banner
@@ -188,6 +204,12 @@ const NotificationsCenter = () => {
         if (notification?.data?.notificationFrom == 'reminder') {
           setTimeout(() => {
             handleNavigationFromNotification(notification.data);
+          }, 1000);
+        } else if (notification?.data?.notificationFrom == 'JoinMeeting') {
+          setTimeout(() => {
+            navigation.navigate(ROUTES.preViewCall, {
+              Data: notification?.data,
+            });
           }, 1000);
         }
       }

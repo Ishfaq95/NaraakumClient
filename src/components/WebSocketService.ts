@@ -2,8 +2,9 @@
 
 import {PermissionsAndroid, Platform, AppState} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-const WEBSOCKET_URL = 'wss://nodedev01.innotech-sa.com:6223/';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WEBSOCKET_URL } from '../shared/utils/constants';
 
 class WebSocketService {
   private static instance: WebSocketService;

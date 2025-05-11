@@ -56,6 +56,7 @@ import {useSelector} from 'react-redux';
 import DocumentIcon from '../../assets/icons/DocumentIcon';
 import DocumentViewScreen from './DocumentViewScreen';
 import {useTranslation} from 'react-i18next';
+import {WEBSITE_URL} from '../../shared/utils/constants';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const SMALL_VIDEO_WIDTH = 140;
@@ -117,7 +118,7 @@ const VideoCallScreen = ({
     if (Data?.Data) {
       console.log('Data?.Data', Data?.Data?.VisitData);
       setDocumentUrl(
-        `https://dvx.innotech-sa.com/HHC/web/ServiceProvider/AddVisitRecord?visitData=${Data?.Data?.VisitData}`,
+        `${WEBSITE_URL}ServiceProvider/AddVisitRecord?visitData=${Data?.Data?.VisitData}`,
       );
     }
   }, [Data]);
