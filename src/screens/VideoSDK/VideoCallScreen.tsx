@@ -107,6 +107,7 @@ const VideoCallScreen = ({
   const [messageText, setMessageText] = useState('');
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const notificationSentRef = useRef(false);
+  const [currentParticipantName, setCurrentParticipantName] = useState(null);
   const participantCount = participantIds ? participantIds.length : null;
   const {t} = useTranslation();
 
@@ -114,6 +115,12 @@ const VideoCallScreen = ({
     participantIds[0],
     {},
   );
+
+  useEffect(() => {
+    if (Data?.Data) {
+      setCurrentParticipantName(Data?.Data?.displayName);
+    }
+  }, [Data]);
 
   useEffect(() => {
     // Update participantIds whenever participants change
@@ -531,6 +538,7 @@ const VideoCallScreen = ({
                 <LargeView
                   participantId={participantIds[1]}
                   openStatsBottomSheet={openStatsBottomSheet}
+                  name={displayName}
                 />
               </View>
             ) : (
@@ -551,6 +559,7 @@ const VideoCallScreen = ({
               <MemoizedMiniView
                 openStatsBottomSheet={openStatsBottomSheet}
                 participantId={participantIds[0]}
+                name={currentParticipantName}
               />
             </Animated.View>
             <View style={styles.controls}>
@@ -618,6 +627,7 @@ const VideoCallScreen = ({
               <MemoizedMiniView
                 openStatsBottomSheet={openStatsBottomSheet}
                 participantId={participantIds[1]}
+                name={displayName}
               />
             ) : (
               <View style={styles.waitingParticipantView}>
