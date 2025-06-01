@@ -12,13 +12,13 @@ import NotificationsCenter from './components/NotificationConfig';
 import SplashScreen from 'react-native-splash-screen';
 import {Platform, Text, TouchableOpacity, View} from 'react-native';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import AlarmListener from './components/AlarmListener';
 import {Connectivity} from './components/NetwordConnectivity';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import queryClient from './Network/queryClient';
 import {CrashlyticsErrorBoundary} from './components/CrashlyticsErrorBoundary';
-import { CrashlyticsProvider } from './components/CrashlyticsProvider';
 import crashlytics from '@react-native-firebase/crashlytics';
+import {initializeI18Next} from './utils/language/i18nextConfig';
+import {CrashlyticsProvider} from './components/CrashlyticsProvider';
 
 const App = () => {
   useEffect(() => {
@@ -29,9 +29,13 @@ const App = () => {
     };
   });
 
+  useEffect(() => {
+    // Initialize i18n with the default language
+    initializeI18Next();
+  }, []);
+
   const onRemoteNotification = (notification: any) => {
     const actionIdentifier = notification.getActionIdentifier();
-    console.log('notificationnotification', notification);
 
     if (actionIdentifier === 'open') {
       // Perform action based on open action
@@ -73,13 +77,12 @@ const App = () => {
               <CrashlyticsProvider
                 userId="user"
                 customKeys={{
-                  appVersion: '1.0.2',
-                  environment: 'development',
+                  appVersion: '1.0.3',
+                  environment: 'production',
                 }}>
                 <NavigationContainer ref={navigationRef}>
                   <Routes />
                   <NotificationsCenter />
-                  {Platform.OS == 'android' && <AlarmListener />}
                   <Connectivity />
                 </NavigationContainer>
               </CrashlyticsProvider>

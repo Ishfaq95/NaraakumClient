@@ -1,6 +1,9 @@
 export const ROUTES = {
     Home: 'Home',
     AlarmScreen:'AlarmScreen',
-    NetworkError:'NetworkError'
+    NetworkError:'NetworkError',
+    preViewCall:'preViewCall',
+    VideoCallScreen:'VideoCallScreen',
+    Meeting: "Meeting_Screen",
   };
   

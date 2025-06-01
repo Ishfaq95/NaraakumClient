@@ -80,7 +80,7 @@ android {
         applicationId "com.naraakum_patient"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 15
+        versionCode 17
         versionName "1.0"
     }
     signingConfigs {
@@ -123,12 +123,15 @@ dependencies {
     implementation project(':react-native-splash-screen')
     implementation "androidx.work:work-runtime-ktx:2.8.1"
 
+    implementation project(':rnwebrtc')
+
      implementation 'com.google.firebase:firebase-crashlytics:18.2.13'
      implementation("androidx.browser:browser") {
         version {
             strictly("1.8.0")
         }
     }
+    implementation 'com.airbnb.android:lottie:6.1.0'
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

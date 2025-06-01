@@ -11,6 +11,8 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
 import org.devio.rn.splashscreen.SplashScreenReactPackage
+import live.videosdk.rnwebrtc.WebRTCModulePackage
+import com.facebook.react.modules.i18nmanager.I18nUtil
 
 class MainApplication : Application(), ReactApplication {
 
@@ -19,6 +21,7 @@ class MainApplication : Application(), ReactApplication {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
               // Manually add AlarmPackage to the list of packages
+              add(WebRTCModulePackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
@@ -39,5 +42,10 @@ class MainApplication : Application(), ReactApplication {
       // Load native entry point for new architecture
       load()
     }
+    
+    // Force RTL layout direction
+    val i18nUtil = I18nUtil.getInstance()
+    i18nUtil.allowRTL(applicationContext, true)
+    i18nUtil.forceRTL(applicationContext, true)
   }
 }

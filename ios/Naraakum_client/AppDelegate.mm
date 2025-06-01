@@ -6,6 +6,9 @@
 #import <UserNotifications/UserNotifications.h>
 #import <RNCPushNotificationIOS.h>
 #import "RNSplashScreen.h"
+#import <FirebaseCore/FirebaseCore.h>
+#import <FirebaseCrashlytics/FirebaseCrashlytics.h>
+#import <React/RCTI18nUtil.h>
 
 @implementation AppDelegate
 
@@ -16,6 +19,9 @@
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{};
 
+  // Configure RTL
+  [[RCTI18nUtil sharedInstance] allowRTL:YES];
+  [[RCTI18nUtil sharedInstance] forceRTL:YES];
   
   [FIRApp configure];
 
@@ -26,12 +32,6 @@
 //   [RNSplashScreen show];
 
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
-}
-
-//Called when a notification is delivered to a foreground app.
--(void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
-{
-  completionHandler(UNNotificationPresentationOptionSound | UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge);
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
@@ -70,6 +70,14 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
          withCompletionHandler:(void (^)(void))completionHandler
 {
   [RNCPushNotificationIOS didReceiveNotificationResponse:response];
+}
+
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
+{
+  //THIS ONE, it allows you to call javascript even on foreground state.
+  NSDictionary *userInfo = notification.request.content.userInfo;
+  [RNCPushNotificationIOS didReceiveRemoteNotification:userInfo];
+  completionHandler(UNNotificationPresentationOptionSound | UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge);
 }
 
 @end

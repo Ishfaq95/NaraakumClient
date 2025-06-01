@@ -6,15 +6,16 @@ import {
   Platform,
   PermissionsAndroid,
   AppState,
+  Linking,
 } from 'react-native';
 import LoaderKit from 'react-native-loader-kit';
 import {WebView} from 'react-native-webview';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 import messaging from '@react-native-firebase/messaging';
 import {useDispatch, useSelector} from 'react-redux';
+import {setTopic, setUser} from '../shared/redux/reducers/userReducer';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
-import {setTopic, setUser} from '../shared/redux/reducers/userReducer';
 import useMutationHook from '../Network/useMutationHook';
 import PushNotification from 'react-native-push-notification';
 import notifee, {
@@ -23,6 +24,9 @@ import notifee, {
   TimestampTrigger,
   TriggerType,
 } from '@notifee/react-native';
+import {ROUTES} from '../shared/utils/routes';
+import {useNavigation} from '@react-navigation/native';
+import WebSocketService from './WebSocketService';
 
 const WebViewComponent = ({uri}: any) => {
   const dispatch = useDispatch();
@@ -33,6 +37,8 @@ const WebViewComponent = ({uri}: any) => {
   const [reloadWebView, setReloadWebView] = useState(false);
   const [latestUrl, setLatestUrl] = useState('');
   const webViewRef = useRef(null);
+  const navigation = useNavigation();
+  const webSocketService = WebSocketService.getInstance();
 
   const sleep = (timeout: number) =>
     new Promise<void>(resolve => setTimeout(resolve, timeout));
@@ -48,26 +54,61 @@ const WebViewComponent = ({uri}: any) => {
   useEffect(() => {
     if (isSuccessSystemNotification) {
       PushNotification.cancelAllLocalNotifications();
-      
-      scheduleNotification(SystemNotificationList?.ReminderList);
+
+      if (Platform.OS === 'ios') {
+        scheduleNotificationIOS(SystemNotificationList?.ReminderList);
+      } else {
+        scheduleNotificationAndroid(SystemNotificationList?.ReminderList);
+      }
     }
     if (isErrorSystemNotifiction) {
     }
   }, [isSuccessSystemNotification, isErrorSystemNotifiction]);
 
-  const scheduleNotification = async (notificationList: any[]) => {
+  const scheduleNotificationIOS = (notificationList: any) => {
+    notificationList.map((item: any, index: any) => {
+      const data = item;
+      // Convert UTC date string to local Date object
+      const localDate = new Date(data.ReminderDate); // Date object auto-adjusts to local timezone
+
+      // Optional: skip past dates
+      if (localDate <= new Date()) {
+        return;
+      }
+
+      const reminderObj = {
+        ...item,
+        meetingInfo: item.meetingInfo[0],
+        notificationFrom: 'reminder',
+      };
+
+      PushNotification.localNotificationSchedule({
+        id: data.Id,
+        title: data.Subject,
+        message: data.NotificationBody,
+        date: localDate,
+        // date: new Date(Date.now() + 60 * 1000),
+        playSound: true,
+        soundName: 'default',
+        userInfo: reminderObj,
+        allowWhileIdle: true, // important for background
+      });
+    });
+
+    PushNotification.getScheduledLocalNotifications(notifs => {});
+  };
+
+  const scheduleNotificationAndroid = async (notificationList: any) => {
     await notifee.cancelAllNotifications();
-    
+
     try {
-  
       for (const item of notificationList) {
         const localDate = new Date(item.ReminderDate);
-  
+
         const trigger: TimestampTrigger = {
           type: TriggerType.TIMESTAMP,
           timestamp: localDate.getTime(), // cleaner and safer
         };
-  
         await notifee.createTriggerNotification(
           {
             id: `reminder-${item.Id}`,
@@ -80,97 +121,28 @@ const WebViewComponent = ({uri}: any) => {
               },
             },
             data: {
-                CatNotificationPlatformId: item.CatNotificationPlatformId,
-                CreatedDate: item.CreatedDate,
-                Id:item.Id,
-                NotificationBody: item.NotificationBody,
-                ReceiverId: item.ReceiverId,
-                ReminderDate: item.ReminderDate,
-                SchedulingDate: item.SchedulingDate,
-                SchedulingTime: item.SchedulingTime,
-                Subject: item.Subject,
-                TaskId: item.TaskId,
-                VideoSDKMeetingId: item.VideoSDKMeetingId || "Not Found",
+              CatNotificationPlatformId: item.CatNotificationPlatformId,
+              CreatedDate: item.CreatedDate,
+              Id: item.Id,
+              NotificationBody: item.NotificationBody,
+              ReceiverId: item.ReceiverId,
+              ReminderDate: item.ReminderDate,
+              SchedulingDate: item.SchedulingDate,
+              SchedulingTime: item.SchedulingTime,
+              Subject: item.Subject,
+              TaskId: item.TaskId,
+              VideoSDKMeetingId: item.VideoSDKMeetingId || 'Not Found',
               notificationFrom: 'reminder',
+              meetingInfo: item.meetingInfo[0],
             },
           },
-          trigger
+          trigger,
         );
       }
-  
+
       const notifeeNotifs = await notifee.getTriggerNotifications();
-      console.log('✅ Notifee Scheduled Notifications:', notifeeNotifs);
-    } catch (error) {
-      console.error('🔥 Error scheduling notifications:', error);
-    }
+    } catch (error) {}
   };
-
-  // const scheduleNotification = async (notificationList: any) => {
-  //   notificationList.map(async (item: any, index: any) => {
-  //     const data = item;
-  //     // Convert UTC date string to local Date object
-  //     const localDate = new Date(data.ReminderDate); // Date object auto-adjusts to local timezone
-
-  //     // Optional: skip past dates
-  //     if (localDate <= new Date()) {
-  //       console.log(`Skipping past notification with id: ${data.Id}`);
-  //       return;
-  //     }
-
-  //     const reminderObj = {
-  //       ...item,
-  //       notificationFrom: 'reminder',
-  //     };
-
-  //     const date = new Date(Date.now());
-  //     date.setMinutes(date.getMinutes() + 1); // 1 minute from now
-
-  //     const trigger: TimestampTrigger = {
-  //       type: TriggerType.TIMESTAMP,
-  //       timestamp: date.getTime(),
-  //       repeatFrequency: undefined,
-  //     };
-
-  //     if (index == 0) {
-  //       await notifee.createTriggerNotification(
-  //         {
-  //           title: 'New Offer 🎁',
-  //           body: 'Tap to view your special offer!',
-  //           android: {
-  //             channelId: 'default',
-  //             pressAction: {
-  //               id: 'default',
-  //             },
-  //           },
-  //           // 👇 Attach your custom data here
-  //           data: {
-  //             type: 'promo',
-  //             itemId: '12345',
-  //           },
-  //         },
-  //         trigger,
-  //       );
-  //       // PushNotification.localNotificationSchedule({
-  //       //   channelId: "com.naraakm.naraakumPatient",
-  //       //   id: data.Id,
-  //       //   title: data.Subject,
-  //       //   message: data.NotificationBody,
-  //       //   // date: localDate,
-  //       //   date: new Date(Date.now() + 60 * 1000),
-  //       //   playSound: true,
-  //       //   soundName: 'default',
-  //       //   userInfo: reminderObj,
-  //       //   allowWhileIdle: true, // important for background
-  //       // });
-  //     }
-  //   });
-
-  //   const notifications = await notifee.getTriggerNotifications();
-  //   console.log('notification list', notifications);
-  //   PushNotification.getScheduledLocalNotifications(notifs => {
-  //     console.log('Currently Scheduled Notifications:', notifs);
-  //   });
-  // };
 
   useEffect(() => {
     if (user) {
@@ -180,9 +152,20 @@ const WebViewComponent = ({uri}: any) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      const presence = 1;
+      const communicationKey = user.communicationKey;
+      const UserId = user.id;
+      webSocketService.connect(presence, communicationKey, UserId);
+    } else {
+      webSocketService.disconnect();
+    }
+  }, [user]);
+
   const subsribeTopic = (Id: any) => {
     const topicName = `patient_${Id}`;
-    console.log('topicName', topicName);
+
     if (topic) {
       if (topic != topicName) {
         messaging()
@@ -196,7 +179,6 @@ const WebViewComponent = ({uri}: any) => {
           .then(() => {});
       }
     } else {
-      console.log('subscribe');
       dispatch(setTopic(topicName));
       messaging()
         .subscribeToTopic(topicName)
@@ -253,7 +235,19 @@ const WebViewComponent = ({uri}: any) => {
       fileName,
     } = JSON.parse(event.nativeEvent.data);
 
-    if (eventHandler == 'download') {
+    if (eventHandler == 'logout') {
+      dispatch(setUser(null));
+      dispatch(setTopic(null));
+      webSocketService.disconnect();
+    }
+
+    if (eventHandler == 'joinMeeting') {
+      navigation.navigate(ROUTES.preViewCall, {Data: data});
+    } else if (eventHandler == 'orderSuccess') {
+      getSystemNotificationFN({
+        UserloginInfo: user.id,
+      });
+    } else if (eventHandler == 'download') {
       let isPermissionGrandted = await getStoragePermission();
       if (isPermissionGrandted) {
         setLoading(true);
@@ -290,50 +284,50 @@ const WebViewComponent = ({uri}: any) => {
       dispatch(setUser(userInfo));
     }
 
-    if (url && url.includes('OnlineSessionRoom')) {
-      // let urlComplete = `https://staging.innotech-sa.com${url}`;
-      let urlComplete = `https://dvx.innotech-sa.com${url}`;
-      // let urlComplete = `https://nkapps.innotech-sa.com${url}`;
-      // let urlComplete = `https://naraakum.com${url}`;
+    // if (url && url.includes('OnlineSessionRoom')) {
+    //   // let urlComplete = `https://staging.innotech-sa.com${url}`;
+    //   let urlComplete = `https://dvx.innotech-sa.com${url}`;
+    //   // let urlComplete = `https://nkapps.innotech-sa.com${url}`;
+    //   // let urlComplete = `https://naraakum.com${url}`;
 
-      const redirectUrl = getDeepLink();
+    //   const redirectUrl = getDeepLink();
 
-      try {
-        if (await InAppBrowser.isAvailable()) {
-          // const result = await InAppBrowser.open(urlComplete, {
-          //   showTitle: true,
-          //   toolbarColor: '#6200EE',
-          //   enableDefaultShare: true,
-          //   animations: {
-          //     startEnter: 'slide_in_right',
-          //     startExit: 'slide_out_left',
-          //     endEnter: 'slide_in_left',
-          //     endExit: 'slide_out_right',
-          //   },
-          // });
-          const result = await InAppBrowser.open(urlComplete, {
-            forceCloseOnRedirection: false,
-            showInRecents: true,
-            showTitle: true,
-            enableUrlBarHiding: true,
-            enableDefaultShare: false,
-            modalPresentationStyle: 'overFullScreen',
+    //   try {
+    //     if (await InAppBrowser.isAvailable()) {
+    //       // const result = await InAppBrowser.open(urlComplete, {
+    //       //   showTitle: true,
+    //       //   toolbarColor: '#6200EE',
+    //       //   enableDefaultShare: true,
+    //       //   animations: {
+    //       //     startEnter: 'slide_in_right',
+    //       //     startExit: 'slide_out_left',
+    //       //     endEnter: 'slide_in_left',
+    //       //     endExit: 'slide_out_right',
+    //       //   },
+    //       // });
+    //       const result = await InAppBrowser.open(urlComplete, {
+    //         forceCloseOnRedirection: false,
+    //         showInRecents: true,
+    //         showTitle: true,
+    //         enableUrlBarHiding: true,
+    //         enableDefaultShare: false,
+    //         modalPresentationStyle: 'overFullScreen',
 
-            ephemeralWebSession: false,
-            enableBarCollapsing: true,
-            modalEnabled: true,
-          });
-          await sleep(800);
-          setCurrentUrl(latestUrl);
-          setReloadWebView(true);
-          setTimeout(() => {
-            setReloadWebView(false);
-          }, 100);
-        }
-      } catch (error) {
-        Alert.alert('Error', 'Failed to open the in-app browser');
-      }
-    }
+    //         ephemeralWebSession: false,
+    //         enableBarCollapsing: true,
+    //         modalEnabled: true,
+    //       });
+    //       await sleep(800);
+    //       setCurrentUrl(latestUrl);
+    //       setReloadWebView(true);
+    //       setTimeout(() => {
+    //         setReloadWebView(false);
+    //       }, 100);
+    //     }
+    //   } catch (error) {
+    //     Alert.alert('Error', 'Failed to open the in-app browser');
+    //   }
+    // }
   };
 
   const getDeepLink = (path = '') => {
@@ -486,10 +480,8 @@ const WebViewComponent = ({uri}: any) => {
       photoLibraryPermission === RESULTS.GRANTED &&
       mediaLibraryPermission === RESULTS.GRANTED
     ) {
-      console.log('All necessary permissions granted');
       return true;
     } else {
-      console.log('Some permissions were denied');
       return false;
     }
   };
@@ -500,7 +492,6 @@ const WebViewComponent = ({uri}: any) => {
     } else {
       setLoading(false);
     }
-    setLatestUrl(url.url);
   };
 
   const handleLoadEnd = () => {
@@ -525,20 +516,21 @@ const WebViewComponent = ({uri}: any) => {
     ];
 
     const lowerCaseUrl = url.toLowerCase();
-
-    // Use stricter domain matching by extracting the host
-    const match = lowerCaseUrl.match(/https?:\/\/(www\.)?([^\/]+)/);
-    const domain = match ? match[2] : null;
-
-    // Check if the extracted domain matches any social media domain
-    return !socialMediaDomains.some(socialDomain =>
-      domain?.includes(socialDomain),
-    );
+    if (lowerCaseUrl.includes('www.facebook.com') && Platform.OS == 'ios') {
+      Linking.openURL(lowerCaseUrl);
+      return false;
+    } else {
+      const match = lowerCaseUrl.match(/https?:\/\/(www\.)?([^\/]+)/);
+      const domain = match ? match[2] : null;
+      // Check if the extracted domain matches any social media domain
+      return !socialMediaDomains.some(socialDomain =>
+        domain?.includes(socialDomain),
+      );
+    }
   };
 
   useEffect(() => {
     const handleAppStateChange = nextAppState => {
-      console.log('App State changed to:', nextAppState);
       if (nextAppState == 'inactive') {
         setLoading(false);
       }
@@ -567,6 +559,36 @@ const WebViewComponent = ({uri}: any) => {
               color={'green'}
             />
           </View>
+        ) : Platform.OS === 'ios' ? (
+          <WebView
+            ref={webViewRef}
+            source={{uri: currentUrl}}
+            useWebKit={true}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={true}
+            cacheEnabled={false}
+            onLoadStart={() => setLoading(true)}
+            onLoadEnd={() => {
+              setLoading(false);
+              handleLoadEnd();
+            }}
+            mediaPlaybackRequiresUserAction={false}
+            allowsInlineMediaPlayback={true}
+            setSupportMultipleWindows={true} // Enable multiple windows on Android
+            // userAgent={Platform.OS === 'android' ? 'Chrome/18.0.1025.133 Mobile Safari/535.19' : 'AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75'}
+            userAgent={
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75 Mobile/14E5239e Safari/602.1'
+            }
+            originWhitelist={['https://*', 'http://*', 'file://*', 'sms://*']}
+            geolocationEnabled={true}
+            javaScriptEnabledAndroid={true}
+            injectedJavaScript={injectedJavaScript}
+            onMessage={handleMessage}
+            onError={handleLoadError}
+            onNavigationStateChange={onNavigationStateChange}
+            style={styles.webview}
+          />
         ) : (
           <WebView
             ref={webViewRef}
@@ -586,9 +608,7 @@ const WebViewComponent = ({uri}: any) => {
             setSupportMultipleWindows={true} // Enable multiple windows on Android
             // userAgent={Platform.OS === 'android' ? 'Chrome/18.0.1025.133 Mobile Safari/535.19' : 'AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75'}
             userAgent={
-              Platform.OS === 'android'
-                ? 'Mozilla/5.0 (Linux; Android 10; Mobile; rv:79.0) Gecko/79.0 Firefox/79.0'
-                : 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15'
+              'Mozilla/5.0 (Linux; Android 10; Mobile; rv:79.0) Gecko/79.0 Firefox/79.0'
             }
             originWhitelist={['https://*', 'http://*', 'file://*', 'sms://*']}
             geolocationEnabled={true}

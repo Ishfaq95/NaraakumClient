@@ -26,11 +26,6 @@ class CrashlyticsService {
             }
 
             await crashlytics().setCrashlyticsCollectionEnabled(true);
-            
-            // if (_DEV_) {
-            //     await crashlytics().setCustomKey('debug_mode', 'enabled');
-            //     console.log('Crashlytics initialized in debug mode');
-            // }
 
             if (config?.userId) {
                 await this.setUserId(config.userId);
