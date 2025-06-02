@@ -236,7 +236,7 @@ const WebViewComponent = ({uri}: any) => {
     } = JSON.parse(event.nativeEvent.data);
 
     if (eventHandler == 'logout') {
-      dispatch(setUser(null));
+      // dispatch(setUser(null));
       dispatch(setTopic(null));
       webSocketService.disconnect();
     }
@@ -281,7 +281,7 @@ const WebViewComponent = ({uri}: any) => {
       const userInfo = data;
       setUserInformation(userInfo);
       subsribeTopic(userInfo.id);
-      dispatch(setUser(userInfo));
+      // dispatch(setUser(userInfo));
     }
 
     // if (url && url.includes('OnlineSessionRoom')) {

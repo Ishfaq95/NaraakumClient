@@ -1,36 +1,44 @@
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {ROUTES} from '../shared/utils/routes';
 import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useSelector } from 'react-redux';
+import LoginScreen from '../screens/LoginScreen';
+import AppointmentListScreen from '../screens/AppointmentListScreen';
 import HomeScreen from '../screens/Home';
 import AlarmScreen from '../screens/AlarmScreen';
 import NetworkErrorScreen from '../screens/NetworkScreen';
 import PreViewScreen from '../screens/VideoSDK/preViewScreen';
 import VideoCallScreen from '../screens/VideoSDK/VideoCallScreen';
 import meeting from '../screens/meeting';
+import { ROUTES } from '../shared/utils/routes';
 
 const Stack = createNativeStackNavigator();
 
-const AuthStack = () => {
-  return (
-    <>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
-        <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
-        <Stack.Screen name={ROUTES.AlarmScreen} component={AlarmScreen} />
-        <Stack.Screen
-          name={ROUTES.NetworkError}
-          component={NetworkErrorScreen}
-        />
+const RootNavigator = () => {
+  const state = useSelector((state: any) => state);
+  const user = useSelector((state: any) => state.root.user.user);
 
-        <Stack.Screen name={ROUTES.preViewCall} component={PreViewScreen} />
+  console.log('Navigation state - Full state:', state);
+  console.log('Navigation state - User:', user);
 
-        <Stack.Screen
-          name={ROUTES.VideoCallScreen}
-          component={VideoCallScreen}
-        />
-        <Stack.Screen name={ROUTES.Meeting} component={meeting} />
+  if (!user) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name={ROUTES.Login} component={LoginScreen} />
       </Stack.Navigator>
-    </>
+    );
+  }
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name={ROUTES.AppointmentList} component={AppointmentListScreen} />
+      <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
+      <Stack.Screen name={ROUTES.AlarmScreen} component={AlarmScreen} />
+      <Stack.Screen name={ROUTES.NetworkError} component={NetworkErrorScreen} />
+      <Stack.Screen name={ROUTES.preViewCall} component={PreViewScreen} />
+      <Stack.Screen name={ROUTES.VideoCallScreen} component={VideoCallScreen} />
+      <Stack.Screen name={ROUTES.Meeting} component={meeting} />
+    </Stack.Navigator>
   );
 };
 
-export default AuthStack;
+export default RootNavigator;

@@ -11,15 +11,15 @@ interface State {
   mediaTokenExpiresAt: any;
 }
 
-const initialState: State = {
-  user:null,
+const initialState = {
+  user: null,
   topic: null,
   token: null,
   expiresAt: null,
   appVersionCode: Platform.OS=="android"? "1.0.3":"1.0.3",
   mediaToken: null,
   mediaTokenExpiresAt: null,
-};
+} as State;
 
 export const userReducer = createSlice({
   name: 'user',
@@ -29,24 +29,22 @@ export const userReducer = createSlice({
       state.topic = action.payload;
     },
     setUser: (state, action) => {
+      console.log('action.payload', action.payload);
       state.user = action.payload;
     },
-    setToken:(state = initialState, action)=>{
-      return {
-        ...state,
-        token: action.payload.token,
-        expiresAt: action.payload.expiresAt,
-      };
+    setToken:(state, action)=>{
+      state.token = action.payload.token;
+      state.expiresAt = action.payload.expiresAt;
     },
-    setMediaToken: (state = initialState, action) => {
-      return {
-        ...state,
-        mediaToken: action.payload.token,
-        mediaTokenExpiresAt: action.payload.expiresAt,
-      };
+    setMediaToken: (state, action) => {
+      state.mediaToken = action.payload.token;
+      state.mediaTokenExpiresAt = action.payload.expiresAt;
+    },
+    logout: (state) => {
+      return initialState;
     }
   },
 });
 
-export const {setTopic,setToken,setUser,setMediaToken } = userReducer.actions;
+export const {setTopic, setToken, setUser, setMediaToken, logout} = userReducer.actions;
 export default userReducer.reducer;

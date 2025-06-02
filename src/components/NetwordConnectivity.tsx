@@ -19,7 +19,7 @@ export const Connectivity = () => {
         if (!netInfo.isConnected) {
           navigation.navigate(ROUTES.NetworkError)
         } else {
-          navigation.navigate(ROUTES.Home)
+          // navigation.navigate(ROUTES.Home)
         }
         setPreviousConnection(netInfo.isConnected);
       }

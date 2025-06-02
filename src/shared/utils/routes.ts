@@ -5,5 +5,7 @@ export const ROUTES = {
     preViewCall:'preViewCall',
     VideoCallScreen:'VideoCallScreen',
     Meeting: "Meeting_Screen",
+    Login: "Login",
+    AppointmentList: "AppointmentList",
   };
   

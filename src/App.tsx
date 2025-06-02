@@ -19,6 +19,7 @@ import {CrashlyticsErrorBoundary} from './components/CrashlyticsErrorBoundary';
 import crashlytics from '@react-native-firebase/crashlytics';
 import {initializeI18Next} from './utils/language/i18nextConfig';
 import {CrashlyticsProvider} from './components/CrashlyticsProvider';
+import AppInitializer from './components/AppInitializer';
 
 const App = () => {
   useEffect(() => {
@@ -80,11 +81,13 @@ const App = () => {
                   appVersion: '1.0.3',
                   environment: 'production',
                 }}>
-                <NavigationContainer ref={navigationRef}>
-                  <Routes />
-                  <NotificationsCenter />
-                  <Connectivity />
-                </NavigationContainer>
+                <AppInitializer>
+                  <NavigationContainer ref={navigationRef}>
+                    <Routes />
+                    <NotificationsCenter />
+                    <Connectivity />
+                  </NavigationContainer>
+                </AppInitializer>
               </CrashlyticsProvider>
             </CrashlyticsErrorBoundary>
           </QueryClientProvider>

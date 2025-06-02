@@ -14,7 +14,7 @@ const NetworkErrorScreen = ({ navigation }:any) => {
                 setLoading(false)
             }, 100);
         }else{
-            navigation.navigate(ROUTES.Home)
+            // navigation.navigate(ROUTES.Home)
         }
         
     }
