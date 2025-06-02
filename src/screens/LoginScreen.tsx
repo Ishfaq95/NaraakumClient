@@ -13,6 +13,9 @@ import {
   ScrollView,
   Dimensions,
   useWindowDimensions,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -28,6 +31,7 @@ import { authService } from '../services/api/authService';
 import { setUser, setToken } from '../shared/redux/reducers/userReducer';
 import { useDispatch } from 'react-redux';
 import FullScreenLoader from '../components/FullScreenLoader';
+import { signInWithGoogle } from '../services/auth/googleAuthService';
 
 const MIN_HEIGHT = 550; // Absolute minimum height
 const OPTIMAL_HEIGHT = 750; // Height for medium screens
@@ -76,6 +80,9 @@ const LoginScreen = () => {
   }, [selectedCountry]);
 
   const handleLogin = async () => {
+    // Dismiss keyboard immediately
+    Keyboard.dismiss();
+    
     try {
       setIsLoading(true);
       let hasError = false;
@@ -90,7 +97,10 @@ const LoginScreen = () => {
         hasError = true;
       }
 
-      if (hasError) return;
+      if (hasError) {
+        setIsLoading(false);
+        return;
+      }
 
       let data = {
         "Username": activeTab === 'mobile' ? fullNumber : emailOrUsername,
@@ -125,11 +135,50 @@ const LoginScreen = () => {
     if (passwordError) setPasswordError(false);
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const googleUser = await signInWithGoogle();
+
+      console.log('googleUser', googleUser);
+      
+      // // Call your API to save the Google user data
+      // const response = await authService.loginWithGoogle({
+      //   googleId: googleUser.id,
+      //   email: googleUser.email,
+      //   name: googleUser.name,
+      //   photo: googleUser.photo,
+      // });
+
+      // if (response?.ResponseStatus?.STATUSCODE === 200) {
+      //   dispatch(setUser(response.Userinfo));
+      // } else {
+      //   Alert.alert(
+      //     t('error'),
+      //     t('google_login_failed'),
+      //     [{ text: t('ok') }]
+      //   );
+      // }
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      Alert.alert(
+        t('error'),
+        error.message || t('google_login_failed'),
+        [{ text: t('ok') }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderSocialButtons = () => {
     if (Platform.OS === 'ios') {
       return (
         <View style={styles.socialButtonsRow}>
-          <TouchableOpacity style={[styles.socialButton, styles.googleButton]}>
+          <TouchableOpacity 
+            style={[styles.socialButton, styles.googleButton]}
+            onPress={handleGoogleLogin}
+          >
             <GoogleIcon width={24} height={24} style={styles.socialIcon} />
             <Text style={styles.socialButtonText}>{t('continue_with_google')}</Text>
           </TouchableOpacity>
@@ -149,7 +198,10 @@ const LoginScreen = () => {
     }
     
     return (
-      <TouchableOpacity style={[styles.socialButton, styles.googleButton, styles.centerButton]}>
+      <TouchableOpacity 
+        style={[styles.socialButton, styles.googleButton, styles.centerButton]}
+        onPress={handleGoogleLogin}
+      >
         <GoogleIcon width={24} height={24} style={styles.socialIcon} />
         <Text style={styles.socialButtonText}>{t('continue_with_google')}</Text>
       </TouchableOpacity>
@@ -174,180 +226,186 @@ const LoginScreen = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}>
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollView
-          ]}
-          bounces={false}
-          showsVerticalScrollIndicator={isSmallScreen}>
-          <View style={[
-            styles.contentContainer
-          ]}>
-            {/* Logo and Header */}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollView
+            ]}
+            bounces={false}
+            showsVerticalScrollIndicator={isSmallScreen}>
             <View style={[
-              styles.headerContainer
+              styles.contentContainer
             ]}>
-              <Image
-                source={require('../assets/images/NaraakumLogo.png')}
-                style={[
-                  styles.logo,
-                  { 
-                    width: isLargeScreen ? 120 : 100, 
-                    height: isLargeScreen ? 120 : 100,
-                    marginBottom: isLargeScreen ? 16 : 8 
-                  }
-                ]}
-                resizeMode="contain"
-              />
-              <View style={styles.headerTextContainer}>
-                <Text style={[
-                  styles.headerText,
-                  isLargeScreen && { fontSize: 16 }
-                ]}>{t('please_login_or')}</Text>
-                <TouchableOpacity>
+              {/* Logo and Header */}
+              <View style={[
+                styles.headerContainer
+              ]}>
+                <Image
+                  source={require('../assets/images/NaraakumLogo.png')}
+                  style={[
+                    styles.logo,
+                    { 
+                      width: isLargeScreen ? 120 : 100, 
+                      height: isLargeScreen ? 120 : 100,
+                      marginBottom: isLargeScreen ? 16 : 8 
+                    }
+                  ]}
+                  resizeMode="contain"
+                />
+                <View style={styles.headerTextContainer}>
                   <Text style={[
-                    styles.createAccountText,
+                    styles.headerText,
                     isLargeScreen && { fontSize: 16 }
-                  ]}>{t('create_new_account')}</Text>
-                </TouchableOpacity>
+                  ]}>{t('please_login_or')}</Text>
+                  <TouchableOpacity>
+                    <Text style={[
+                      styles.createAccountText,
+                      isLargeScreen && { fontSize: 16 }
+                    ]}>{t('create_new_account')}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
 
-            {/* Login Form Card */}
-            <View style={[
-              styles.formCard
-            ]}>
-              {/* Login Tabs */}
-              <View style={styles.tabContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    activeTab === 'mobile' && styles.activeTab,
-                    { [isRTL ? 'marginLeft' : 'marginRight']: 10 },
-                  ]}
-                  onPress={() => setActiveTab('mobile')}>
-                  <Text style={[styles.tabText, activeTab === 'mobile' && styles.activeTabText]}>
-                    {t('mobile_number')}
+              {/* Login Form Card */}
+              <View style={[
+                styles.formCard
+              ]}>
+                {/* Login Tabs */}
+                <View style={styles.tabContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.tab,
+                      activeTab === 'mobile' && styles.activeTab,
+                      { [isRTL ? 'marginLeft' : 'marginRight']: 10 },
+                    ]}
+                    onPress={() => setActiveTab('mobile')}>
+                    <Text style={[styles.tabText, activeTab === 'mobile' && styles.activeTabText]}>
+                      {t('mobile_number')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.tab, activeTab === 'email' && styles.activeTab]}
+                    onPress={() => setActiveTab('email')}>
+                    <Text style={[styles.tabText, activeTab === 'email' && styles.activeTabText]}>
+                      {t('email_username')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Input Fields */}
+                {activeTab === 'email' ? (
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.ltrInput,
+                      emailError && styles.inputError
+                    ]}
+                    placeholder={"example@info.com"}
+                    value={emailOrUsername}
+                    onChangeText={handleEmailChange}
+                    placeholderTextColor="#999"
+                    textAlign="left"
+                  />
+                ) : (
+                  <PhoneNumberInput
+                    value={mobileNumber}
+                    onChangePhoneNumber={handlePhoneNumberChange}
+                    placeholder={t('mobile_number')}
+                    errorText={t('mobile_number_not_valid')}
+                  />
+                )}
+
+                <View style={[styles.labelContainer]}>
+                  <Text style={[styles.inputLabel, isRTL && {textAlign:'left'}]}>
+                    {t('password')}
+                    <Text style={styles.requiredStar}> *</Text>
                   </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.tab, activeTab === 'email' && styles.activeTab]}
-                  onPress={() => setActiveTab('email')}>
-                  <Text style={[styles.tabText, activeTab === 'email' && styles.activeTabText]}>
-                    {t('email_username')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                </View>
 
-              {/* Input Fields */}
-              {activeTab === 'email' ? (
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.ltrInput,
-                    emailError && styles.inputError
-                  ]}
-                  placeholder={"example@info.com"}
-                  value={emailOrUsername}
-                  onChangeText={handleEmailChange}
-                  placeholderTextColor="#999"
-                  textAlign="left"
-                />
-              ) : (
-                <PhoneNumberInput
-                  value={mobileNumber}
-                  onChangePhoneNumber={handlePhoneNumberChange}
-                  placeholder={t('mobile_number')}
-                  errorText={t('mobile_number_not_valid')}
-                />
-              )}
+                {/* Password Input */}
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.passwordInput,
+                      isRTL && styles.rtlInput,
+                      passwordError && styles.inputError
+                    ]}
+                    placeholder={t('password')}
+                    value={password}
+                    onChangeText={handlePasswordChange}
+                    secureTextEntry={!showPassword}
+                    placeholderTextColor="#999"
+                    textAlign={isRTL ? 'right' : 'left'}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowPassword(!showPassword)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    {showPassword ? (
+                      <EyeIcon width={22} height={22} color="#666666" />
+                    ) : (
+                      <EyeOffIcon width={22} height={22} color="#666666" />
+                    )}
+                  </TouchableOpacity>
+                </View>
 
-              <View style={[styles.labelContainer]}>
-                <Text style={[styles.inputLabel, isRTL && {textAlign:'left'}]}>
-                  {t('password')}
-                  <Text style={styles.requiredStar}> *</Text>
-                </Text>
-              </View>
+                {/* Remember Me and Forgot Password */}
+                <View style={styles.rememberContainer}>
+                  <TouchableOpacity
+                    style={styles.rememberMe}
+                    onPress={() => setRememberMe(!rememberMe)}>
+                    <View style={[styles.checkbox, rememberMe && styles.checkedBox]}>
+                      {rememberMe && <CheckIcon width={12} height={12} />}
+                    </View>
+                    <Text style={styles.rememberText}>{t('remember_me')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity>
+                    <Text style={styles.forgotPassword}>{t('forgot_password')}</Text>
+                  </TouchableOpacity>
+                </View>
 
-              {/* Password Input */}
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={[
-                    styles.passwordInput,
-                    isRTL && styles.rtlInput,
-                    passwordError && styles.inputError
-                  ]}
-                  placeholder={t('password')}
-                  value={password}
-                  onChangeText={handlePasswordChange}
-                  secureTextEntry={!showPassword}
-                  placeholderTextColor="#999"
-                  textAlign={isRTL ? 'right' : 'left'}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                {/* Login Button */}
+                <TouchableOpacity 
+                  onPress={handleLogin} 
+                  style={styles.loginButton}
+                  activeOpacity={0.7}
                 >
-                  {showPassword ? (
-                    <EyeIcon width={22} height={22} color="#666666" />
-                  ) : (
-                    <EyeOffIcon width={22} height={22} color="#666666" />
-                  )}
+                  <Text style={styles.loginButtonText}>{t('login')}</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Remember Me and Forgot Password */}
-              <View style={styles.rememberContainer}>
-                <TouchableOpacity
-                  style={styles.rememberMe}
-                  onPress={() => setRememberMe(!rememberMe)}>
-                  <View style={[styles.checkbox, rememberMe && styles.checkedBox]}>
-                    {rememberMe && <CheckIcon width={12} height={12} />}
-                  </View>
-                  <Text style={styles.rememberText}>{t('remember_me')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  <Text style={styles.forgotPassword}>{t('forgot_password')}</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Login Button */}
-              <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-                <Text style={styles.loginButtonText}>{t('login')}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Bottom Section */}
-            <View style={[
-              styles.bottomContainer,
-            ]}>
-              <View style={[styles.orContainer]}>
-                <View style={styles.orLine} />
-                <Text style={[
-                  styles.orText,
-                  isLargeScreen && { fontSize: 14 }
-                ]}>{t('or_continue_with')}</Text>
-                <View style={styles.orLine} />
-              </View>
-
-              {renderSocialButtons()}
-
-              <View style={[styles.signUpContainer]}>
-                <Text style={[
-                  styles.signUpText,
-                  isLargeScreen && { fontSize: 14 }
-                ]}>{t('dont_have_an_account')}</Text>
-                <TouchableOpacity>
+              {/* Bottom Section */}
+              <View style={[
+                styles.bottomContainer,
+              ]}>
+                <View style={[styles.orContainer]}>
+                  <View style={styles.orLine} />
                   <Text style={[
-                    styles.signUpLink,
+                    styles.orText,
                     isLargeScreen && { fontSize: 14 }
-                  ]}>{t('sign_up')}</Text>
-                </TouchableOpacity>
+                  ]}>{t('or_continue_with')}</Text>
+                  <View style={styles.orLine} />
+                </View>
+
+                {renderSocialButtons()}
+
+                <View style={[styles.signUpContainer]}>
+                  <Text style={[
+                    styles.signUpText,
+                    isLargeScreen && { fontSize: 14 }
+                  ]}>{t('dont_have_an_account')}</Text>
+                  <TouchableOpacity>
+                    <Text style={[
+                      styles.signUpLink,
+                      isLargeScreen && { fontSize: 14 }
+                    ]}>{t('sign_up')}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -557,6 +615,8 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     marginBottom: 16,
+    elevation: 2,
+    zIndex: 1,
   },
   loginButtonText: {
     color: '#FFFFFF',
