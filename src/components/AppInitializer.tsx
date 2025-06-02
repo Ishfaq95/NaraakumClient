@@ -7,7 +7,7 @@ import { crashlyticsService } from '../shared/services/crashlytics/crashlytics.s
 import useMutationHook from '../Network/useMutationHook';
 import { MediaBaseURL } from '../shared/utils/constants';
 
-const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AppInitializer = () => {
   const dispatch = useDispatch();
   const [appState, setAppState] = useState(AppState.currentState);
   const { expiresAt, appVersionCode } = useSelector((state: any) => state.root.user);
@@ -159,6 +159,7 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
         token: (data as any).access_token,
         expiresAt: (data as any).expires,
       };
+      console.log('sessionToken', sessionToken);
       dispatch(setToken(sessionToken));
       setTimeout(AppversionAPICall, 100);
     }
@@ -170,7 +171,7 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
     }
   }, [isSuccessVersionCode]);
 
-  return <>{children}</>;
+  return null;
 };
 
 export default AppInitializer; 

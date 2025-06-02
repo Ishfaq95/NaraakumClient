@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { logout } from '../shared/redux/reducers/userReducer';
+import { logout, setUser } from '../shared/redux/reducers/userReducer';
 import { useDispatch } from 'react-redux';
 
 type TabType = 'current' | 'upcoming' | 'previous';
@@ -24,7 +24,7 @@ const AppointmentListScreen = ({navigation}: any) => {
   const dispatch = useDispatch();
 
   const onLogout = () => {
-    dispatch(logout());
+    dispatch(setUser(null));
   }
 
   const renderHeader = () => (

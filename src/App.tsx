@@ -81,13 +81,14 @@ const App = () => {
                   appVersion: '1.0.3',
                   environment: 'production',
                 }}>
-                <AppInitializer>
+                
                   <NavigationContainer ref={navigationRef}>
+                    <AppInitializer />
                     <Routes />
                     <NotificationsCenter />
                     <Connectivity />
+                    
                   </NavigationContainer>
-                </AppInitializer>
               </CrashlyticsProvider>
             </CrashlyticsErrorBoundary>
           </QueryClientProvider>

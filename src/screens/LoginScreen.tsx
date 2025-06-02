@@ -27,6 +27,7 @@ import PhoneNumberInput from '../components/PhoneNumberInput';
 import { authService } from '../services/api/authService';
 import { setUser, setToken } from '../shared/redux/reducers/userReducer';
 import { useDispatch } from 'react-redux';
+import FullScreenLoader from '../components/FullScreenLoader';
 
 const MIN_HEIGHT = 550; // Absolute minimum height
 const OPTIMAL_HEIGHT = 750; // Height for medium screens
@@ -58,6 +59,7 @@ const LoginScreen = () => {
   const isRTL = I18nManager.isRTL;
   const isLargeScreen = windowHeight > OPTIMAL_HEIGHT;
   const isSmallScreen = windowHeight < MIN_HEIGHT;
+  const [isLoading, setIsLoading] = useState(false);
 
   const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
     console.log('data', data);
@@ -74,26 +76,29 @@ const LoginScreen = () => {
   }, [selectedCountry]);
 
   const handleLogin = async () => {
-    let hasError = false;
-    
-    if (activeTab === 'email' && !emailOrUsername.trim()) {
-      setEmailError(true);
-      hasError = true;
-    }
-    
-    if (!password.trim()) {
-      setPasswordError(true);
-      hasError = true;
-    }
-
-    if (hasError) return;
-
     try {
+      setIsLoading(true);
+      let hasError = false;
+      
+      if (activeTab === 'email' && !emailOrUsername.trim()) {
+        setEmailError(true);
+        hasError = true;
+      }
+      
+      if (!password.trim()) {
+        setPasswordError(true);
+        hasError = true;
+      }
+
+      if (hasError) return;
+
       let data = {
         "Username": activeTab === 'mobile' ? fullNumber : emailOrUsername,
         "Password": password,
         "Filter": activeTab === 'mobile' ? "mob" : "email"
       }
+
+      console.log('data', data);
 
       const response = await authService.login(data);
 
@@ -102,8 +107,10 @@ const LoginScreen = () => {
       }else{
         console.log('response', response.ResponseStatus?.STATUSCODE);
       }
+      setIsLoading(false);
     } catch (error: any) {
       console.error('Login error:', error);
+      setIsLoading(false);
       // Handle login error here (show error message, etc.)
     }
   };
@@ -163,6 +170,7 @@ const LoginScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <FullScreenLoader visible={isLoading} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}>

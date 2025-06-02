@@ -17,9 +17,6 @@ const RootNavigator = () => {
   const state = useSelector((state: any) => state);
   const user = useSelector((state: any) => state.root.user.user);
 
-  console.log('Navigation state - Full state:', state);
-  console.log('Navigation state - User:', user);
-
   if (!user) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
