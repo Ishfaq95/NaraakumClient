@@ -8,5 +8,17 @@ export const ROUTES = {
     Login: "Login",
     AppointmentList: "AppointmentList",
     AuthWelcome: "AuthWelcome",
+
+    HomeStack: "HomeStack",
+    CartStack: "CartStack",
+    ProfileStack: "ProfileStack",
+    SettingsStack: "SettingsStack",
+
+    HomeScreen: "HomeScreen",
+    CartScreen: "CartScreen",
+    ProfileScreen: "ProfileScreen",
+    SettingsScreen: "SettingsScreen",
+
+    AppNavigator: "AppNavigator",
   };
   

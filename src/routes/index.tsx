@@ -11,6 +11,7 @@ import VideoCallScreen from '../screens/VideoSDK/VideoCallScreen';
 import meeting from '../screens/meeting';
 import { ROUTES } from '../shared/utils/routes';
 import AuthWelcomeScreen from '../screens/AuthWelcomeScreen';
+import AppNavigator from './AppNavigator';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +30,7 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name={ROUTES.AppNavigator} component={AppNavigator} />
       <Stack.Screen name={ROUTES.AppointmentList} component={AppointmentListScreen} />
       <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
       <Stack.Screen name={ROUTES.AlarmScreen} component={AlarmScreen} />
