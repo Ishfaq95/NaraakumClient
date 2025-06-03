@@ -113,6 +113,7 @@ const LoginScreen = () => {
       const response = await authService.login(data);
 
       if(response?.ResponseStatus?.STATUSCODE == 200){
+        console.log('response====>', response);
         dispatch(setUser(response.Userinfo));
       }else{
         console.log('response', response.ResponseStatus?.STATUSCODE);

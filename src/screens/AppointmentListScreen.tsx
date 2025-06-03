@@ -2,35 +2,38 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
-  I18nManager,
-  ScrollView,
   SafeAreaView,
   useWindowDimensions,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { logout, setUser } from '../shared/redux/reducers/userReducer';
-import { useDispatch } from 'react-redux';
+import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../shared/redux/reducers/userReducer';
+import { styles } from '../components/appointments/styles';
+import CurrentAppointments from '../components/appointments/CurrentAppointments';
+import UpcomingAppointments from '../components/appointments/UpcomingAppointments';
+import PreviousAppointments from '../components/appointments/PreviousAppointments';
 
-type TabType = 'current' | 'upcoming' | 'previous';
-
-const AppointmentListScreen = ({navigation}: any) => {
+const AppointmentListScreen = React.memo(({navigation}: any) => {
   const [index, setIndex] = useState(0);
   const { t } = useTranslation();
-  const isRTL = I18nManager.isRTL;
   const layout = useWindowDimensions();
   const dispatch = useDispatch();
+  const userInfo = useSelector((state: any) => state.root.user.user);
 
   const onLogout = () => {
     dispatch(setUser(null));
-  }
+  };
+
+  const handleJoinMeeting = (meetingId: string) => {
+    navigation.navigate('VideoCall', { meetingId });
+  };
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <View style={styles.headerLeft} >
-        <TouchableOpacity style={styles.logoutButton} onPress={() => onLogout()}>
+      <View style={styles.headerLeft}>
+        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
           <Text style={styles.logoutButtonText}>{t('logout')}</Text>
         </TouchableOpacity>
       </View>
@@ -41,41 +44,11 @@ const AppointmentListScreen = ({navigation}: any) => {
     </View>
   );
 
-  const CurrentTab = () => (
-    <View style={styles.contentContainer}>
-      <Text>{t('current_appointments')}</Text>
-    </View>
-  );
-
-  const UpcomingTab = () => (
-    <View style={styles.contentContainer}>
-      <Text>{t('upcoming_appointments')}</Text>
-    </View>
-  );
-
-  const PreviousTab = () => (
-    <View style={styles.contentContainer}>
-      <Text>{t('previous_appointments')}</Text>
-    </View>
-  );
-
-  const renderScene = SceneMap({
-    current: CurrentTab,
-    upcoming: UpcomingTab,
-    previous: PreviousTab,
-  });
-
-  const routes = isRTL 
-    ? [
-        { key: 'current', title: t('current') },
-        { key: 'upcoming', title: t('upcoming') },
-        { key: 'previous', title: t('previous') },
-      ]
-    : [
-        { key: 'current', title: t('current') },
-        { key: 'upcoming', title: t('upcoming') },
-        { key: 'previous', title: t('previous') },
-      ];
+  const routes = [
+    { key: 'current', title: t('current') },
+    { key: 'upcoming', title: t('upcoming') },
+    { key: 'previous', title: t('previous') },
+  ];
 
   const renderTabBar = (props: any) => (
     <TabBar
@@ -87,6 +60,12 @@ const AppointmentListScreen = ({navigation}: any) => {
       inactiveColor="#666666"
     />
   );
+
+  const renderScene = SceneMap({
+    current: () => <CurrentAppointments userId={userInfo?.Id} onJoinMeeting={handleJoinMeeting} />,
+    upcoming: () => <UpcomingAppointments userId={userInfo?.Id} onJoinMeeting={handleJoinMeeting} />,
+    previous: () =><PreviousAppointments userId={userInfo?.Id} onJoinMeeting={handleJoinMeeting} />,
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -100,85 +79,12 @@ const AppointmentListScreen = ({navigation}: any) => {
         swipeEnabled={true}
         animationEnabled={true}
         lazy={true}
+        lazyPreloadDistance={0}
         tabBarPosition="top"
         style={styles.tabView}
-        direction={isRTL ? 'rtl' : 'ltr'}
       />
     </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerLeft: {
-    width: 80,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'center',
-  },
-  logoutButton: {
-    backgroundColor: '#008080',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    width: 80,
-  },
-  logoutButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  bookButton: {
-    backgroundColor: '#008080',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    width: 80,
-  },
-  bookButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  tabBar: {
-    backgroundColor: '#FFFFFF',
-    elevation: 0,
-    shadowOpacity: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  tabLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    textTransform: 'none',
-  },
-  indicator: {
-    backgroundColor: '#008080',
-    height: 2,
-  },
-  contentContainer: {
-    flex: 1,
-    padding: 16,
-  },
-  tabView: {
-    flex: 1,
-  },
 });
 
 export default AppointmentListScreen; 
