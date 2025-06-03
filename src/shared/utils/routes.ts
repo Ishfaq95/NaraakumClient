@@ -7,5 +7,6 @@ export const ROUTES = {
     Meeting: "Meeting_Screen",
     Login: "Login",
     AppointmentList: "AppointmentList",
+    AuthWelcome: "AuthWelcome",
   };
   

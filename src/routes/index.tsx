@@ -10,6 +10,7 @@ import PreViewScreen from '../screens/VideoSDK/preViewScreen';
 import VideoCallScreen from '../screens/VideoSDK/VideoCallScreen';
 import meeting from '../screens/meeting';
 import { ROUTES } from '../shared/utils/routes';
+import AuthWelcomeScreen from '../screens/AuthWelcomeScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +21,7 @@ const RootNavigator = () => {
   if (!user) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name={ROUTES.AuthWelcome} component={AuthWelcomeScreen} />
         <Stack.Screen name={ROUTES.Login} component={LoginScreen} />
       </Stack.Navigator>
     );
