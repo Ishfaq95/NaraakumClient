@@ -3,7 +3,7 @@ import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-si
 // Configure Google Sign In
 GoogleSignin.configure({
   // Get this from Google Cloud Console
-  webClientId: '1060639338997-sgjk0nuctcb6dqu64qd4vcbn2h8tj4ka.apps.googleusercontent.com',
+  webClientId: '1060639338997-trk5clk7fhaln0klkrum6a5fritpn3t6.apps.googleusercontent.com',
   offlineAccess: true,
 });
 
@@ -36,6 +36,7 @@ export const signInWithGoogle = async (): Promise<GoogleUser> => {
       givenName: user.givenName || undefined,
     };
   } catch (error: any) {
+    console.log('error', error.code);
     if (error.code === statusCodes.SIGN_IN_CANCELLED) {
       throw new Error('User cancelled the login flow');
     } else if (error.code === statusCodes.IN_PROGRESS) {

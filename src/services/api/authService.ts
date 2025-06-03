@@ -27,15 +27,10 @@ export const login = async (credentials: any) => {
  * Authenticate user with Google credentials
  * @param googleUser object containing Google user data
  */
-export const loginWithGoogle = async (googleUser: {
-    googleId: string;
-    email: string;
-    name: string;
-    photo?: string;
-}) => {
+export const loginWithGoogle = async (googleUser: any) => {
     try {
         const response = await axiosInstance.post(
-            `User/AuthenticateUserbyGoogle`,
+            `patients/RegisterPatientbySocialmedia`,
             googleUser
         );
         return response.data;

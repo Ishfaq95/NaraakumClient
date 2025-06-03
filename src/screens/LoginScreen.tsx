@@ -142,25 +142,30 @@ const LoginScreen = () => {
       setIsLoading(true);
       const googleUser = await signInWithGoogle();
 
-      console.log('googleUser', googleUser);
+      const data = {
+        "FullName": googleUser.name,
+        "Username": googleUser.name,
+        "Email": googleUser.email,
+        "UniqueSocialId": googleUser.id,
+        "RegistrationPlatformId":2,
+        "RegistrationTypeId":1,
+        "CatSocialServerId":1, 
+        "CatUserTypeId":1,
+        "CatNationalityId":1,
+      }
 
       // // Call your API to save the Google user data
-      // const response = await authService.loginWithGoogle({
-      //   googleId: googleUser.id,
-      //   email: googleUser.email,
-      //   name: googleUser.name,
-      //   photo: googleUser.photo,
-      // });
+      const response = await authService.loginWithGoogle(data);
 
-      // if (response?.ResponseStatus?.STATUSCODE === 200) {
-      //   dispatch(setUser(response.Userinfo));
-      // } else {
-      //   Alert.alert(
-      //     t('error'),
-      //     t('google_login_failed'),
-      //     [{ text: t('ok') }]
-      //   );
-      // }
+      if (response?.ResponseStatus?.STATUSCODE === 200) {
+        dispatch(setUser(response.Userinfo));
+      } else {
+        Alert.alert(
+          t('error'),
+          t('google_login_failed'),
+          [{ text: t('ok') }]
+        );
+      }
     } catch (error: any) {
       console.error('Google login error:', error);
       Alert.alert(
