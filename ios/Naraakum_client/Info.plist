@@ -41,7 +41,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is needed to capture images of medical reports and other relevant files for uploading and managing patient records.</string>
 	<key>NSDocumentsDirectory</key>
-	<string>Access is required to store and manage medical reports and other patient-related files securely within the app’s Documents directory.</string>
+	<string>Access is required to store and manage medical reports and other patient-related files securely within the app's Documents directory.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>Access to the Documents folder is needed to securely store, retrieve, and manage medical reports and patient records within the app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

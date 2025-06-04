@@ -33,6 +33,7 @@ import { useDispatch } from 'react-redux';
 import FullScreenLoader from '../components/FullScreenLoader';
 import { signInWithGoogle } from '../services/auth/googleAuthService';
 import AuthHeader from '../components/AuthHeader';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
 
 const MIN_HEIGHT = 550; // Absolute minimum height
 const OPTIMAL_HEIGHT = 750; // Height for medium screens
@@ -142,15 +143,18 @@ const LoginScreen = () => {
         "Username": googleUser.name,
         "Email": googleUser.email,
         "UniqueSocialId": googleUser.id,
-        "RegistrationPlatformId":2,
-        "RegistrationTypeId":1,
+        "RegistrationPlatformId":Platform.OS === 'ios' ? 3 : 2,
+        "RegistrationTypeId":2,
         "CatSocialServerId":1, 
         "CatUserTypeId":1,
         "CatNationalityId":1,
+        "CellNumber":"",
+        "DeviceId":"DDRT56789",
+        "DateofBirth":""
       }
 
       // // Call your API to save the Google user data
-      const response = await authService.loginWithGoogle(data);
+      const response = await authService.loginWithSocialMedia(data);
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         dispatch(setUser(response.Userinfo[0]));
@@ -173,6 +177,74 @@ const LoginScreen = () => {
     }
   };
 
+  const handleAppleLogin = async () => {
+    try {
+      // Dismiss any existing modals first
+      setIsLoading(false);
+      
+      const appleAuthResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      console.log('appleAuthResponse====>', appleAuthResponse);
+
+      if (!appleAuthResponse.identityToken) {
+        throw new Error('Apple Sign-In failed - no identify token returned');
+      }
+
+      const { identityToken, nonce, fullName, email, user } = appleAuthResponse;
+
+      // Get user info from the identity token
+      const decodedToken = JSON.parse(atob(identityToken.split('.')[1]));
+      console.log('Decoded token:', decodedToken);
+
+      const data = {
+        "FullName": fullName?.givenName || decodedToken.email?.split('@')[0] || 'Apple User',
+        "Username": email || decodedToken.email || `apple_user_${user}`,
+        "Email": email || decodedToken.email,
+        "UniqueSocialId": user,
+        "RegistrationPlatformId": Platform.OS === 'ios' ? 3 : 2,
+        "RegistrationTypeId": 2,
+        "CatSocialServerId": 3, // Apple
+        "CatUserTypeId": 1,
+        "CatNationalityId": 1,
+        "CellNumber": "000000000",
+        "DeviceId": "DDRT56789",
+        "DateofBirth": "1984-09-09"
+      };
+
+      // Show loading after Apple Sign In is complete
+      setIsLoading(true);
+      
+      const response = await authService.loginWithSocialMedia(data);
+      console.log('response====>', response);
+
+      if (response?.ResponseStatus?.STATUSCODE === 200) {
+        dispatch(setUser(response.Userinfo[0]));
+      } else {
+        Alert.alert(
+          t('error'),
+          t('apple_login_failed'),
+          [{ text: t('ok') }]
+        );
+      }
+    } catch (error: any) {
+      if (error.code === appleAuth.Error.CANCELED) {
+        console.log('User canceled Apple Sign in.');
+      } else {
+        console.error('Apple Sign in error:', error);
+        Alert.alert(
+          t('error'),
+          error.message || t('apple_login_failed'),
+          [{ text: t('ok') }]
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderSocialButtons = () => {
     if (Platform.OS === 'ios') {
       return (
@@ -184,7 +256,10 @@ const LoginScreen = () => {
             <GoogleIcon width={24} height={24} style={styles.socialIcon} />
             <Text style={styles.socialButtonText}>{t('continue_with_google')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.socialButton, styles.appleButton]}>
+          <TouchableOpacity 
+            style={[styles.socialButton, styles.appleButton]}
+            onPress={handleAppleLogin}
+          >
             <AppleIcon
               width={24}
               height={24}
