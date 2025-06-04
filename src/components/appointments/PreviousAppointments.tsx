@@ -44,6 +44,8 @@ const PreviousAppointments: React.FC<PreviousAppointmentsProps> = ({ userId, onJ
         setAppointments(response.UserOrders);
       }
 
+      console.log('response.UserOrders====>', response.UserOrders);
+
       if(response?.UserOrders?.length > 0 && response?.TotalRecord > PAGE_SIZE*page){
         setIsLoadingMore(true);
       }else{

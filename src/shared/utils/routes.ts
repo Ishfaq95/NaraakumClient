@@ -14,7 +14,7 @@ export const ROUTES = {
     ProfileStack: "ProfileStack",
     SettingsStack: "SettingsStack",
 
-    HomeScreen: "HomeScreen",
+    AppointmentListScreen: "AppointmentListScreen",
     CartScreen: "CartScreen",
     ProfileScreen: "ProfileScreen",
     SettingsScreen: "SettingsScreen",

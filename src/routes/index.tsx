@@ -2,7 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSelector } from 'react-redux';
 import LoginScreen from '../screens/LoginScreen';
-import AppointmentListScreen from '../screens/AppointmentListScreen';
+import AppointmentListScreen from '../screens/Home/AppointmentListScreen';
 import HomeScreen from '../screens/Home';
 import AlarmScreen from '../screens/AlarmScreen';
 import NetworkErrorScreen from '../screens/NetworkScreen';

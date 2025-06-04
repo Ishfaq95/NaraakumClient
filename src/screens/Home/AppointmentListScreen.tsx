@@ -9,11 +9,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUser } from '../shared/redux/reducers/userReducer';
-import { styles } from '../components/appointments/styles';
-import CurrentAppointments from '../components/appointments/CurrentAppointments';
-import UpcomingAppointments from '../components/appointments/UpcomingAppointments';
-import PreviousAppointments from '../components/appointments/PreviousAppointments';
+import { setUser } from '../../shared/redux/reducers/userReducer';
+import { styles } from '../../components/appointments/styles';
+import CurrentAppointments from '../../components/appointments/CurrentAppointments';
+import UpcomingAppointments from '../../components/appointments/UpcomingAppointments';
+import PreviousAppointments from '../../components/appointments/PreviousAppointments';
 
 const AppointmentListScreen = React.memo(({navigation}: any) => {
   const [index, setIndex] = useState(0);
@@ -21,6 +21,8 @@ const AppointmentListScreen = React.memo(({navigation}: any) => {
   const layout = useWindowDimensions();
   const dispatch = useDispatch();
   const userInfo = useSelector((state: any) => state.root.user.user);
+
+  console.log("userInfo", userInfo);
 
   const onLogout = () => {
     dispatch(setUser(null));

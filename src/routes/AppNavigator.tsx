@@ -5,11 +5,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch } from "react-redux";
 import { ROUTES } from "../shared/utils/routes";
-import HomeScreen from "../screens/Home/Home";
+
 import CartScreen from "../screens/Cart/Cart";
 import ProfileScreen from "../screens/Profile/Profile";
 import SettingsScreen from "../screens/Settings/Settings";
 import CalendarClockIcon from "../assets/icons/CalendarClockIcon";
+import AppointmentListScreen from "../screens/Home/AppointmentListScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -208,7 +209,7 @@ function CustomTabbar({ state, descriptors, navigation }: CustomTabbarProps) {
 function HomeStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name={ROUTES.HomeScreen} component={HomeScreen} />
+      <Stack.Screen name={ROUTES.AppointmentListScreen} component={AppointmentListScreen} />
     </Stack.Navigator>
   );
 }

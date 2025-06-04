@@ -33,8 +33,8 @@ class MainActivity : ReactActivity() {
                     .emit("AlarmEvent", message)
             } else {
                 reactInstanceManager.addReactInstanceEventListener(object : ReactInstanceManager.ReactInstanceEventListener {
-                    override fun onReactContextInitialized(reactContext: ReactContext) {
-                        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                    override fun onReactContextInitialized(context: ReactContext) {
+                        context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
                             .emit("AlarmEvent", message)
                     }
                 })

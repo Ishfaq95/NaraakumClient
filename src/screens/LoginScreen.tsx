@@ -158,7 +158,8 @@ const LoginScreen = () => {
       const response = await authService.loginWithGoogle(data);
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
-        dispatch(setUser(response.Userinfo));
+        console.log("response", response.Userinfo);
+        dispatch(setUser(response.Userinfo[0]));
       } else {
         Alert.alert(
           t('error'),

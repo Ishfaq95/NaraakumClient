@@ -23,10 +23,10 @@ const AuthWelcomeScreen = ({ navigation }: any) => {
         
         {/* Buttons */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity activeOpacity={0.8} style={styles.loginButton} onPress={() => navigation.navigate('Login')}>
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate('Register')}>
+          <TouchableOpacity activeOpacity={0.8} style={styles.createButton} onPress={() => {}}>
             <Text style={styles.createButtonText}>Create New Account</Text>
           </TouchableOpacity>
           

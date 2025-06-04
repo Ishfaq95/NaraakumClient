@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,15 @@ import {
   TouchableOpacity,
   I18nManager,
   Image,
+  ScrollView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import moment from 'moment';
 import Person from '../../assets/icons/Person';
 import CallIcon from '../../assets/icons/CallIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import Participants from '../../assets/icons/Participants';
+import Svg, { Path } from 'react-native-svg';
 
 // Inline SVG for Calendar
 const CalendarIcon = ({ width = 18, height = 18, color = '#008080' }) => (
@@ -30,6 +33,31 @@ const ClockIcon = ({ width = 18, height = 18, color = '#008080' }) => (
   </svg>
 );
 
+// Replace the SVG components with react-native-svg components
+const LeftArrow = ({ width = 24, height = 24, color = '#008080' }) => (
+  <Svg width={width} height={height} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M15 18l-6-6 6-6"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const RightArrow = ({ width = 24, height = 24, color = '#008080' }) => (
+  <Svg width={width} height={height} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M9 18l6-6-6-6"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 interface AppointmentCardProps {
   appointment: any;
   onJoinMeeting: (meetingId: string) => void;
@@ -38,9 +66,103 @@ interface AppointmentCardProps {
 const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onJoinMeeting }) => {
   const { t } = useTranslation();
   const isRTL = I18nManager.isRTL;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [scrollPosition, setScrollPosition] = React.useState(0);
 
-  // Example specialties array from appointment object
-  const specialties = appointment.Specialties || [];
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+      return moment.utc(dateString).local().format('DD/MM/YYYY');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
+  };
+
+  const formatTime = (timeString: string) => {
+    if (!timeString) return '';
+    try {
+      // If timeString is in ISO format
+      if (timeString.includes('T')) {
+        return moment.utc(timeString).local().format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
+      }
+      
+      // If timeString is just time (HH:mm)
+      const [hours, minutes] = timeString.split(':');
+      const date = moment.utc().set({ hours: parseInt(hours), minutes: parseInt(minutes) });
+      return date.local().format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return timeString;
+    }
+  };
+
+  const scrollByAmount = (direction: 'left' | 'right') => {
+    const scrollAmount = 120; // Width of approximately 2 tags
+    
+    if (isRTL) {
+      // In RTL, left button should scroll left and right button should scroll right
+      const newOffset = direction === 'left' 
+        ? scrollPosition + scrollAmount 
+        : scrollPosition - scrollAmount;
+      scrollViewRef.current?.scrollTo({ x: newOffset, animated: true });
+    } else {
+      const newOffset = direction === 'left' 
+        ? scrollPosition - scrollAmount 
+        : scrollPosition + scrollAmount;
+      scrollViewRef.current?.scrollTo({ x: newOffset, animated: true });
+    }
+  };
+
+  const getStatusStyle = (statusId: string | number) => {
+    // Convert statusId to number if it's a string
+    const numericStatusId = typeof statusId === 'string' ? parseInt(statusId, 10) : statusId;
+
+    switch (numericStatusId) {
+      case 1:
+        return {
+          backgroundColor: '#edfbfe',
+          borderColor: '#50c8e1',
+          text: t('تم حجز الخدمة')
+        };
+      case 17:
+        return {
+          backgroundColor: '#edfbfe',
+          borderColor: '#50c8e1',
+          text: t('قبول الطلب')
+        };
+      case 7:
+        return {
+          backgroundColor: '#fef6e2',
+          borderColor: '#ffde7a',
+          text: t('الممارس الصحي في طريقه اليك')
+        };
+      case 8:
+        return {
+          backgroundColor: '#d2f9cd',
+          borderColor: '#2ab318',
+          text: t('تم تلقي الخدمة')
+        };
+      case 10:
+        return {
+          backgroundColor: '#d2f9cd',
+          borderColor: '#2ab318',
+          text: t('اكتملت الخدمة')
+        };
+      case 24:
+        return {
+          backgroundColor: '#ececec',
+          borderColor: '#838a98',
+          text: t('فاتت')
+        };
+      default:
+        return {
+          backgroundColor: '#edfbfe',
+          borderColor: '#50c8e1',
+          text: t('قبول الطلب')
+        };
+    }
+  };
 
   return (
     <View style={styles.card}>
@@ -51,14 +173,43 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onJoinMe
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.doctorName} numberOfLines={1}>
-            {isRTL ? appointment.ServiceProviderSName : appointment.ServiceProviderPName}
+            {isRTL ? appointment?.ServiceProviderSName : appointment?.ServiceProviderPName}
           </Text>
-          <View style={styles.specialtiesRow}>
-            {(appointment.Specialties || []).map((spec: string, idx: number) => (
-              <View key={idx} style={styles.specialtyPill}>
-                <Text style={styles.specialtyText}>{spec}</Text>
+          <View style={styles.specialtiesContainer}>
+            <TouchableOpacity 
+              onPress={() => scrollByAmount('left')} 
+              style={styles.scrollButton}
+            >
+              {isRTL ? <RightArrow /> : <LeftArrow />}
+            </TouchableOpacity>
+            
+            <ScrollView
+              ref={scrollViewRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.specialtiesScrollView}
+              onScroll={(event) => {
+                setScrollPosition(event.nativeEvent.contentOffset.x);
+              }}
+              scrollEventThrottle={16}
+            >
+              <View style={styles.specialtiesRow}>
+                {(appointment?.Specialties || []).map((spec: any, idx: number) => (
+                  <View key={idx} style={styles.specialtyPill}>
+                    <Text style={styles.specialtyText}>
+                      {isRTL ? spec.TitleSlang : spec.TitlePlang}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ))}
+            </ScrollView>
+
+            <TouchableOpacity 
+              onPress={() => scrollByAmount('right')} 
+              style={styles.scrollButton}
+            >
+              {isRTL ? <LeftArrow /> : <RightArrow />}
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -67,28 +218,37 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onJoinMe
       <View style={styles.divider} />
 
       {/* Visit Details */}
-      <View style={styles.detailsRow}>
+      <View style={styles.detailsContainer}>
         <View style={styles.detailItem}>
-          <CalendarIcon />
           <Text style={styles.detailLabel}>{t('تاريخ الزيارة')}</Text>
-          <Text style={styles.detailValue}>{appointment.SchedulingDate}</Text>
+          <Text style={styles.detailValue}>
+            {formatDate(appointment?.SchedulingDate)}
+          </Text>
         </View>
         <View style={styles.detailItem}>
-          <ClockIcon />
           <Text style={styles.detailLabel}>{t('موعد الزيارة')}</Text>
-          <Text style={styles.detailValue}>{appointment.SchedulingTime}</Text>
+          <Text style={styles.detailValue}>
+            {formatTime(appointment?.SchedulingTime)}
+          </Text>
         </View>
         <View style={styles.detailItem}>
-          <CheckIcon color="#008080" width={18} height={18} />
           <Text style={styles.detailLabel}>{t('الحالة')}</Text>
-          <Text style={styles.detailValue}>{appointment.StatusText || t('قبول الطلب')}</Text>
+          <View style={[
+            styles.statusContainer,
+            {
+              backgroundColor: getStatusStyle(appointment?.CatOrderStatusId).backgroundColor,
+              borderLeftColor: getStatusStyle(appointment?.CatOrderStatusId).borderColor
+            }
+          ]}>
+            <Text style={[
+              styles.statusText,
+              { color: getStatusStyle(appointment?.CatOrderStatusId).borderColor }
+            ]}>
+              {getStatusStyle(appointment?.CatOrderStatusId).text}
+            </Text>
+          </View>
         </View>
       </View>
-
-      {/* Accept Button */}
-      <TouchableOpacity style={styles.acceptBtn}>
-        <Text style={styles.acceptBtnText}>{t('قبول الطلب')}</Text>
-      </TouchableOpacity>
 
       {/* Info Bar (not a button) */}
       <View style={styles.infoBar}>
@@ -142,10 +302,21 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: 'right',
   },
+  specialtiesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scrollButton: {
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  specialtiesScrollView: {
+    flex: 1,
+  },
   specialtiesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
+    paddingHorizontal: 4,
   },
   specialtyPill: {
     backgroundColor: '#f2f2f2',
@@ -164,39 +335,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     marginVertical: 12,
   },
-  detailsRow: {
-    flexDirection: 'row',
+  detailsContainer: {
+    flexDirection: 'column',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginVertical: 12,
+    paddingHorizontal: 8,
   },
   detailItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    flex: 1,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   detailLabel: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'right',
   },
   detailValue: {
     fontSize: 14,
     color: '#222',
-    fontWeight: 'bold',
-    marginTop: 2,
+    fontWeight: '500',
+    textAlign: 'left',
   },
-  acceptBtn: {
-    backgroundColor: '#e0f7fa',
+  statusContainer: {
     borderRadius: 6,
     paddingVertical: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-    borderWidth: 2,
-    borderColor: '#008080',
-    width: 120,
-    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    borderLeftWidth: 4,
   },
-  acceptBtnText: {
-    color: '#008080',
+  statusText: {
     fontWeight: 'bold',
     fontSize: 14,
   },
