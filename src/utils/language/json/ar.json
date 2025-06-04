@@ -23,9 +23,9 @@
   "mobile_number_not_valid":"رقم جوال غير صالح",
   "appointments": "المواعيد",
   "book_order": "حجز موعد",
-  "current": "الحالي",
-  "upcoming": "القادم",
-  "previous": "السابق",
+  "current": "مواعيد اليوم",
+  "upcoming": "القادمة",
+  "previous": "السابقة",
   "current_appointments": "المواعيد الحالية",
   "upcoming_appointments": "المواعيد القادمة",
   "previous_appointments": "المواعيد السابقة"

@@ -159,7 +159,7 @@ const AppInitializer = () => {
         token: (data as any).access_token,
         expiresAt: (data as any).expires,
       };
-      console.log('sessionToken', sessionToken);
+      
       dispatch(setToken(sessionToken));
       setTimeout(AppversionAPICall, 100);
     }

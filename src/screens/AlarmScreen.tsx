@@ -21,8 +21,6 @@ const AlarmScreen = () => {
   const [time, setTime] = useState('');
   const [callData, setCallData] = useState('');
 
-  console.log('data==>', data.meetingInfo);
-
   const onPressButton = () => {
     if (data.Subject == 'لقد بدأت الجلسة') {
       navigation.navigate(ROUTES.preViewCall, {Data: callData});
@@ -39,7 +37,6 @@ const AlarmScreen = () => {
   }, [route.params]);
 
   const makeDataForCall = (data: any) => {
-    console.log('data==>', data.meetingInfo);
     const sessionStartTime = formatDateTimeToLocal(
       data.meetingInfo.SchedulingDate,
       data.meetingInfo.sessionStartTime,
@@ -48,9 +45,6 @@ const AlarmScreen = () => {
       data.meetingInfo.SchedulingDate,
       data.meetingInfo.sessionEndTime,
     );
-
-    console.log('sessionStartTime==>', sessionStartTime);
-    console.log('sessionEndTime==>', sessionEndTime);
 
     const dataForCall = {
       ...data.meetingInfo,

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import CallIcon from '../../assets/icons/CallIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import Participants from '../../assets/icons/Participants';
 import Svg, { Path } from 'react-native-svg';
+import { BaseURL, MediaBaseURL } from '../../shared/utils/constants';
 
 // Inline SVG for Calendar
 const CalendarIcon = ({ width = 18, height = 18, color = '#008080' }) => (
@@ -60,10 +61,15 @@ const RightArrow = ({ width = 24, height = 24, color = '#008080' }) => (
 
 interface AppointmentCardProps {
   appointment: any;
-  onJoinMeeting: (meetingId: string) => void;
+  onJoinMeeting: (appointment: any) => void;
+  isCallEnabled: boolean;
 }
 
-const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onJoinMeeting }) => {
+const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({ 
+  appointment, 
+  onJoinMeeting,
+  isCallEnabled 
+}) => {
   const { t } = useTranslation();
   const isRTL = I18nManager.isRTL;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -169,11 +175,11 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onJoinMe
       {/* Doctor Info */}
       <View style={styles.headerRow}>
         <View style={styles.avatarPlaceholder}>
-          <Person width={32} height={32} />
+          {appointment.ImagePath ? <Image source={{ uri: `${MediaBaseURL}${appointment.ImagePath}` }} style={styles.avatarImage} /> : <Person width={32} height={32} />}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.doctorName} numberOfLines={1}>
-            {isRTL ? appointment?.ServiceProviderSName : appointment?.ServiceProviderPName}
+            {appointment?.ServiceProviderSName }
           </Text>
           <View style={styles.specialtiesContainer}>
             <TouchableOpacity 
@@ -258,17 +264,30 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onJoinMe
         </Text>
       </View>
 
-      {/* Disabled Call Button */}
+      {/* Call Button */}
       <TouchableOpacity
-        style={[styles.callBtn, styles.callBtnDisabled]}
-        disabled={true}
+        style={[
+          styles.callBtn,
+          isCallEnabled ? styles.callBtnEnabled : styles.callBtnDisabled
+        ]}
+        disabled={false}
+        onPress={() => onJoinMeeting(appointment)}
       >
-        <CallIcon width={20} height={20} color="#bdbdbd" />
-        <Text style={styles.callBtnText}>{t('بدء الاتصال')}</Text>
+        <CallIcon 
+          width={20} 
+          height={20} 
+          color={isCallEnabled ? '#fff' : '#bdbdbd'} 
+        />
+        <Text style={[
+          styles.callBtnText,
+          isCallEnabled && styles.callBtnTextEnabled
+        ]}>
+          {t('بدء الاتصال')}
+        </Text>
       </TouchableOpacity>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -295,12 +314,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginEnd: 12,
   },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
   doctorName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#222',
     marginBottom: 4,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   specialtiesContainer: {
     flexDirection: 'row',
@@ -393,7 +417,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     justifyContent: 'center',
-    opacity: 1,
+  },
+  callBtnEnabled: {
+    backgroundColor: '#19b123',
+    borderWidth: 1,
+    borderColor: '#19b123',
   },
   callBtnDisabled: {
     opacity: 0.5,
@@ -403,6 +431,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  callBtnTextEnabled: {
+    color: '#fff',
   },
 });
 

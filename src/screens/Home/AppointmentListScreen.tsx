@@ -14,6 +14,10 @@ import { styles } from '../../components/appointments/styles';
 import CurrentAppointments from '../../components/appointments/CurrentAppointments';
 import UpcomingAppointments from '../../components/appointments/UpcomingAppointments';
 import PreviousAppointments from '../../components/appointments/PreviousAppointments';
+import { TimestampTrigger } from '@notifee/react-native';
+import { TriggerType } from '@notifee/react-native';
+import moment from 'moment';
+import { ROUTES } from '../../shared/utils/routes';
 
 const AppointmentListScreen = React.memo(({navigation}: any) => {
   const [index, setIndex] = useState(0);
@@ -22,14 +26,47 @@ const AppointmentListScreen = React.memo(({navigation}: any) => {
   const dispatch = useDispatch();
   const userInfo = useSelector((state: any) => state.root.user.user);
 
-  console.log("userInfo", userInfo);
 
   const onLogout = () => {
     dispatch(setUser(null));
   };
 
-  const handleJoinMeeting = (meetingId: string) => {
-    navigation.navigate('VideoCall', { meetingId });
+  const handleJoinMeeting = (appointment: any) => {
+
+    // Parse the date and time separately
+    const date = moment.utc(appointment.SchedulingDate);
+    const [startHours, startMinutes] = appointment.SchedulingTime.split(':');
+    const [endHours, endMinutes] = appointment.SchedulingEndTime.split(':');
+
+    // Create UTC moments with the correct time
+    let startTimeUTC = moment.utc(date).set({
+      hours: parseInt(startHours),
+      minutes: parseInt(startMinutes)
+    });
+    
+    let endDateTimeUTC = moment.utc(date).set({
+      hours: parseInt(endHours),
+      minutes: parseInt(endMinutes)
+    });
+
+    // Convert to local time
+    let startTimeLocal = startTimeUTC.local();
+    let endTimeLocal = endDateTimeUTC.local();
+
+    let meetingInfo = {
+      toUserId: appointment.ServiceProviderId,
+      sessionStartTime: startTimeLocal.toISOString(),
+      bookingId: appointment.TaskId,
+      patientProfileId: appointment.PatientUserProfileInfoId,
+      meetingId: appointment.VideoSDKMeetingId,
+      Name: appointment.ServiceProviderSName,
+      displayName: appointment.PatientSName,
+      sessionEndTime: endTimeLocal.toISOString(),
+      patientId: appointment.UserLoginInfoId,
+      serviceProviderId: appointment.ServiceProviderId
+    }; 
+    
+    navigation.navigate(ROUTES.preViewCall, {Data: meetingInfo});
   };
 
   const renderHeader = () => (

@@ -44,15 +44,12 @@ const PreviousAppointments: React.FC<PreviousAppointmentsProps> = ({ userId, onJ
         setAppointments(response.UserOrders);
       }
 
-      console.log('response.UserOrders====>', response.UserOrders);
-
       if(response?.UserOrders?.length > 0 && response?.TotalRecord > PAGE_SIZE*page){
         setIsLoadingMore(true);
       }else{
         setIsLoadingMore(false);
       }
-
-      console.log('response.UserOrders====>', response);
+      
       setCurrentPage(page);
     } catch (error) {
       console.error('Error fetching current appointments:', error);
@@ -61,8 +58,6 @@ const PreviousAppointments: React.FC<PreviousAppointmentsProps> = ({ userId, onJ
       setIsRefreshing(false);
     }
   };
-
-  console.log('isLoadingMore====>', isLoadingMore);
 
   const loadMore = () => {
     if (!isLoading && isLoadingMore) {
@@ -100,6 +95,7 @@ const PreviousAppointments: React.FC<PreviousAppointmentsProps> = ({ userId, onJ
         <AppointmentCard
           appointment={item}
           onJoinMeeting={onJoinMeeting}
+          isCallEnabled={false}
         />
       )}
       keyExtractor={(item) => `${item.OrderId}-${item.OrderDetailId}`}

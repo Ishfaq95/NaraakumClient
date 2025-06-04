@@ -14,7 +14,6 @@ export const login = async (credentials: any) => {
         );
         return response.data;
     } catch (error: any) {
-        console.log('error', error);
         throw {
             message: error?.response?.data?.message || 'Login failed',
             status: error?.response?.status,
@@ -35,7 +34,6 @@ export const loginWithGoogle = async (googleUser: any) => {
         );
         return response.data;
     } catch (error: any) {
-        console.log('error', error);
         throw {
             message: error?.response?.data?.message || 'Google login failed',
             status: error?.response?.status,

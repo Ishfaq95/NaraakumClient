@@ -36,7 +36,7 @@ interface Message {
 
 const ChatMessageRender = ({item}: {item: Message}) => {
   const {user} = useSelector((state: any) => state.root.user);
-  const isOwnMessage = item.SenderId == user.id;
+  const isOwnMessage = item.SenderId == user.Id;
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [sound, setSound] = useState<Sound | null>(null);
@@ -162,10 +162,8 @@ const ChatMessageRender = ({item}: {item: Message}) => {
   };
 
   const playVoiceNote = (url: string) => {
-    console.log('Starting playVoiceNote with URL:', url);
 
     if (isPlaying) {
-      console.log('Currently playing, stopping...');
       sound?.stop();
       setIsPlaying(false);
       progressAnim.setValue(0);
@@ -174,15 +172,12 @@ const ChatMessageRender = ({item}: {item: Message}) => {
     }
 
     if (sound) {
-      console.log('Using existing sound instance');
       sound.play(success => {
         if (success) {
-          console.log('Successfully played existing sound');
           setIsPlaying(false);
           progressAnim.setValue(0);
           setCurrentTime(0);
         } else {
-          console.error('Failed to play existing sound');
           Alert.alert('Error', 'Failed to play voice note');
           setIsPlaying(false);
         }
@@ -192,34 +187,25 @@ const ChatMessageRender = ({item}: {item: Message}) => {
     }
 
     const cleanFileURL = cleanUrl(url);
-    console.log('Cleaned URL:', cleanFileURL);
-    console.log('Initializing new Sound instance...');
 
     // Enable playback in silence mode
     Sound.setCategory('Playback');
-    console.log('Set Sound category to Playback');
 
     // For iOS, we need to download the file first
     if (Platform.OS === 'ios') {
-      console.log('iOS platform detected, downloading file first');
       const fileName = getFileNameFromUrl(cleanFileURL);
       const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-
-      console.log('Downloading to:', filePath);
 
       RNFS.downloadFile({
         fromUrl: cleanFileURL,
         toFile: filePath,
         background: true,
         begin: res => {
-          console.log('Download started:', res);
         },
         progress: res => {
-          console.log('Download progress:', res);
         },
       })
         .promise.then(() => {
-          console.log('File downloaded successfully to:', filePath);
 
           const voiceNote = new Sound(filePath, '', error => {
             if (error) {
@@ -237,26 +223,18 @@ const ChatMessageRender = ({item}: {item: Message}) => {
             }
 
             const duration = voiceNote.getDuration();
-            console.log('Voice note loaded successfully:', {
-              duration,
-              numberOfChannels: voiceNote.getNumberOfChannels(),
-              volume: voiceNote.getVolume(),
-            });
 
             setDuration(duration);
 
             // Set volume to maximum
             voiceNote.setVolume(1.0);
-            console.log('Set volume to maximum');
 
             voiceNote.play(success => {
               if (success) {
-                console.log('Voice note played successfully');
                 setIsPlaying(false);
                 progressAnim.setValue(0);
                 setCurrentTime(0);
               } else {
-                console.error('Failed to play voice note');
                 Alert.alert(
                   'Error',
                   'Failed to play voice note. Please try again.',
@@ -290,26 +268,18 @@ const ChatMessageRender = ({item}: {item: Message}) => {
         }
 
         const duration = voiceNote.getDuration();
-        console.log('Voice note loaded successfully:', {
-          duration,
-          numberOfChannels: voiceNote.getNumberOfChannels(),
-          volume: voiceNote.getVolume(),
-        });
 
         setDuration(duration);
 
         // Set volume to maximum
         voiceNote.setVolume(1.0);
-        console.log('Set volume to maximum');
 
         voiceNote.play(success => {
           if (success) {
-            console.log('Voice note played successfully');
             setIsPlaying(false);
             progressAnim.setValue(0);
             setCurrentTime(0);
           } else {
-            console.error('Failed to play voice note');
             Alert.alert(
               'Error',
               'Failed to play voice note. Please try again.',

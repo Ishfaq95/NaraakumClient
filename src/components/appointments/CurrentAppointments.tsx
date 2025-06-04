@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   FlatList,
@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { appointmentService, Appointment } from '../../services/api/appointmentService';
 import AppointmentCard from '../appointments/AppointmentCard';
 import { styles } from '../appointments/styles';
+import { useIsFocused } from '@react-navigation/native';
+import moment from 'moment';
 
 const PAGE_SIZE = 10;
 
@@ -19,11 +21,40 @@ interface CurrentAppointmentsProps {
 
 const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoinMeeting }) => {
   const { t } = useTranslation();
+  const isScreenFocused = useIsFocused();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const enabledAppointmentsRef = useRef<Set<string>>(new Set());
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const checkTimeCondition = useCallback((appointment: Appointment) => {
+    const now = moment();
+    const appointmentDate = moment.utc(appointment?.SchedulingDate).local();
+    const startTime = moment.utc(appointment?.SchedulingTime, 'HH:mm').local();
+    const endTime = moment.utc(appointment?.SchedulingEndTime, 'HH:mm').local();
+
+    startTime.set({
+      year: appointmentDate.year(),
+      month: appointmentDate.month(),
+      date: appointmentDate.date()
+    });
+    endTime.set({
+      year: appointmentDate.year(),
+      month: appointmentDate.month(),
+      date: appointmentDate.date()
+    });
+
+    return now.isSameOrAfter(startTime) && 
+           now.isBefore(endTime) && 
+           now.isSame(appointmentDate, 'day');
+  }, []);
+
+  const isAppointmentEnabled = useCallback((appointment: Appointment) => {
+    return enabledAppointmentsRef.current.has(`${appointment.OrderId}-${appointment.OrderDetailId}`);
+  }, []);
 
   const fetchAppointments = async (page: number, append: boolean = false) => {
     if (!userId || isLoading) return;
@@ -50,7 +81,6 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
         setIsLoadingMore(false);
       }
 
-      console.log('response.UserOrders====>', response);
       setCurrentPage(page);
     } catch (error) {
       console.error('Error fetching current appointments:', error);
@@ -59,8 +89,6 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
       setIsRefreshing(false);
     }
   };
-
-  console.log('isLoadingMore====>', isLoadingMore);
 
   const loadMore = () => {
     if (!isLoading && isLoadingMore) {
@@ -82,6 +110,56 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
     }
   }, [userId]);
 
+  useEffect(() => {
+    if (isScreenFocused && appointments?.length > 0) {
+      // Initial check
+      const enabled = new Set<string>();
+      appointments.forEach(appointment => {
+        if (checkTimeCondition(appointment)) {
+          enabled.add(`${appointment.OrderId}-${appointment.OrderDetailId}`);
+        }
+      });
+      enabledAppointmentsRef.current = enabled;
+      
+      // Set up interval
+      timerRef.current = setInterval(() => {
+        if (!appointments?.length) {
+          return;
+        }
+        const enabled = new Set<string>();
+        let hasChanges = false;
+
+        appointments.forEach(appointment => {
+          const isEnabled = checkTimeCondition(appointment);
+          const appointmentId = `${appointment.OrderId}-${appointment.OrderDetailId}`;
+          
+          if (isEnabled) {
+            enabled.add(appointmentId);
+          }
+          
+          // Check if the enabled state has changed
+          if (isEnabled !== enabledAppointmentsRef.current.has(appointmentId)) {
+            hasChanges = true;
+          }
+        });
+
+        // Only update if there are actual changes
+        if (hasChanges) {
+          enabledAppointmentsRef.current = enabled;
+          // Force a re-render of the FlatList
+          setAppointments(prev => [...prev]);
+        }
+      }, 5000);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isScreenFocused, appointments, checkTimeCondition]);
+
   const renderFooter = () => {
     if (!isLoading) return null;
     return (
@@ -91,15 +169,18 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
     );
   };
 
+  const renderItem = useCallback(({ item }: { item: Appointment }) => (
+    <AppointmentCard
+      appointment={item}
+      onJoinMeeting={onJoinMeeting}
+      isCallEnabled={isAppointmentEnabled(item)}
+    />
+  ), [onJoinMeeting, isAppointmentEnabled]);
+
   return (
     <FlatList
       data={appointments}
-      renderItem={({ item }) => (
-        <AppointmentCard
-          appointment={item}
-          onJoinMeeting={onJoinMeeting}
-        />
-      )}
+      renderItem={renderItem}
       keyExtractor={(item) => `${item.OrderId}-${item.OrderDetailId}`}
       contentContainerStyle={styles.contentContainer}
       onEndReached={loadMore}

@@ -50,17 +50,13 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
         setIsLoadingMore(false);
       }
 
-      console.log('response.UserOrders====>', response);
       setCurrentPage(page);
     } catch (error) {
-      console.error('Error fetching current appointments:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
   };
-
-  console.log('isLoadingMore====>', isLoadingMore);
 
   const loadMore = () => {
     if (!isLoading && isLoadingMore) {
@@ -98,6 +94,7 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
         <AppointmentCard
           appointment={item}
           onJoinMeeting={onJoinMeeting}
+          isCallEnabled={false}
         />
       )}
       keyExtractor={(item) => `${item.OrderId}-${item.OrderDetailId}`}

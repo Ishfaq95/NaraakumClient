@@ -71,7 +71,7 @@ const PreViewScreen = ({navigation, route}: any) => {
 
     // AudioRecord.on('data', data => {
     //   const volume = calculateVolume(data); // You can use a method to calculate volume
-    //   console.log('volume', volume);
+    //   
     //   setVolume(volume);
     // });
   }, []);
@@ -306,7 +306,7 @@ const PreViewScreen = ({navigation, route}: any) => {
             }}>
             {I18nManager.isRTL ? (
               <TouchableOpacity
-                onPress={() => navigation.navigate(ROUTES.Home)}
+                onPress={() => navigation.goBack()}
                 style={{flexDirection: 'row', paddingHorizontal: 8}}>
                 <RightArrowIcon />
                 <Text

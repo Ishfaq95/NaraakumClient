@@ -15,7 +15,6 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = store.getState().root.user.token;
-        console.log('token===>', token);
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -30,7 +29,6 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
-        console.log('error===>', error.response);
         if (error.code === 'ECONNABORTED') {
             // Handle timeout error
             return Promise.reject({ 

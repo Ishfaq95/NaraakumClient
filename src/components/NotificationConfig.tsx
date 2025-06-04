@@ -24,7 +24,7 @@ const createChannel = () => {
       importance: 4,
       vibrate: true,
     },
-    created => console.log(`Channel created: ${created}`),
+    created => {},
   );
 };
 
@@ -53,7 +53,6 @@ const NotificationsCenter = () => {
       const permission = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
       );
-      console.log('Notification permission:', permission);
     }
   };
 

@@ -36,7 +36,6 @@ export const signInWithGoogle = async (): Promise<GoogleUser> => {
       givenName: user.givenName || undefined,
     };
   } catch (error: any) {
-    console.log('error', error.code);
     if (error.code === statusCodes.SIGN_IN_CANCELLED) {
       throw new Error('User cancelled the login flow');
     } else if (error.code === statusCodes.IN_PROGRESS) {

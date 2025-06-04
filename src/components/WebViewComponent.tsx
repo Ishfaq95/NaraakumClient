@@ -147,7 +147,7 @@ const WebViewComponent = ({uri}: any) => {
   useEffect(() => {
     if (user) {
       getSystemNotificationFN({
-        UserloginInfo: user.id,
+        UserloginInfo: user.Id,
       });
     }
   }, [user]);
@@ -155,8 +155,8 @@ const WebViewComponent = ({uri}: any) => {
   useEffect(() => {
     if (user) {
       const presence = 1;
-      const communicationKey = user.communicationKey;
-      const UserId = user.id;
+      const communicationKey = user.CommunicationKey;
+      const UserId = user.Id;
       webSocketService.connect(presence, communicationKey, UserId);
     } else {
       webSocketService.disconnect();
@@ -245,7 +245,7 @@ const WebViewComponent = ({uri}: any) => {
       navigation.navigate(ROUTES.preViewCall, {Data: data});
     } else if (eventHandler == 'orderSuccess') {
       getSystemNotificationFN({
-        UserloginInfo: user.id,
+        UserloginInfo: user.Id,
       });
     } else if (eventHandler == 'download') {
       let isPermissionGrandted = await getStoragePermission();
@@ -278,9 +278,6 @@ const WebViewComponent = ({uri}: any) => {
         );
       }
     } else if (eventHandler == 'userLoggedIn') {
-      const userInfo = data;
-      setUserInformation(userInfo);
-      subsribeTopic(userInfo.id);
       // dispatch(setUser(userInfo));
     }
 

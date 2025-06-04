@@ -171,7 +171,7 @@ const ChatScreen = ({
       if (
         appState.match(/inactive|background/) &&
         nextAppState === 'active' &&
-        user?.communicationKey
+        user?.CommunicationKey
       ) {
         initializeSocket();
       }
@@ -185,14 +185,13 @@ const ChatScreen = ({
   // Initialize socket connection
   const initializeSocket = async () => {
     try {
-      if (user?.communicationKey && user?.id) {
+      if (user?.CommunicationKey && user?.Id) {
         await socketService.current.connect(
           1, // Presence value (1 for online)
-          user?.communicationKey,
-          user?.id,
+          user?.CommunicationKey,
+          user?.Id,
         );
 
-        console.log('socketConnected');
         setSocketConnected(true);
 
         // Set up socket message handler
@@ -244,7 +243,7 @@ const ChatScreen = ({
               const readReceiptEvent = {
                 ConnectionMode: 1,
                 Command: 72,
-                FromUser: {Id: user.id},
+                FromUser: {Id: user.Id},
                 Conversation: {
                   ConversationId: mongoConverstionId,
                   SenderId: mongoSenderId,
@@ -272,7 +271,7 @@ const ChatScreen = ({
       }
     };
   }, [
-    user.id,
+    user.Id,
     mongoConverstionId,
     mongoSenderId,
     mongoReceiverId,
@@ -381,7 +380,7 @@ const ChatScreen = ({
 
       // Your existing ID setup code
       if (page === 1) {
-        if (data[0]?.senderDetails?.userlogininfoId != user.id) {
+        if (data[0]?.senderDetails?.userlogininfoId != user.Id) {
           setMongoSenderId(data[0]?.senderId);
           setMongoReceiverId(data[0]?.receiverId);
           setMongoConverstionId(data[0]?.conversationId);
@@ -395,11 +394,11 @@ const ChatScreen = ({
         onConversationIds?.({
           conversationId: data[0]?.conversationId,
           senderId:
-            data[0]?.senderDetails?.userlogininfoId != user.id
+            data[0]?.senderDetails?.userlogininfoId != user.Id
               ? data[0]?.senderId
               : data[0]?.receiverId,
           receiverId:
-            data[0]?.senderDetails?.userlogininfoId != user.id
+            data[0]?.senderDetails?.userlogininfoId != user.Id
               ? data[0]?.receiverId
               : data[0]?.senderId,
         });
@@ -430,7 +429,6 @@ const ChatScreen = ({
         setMessages(reversedMessages);
       } else {
         // Add new messages to the beginning
-        console.log('messages', messages.length);
         setMessages(prevMessages => [...reversedMessages, ...prevMessages]);
       }
 
@@ -488,7 +486,7 @@ const ChatScreen = ({
     // Create message data
     const messageData = {
       Id: Math.random().toString(36).substr(2, 9),
-      SenderId: user.id,
+      SenderId: user.Id,
       Text: messageText,
       FilePath: null,
       Type: 'Text',
@@ -511,7 +509,7 @@ const ChatScreen = ({
       Id: messageData.Id,
       ConnectionMode: 1,
       Command: 70,
-      FromUser: {Id: user.id},
+      FromUser: {Id: user.Id},
       ToUserList: [{Id: serviceProviderId}],
       Message: JSON.stringify({
         Text: messageText,
@@ -559,7 +557,7 @@ const ChatScreen = ({
       const lastMessage = messages[messages.length - 1];
       const isNewMessage =
         Date.now() - new Date(lastMessage.DateTime).getTime() < 5000 &&
-        lastMessage.SenderId === user.id;
+        lastMessage.SenderId === user.Id;
 
       // Auto-scroll to bottom for new messages from current user
       if (isNewMessage) {
@@ -625,8 +623,6 @@ const ChatScreen = ({
       const pickresult = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
-
-      console.log('pickresult', pickresult);
 
       let pickerResult = null;
       if (Platform.OS === 'ios') {
@@ -696,8 +692,8 @@ const ChatScreen = ({
 
       // Append file with the exact field name expected by backend
       formData.append('file', fileData);
-      formData.append('UserType', user.catUserTypeId);
-      formData.append('Id', user.id);
+      formData.append('UserType', user.CatUserTypeId);
+      formData.append('Id', user.Id);
       formData.append('ResourceCategory', ResourceCategoryId);
       formData.append('ResourceType', '9');
 
@@ -728,11 +724,10 @@ const ChatScreen = ({
       const responseData = await response.json();
 
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
-        console.log('responseData', responseData.Data?.Path);
         // Add the file message to the chat
         const newMessage: Message = {
           Id: responseData.Data?.id || Math.random().toString(36).substr(2, 9),
-          SenderId: user.id,
+          SenderId: user.Id,
           Text: file.name,
           FilePath: responseData.Data?.Path || responseData.Data?.AbsolutePath,
           Type: 'FilePath',
@@ -746,7 +741,7 @@ const ChatScreen = ({
           Id: newMessage.Id,
           ConnectionMode: 1,
           Command: 70,
-          FromUser: {Id: user.id},
+          FromUser: {Id: user.Id},
           ToUserList: [{Id: serviceProviderId}],
           Message: JSON.stringify({
             Text: messageText,
@@ -839,9 +834,7 @@ const ChatScreen = ({
         // Play the sound
         sound.play(success => {
           if (success) {
-            console.log('Successfully finished playing');
           } else {
-            console.log('Playback failed due to audio decoding errors');
           }
           sound.release();
           setIsPlaying(false);

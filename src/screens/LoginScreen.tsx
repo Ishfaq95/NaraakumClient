@@ -67,7 +67,6 @@ const LoginScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
-    console.log('data', data);
     setMobileNumber(data.phoneNumber);
     setIsValidNumber(data.isValid);
     setFullNumber(data.fullNumber);
@@ -109,15 +108,11 @@ const LoginScreen = () => {
         "Filter": activeTab === 'mobile' ? "mob" : "email"
       }
 
-      console.log('data', data);
-
       const response = await authService.login(data);
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
-        console.log('response====>', response);
         dispatch(setUser(response.Userinfo));
       } else {
-        console.log('response', response.ResponseStatus?.STATUSCODE);
       }
       setIsLoading(false);
     } catch (error: any) {
@@ -158,7 +153,6 @@ const LoginScreen = () => {
       const response = await authService.loginWithGoogle(data);
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
-        console.log("response", response.Userinfo);
         dispatch(setUser(response.Userinfo[0]));
       } else {
         Alert.alert(

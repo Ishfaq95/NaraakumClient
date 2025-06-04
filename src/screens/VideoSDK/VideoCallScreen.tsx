@@ -134,7 +134,6 @@ const VideoCallScreen = ({
       participantIds.length === 1 &&
       !notificationSentRef.current
     ) {
-      console.log('Sending notification...');
       notificationSentRef.current = true;
       sendFCMToOtherParticipants();
     }
@@ -195,35 +194,23 @@ const VideoCallScreen = ({
     const handleMessage = async (event: any) => {
       try {
         const socketEvent = JSON.parse(event.data);
-        console.log(
-          'WebSocket message received in VideoCallScreen:',
-          socketEvent,
-        );
 
         if (socketEvent.Command === 56) {
           const parsedData = JSON.parse(socketEvent.Message);
-          console.log('Parsed message data:', parsedData);
 
           if (
             parsedData.MessageType === 'Text' ||
             parsedData.MessageType === 'FilePath'
           ) {
-            console.log(
-              'Message type matches, messageClicked:',
-              messageClicked,
-            );
             // Only increment count if chat is closed
             if (!messageClicked) {
-              console.log('Incrementing unread count');
               setUnreadMessageCount(prev => {
-                console.log('Previous count:', prev);
                 return prev + 1;
               });
             }
           }
         }
       } catch (error) {
-        console.error('Error processing WebSocket message:', error);
       }
     };
 
@@ -353,7 +340,7 @@ const VideoCallScreen = ({
       const socketEvent = {
         ConnectionMode: 1,
         Command: 72,
-        FromUser: {Id: user.id},
+        FromUser: {Id: user.Id},
         Conversation: {
           ConversationId: mongoConverstionId,
           SenderId: mongoSenderId,
@@ -375,10 +362,8 @@ const VideoCallScreen = ({
   const toggleChatScreen = useCallback(() => {
     setMessageClicked(prev => {
       const newState = !prev;
-      console.log('Chat screen state changed to:', newState);
       if (newState) {
         // Send read receipt when opening chat
-        console.log('Sending read receipt');
         sendReadReceipt();
       }
       return newState;
@@ -422,7 +407,6 @@ const VideoCallScreen = ({
   // Add effect to reset unread count when chat is opened
   useEffect(() => {
     if (messageClicked) {
-      console.log('Resetting unread count');
       setUnreadMessageCount(0);
     }
   }, [messageClicked]);
