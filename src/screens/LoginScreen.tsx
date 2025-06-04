@@ -112,8 +112,16 @@ const LoginScreen = () => {
       const response = await authService.login(data);
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
+        setIsLoading(false);
         dispatch(setUser(response.Userinfo));
+
+        
       } else {
+        Alert.alert(
+          "Error",
+          response?.ResponseStatus?.MESSAGE,
+          [{ text: "OK" }]
+        );
       }
       setIsLoading(false);
     } catch (error: any) {
@@ -157,12 +165,13 @@ const LoginScreen = () => {
       const response = await authService.loginWithSocialMedia(data);
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
+        setIsLoading(false);
         dispatch(setUser(response.Userinfo[0]));
       } else {
         Alert.alert(
-          t('error'),
-          t('google_login_failed'),
-          [{ text: t('ok') }]
+          "Error",
+          response?.ResponseStatus?.MESSAGE,
+          [{ text: "OK" }]
         );
       }
     } catch (error: any) {
@@ -221,12 +230,13 @@ const LoginScreen = () => {
       console.log('response====>', response);
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
+        setIsLoading(false);
         dispatch(setUser(response.Userinfo[0]));
       } else {
         Alert.alert(
-          t('error'),
-          t('apple_login_failed'),
-          [{ text: t('ok') }]
+          "Error",
+          response?.ResponseStatus?.MESSAGE,
+          [{ text: "OK" }]
         );
       }
     } catch (error: any) {

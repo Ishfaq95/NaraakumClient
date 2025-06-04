@@ -51,11 +51,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-
-
 use_modular_headers!
-
-
 
 target 'Naraakum_client' do
   config = use_native_modules!
@@ -71,13 +67,13 @@ target 'Naraakum_client' do
 
   pod 'RNInAppBrowser', :path => '../node_modules/react-native-inappbrowser-reborn'
   pod 'react-native-webrtc', :path => '../node_modules/@videosdk.live/react-native-webrtc'
+  pod 'GoogleSignIn', '~> 7.0'
 
   pod 'Firebase/Core',:modular_headers => true
   pod 'Firebase/Messaging',:modular_headers => true
   pod 'FirebaseCoreInternal',:modular_headers => true
   pod 'GoogleUtilities',:modular_headers => true
   pod 'Firebase/Crashlytics'
-
 
   target 'Naraakum_clientTests' do
     inherit! :complete

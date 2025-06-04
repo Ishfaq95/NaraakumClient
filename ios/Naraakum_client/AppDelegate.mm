@@ -9,6 +9,7 @@
 #import <FirebaseCore/FirebaseCore.h>
 #import <FirebaseCrashlytics/FirebaseCrashlytics.h>
 #import <React/RCTI18nUtil.h>
+#import <GoogleSignIn/GoogleSignIn.h>
 
 @implementation AppDelegate
 
@@ -32,6 +33,10 @@
 //   [RNSplashScreen show];
 
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
+  return [GIDSignIn.sharedInstance handleURL:url];
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
