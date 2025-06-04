@@ -148,9 +148,9 @@ const LoginScreen = () => {
         "CatSocialServerId":1, 
         "CatUserTypeId":1,
         "CatNationalityId":1,
-        "CellNumber":"",
-        "DeviceId":"DDRT56789",
-        "DateofBirth":""
+        "CellNumber": "000000000",
+        "DeviceId": "DDRT56789",
+        "DateofBirth": "1984-09-09"
       }
 
       // // Call your API to save the Google user data
