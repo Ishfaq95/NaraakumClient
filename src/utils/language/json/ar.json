@@ -28,5 +28,6 @@
   "previous": "السابقة",
   "current_appointments": "المواعيد الحالية",
   "upcoming_appointments": "المواعيد القادمة",
-  "previous_appointments": "المواعيد السابقة"
+  "previous_appointments": "المواعيد السابقة",
+  "no_appointments": "لا توجد مواعيد متاحة"
 }

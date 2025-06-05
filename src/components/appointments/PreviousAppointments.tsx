@@ -4,11 +4,13 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  Text,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { appointmentService, Appointment } from '../../services/api/appointmentService';
 import AppointmentCard from './AppointmentCard';
 import { styles } from './styles';
+import NoAppointmentsIcon from '../../assets/icons/NoAppointmentsIcon';
 
 const PAGE_SIZE = 10;
 
@@ -79,6 +81,14 @@ const PreviousAppointments: React.FC<PreviousAppointmentsProps> = ({ userId, onJ
     }
   }, [userId]);
 
+  if(isLoading && appointments.length === 0){
+    return (
+      <View style={styles.emptyContentContainer}>
+        <ActivityIndicator size="large" color="#008080" />
+      </View>
+    );
+  }
+
   const renderFooter = () => {
     if (!isLoading) return null;
     return (
@@ -111,6 +121,12 @@ const PreviousAppointments: React.FC<PreviousAppointmentsProps> = ({ userId, onJ
         />
       }
       removeClippedSubviews={true}
+      ListEmptyComponent={() => (
+        <View style={styles.emptyContentContainer}>
+          <NoAppointmentsIcon />
+          <Text style={styles.text}>{t('no_appointments')}</Text>
+        </View>
+      )}
       maxToRenderPerBatch={10}
       windowSize={10}
       initialNumToRender={5}

@@ -163,7 +163,7 @@ const LoginScreen = () => {
 
       // // Call your API to save the Google user data
       const response = await authService.loginWithSocialMedia(data);
-
+      
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setIsLoading(false);
         dispatch(setUser(response.Userinfo[0]));

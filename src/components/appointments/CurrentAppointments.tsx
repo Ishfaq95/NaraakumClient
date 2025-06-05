@@ -4,6 +4,7 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  Text,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { appointmentService, Appointment } from '../../services/api/appointmentService';
@@ -11,6 +12,7 @@ import AppointmentCard from '../appointments/AppointmentCard';
 import { styles } from '../appointments/styles';
 import { useIsFocused } from '@react-navigation/native';
 import moment from 'moment';
+import NoAppointmentsIcon from '../../assets/icons/NoAppointmentsIcon';
 
 const PAGE_SIZE = 10;
 
@@ -194,6 +196,12 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
         />
       }
       removeClippedSubviews={true}
+      ListEmptyComponent={() => (
+        <View style={styles.emptyContentContainer}>
+          <NoAppointmentsIcon />
+          <Text style={styles.text}>{t('no_appointments')}</Text>
+        </View>
+      )}
       maxToRenderPerBatch={10}
       windowSize={10}
       initialNumToRender={5}

@@ -1,9 +1,15 @@
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
+const windowHeight = Dimensions.get('window').height;
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  emptyContentContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: windowHeight - 200,
   },
   contentContainer: {
     padding: 16,
@@ -73,5 +79,9 @@ export const styles = StyleSheet.create({
   },
   tabView: {
     flex: 1,
+  },
+  text: {
+    fontSize: 16,
+    color: '#000',
   },
 }); 
