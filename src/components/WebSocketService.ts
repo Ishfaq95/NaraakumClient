@@ -58,8 +58,9 @@ class WebSocketService {
           if (persistedState) {
             const parsedState = JSON.parse(persistedState);
             const rootState = JSON.parse(parsedState.user);
-            const {CommunicationKey, Id} = rootState.userinfo;
-            this.connect(presence, communicationKey, Id);
+            const {CommunicationKey, Id} = rootState.user;
+            
+            this.connect(presence, CommunicationKey, Id);
           }
         }, 5000); // Attempt to reconnect
       };

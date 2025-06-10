@@ -29,5 +29,8 @@
   "current_appointments": "المواعيد الحالية",
   "upcoming_appointments": "المواعيد القادمة",
   "previous_appointments": "المواعيد السابقة",
-  "no_appointments": "لا توجد مواعيد متاحة"
+  "no_appointments": "لا توجد مواعيد متاحة",
+  "cart": "السلة",
+  "profile": "الحساب",
+  "settings": "الإعدادات"
 }

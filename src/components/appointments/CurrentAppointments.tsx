@@ -179,6 +179,14 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
     />
   ), [onJoinMeeting, isAppointmentEnabled]);
 
+  if(isLoading && appointments.length === 0){
+    return (
+      <View style={styles.emptyContentContainer}>
+        <ActivityIndicator size="large" color="#008080" />
+      </View>
+    );
+  }
+
   return (
     <FlatList
       data={appointments}

@@ -196,8 +196,6 @@ const LoginScreen = () => {
         requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
       });
 
-      console.log('appleAuthResponse====>', appleAuthResponse);
-
       if (!appleAuthResponse.identityToken) {
         throw new Error('Apple Sign-In failed - no identify token returned');
       }
@@ -206,7 +204,6 @@ const LoginScreen = () => {
 
       // Get user info from the identity token
       const decodedToken = JSON.parse(atob(identityToken.split('.')[1]));
-      console.log('Decoded token:', decodedToken);
 
       const data = {
         "FullName": fullName?.givenName || decodedToken.email?.split('@')[0] || 'Apple User',
@@ -227,7 +224,6 @@ const LoginScreen = () => {
       setIsLoading(true);
       
       const response = await authService.loginWithSocialMedia(data);
-      console.log('response====>', response);
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setIsLoading(false);
@@ -241,7 +237,6 @@ const LoginScreen = () => {
       }
     } catch (error: any) {
       if (error.code === appleAuth.Error.CANCELED) {
-        console.log('User canceled Apple Sign in.');
       } else {
         console.error('Apple Sign in error:', error);
         Alert.alert(

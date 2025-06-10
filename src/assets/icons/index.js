@@ -13,6 +13,8 @@ import VoiceNoteIcon from "./VoiceNoteIcon";
 import VoiceNoteIconBlack from "./VoiceNoteIconBlack";
 import SendIcon from "./SendIcon";
 import ClipIcon from "./ClipIcon";
+import CartIconSelected from "./CartIconSelected";
+import CartIconNotSelected from "./CartIconNotSelected";
 
 import VideoOn from "./VideoOn";
 import VideoOff from "./VideoOff";
@@ -68,5 +70,7 @@ export {
   VoiceNoteIcon,
   VoiceNoteIconBlack,
   SendIcon,
-  ClipIcon
+  ClipIcon,
+  CartIconSelected,
+  CartIconNotSelected
 };

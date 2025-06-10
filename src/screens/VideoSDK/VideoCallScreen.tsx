@@ -57,7 +57,7 @@ import DocumentIcon from '../../assets/icons/DocumentIcon';
 import DocumentViewScreen from './DocumentViewScreen';
 import {useTranslation} from 'react-i18next';
 import {WEBSITE_URL} from '../../shared/utils/constants';
-import {SendNotificationForMeeting} from '../../Network/sendNotificationForMeeting';
+import { notificationService } from '../../services/api/NotificationService';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const SMALL_VIDEO_WIDTH = 140;
@@ -156,7 +156,8 @@ const VideoCallScreen = ({
       serviceProviderId: Data?.Data?.serviceProviderId,
     };
 
-    const response = await SendNotificationForMeeting(reciverId, data);
+    const response = await notificationService.sendNotificationForMeeting(reciverId, data);
+    console.log('Notification sent', response);
   };
 
   const {score} = useParticipantStat({

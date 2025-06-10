@@ -5,12 +5,21 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch } from "react-redux";
 import { ROUTES } from "../shared/utils/routes";
+import { useTranslation } from "react-i18next";
 
 import CartScreen from "../screens/Cart/Cart";
 import ProfileScreen from "../screens/Profile/Profile";
 import SettingsScreen from "../screens/Settings/Settings";
 import CalendarClockIcon from "../assets/icons/CalendarClockIcon";
 import AppointmentListScreen from "../screens/Home/AppointmentListScreen";
+import AppointmentIconSelected from "../assets/icons/AppointmentIconSelected";
+import AppointmentIconNotSelected from "../assets/icons/AppointmentIconNotSelected";
+import SettingIconSelected from "../assets/icons/SettingIconSelected";
+import SettingIconNotSelected from "../assets/icons/SettingIconNotSelected";
+import ProfileIconSelected from "../assets/icons/ProfileIconSelected";
+import ProfileIconNotSelected from "../assets/icons/ProfileIconNotSelected";
+import CartIconSelected from "../assets/icons/CartIconSelected";
+import CartIconNotSelected from "../assets/icons/CartIconNotSelected";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -32,19 +41,20 @@ const HamburgerManu = () => (
 function RenderTabIcon({ routeName, isFocused }: RenderTabIconProps) {
   switch (routeName) {
     case "HomeStack":
-      return isFocused ? <CalendarClockIcon width={32} height={32} color="#22A6A7" /> : <CalendarClockIcon width={32} height={32} color="#22A6A7" />;
+      return isFocused ? <AppointmentIconSelected width={32} height={32} color="#22A6A7" /> : <AppointmentIconNotSelected width={32} height={32} color="#22A6A7" />;
     case "CartStack":
-      return isFocused ? <HamburgerManu /> : <HamburgerManu />;
+      return isFocused ? <CartIconSelected /> : <CartIconNotSelected />;
     case "ProfileStack":
-      return isFocused ? <HamburgerManu /> : <HamburgerManu />;
+      return isFocused ? <ProfileIconSelected /> : <ProfileIconNotSelected />;
     case "SettingsStack":
-      return isFocused ? <HamburgerManu /> : <HamburgerManu />;
+      return isFocused ? <SettingIconSelected /> : <SettingIconNotSelected />;
     default:
       return <></>;
   }
 }
 
-function RenderTabText({ routeName, isFocused }: RenderTabIconProps) {
+const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
+  const { t } = useTranslation();
   switch (routeName) {
     case "HomeStack":
       return (
@@ -59,7 +69,7 @@ function RenderTabText({ routeName, isFocused }: RenderTabIconProps) {
               marginTop:  10,
             },
           ]}
-        >Appointments</Text>
+        >{t('appointments')}</Text>
       );
     case "CartStack":
       return (
@@ -74,7 +84,7 @@ function RenderTabText({ routeName, isFocused }: RenderTabIconProps) {
               marginTop: 10,
             },
           ]}
-        >Cart</Text>
+        >{t('cart')}</Text>
       );
     case "ProfileStack":
       return (
@@ -89,7 +99,7 @@ function RenderTabText({ routeName, isFocused }: RenderTabIconProps) {
               marginTop: 10,
             },
           ]}
-        >Profile</Text>
+        >{t('profile')}</Text>
       );
     case "SettingsStack":
       return (
@@ -104,7 +114,7 @@ function RenderTabText({ routeName, isFocused }: RenderTabIconProps) {
               marginTop: 10,
             },
           ]}
-        >Settings</Text>
+        >{t('settings')}</Text>
       );
     default:
       return <></>;

@@ -25,5 +25,8 @@
   "current_appointments": "Current Appointments",
   "upcoming_appointments": "Upcoming Appointments",
   "previous_appointments": "Previous Appointments",
-  "no_appointments": "There are no appointments available"
+  "no_appointments": "There are no appointments available",
+  "cart": "Cart",
+  "profile": "Profile",
+  "settings": "Settings"
 }

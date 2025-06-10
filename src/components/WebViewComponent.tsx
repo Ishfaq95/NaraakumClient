@@ -10,181 +10,19 @@ import {
 } from 'react-native';
 import LoaderKit from 'react-native-loader-kit';
 import {WebView} from 'react-native-webview';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
-import messaging from '@react-native-firebase/messaging';
-import {useDispatch, useSelector} from 'react-redux';
-import {setTopic, setUser} from '../shared/redux/reducers/userReducer';
-import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
-import useMutationHook from '../Network/useMutationHook';
-import PushNotification from 'react-native-push-notification';
-import notifee, {
-  AndroidImportance,
-  EventType,
-  TimestampTrigger,
-  TriggerType,
-} from '@notifee/react-native';
 import {ROUTES} from '../shared/utils/routes';
 import {useNavigation} from '@react-navigation/native';
-import WebSocketService from './WebSocketService';
 
 const WebViewComponent = ({uri}: any) => {
-  const dispatch = useDispatch();
-  const {topic, user} = useSelector((state: any) => state.root.user);
   const [loading, setLoading] = useState(true);
   const [currentUrl, setCurrentUrl] = useState(uri);
-  const [userInformation, setUserInformation] = useState('');
   const [reloadWebView, setReloadWebView] = useState(false);
   const [latestUrl, setLatestUrl] = useState('');
   const webViewRef = useRef(null);
   const navigation = useNavigation();
-  const webSocketService = WebSocketService.getInstance();
-
-  const sleep = (timeout: number) =>
-    new Promise<void>(resolve => setTimeout(resolve, timeout));
-
-  const {
-    mutate: getSystemNotificationFN,
-    isSuccess: isSuccessSystemNotification,
-    isError: isErrorSystemNotifiction,
-    data: SystemNotificationList,
-    isLoading: isLoadingSystemNotification,
-  } = useMutationHook('reminders/GetSystemReminderList', 'POST');
-
-  useEffect(() => {
-    if (isSuccessSystemNotification) {
-      PushNotification.cancelAllLocalNotifications();
-
-      if (Platform.OS === 'ios') {
-        scheduleNotificationIOS(SystemNotificationList?.ReminderList);
-      } else {
-        scheduleNotificationAndroid(SystemNotificationList?.ReminderList);
-      }
-    }
-    if (isErrorSystemNotifiction) {
-    }
-  }, [isSuccessSystemNotification, isErrorSystemNotifiction]);
-
-  const scheduleNotificationIOS = (notificationList: any) => {
-    notificationList.map((item: any, index: any) => {
-      const data = item;
-      // Convert UTC date string to local Date object
-      const localDate = new Date(data.ReminderDate); // Date object auto-adjusts to local timezone
-
-      // Optional: skip past dates
-      if (localDate <= new Date()) {
-        return;
-      }
-
-      const reminderObj = {
-        ...item,
-        meetingInfo: item.meetingInfo[0],
-        notificationFrom: 'reminder',
-      };
-
-      PushNotification.localNotificationSchedule({
-        id: data.Id,
-        title: data.Subject,
-        message: data.NotificationBody,
-        date: localDate,
-        // date: new Date(Date.now() + 60 * 1000),
-        playSound: true,
-        soundName: 'default',
-        userInfo: reminderObj,
-        allowWhileIdle: true, // important for background
-      });
-    });
-
-    PushNotification.getScheduledLocalNotifications(notifs => {});
-  };
-
-  const scheduleNotificationAndroid = async (notificationList: any) => {
-    await notifee.cancelAllNotifications();
-
-    try {
-      for (const item of notificationList) {
-        const localDate = new Date(item.ReminderDate);
-
-        const trigger: TimestampTrigger = {
-          type: TriggerType.TIMESTAMP,
-          timestamp: localDate.getTime(), // cleaner and safer
-        };
-        await notifee.createTriggerNotification(
-          {
-            id: `reminder-${item.Id}`,
-            title: item.Subject || 'Reminder',
-            body: item.NotificationBody || 'You have a reminder',
-            android: {
-              channelId: 'default',
-              pressAction: {
-                id: 'default',
-              },
-            },
-            data: {
-              CatNotificationPlatformId: item.CatNotificationPlatformId,
-              CreatedDate: item.CreatedDate,
-              Id: item.Id,
-              NotificationBody: item.NotificationBody,
-              ReceiverId: item.ReceiverId,
-              ReminderDate: item.ReminderDate,
-              SchedulingDate: item.SchedulingDate,
-              SchedulingTime: item.SchedulingTime,
-              Subject: item.Subject,
-              TaskId: item.TaskId,
-              VideoSDKMeetingId: item.VideoSDKMeetingId || 'Not Found',
-              notificationFrom: 'reminder',
-              meetingInfo: item.meetingInfo[0],
-            },
-          },
-          trigger,
-        );
-      }
-
-      const notifeeNotifs = await notifee.getTriggerNotifications();
-    } catch (error) {}
-  };
-
-  useEffect(() => {
-    if (user) {
-      getSystemNotificationFN({
-        UserloginInfo: user.Id,
-      });
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      const presence = 1;
-      const communicationKey = user.CommunicationKey;
-      const UserId = user.Id;
-      webSocketService.connect(presence, communicationKey, UserId);
-    } else {
-      webSocketService.disconnect();
-    }
-  }, [user]);
-
-  const subsribeTopic = (Id: any) => {
-    const topicName = `patient_${Id}`;
-
-    if (topic) {
-      if (topic != topicName) {
-        messaging()
-          .unsubscribeFromTopic(topic)
-          .then(() => {});
-
-        dispatch(setTopic(topicName));
-
-        messaging()
-          .subscribeToTopic(topicName)
-          .then(() => {});
-      }
-    } else {
-      dispatch(setTopic(topicName));
-      messaging()
-        .subscribeToTopic(topicName)
-        .then(() => {});
-    }
-  };
 
   const injectedJavaScript = `
     (function() {
@@ -235,18 +73,12 @@ const WebViewComponent = ({uri}: any) => {
       fileName,
     } = JSON.parse(event.nativeEvent.data);
 
-    if (eventHandler == 'logout') {
-      // dispatch(setUser(null));
-      dispatch(setTopic(null));
-      webSocketService.disconnect();
-    }
-
     if (eventHandler == 'joinMeeting') {
       navigation.navigate(ROUTES.preViewCall, {Data: data});
     } else if (eventHandler == 'orderSuccess') {
-      getSystemNotificationFN({
-        UserloginInfo: user.Id,
-      });
+      // getSystemNotificationFN({
+      //   UserloginInfo: user.Id,
+      // });
     } else if (eventHandler == 'download') {
       let isPermissionGrandted = await getStoragePermission();
       if (isPermissionGrandted) {
@@ -277,54 +109,7 @@ const WebViewComponent = ({uri}: any) => {
           'Allow media access to download the file.',
         );
       }
-    } else if (eventHandler == 'userLoggedIn') {
-      // dispatch(setUser(userInfo));
-    }
-
-    // if (url && url.includes('OnlineSessionRoom')) {
-    //   // let urlComplete = `https://staging.innotech-sa.com${url}`;
-    //   let urlComplete = `https://dvx.innotech-sa.com${url}`;
-    //   // let urlComplete = `https://nkapps.innotech-sa.com${url}`;
-    //   // let urlComplete = `https://naraakum.com${url}`;
-
-    //   const redirectUrl = getDeepLink();
-
-    //   try {
-    //     if (await InAppBrowser.isAvailable()) {
-    //       // const result = await InAppBrowser.open(urlComplete, {
-    //       //   showTitle: true,
-    //       //   toolbarColor: '#6200EE',
-    //       //   enableDefaultShare: true,
-    //       //   animations: {
-    //       //     startEnter: 'slide_in_right',
-    //       //     startExit: 'slide_out_left',
-    //       //     endEnter: 'slide_in_left',
-    //       //     endExit: 'slide_out_right',
-    //       //   },
-    //       // });
-    //       const result = await InAppBrowser.open(urlComplete, {
-    //         forceCloseOnRedirection: false,
-    //         showInRecents: true,
-    //         showTitle: true,
-    //         enableUrlBarHiding: true,
-    //         enableDefaultShare: false,
-    //         modalPresentationStyle: 'overFullScreen',
-
-    //         ephemeralWebSession: false,
-    //         enableBarCollapsing: true,
-    //         modalEnabled: true,
-    //       });
-    //       await sleep(800);
-    //       setCurrentUrl(latestUrl);
-    //       setReloadWebView(true);
-    //       setTimeout(() => {
-    //         setReloadWebView(false);
-    //       }, 100);
-    //     }
-    //   } catch (error) {
-    //     Alert.alert('Error', 'Failed to open the in-app browser');
-    //   }
-    // }
+    } 
   };
 
   const getDeepLink = (path = '') => {
@@ -461,6 +246,7 @@ const WebViewComponent = ({uri}: any) => {
       }
     }
   };
+
   const handleLoadError = (event: any) => {
     setLoading(false);
     setReloadWebView(true);

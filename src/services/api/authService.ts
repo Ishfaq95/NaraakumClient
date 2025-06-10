@@ -1,7 +1,5 @@
 import axiosInstance from '../axios/axiosConfig';
 
-const BASE_PATH = '/auth';
-
 /**
  * Authenticate user with email and password
  * @param credentials object containing email and password

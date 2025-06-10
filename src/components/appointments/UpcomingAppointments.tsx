@@ -80,14 +80,6 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
     }
   }, [userId]);
 
-  if(isLoading){
-    return (
-      <View style={styles.emptyContentContainer}>
-        <ActivityIndicator size="large" color="#008080" />
-      </View>
-    );
-  }
-
   const renderFooter = () => {
     if (!isLoading) return null;
     return (
@@ -96,6 +88,14 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
       </View>
     );
   };
+  
+  if(isLoading && appointments.length === 0){
+    return (
+      <View style={styles.emptyContentContainer}>
+        <ActivityIndicator size="large" color="#008080" />
+      </View>
+    );
+  }
 
   return (
     <FlatList

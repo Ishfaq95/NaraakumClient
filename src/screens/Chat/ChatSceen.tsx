@@ -17,26 +17,20 @@ import {
   Dimensions,
   Alert,
 } from 'react-native';
-import useMutationHook from '../../Network/useMutationHook';
-import {getMessagesList} from '../../Network/getMessagesList';
 import {useSelector} from 'react-redux';
 import ChatMessageRender from './ChatMessageRender';
 import WebSocketService from '../../components/WebSocketService';
 import {
-  RightArrowWhite as RightArrowWhiteIcon,
   SendIcon,
   ClipIcon,
-  DocumentIcon,
-  VoiceNoteIcon,
 } from '../../assets/icons';
-import {launchImageLibrary} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
-import FilePicker from 'react-native-file-picker';
 import Sound from 'react-native-sound';
 import RNFS from 'react-native-fs';
 import {store} from '../../shared/redux/store';
 import RightArrowIcon from '../../assets/icons/RightArrow';
 import {MediaBaseURL} from '../../shared/utils/constants';
+import { getMessagesList } from '../../services/api/MessagesAndCallService';
 
 interface Message {
   Id: string;
@@ -80,7 +74,7 @@ interface WebSocketError {
   code?: string;
 }
 
-interface WebSocketService {
+interface WebSocketServiceInterface {
   connect: (
     mode: number,
     communicationKey: string,
@@ -89,7 +83,7 @@ interface WebSocketService {
   disconnect: () => void;
   getSocket: () => WebSocket | null;
   sendMessage: (message: any) => Promise<WebSocketResponse>;
-  getInstance: () => WebSocketService;
+  getInstance: () => WebSocketServiceInterface;
 }
 
 const ChatScreen = ({

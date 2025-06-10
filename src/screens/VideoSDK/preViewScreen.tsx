@@ -1,4 +1,4 @@
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect, useIsFocused, useNavigation} from '@react-navigation/native';
 import {
   createCameraVideoTrack,
   createMicrophoneAudioTrack,
@@ -30,7 +30,6 @@ import MicIconWithCircle from '../../assets/icons/MicIconWithCircle';
 import NetworkSignalIcon from '../../assets/icons/NetworkSignalIcon';
 import MicIconOff from '../../assets/icons/MicIconOff';
 import CameraIconOff from '../../assets/icons/CameraIconOff';
-import {getVideoSDKToken} from '../../Network/GetVideoSDKToken';
 import useParticipantStat from '../meeting/Hooks/useParticipantStat';
 import {useTranslation} from 'react-i18next';
 import {changeLanguage} from '../../utils/language/i18nextConfig';
@@ -39,6 +38,7 @@ import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
 import Svg, {Path} from 'react-native-svg';
 import AudioRecord from 'react-native-audio-record';
 import RightArrowIcon from '../../assets/icons/RightArrow';
+import { getVideoSDKToken } from '../../services/api/MessagesAndCallService';
 
 const width = 200;
 
@@ -63,6 +63,7 @@ const PreViewScreen = ({navigation, route}: any) => {
   const [recording, setRecording] = useState(false);
   const [volume, setVolume] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (Platform.OS == 'android') {
@@ -177,20 +178,32 @@ const PreViewScreen = ({navigation, route}: any) => {
     await switchAudioDevice(id);
   };
 
-  const disposeVideoTrack = () => {
-    setTrack((stream: any) => {
-      stream.getTracks().forEach((track: any) => {
-        track.enabled = false;
-        return track;
-      });
-    });
+  const disposeVideoTrack = async () => {
+    console.log('disposeVideoTrack');
+    try {
+      const currentTrack = tracks;
+      if (currentTrack) {
+        currentTrack.getTracks().forEach((track: any) => {
+          track.enabled = false;
+          track.stop();
+        });
+      }
+      setTrack('');
+    } catch (error) {
+      console.error('Error disposing video track:', error);
+    }
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      getTrack();
-    }, []),
-  );
+  useEffect(() => {
+    return () => {
+      disposeVideoTrack();
+    };
+  }, []);
+
+  const handleBackPress = async () => {
+    await disposeVideoTrack();
+    navigation.navigate(ROUTES.HomeStack);
+  };
 
   const getAudioTrack = async () => {
     try {
@@ -209,18 +222,23 @@ const PreViewScreen = ({navigation, route}: any) => {
   const getTrack = async () => {
     getAudioTrack();
 
-    const track = await createCameraVideoTrack({
-      optimizationMode: 'motion',
-      encoderConfig: 'h720p_w960p',
-      facingMode: facingMode,
-    });
-    setTrack(track);
+      const track = await createCameraVideoTrack({
+        optimizationMode: 'motion',
+        encoderConfig: 'h720p_w960p',
+        facingMode: facingMode,
+      });
+      setTrack(track);
   };
 
   useEffect(() => {
-    handleDevicePress();
-    getTrack();
-  }, [facingMode]);
+    if(isFocused) {
+      handleDevicePress();
+      getTrack();
+    }else{
+      disposeVideoTrack();
+    }
+    
+  }, [facingMode, isFocused]);
 
   const toggleCameraFacing = () => {
     try {
@@ -306,7 +324,7 @@ const PreViewScreen = ({navigation, route}: any) => {
             }}>
             {I18nManager.isRTL ? (
               <TouchableOpacity
-                onPress={() => navigation.goBack()}
+                onPress={handleBackPress}
                 style={{flexDirection: 'row', paddingHorizontal: 8}}>
                 <RightArrowIcon />
                 <Text
@@ -315,7 +333,7 @@ const PreViewScreen = ({navigation, route}: any) => {
                 </Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={{flexDirection: 'row'}}>
+              <TouchableOpacity onPress={handleBackPress} style={{flexDirection: 'row'}}>
                 <BackIcon />
                 <Text style={{paddingLeft: 8}}>Back</Text>
               </TouchableOpacity>

@@ -1,33 +1,82 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   SafeAreaView,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUser } from '../../shared/redux/reducers/userReducer';
+import { setTopic, setUser } from '../../shared/redux/reducers/userReducer';
 import { styles } from '../../components/appointments/styles';
 import CurrentAppointments from '../../components/appointments/CurrentAppointments';
 import UpcomingAppointments from '../../components/appointments/UpcomingAppointments';
 import PreviousAppointments from '../../components/appointments/PreviousAppointments';
-import { TimestampTrigger } from '@notifee/react-native';
-import { TriggerType } from '@notifee/react-native';
 import moment from 'moment';
 import { ROUTES } from '../../shared/utils/routes';
+import { useIsFocused } from '@react-navigation/native';
 
-const AppointmentListScreen = React.memo(({navigation}: any) => {
+import WebSocketService from '../../components/WebSocketService';
+import { notificationService } from '../../services/api/NotificationService';
+import { requestAndroidPermissions, requestiOSPermissions, scheduleNotificationAndroid, scheduleNotificationIOS, subsribeTopic } from '../../shared/services/service';
+import Header from '../../components/common/Header';
+
+const AppointmentListScreen = ({navigation}: any) => {
   const [index, setIndex] = useState(0);
   const { t } = useTranslation();
   const layout = useWindowDimensions();
   const dispatch = useDispatch();
-  const userInfo = useSelector((state: any) => state.root.user.user);
+  const user = useSelector((state: any) => state.root.user.user);
+  const {topic} = useSelector((state: any) => state.root.user);
+  const webSocketService = WebSocketService.getInstance();
+  const isFocused = useIsFocused();
+  const requestPermissions = async () => {
+    return Platform.OS === 'ios' ? requestiOSPermissions() : requestAndroidPermissions();
+  };
 
+  const afterLogin = async () => {
+    try {
+      const presence = 1;
+      const communicationKey = user.CommunicationKey;
+      const UserId = user.Id;
+      subsribeTopic(UserId, topic, dispatch);
+      
+      webSocketService.connect(presence, communicationKey, UserId);
+
+      notificationService.getSystemNotification({
+        UserloginInfo: user.Id,
+      }).then((SystemNotificationList: any) => {
+        if (Platform.OS === 'ios') {
+          scheduleNotificationIOS(SystemNotificationList?.ReminderList);
+        } else {
+          scheduleNotificationAndroid(SystemNotificationList?.ReminderList);
+        }
+      }); 
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+
+  // Initial permissions request
+  useEffect(() => {
+    requestPermissions();
+  }, []);
+
+  // Handle both initial load and tab focus
+  useEffect(() => {
+    if (user && isFocused) {
+      afterLogin();
+    } else {
+      webSocketService.disconnect();
+    }
+  }, [user, isFocused]);
 
   const onLogout = () => {
+    dispatch(setTopic(null));
+    webSocketService.disconnect();
     dispatch(setUser(null));
   };
 
@@ -70,17 +119,21 @@ const AppointmentListScreen = React.memo(({navigation}: any) => {
   };
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <View style={styles.headerLeft}>
+    <Header
+      leftComponent={
         <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
           <Text style={styles.logoutButtonText}>{t('logout')}</Text>
         </TouchableOpacity>
-      </View>
-      <Text style={styles.headerTitle}>{t('appointments')}</Text>
-      <TouchableOpacity style={styles.bookButton}>
-        <Text style={styles.bookButtonText}>{t('book_order')}</Text>
-      </TouchableOpacity>
-    </View>
+      }
+      centerComponent={
+        <Text style={styles.headerTitle}>{t('appointments')}</Text>
+      }
+      rightComponent={
+        <TouchableOpacity style={styles.bookButton}>
+          <Text style={styles.bookButtonText}>{t('book_order')}</Text>
+        </TouchableOpacity>
+      }
+    />
   );
 
   const routes = [
@@ -101,9 +154,9 @@ const AppointmentListScreen = React.memo(({navigation}: any) => {
   );
 
   const renderScene = SceneMap({
-    current: () => <CurrentAppointments userId={userInfo?.Id} onJoinMeeting={handleJoinMeeting} />,
-    upcoming: () => <UpcomingAppointments userId={userInfo?.Id} onJoinMeeting={handleJoinMeeting} />,
-    previous: () =><PreviousAppointments userId={userInfo?.Id} onJoinMeeting={handleJoinMeeting} />,
+    current: () => <CurrentAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
+    upcoming: () => <UpcomingAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
+    previous: () =><PreviousAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
   });
 
   return (
@@ -124,6 +177,6 @@ const AppointmentListScreen = React.memo(({navigation}: any) => {
       />
     </SafeAreaView>
   );
-});
+};
 
 export default AppointmentListScreen; 

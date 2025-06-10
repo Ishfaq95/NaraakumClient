@@ -41,10 +41,9 @@ const AppleSignIn: React.FC<AppleSignInProps> = ({ navigation }) => {
       navigation.replace(ROUTES.AppointmentList);
     } catch (error: any) {
       if (error.code === appleAuth.Error.CANCELED) {
-        // User canceled Apple Sign-in
         console.log('User canceled Apple Sign in.');
       } else {
-        console.error('Apple Sign in error:', error);
+        console.log('Apple Sign in error:', error);
       }
     }
   };
