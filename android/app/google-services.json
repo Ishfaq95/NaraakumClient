@@ -76,6 +76,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1060639338997-9spg36j5m2hcnv0p2nsm51n34ts59esc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naraakum_patient",
+            "certificate_hash": "56af8d3afcb88ee2aceb0600999826cad7deed3e"
+          }
+        },
+        {
           "client_id": "1060639338997-sgjk0nuctcb6dqu64qd4vcbn2h8tj4ka.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

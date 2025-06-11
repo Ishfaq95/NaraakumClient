@@ -28,5 +28,6 @@
   "no_appointments": "There are no appointments available",
   "cart": "Cart",
   "profile": "Profile",
-  "settings": "Settings"
+  "settings": "Settings",
+  "login_with": "Login with"
 }
