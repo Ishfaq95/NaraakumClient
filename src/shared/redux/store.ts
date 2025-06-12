@@ -4,6 +4,7 @@ import {persistReducer, persistStore} from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import userReducer from './reducers/userReducer';
 import {TypedUseSelectorHook, useSelector} from 'react-redux';
+import bookingReducer from './reducers/bookingReducer';
 
 const persistConfig = {
   key: 'root',
@@ -13,6 +14,7 @@ const persistConfig = {
 
 const reducers = combineReducers({
   user: userReducer,
+  booking: bookingReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, reducers);

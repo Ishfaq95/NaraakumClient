@@ -1,0 +1,63 @@
+import React from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+
+const colors = [ '#E5F3EF', '#BDF3F9', '#CEEAEB', '#D2DBEF', '#C6FAE4','#EFE4CF'];
+
+const HomeVisitCard = ({ item,index,onPress }: { item: any,index:number,onPress:(item:any) => void }) => (
+  <TouchableOpacity style={[styles.card]} onPress={() => onPress(item)}>
+    <View style={[styles.iconContainer,{backgroundColor:colors[index]}]}>
+      <Image source={{ uri: item.ImagePath }} style={styles.image} resizeMode="contain" />
+    </View>
+    <View style={styles.contentContainer}>
+      <Text style={styles.title}>{item.TitleSlang}</Text>
+      <Text style={styles.price}>
+        تبدأ من <Text style={{ color: '#179c8e', fontWeight: 'bold' }}>{item.Price} ريال</Text>
+      </Text>
+    </View>
+  </TouchableOpacity>
+);
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    margin: 8,
+    // alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#179c8e',
+    height:220,
+    width:'45%'
+  },
+  iconContainer: {
+    backgroundColor: '#e6f2f2',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    height: '60%',
+    width: '100%',
+    padding: 8,
+    alignItems:'center',
+    justifyContent:'center'
+  },
+  image: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#222',
+  },
+  price: {
+    fontSize: 14,
+    color: '#222',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingLeft:10,
+    justifyContent: 'center',
+  },
+});
+
+export default HomeVisitCard; 

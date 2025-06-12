@@ -37,15 +37,28 @@ const AppointmentListScreen = ({navigation}: any) => {
     return Platform.OS === 'ios' ? requestiOSPermissions() : requestAndroidPermissions();
   };
 
+  console.log("webSocketService",webSocketService.isSocketConnected())
+
+  // Handle WebSocket connection
+  // useEffect(() => {
+    
+  //   if (user) {
+  //     const presence = 1;
+  //     const communicationKey = user.CommunicationKey;
+  //     const UserId = user.Id;
+  //     subsribeTopic(UserId, topic, dispatch);
+      
+  //     // Only connect if not already connected
+  //     if (!webSocketService.isSocketConnected()) {
+  //       webSocketService.connect(presence, communicationKey, UserId);
+  //     }
+  //   } else {
+  //     webSocketService.disconnect();
+  //   }
+  // }, [user]);
+
   const afterLogin = async () => {
     try {
-      const presence = 1;
-      const communicationKey = user.CommunicationKey;
-      const UserId = user.Id;
-      subsribeTopic(UserId, topic, dispatch);
-      
-      webSocketService.connect(presence, communicationKey, UserId);
-
       notificationService.getSystemNotification({
         UserloginInfo: user.Id,
       }).then((SystemNotificationList: any) => {
@@ -65,12 +78,10 @@ const AppointmentListScreen = ({navigation}: any) => {
     requestPermissions();
   }, []);
 
-  // Handle both initial load and tab focus
+  // Handle notifications when screen is focused
   useEffect(() => {
     if (user && isFocused) {
       afterLogin();
-    } else {
-      webSocketService.disconnect();
     }
   }, [user, isFocused]);
 
@@ -129,7 +140,7 @@ const AppointmentListScreen = ({navigation}: any) => {
         <Text style={styles.headerTitle}>{t('appointments')}</Text>
       }
       rightComponent={
-        <TouchableOpacity style={styles.bookButton}>
+        <TouchableOpacity onPress={() => navigation.navigate(ROUTES.Services)} style={styles.bookButton}>
           <Text style={styles.bookButtonText}>{t('book_order')}</Text>
         </TouchableOpacity>
       }

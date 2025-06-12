@@ -10,4 +10,6 @@ export const WEBSITE_URL = 'https://dvx.innotech-sa.com/HHC/web/';
 // export const WEBSOCKET_URL = 'wss://nk-pro-presense.innotech-sa.com:8202/';
 // export const WEBSITE_URL = 'https://naraakum.com/';
 
-
+// Local
+// export const BaseURL='http://192.168.1.20:3000/api/'
+// export const WEBSOCKET_URL = 'ws://192.168.1.20:6223/';

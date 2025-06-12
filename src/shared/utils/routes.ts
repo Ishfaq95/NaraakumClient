@@ -20,5 +20,8 @@ export const ROUTES = {
     SettingsScreen: "SettingsScreen",
 
     AppNavigator: "AppNavigator",
+
+    Services: "Services",
+    BookingScreen: "BookingScreen",
   };
   

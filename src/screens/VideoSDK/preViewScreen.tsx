@@ -14,6 +14,7 @@ import {
   I18nManager,
   Platform,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import colors from '../../shared/utils/color';
 import VideoOff from '../../assets/icons/VideoOff';
@@ -267,7 +268,12 @@ const PreViewScreen = ({navigation, route}: any) => {
 
       setMicon(true);
       setVideoOn(true);
-      navigation.navigate(ROUTES.Meeting, paramsVal);
+      console.log('paramsVal', paramsVal);
+      if(meetingId){
+        navigation.navigate(ROUTES.Meeting, paramsVal);
+      }else{
+        Alert.alert('Meeting ID is required');
+      }
     }
   };
 
