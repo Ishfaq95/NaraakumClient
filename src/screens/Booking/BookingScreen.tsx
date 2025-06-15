@@ -9,13 +9,16 @@ import { useTranslation } from 'react-i18next';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
 import Specialties from '../../components/bookingSteps/Specialties';
 import LinearGradient from 'react-native-linear-gradient';
+import { setSelectedSpecialtyOrService } from '../../shared/redux/reducers/bookingReducer';
+import { useDispatch } from 'react-redux';
 
 const BookingScreen = ({navigation}:any ) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
-
+  const dispatch = useDispatch();
+  
   const onPressSpecialty = (specialty: any) => {
-    console.log("specialty", specialty);
+    dispatch(setSelectedSpecialtyOrService(specialty));
     setCurrentStep(2);
   }
 

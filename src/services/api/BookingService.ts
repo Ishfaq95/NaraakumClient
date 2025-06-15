@@ -30,8 +30,46 @@ export const getAllSpecialties = async (): Promise<any> => {
     }
 };
 
+export const getServiceProviderSchedulingAvailability = async (params: {
+    CatServiceId: string;
+    CatSpecialtyId: number;
+    StartDate: string;
+    PageNumber: number;
+    PageSize: number;
+}): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('organization/GetServiceProviderSchedulingAvailability', params);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error fetching service provider scheduling availability:', error);
+        throw error;
+    }
+};
+
+export const getServiceProviderListByService = async (params: {
+    CatcategoryId: string;
+    ServiceIds: string;
+    Search: string;
+    PatientLocation: any;
+    CatCityId: any;
+    CatSquareId: any;
+    Gender: number;
+    PageNumber: number;
+    PageSize: number;
+}): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('offeredServices/GetServiceProviderListByService', params);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error fetching service provider list:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
-    getAllSpecialties
+    getAllSpecialties,
+    getServiceProviderSchedulingAvailability,
+    getServiceProviderListByService
 }; 

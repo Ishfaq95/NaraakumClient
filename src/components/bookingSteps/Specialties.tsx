@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, FlatList, Text, Image, TouchableOpacity, StyleSheet, I18nManager, ActivityIndicator } from 'react-native';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import SearchInput from '../common/SearchInput';
 import { bookingService } from '../../services/api/BookingService';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import { SvgUri } from 'react-native-svg';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { setServices } from '../../shared/redux/reducers/bookingReducer';
 
 const Specialties = ({onPressSpecialty}: {onPressSpecialty: (specialty: any) => void}) => {
   const category = useSelector((state: any) => state.root.booking.category);
@@ -13,6 +14,8 @@ const Specialties = ({onPressSpecialty}: {onPressSpecialty: (specialty: any) => 
   const [offeredServices, setOfferedServices] = useState<any>(null);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -26,6 +29,7 @@ const Specialties = ({onPressSpecialty}: {onPressSpecialty: (specialty: any) => 
         if (general) {
           merged = [general, ...merged];
         }
+        dispatch(setServices(offered.OfferedServices));
         setSpecialties(merged); 
       } catch (error) {
         console.error('Error fetching booking data:', error);
