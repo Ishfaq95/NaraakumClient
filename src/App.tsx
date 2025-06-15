@@ -70,31 +70,32 @@ const App = () => {
   };
 
   return (
-    <Provider store={store}>
-      <PersistGate persistor={persistor}>
-        <SafeAreaProvider>
-          <QueryClientProvider client={queryClient}>
-            <CrashlyticsErrorBoundary>
-              <CrashlyticsProvider
-                userId="user"
-                customKeys={{
-                  appVersion: '1.0.3',
-                  environment: 'production',
-                }}>
+      <Provider store={store}>
+        <PersistGate persistor={persistor}>
+          <SafeAreaProvider>
+            <QueryClientProvider client={queryClient}>
+              <CrashlyticsErrorBoundary>
+                <CrashlyticsProvider
+                  userId="user"
+                  customKeys={{
+                    appVersion: '1.0.3',
+                    environment: 'production',
+                  }}>
                 
                   <NavigationContainer ref={navigationRef}>
+
                     <AppInitializer />
                     <Routes />
                     <NotificationsCenter />
                     <Connectivity />
                     
                   </NavigationContainer>
-              </CrashlyticsProvider>
-            </CrashlyticsErrorBoundary>
-          </QueryClientProvider>
-        </SafeAreaProvider>
-      </PersistGate>
-    </Provider>
+                </CrashlyticsProvider>
+              </CrashlyticsErrorBoundary>
+            </QueryClientProvider>
+          </SafeAreaProvider>
+        </PersistGate>
+      </Provider>
   );
 };
 

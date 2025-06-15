@@ -14,9 +14,14 @@ const BookingScreen = ({navigation}:any ) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
 
+  const onPressSpecialty = (specialty: any) => {
+    console.log("specialty", specialty);
+    setCurrentStep(2);
+  }
+
   const renderStep = () => {
     switch (currentStep) {
-      case 1: return <Specialties />;
+      case 1: return <Specialties onPressSpecialty={onPressSpecialty} />;
       case 2: return <Step2 />;
       case 3: return <Step3 />;
       case 4: return <Step4 />;
@@ -58,7 +63,7 @@ const BookingScreen = ({navigation}:any ) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1, padding: 16 },
+  content: { flex: 1},
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
