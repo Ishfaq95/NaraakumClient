@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -13,6 +14,7 @@ import {
 const { width, height } = Dimensions.get('window');
 
 const AuthWelcomeScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   return (
     <ImageBackground
       source={require('../assets/images/backgroundImage.png')}
@@ -24,10 +26,10 @@ const AuthWelcomeScreen = ({ navigation }: any) => {
         {/* Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity activeOpacity={0.8} style={styles.loginButton} onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.loginButtonText}>Login</Text>
+            <Text style={styles.loginButtonText}>{t('login')}</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.8} style={styles.createButton} onPress={() => {}}>
-            <Text style={styles.createButtonText}>Create New Account</Text>
+            <Text style={styles.createButtonText}>{t('createNewAccount')}</Text>
           </TouchableOpacity>
           
         </View>

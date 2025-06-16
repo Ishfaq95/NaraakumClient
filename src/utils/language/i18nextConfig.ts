@@ -21,8 +21,10 @@ const resources = {
 // Initialize i18n and set the default language (Arabic by default)
 export const initializeI18Next = async () => {
   const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
-  const defaultLanguage = savedLanguage || LangCode.ar; // Use saved language or default to Arabic
+  const defaultLanguage = savedLanguage || LangCode.en; // Use saved language or default to Arabic
   const isRtl = defaultLanguage === LangCode.ar;
+
+  console.log("isRtl ",isRtl);
 
   // Set RTL or LTR based on the language
   I18nManager.forceRTL(isRtl);

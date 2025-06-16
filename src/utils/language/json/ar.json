@@ -34,5 +34,6 @@
   "profile": "الحساب",
   "settings": "الإعدادات",
   "login_with": "تسجيل الدخول باستخدام",
-  "booking": "الحجز"
+  "booking": "الحجز",
+  "createNewAccount": "إنشاء حساب جديد"
 }

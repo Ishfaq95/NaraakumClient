@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, ScrollView, FlatList } from 'react-native'
+import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, ScrollView, FlatList, I18nManager } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import Header from '../../components/common/Header';
@@ -72,7 +72,7 @@ const Services = ({ navigation }: any) => {
             }
             leftComponent={
                 <TouchableOpacity onPress={() => isHomeVisit ? setIsHomeVisit(false) : navigation.goBack()} style={styles.bookButton}>
-                    <ArrowRightIcon />
+                    {I18nManager.isRTL ?  <ArrowRightIcon /> : <BackIcon />}
                 </TouchableOpacity>
             }
             containerStyle={styles.headerContainer}

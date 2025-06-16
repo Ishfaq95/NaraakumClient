@@ -43,9 +43,6 @@ class MainApplication : Application(), ReactApplication {
       load()
     }
     
-    // Force RTL layout direction
-    val i18nUtil = I18nUtil.getInstance()
-    i18nUtil.allowRTL(applicationContext, true)
-    i18nUtil.forceRTL(applicationContext, true)
+
   }
 }

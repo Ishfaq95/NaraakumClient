@@ -325,7 +325,7 @@ const LoginScreen = () => {
                 </Text>
               </View>
               <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 16, paddingTop: 20 }}>
-                <Text style={{ fontSize: 14, color: '#666' }}>{t('login_with')}</Text>
+                <Text style={{ fontSize: 14, color: '#666',textAlign:I18nManager.isRTL ? 'left' : 'right' }}>{t('login_with')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
                   <TouchableOpacity onPress={() => setActiveTab('mobile')} style={[styles.tab, activeTab === 'mobile' && styles.activeTab]}>
                     <Text style={[styles.tabText, activeTab === 'mobile' && styles.activeTabText]}>{t('mobile_number')}</Text>

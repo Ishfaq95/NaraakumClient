@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, I18nManager } from 'react-native';
 
 const colors = [ '#E5F3EF', '#BDF3F9', '#CEEAEB', '#D2DBEF', '#C6FAE4','#EFE4CF'];
 
@@ -48,14 +48,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
     color: '#222',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
+    writingDirection: I18nManager.isRTL ? 'ltr' : 'rtl',
   },
   price: {
     fontSize: 14,
     color: '#222',
+    textAlign: I18nManager.isRTL ? 'left' : 'right',
+    writingDirection: I18nManager.isRTL ? 'ltr' : 'rtl',
   },
   contentContainer: {
     flex: 1,
-    paddingLeft:10,
+    paddingLeft: I18nManager.isRTL ? 10 : 0,
+    paddingRight: I18nManager.isRTL ? 0 : 10,
     justifyContent: 'center',
   },
 });

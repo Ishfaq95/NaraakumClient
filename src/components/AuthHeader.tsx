@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, I18nManager } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
+import { changeLanguage } from '../utils/language/i18nextConfig';
 
 // Simple inline SVG for back arrow
 const BackArrow = ({ color = '#222', size = 24 }) => (
@@ -24,6 +25,11 @@ const AuthHeader = ({
   style?: any;
 }) => {
   const navigation = useNavigation();
+
+  const onChangeLanguage = () => {
+    changeLanguage(I18nManager.isRTL ? 'en' : 'ar');
+  }
+
   return (
     <View style={[styles.header, style]}>
       <TouchableOpacity
@@ -34,8 +40,8 @@ const AuthHeader = ({
         <BackArrow />
       </TouchableOpacity>
       <View style={{ flex: 1 }} />
-      <TouchableOpacity style={styles.langBtn} onPress={onLanguageSwitch}>
-        <Text style={styles.langText}>{language}</Text>
+      <TouchableOpacity style={styles.langBtn} onPress={onChangeLanguage}>
+        <Text style={styles.langText}>{I18nManager.isRTL ? 'En' : 'Ar'}</Text>
       </TouchableOpacity>
     </View>
   );
