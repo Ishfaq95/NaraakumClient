@@ -19,7 +19,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ item, style, onPress }) => {
         style={[styles.card, style]}
       >
         <View style={{ height: '45%' }}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#209092' }}>خدمات</Text>
+          <Text style={{ fontSize: 16,alignSelf:'flex-start', fontWeight: 'bold', color: '#209092' }}>خدمات</Text>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.subtitle}>{item.description}</Text>
           <Text style={styles.price}>{`تبدأ من ${item.Price} ريال`}</Text>
@@ -59,17 +59,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#e6f2f2',
   },
   title: {
+    alignSelf:'flex-start',
     fontSize: 22,
     fontWeight: 'bold',
     color: '#209092',
     marginBottom: 6,
   },
   subtitle: {
+    alignSelf:'flex-start',
     fontSize: 15,
     color: '#444',
     marginBottom: 10,
   },
   price: {
+    alignSelf:'flex-start',
     fontSize: 18,
     color: '#179c8e',
     fontWeight: 'bold',

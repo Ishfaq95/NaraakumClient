@@ -41,8 +41,7 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.VideoCallScreen} component={VideoCallScreen} />
       <Stack.Screen name={ROUTES.Meeting} component={meeting} />
 
-      <Stack.Screen name={ROUTES.Services} component={Services} />
-      <Stack.Screen name={ROUTES.BookingScreen} component={BookingScreen} />
+      
     </Stack.Navigator>
   );
 };

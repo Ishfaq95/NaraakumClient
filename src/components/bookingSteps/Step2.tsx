@@ -12,7 +12,7 @@ import { MediaBaseURL } from '../../shared/utils/constants';
 import LeftArrow from '../../assets/icons/LeftArrow';
 import RightArrow from '../../assets/icons/RightArrow';
 import ServiceProviderCard from './ServiceProviderCard';
-import { generateSlots, getUniqueAvailableSlots } from '../../utils/timeUtils';
+import { generateSlots, generateSlotsForDate, getUniqueAvailableSlots } from '../../utils/timeUtils';
 import FullScreenLoader from "../../components/FullScreenLoader";
 // import BottomSheet from '@gorhom/bottom-sheet';
 
@@ -104,6 +104,7 @@ const Step2 = () => {
   const [availability, setAvailability] = useState<any[]>([]);
   const [allAvailabilityData, setAllAvailabilityData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loader2, setLoader2] = useState(false);
   const selectedSpecialtyOrService = useSelector((state: any) => state.root.booking.selectedSpecialtyOrService);
   const services = useSelector((state: any) => state.root.booking.services);
   const category = useSelector((state: any) => state.root.booking.category);
@@ -138,19 +139,37 @@ const Step2 = () => {
     try {
       setLoading(true);
       const serviceIds = getServiceIds();
-
-      const requestBody = {
-        CatcategoryId: category.Id,
-        ServiceIds: serviceIds,
-        Search: searchQuery,
-        PatientLocation: null,
-        CatCityId: null,
-        CatSquareId: null,
-        Gender: 2,
-        PageNumber: 0,
-        PageSize: 100
+      let requestBody:any = {};
+      if(selectedSpecialtyOrService.CatLevelId == 3){
+         requestBody = {
+          CatcategoryId: category.Id,
+          ServiceIds: serviceIds,
+          Search: searchQuery,
+          PatientLocation: null,
+          CatCityId: null,
+          CatSquareId: null,
+          Gender: 2,
+          PageNumber: 0,
+          PageSize: 100,
+        }
+      }else{
+         requestBody = {
+          CatcategoryId: category.Id,
+          ServiceIds: serviceIds,
+          Search: searchQuery,
+          PatientLocation: null,
+          CatCityId: null,
+          CatSquareId: null,
+          Gender: 2,
+          PageNumber: 0,
+          PageSize: 100,
+          SpecialtyIds:selectedSpecialtyOrService.Id
+        }
       }
 
+      
+
+      console.log("requestBody",requestBody);
       const response = await bookingService.getServiceProviderListByService(requestBody);
 
       setServiceProviders(response?.ServiceProviderList || []);
@@ -163,7 +182,7 @@ const Step2 = () => {
 
   const fetchInitialAvailability = async () => {
     try {
-      setLoading(true);
+      setLoader2(true);
       const serviceIds = getServiceIds();
 
       const requestBody = {
@@ -181,7 +200,7 @@ const Step2 = () => {
     } catch (error) {
       console.error('Error fetching initial availability:', error);
     } finally {
-      setLoading(false);
+      setLoader2(false);
     }
   };
 
@@ -480,7 +499,9 @@ const Step2 = () => {
         {renderFilterContent()}
       </BottomSheet> */}
       {/* Service Providers List */}
-      {serviceProviders.length > 0 && availability.length > 0 && <FlatList
+      {serviceProviders.length > 0 && availability.length > 0 && 
+      <View style={{flex:1,paddingBottom:50,paddingTop:10}}> 
+        <FlatList
         data={serviceProviders}
         keyExtractor={(item) => item.RowId}
         renderItem={({ item }) => {
@@ -488,32 +509,31 @@ const Step2 = () => {
             avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
           );
 
+          const dayOfWeek = new Date(selectedDate.format('YYYY-MM-DD')).toLocaleString("en-US", {
+            weekday: "long",
+          });
+          
+          const holidays = providerAvailability[0]?.ServiceProviderHolidays?.split(',');
+
           if (providerAvailability.length > 0) {
-            const providerSlots = getUniqueAvailableSlots(providerAvailability, item.SlotDuration || 30, selectedDate.format('YYYY-MM-DD'));
-
-            const providerWithSlots = {
-              ...item,
-              // Slots: providerSlots
+            if(holidays?.includes(dayOfWeek)){
+              return null
             }
-
             return <ServiceProviderCard
-              provider={providerWithSlots}
+              provider={item}
+              selectedDate={selectedDate}
               onTimeSelect={handleTimeSelect}
+              availability={providerAvailability[0]}
             />
           } else {
             return null
           }
-          // return (
-          // <ServiceProviderCard 
-          //   provider={item} 
-          //   onTimeSelect={handleTimeSelect}
-          //   availability={availability}
-          // />
-          // )
         }}
         contentContainerStyle={{ padding: 16 }}
         showsVerticalScrollIndicator={false}
-      />}
+      />
+      </View>
+      }
       <View style={styles.BottomContainer}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>رجوع</Text>
@@ -523,7 +543,7 @@ const Step2 = () => {
         </TouchableOpacity>
       </View>
 
-      <FullScreenLoader visible={loading} />
+      <FullScreenLoader visible={loading || loader2} />
     </View>
   );
 };

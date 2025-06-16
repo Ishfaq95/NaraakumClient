@@ -1,10 +1,12 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, ScrollView } from 'react-native';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Image, ScrollView, ActivityIndicator } from 'react-native';
 import UserPlaceholder from '../../assets/icons/UserPlaceholder';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import LeftArrow from '../../assets/icons/LeftArrow';
 import RightArrow from '../../assets/icons/RightArrow';
-import { generateSlots } from '../../utils/timeUtils';
+import { generateSlotsForDate } from '../../utils/timeUtils';
+import CheckIcon from '../../assets/icons/CheckIcon';
+import { useSelector } from 'react-redux';
 
 interface Specialty {
   CatSpecialtyId: string;
@@ -46,6 +48,36 @@ interface TimeConfig {
   BookedSlots: any[];
 }
 
+interface TimeSlot {
+  date: string;
+  fullTime: string;
+  start_time: string;
+  end_time: string;
+  availability_type_id: string;
+  is_holiday: boolean;
+  available: boolean;
+}
+
+interface Service {
+  CatCategoryId: string;
+  CatCategoryTypeId: number;
+  CatLevelId: number;
+  CatServiceCategoryId: string;
+  CatServiceServeTypeId: number;
+  DescriptionPlang: string;
+  DescriptionSlang: string;
+  FeatureExcludedPlang: string;
+  FeatureExcludedSlang: string;
+  FeatureIncludedPlang: string;
+  FeatureIncludedSlang: string;
+  Id: string;
+  ImagePath: string;
+  Price: number;
+  TitlePlang: string;
+  TitleSlang: string;
+  iswithNurse: boolean;
+}
+
 interface ServiceProvider {
   RowId: string;
   ServiceIds: string;
@@ -76,26 +108,249 @@ interface ServiceProvider {
 interface ServiceProviderCardProps {
   provider: ServiceProvider;
   onTimeSelect?: (time: string) => void;
+  selectedDate: any;
+  availability: any;
 }
 
-const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ 
-  provider, 
+const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
+  provider,
   onTimeSelect,
+  selectedDate,
+  availability
 }) => {
+  const selectedSpecialtyOrService = useSelector((state: any) => state.root.booking.selectedSpecialtyOrService);
+  const services = useSelector((state: any) => state.root.booking.services);
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState("");
+
   const specialtiesScrollViewRef = useRef<ScrollView>(null);
   const timeSlotsScrollViewRef = useRef<ScrollView>(null);
   const isRTL = true;
+
+  useEffect(() => {
+    console.log("timeSlots",timeSlots);
+  }, [timeSlots]);
+
+  useEffect(() => {
+    if (timeSlots.length > 0) {
+      const now = new Date();
+      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      // Find the next available slot after current time
+      const nextSlotIndex = timeSlots.findIndex(slot => {
+        const [slotHour, slotMinute] = slot.fullTime.split(':').map(Number);
+        const [currentHour, currentMinute] = currentTime.split(':').map(Number);
+        
+        // Convert to minutes for easier comparison
+        const slotTimeInMinutes = slotHour * 60 + slotMinute;
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+        
+        return slotTimeInMinutes > currentTimeInMinutes && slot.available;
+      });
+     
+      setTimeout(() => {
+      if (timeSlotsScrollViewRef.current) {
+        if (timeSlotsScrollViewRef.current) {
+          const slotWidth = 104;
+          const scrollAmount = slotWidth * nextSlotIndex/2;
+          const currentPosition = timeSlotsScrollPosition;
+          const newPosition = true
+            ? Math.max(0, currentPosition - scrollAmount)
+            : currentPosition + scrollAmount;
+    
+          requestAnimationFrame(() => {
+            timeSlotsScrollViewRef.current?.scrollTo({
+              x: newPosition,
+              animated: true
+            });
+          });
+        }
+      }
+    }, 1000);
+      console.log("Current time:", currentTime);
+      console.log("Next available slot index:", nextSlotIndex);
+    }
+  }, [timeSlots]);
+
+  // Generate time slots asynchronously
+  useEffect(() => {
+    const generateTimeSlots = async () => {
+      if (!availability || !selectedDate) {
+        setTimeSlots([]);
+        return;
+      }
+
+      setIsLoadingSlots(true);
+      setSlotsError(null);
+
+      try {
+        // Use setTimeout to make it async and prevent blocking
+        const slots = await new Promise<TimeSlot[]>((resolve, reject) => {
+          setTimeout(() => {
+            try {
+              const formattedDate = selectedDate.format('YYYY-MM-DD');
+              const slotDuration = provider.SlotDuration || 30;
+              const generatedSlots = generateSlotsForDate(
+                availability,
+                formattedDate,
+                slotDuration,
+                'Asia/Karachi' // Your timezone
+              );
+              resolve(generatedSlots);
+            } catch (error) {
+              reject(error);
+            }
+          }, 0);
+        });
+
+        setTimeSlots(slots);
+      } catch (error) {
+        console.error('Error generating time slots:', error);
+        setSlotsError('Failed to load time slots');
+        setTimeSlots([]);
+      } finally {
+        setIsLoadingSlots(false);
+      }
+    };
+
+    generateTimeSlots();
+  }, [availability, selectedDate, provider.SlotDuration]);
+
+
+
+  // Memoize static content to prevent unnecessary re-renders
+  const providerInfo = useMemo(() => (
+    <>
+      <View style={{ flexDirection: 'row', width: '100%' }}>
+        <View style={{ width: '30%' }}>
+          {provider.ImagePath ? (
+            <Image
+              source={{ uri: `${MediaBaseURL}${provider.ImagePath}` }}
+              style={styles.providerImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <UserPlaceholder width={80} height={80} />
+          )}
+        </View>
+        <View style={{ width: '70%' }}>
+          <Text style={styles.providerName}>{provider.FullnamePlang}</Text>
+          <View style={{ flexDirection: 'row', marginVertical: 2 }}>
+            <Text style={styles.ratingText}>{provider.AccumulativeRatingAvg.toFixed(1)}</Text>
+            <Text style={{ color: '#888', fontSize: 12 }}> ({provider.AccumulativeRatingNum} تقييم)</Text>
+            <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
+          </View>
+        </View>
+      </View>
+{selectedSpecialtyOrService.CatLevelId == 3 ? 
+      <View style={{ width: '100%',paddingVertical:10,backgroundColor:'#f7f7f7',borderRadius:10,paddingHorizontal:10,marginVertical:10 }}>
+        <Text style={styles.priceText}>{`سعر ${Number(provider.Prices).toFixed(0)}`}</Text>
+      </View> : 
+      <View style={{ flexDirection: 'row', width: '100%',paddingVertical:10,backgroundColor:'#f7f7f7',borderRadius:10,paddingHorizontal:10,marginVertical:10  }}>
+        {(() => {
+          const serviceIds = provider.ServiceIds.split(',');
+          const prices = provider.Prices.split(',');
+          
+          // Filter out services that don't exist in the services array or don't have a valid price
+          const validServices = serviceIds.map((id, index) => {
+            const service = services.find((s: Service) => s.Id === id);
+            const price = prices[index];
+            // Only include if both service and price exist and price is a valid number
+            if (service && price && !isNaN(Number(price))) {
+              return { id, price, title: service.TitleSlang };
+            }
+            return null;
+          }).filter((service): service is { id: string; price: string; title: string } => service !== null);
+
+          if (validServices.length === 1) {
+            const service = validServices[0];
+            return (
+              <View style={{flexDirection:'row',alignItems:'center',gap:10, width: '100%', justifyContent: 'center' }}>
+                <Text style={styles.priceText}>{`${service.title}: ${Number(service.price).toFixed(0)}`}</Text>
+                <View style={[styles.checkbox, selectedService == "Specialist" && styles.checkedBox]}>
+                  {selectedService == "Specialist" && <CheckIcon width={12} height={12} />}
+                </View>
+              </View>
+            );
+          } else if (validServices.length === 2) {
+            const [firstService, secondService] = validServices;
+            return (
+              <>
+                <View style={{flexDirection:'row',alignItems:'center',gap:10, width: '50%' }}>
+                  <Text style={styles.priceText}>{`${firstService.title}: ${Number(firstService.price).toFixed(0)}`}</Text>
+                  <View style={[styles.checkbox, selectedService == "Specialist" && styles.checkedBox]}>
+                    {selectedService == "Specialist" && <CheckIcon width={12} height={12} />}
+                  </View>
+                </View>
+                <View style={{width: 1, height: '100%', backgroundColor: '#e0e0e0', marginHorizontal: 10}} />
+                <View style={{flexDirection:'row', alignItems:'center',gap:10, width: '50%' }}>
+                  <Text style={styles.priceText}>{`${secondService.title}: ${Number(secondService.price).toFixed(0)}`}</Text>
+                  <View style={[styles.checkbox, selectedService == "Consultant" && styles.checkedBox]}>
+                    {selectedService == "Consultant" && <CheckIcon width={12} height={12} />}
+                  </View>
+                </View>
+              </>
+            );
+          }
+          return null;
+        })()}
+      </View>}
+    </>
+  ), [provider]);
+
+  const specialtiesSection = useMemo(() => (
+    <View style={styles.specialtyContainer}>
+      <TouchableOpacity
+        onPress={() => scrollSpecialties('left')}
+        style={[styles.scrollButton, styles.leftScrollButton]}
+        activeOpacity={0.7}
+      >
+        {isRTL ? <RightArrow /> : <LeftArrow />}
+      </TouchableOpacity>
+
+      <ScrollView
+        ref={specialtiesScrollViewRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.specialtiesScrollView}
+        onScroll={(event) => setSpecialtiesScrollPosition(event.nativeEvent.contentOffset.x)}
+        scrollEventThrottle={16}
+        decelerationRate={0}
+        contentContainerStyle={styles.specialtiesContent}
+      >
+        <View style={styles.specialtiesRow}>
+          {provider.Specialties.map((spec, index) => (
+            <View key={`${spec.CatSpecialtyId}-${spec.UserloginInfoId}-${index}`} style={styles.specialtyPill}>
+              <Text style={styles.specialtyText}>
+                {isRTL ? spec.TitleSlang : spec.TitlePlang}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+
+      <TouchableOpacity
+        onPress={() => scrollSpecialties('right')}
+        style={[styles.scrollButton, styles.rightScrollButton]}
+        activeOpacity={0.7}
+      >
+        {isRTL ? <LeftArrow /> : <RightArrow />}
+      </TouchableOpacity>
+    </View>
+  ), [provider.Specialties]);
 
   const scrollSpecialties = (direction: 'left' | 'right') => {
     if (specialtiesScrollViewRef.current) {
       const scrollAmount = 100;
       const currentPosition = specialtiesScrollPosition;
-      const newPosition = direction === 'right' 
+      const newPosition = direction === 'right'
         ? Math.max(0, currentPosition - scrollAmount)
         : currentPosition + scrollAmount;
-      
+
       requestAnimationFrame(() => {
         specialtiesScrollViewRef.current?.scrollTo({
           x: newPosition,
@@ -106,14 +361,15 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   };
 
   const scrollTimeSlots = (direction: 'left' | 'right') => {
+    console.log("timeSlots",direction);
     if (timeSlotsScrollViewRef.current) {
-      const slotWidth = 120;
+      const slotWidth = 104;
       const scrollAmount = slotWidth * 2;
       const currentPosition = timeSlotsScrollPosition;
-      const newPosition = direction === 'right' 
+      const newPosition = direction === 'right'
         ? Math.max(0, currentPosition - scrollAmount)
         : currentPosition + scrollAmount;
-      
+
       requestAnimationFrame(() => {
         timeSlotsScrollViewRef.current?.scrollTo({
           x: newPosition,
@@ -123,91 +379,99 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
     }
   };
 
-  return (
-    <View style={styles.providerCard}>
-      <TouchableOpacity style={styles.favoriteIcon}>
-        <Text>♡</Text>
-      </TouchableOpacity>
+  // Helper to convert Arabic AM/PM to English AM/PM
+  const convertArabicTime = (timeStr: string) => {
+    return timeStr.replace('م', 'PM').replace('ص', 'AM').trim();
+  };
 
-      {provider.ImagePath ? (
-        <Image
-          source={{ uri: `${MediaBaseURL}${provider.ImagePath}` }}
-          style={styles.providerImage}
-          resizeMode="cover"
-        />
-      ) : (
-        <UserPlaceholder width={80} height={80} />
-      )}
+  // Converts time string and date to a Date object
+  const getDateTime = (date: string, time: string, is24Hour = false) => {
+    if (is24Hour) {
+      // time is already in HH:mm format
+      const [hour, minute] = time.split(':').map(Number);
+      return new Date(`${date}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`);
+    } else {
+      // convert AM/PM time (e.g., 11:30 PM)
+      const formattedTime = convertArabicTime(time);
+      const [timePart, period] = formattedTime.split(' ');
+      let [hour, minute] = timePart.split(':').map(Number);
+      if (period.toUpperCase() === 'PM' && hour !== 12) hour += 12;
+      if (period.toUpperCase() === 'AM' && hour === 12) hour = 0;
+      return new Date(`${date}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`);
+    }
+  };
 
-      <Text style={styles.providerName}>{provider.FullnamePlang}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
-        <Text style={styles.ratingText}>{provider.AccumulativeRatingAvg.toFixed(1)}</Text>
-        <Text style={{ color: '#888', fontSize: 12 }}> ({provider.AccumulativeRatingNum} تقييم)</Text>
-        <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={styles.priceText}>{provider.Prices} ريال</Text>
-        <Text style={[styles.priceText, { color: '#888', fontSize: 14 }]}>
-          (شامل الضريبة: {provider.PriceswithTax} ريال)
-        </Text>
-      </View>
+  // Main check
+  const isPastTime = (slot: TimeSlot) => {
+    const inputTime = slot.fullTime;
 
-      {/* Specialties Section */}
+    // Get current time
+    const now = new Date();
+    const currentTime = new Date();
+    const [inputHours, inputMinutes] = inputTime.split(':').map(Number);
+
+    // Set the time of current date to match the input
+    currentTime.setHours(inputHours);
+    currentTime.setMinutes(inputMinutes);
+    currentTime.setSeconds(0);
+    currentTime.setMilliseconds(0);
+
+
+
+    return currentTime < now
+  };
+
+  const isTimeSlotAvailable = (slot: TimeSlot) => {
+    return !isPastTime(slot);
+  }
+
+  const renderTimeSlots = () => {
+    if (isLoadingSlots) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#179c8e" />
+          <Text style={styles.loadingText}>جاري تحميل المواعيد...</Text>
+        </View>
+      );
+    }
+
+    if (slotsError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{slotsError}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              setIsLoadingSlots(true);
+              setSlotsError(null);
+              // Trigger re-generation
+              setTimeSlots([]);
+            }}
+          >
+            <Text style={styles.retryButtonText}>إعادة المحاولة</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (timeSlots.length === 0) {
+      return (
+        <View style={styles.noSlotsContainer}>
+          <Text style={styles.noSlotsText}>لا توجد مواعيد متاحة لهذا اليوم</Text>
+        </View>
+      );
+    }
+
+    return (
       <View style={styles.specialtyContainer}>
-        <TouchableOpacity 
-          onPress={() => scrollSpecialties('left')} 
+        <TouchableOpacity
+          onPress={() => scrollTimeSlots('left')}
           style={[styles.scrollButton, styles.leftScrollButton]}
-          activeOpacity={0.7}
-        >
-          {isRTL ? <LeftArrow /> : <RightArrow />}
-        </TouchableOpacity>
-        
-        <ScrollView
-          ref={specialtiesScrollViewRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.specialtiesScrollView}
-          onScroll={(event) => setSpecialtiesScrollPosition(event.nativeEvent.contentOffset.x)}
-          scrollEventThrottle={16}
-          decelerationRate={0}
-          contentContainerStyle={styles.specialtiesContent}
-        >
-          <View style={styles.specialtiesRow}>
-            {provider.Specialties.map((spec, index) => (
-              <View key={`${spec.CatSpecialtyId}-${spec.UserloginInfoId}-${index}`} style={styles.specialtyPill}>
-                <Text style={styles.specialtyText}>
-                  {isRTL ? spec.TitleSlang : spec.TitlePlang}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
-
-        <TouchableOpacity 
-          onPress={() => scrollSpecialties('right')} 
-          style={[styles.scrollButton, styles.rightScrollButton]}
           activeOpacity={0.7}
         >
           {isRTL ? <RightArrow /> : <LeftArrow />}
         </TouchableOpacity>
-      </View>
 
-      <Text style={styles.videoInfo}>
-        <Text style={{ color: '#179c8e' }}>{provider.SlotDuration} دقيقة</Text> : استشارة طبية فيديو
-      </Text>
-      <View style={styles.divider} />
-      <Text style={styles.selectTimeLabel}>اختر توقيت الزيارة</Text>
-
-      {/* Time Slots Section */}
-      <View style={styles.specialtyContainer}>
-        <TouchableOpacity 
-          onPress={() => scrollTimeSlots('left')} 
-          style={[styles.scrollButton, styles.leftScrollButton]}
-          activeOpacity={0.7}
-        >
-          {isRTL ? <LeftArrow /> : <RightArrow />}
-        </TouchableOpacity>
-        
         <ScrollView
           ref={timeSlotsScrollViewRef}
           horizontal
@@ -221,34 +485,53 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
           contentContainerStyle={styles.timeSlotsContent}
         >
           <View style={styles.specialtiesRow}>
-            {provider?.Slots?.map((slot, index) => (
-              <TouchableOpacity 
-                key={`time-${slot.start_time}-${index}`} 
+            {timeSlots.map((slot, index) => (
+              <TouchableOpacity
+                key={`time-${slot.start_time}-${index}`}
                 style={[
                   styles.timeButton,
-                  !slot.available && styles.disabledTimeButton
+                  (!slot.available || !isPastTime(slot)) && styles.disabledTimeButton
                 ]}
                 onPress={() => slot.available && onTimeSelect?.(slot.start_time)}
                 activeOpacity={0.7}
-                disabled={!slot.available}
+                disabled={!slot.available || !isPastTime(slot)}
               >
                 <Text style={[
                   styles.timeButtonText,
-                  !slot.available && styles.disabledTimeButtonText
+                  (!slot.available || !isPastTime(slot)) && styles.disabledTimeButtonText
                 ]}>{slot.start_time}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </ScrollView>
 
-        <TouchableOpacity 
-          onPress={() => scrollTimeSlots('right')} 
+        <TouchableOpacity
+          onPress={() => scrollTimeSlots('right')}
           style={[styles.scrollButton, styles.rightScrollButton]}
           activeOpacity={0.7}
         >
-          {isRTL ? <RightArrow /> : <LeftArrow />}
+          {isRTL ? <LeftArrow /> : <RightArrow />}
         </TouchableOpacity>
       </View>
+    );
+  };
+
+  return (
+    <View style={styles.providerCard}>
+      {providerInfo}
+      {specialtiesSection}
+
+      <View style={{flexDirection:'row',alignItems:'center',gap:2,width:'100%'}}>
+      <Text style={styles.videoInfo}>استشارة طبية فيديو :</Text>
+        <Text style={{ color: '#179c8e' }}>{provider.SlotDuration} دقيقة</Text>
+        
+      </View>
+      <View style={styles.divider} />
+     <View style={{width:'100%',alignItems:'flex-start'}}>
+     <Text style={styles.selectTimeLabel}>اختر توقيت الزيارة</Text>
+     </View>
+
+      {renderTimeSlots()}
     </View>
   );
 };
@@ -286,6 +569,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 2,
     color: '#222',
+    flexWrap: 'wrap',
+    alignSelf: 'flex-start',
   },
   ratingText: {
     color: '#222',
@@ -294,8 +579,8 @@ const styles = StyleSheet.create({
   },
   priceText: {
     color: '#179c8e',
-    fontWeight: 'bold',
-    fontSize: 18,
+    fontWeight: '600',
+    fontSize: 16,
     marginVertical: 4,
   },
   specialtyContainer: {
@@ -313,10 +598,10 @@ const styles = StyleSheet.create({
     minWidth: 40,
   },
   leftScrollButton: {
-    marginRight: 8,
+    marginRight: 4,
   },
   rightScrollButton: {
-    marginLeft: 8,
+    marginLeft: 4,
   },
   specialtiesScrollView: {
     flex: 1,
@@ -326,7 +611,6 @@ const styles = StyleSheet.create({
   },
   specialtiesRow: {
     flexDirection: 'row',
-    paddingHorizontal: 8,
   },
   specialtyPill: {
     backgroundColor: '#f7f7f7',
@@ -361,7 +645,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 6,
-    marginHorizontal: 4,
+    marginRight: 4,
     backgroundColor: '#fff',
     width: 100,
   },
@@ -373,13 +657,70 @@ const styles = StyleSheet.create({
     color: '#179c8e',
     fontWeight: 'bold',
     fontSize: 14,
+    textAlign: 'center',
   },
   disabledTimeButtonText: {
     color: '#999',
   },
   timeSlotsContent: {
-    paddingHorizontal: 8,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    width: '100%',
+  },
+  loadingText: {
+    marginLeft: 8,
+    color: '#179c8e',
+    fontSize: 14,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    width: '100%',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  retryButton: {
+    backgroundColor: '#179c8e',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  noSlotsContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    width: '100%',
+  },
+  noSlotsText: {
+    color: '#888',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#008080',
+    marginRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkedBox: {
+    backgroundColor: '#008080',
   },
 });
 
-export default ServiceProviderCard; 
+export default ServiceProviderCard;

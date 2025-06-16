@@ -20,6 +20,8 @@ import ProfileIconSelected from "../assets/icons/ProfileIconSelected";
 import ProfileIconNotSelected from "../assets/icons/ProfileIconNotSelected";
 import CartIconSelected from "../assets/icons/CartIconSelected";
 import CartIconNotSelected from "../assets/icons/CartIconNotSelected";
+import Services from "../screens/Booking/Services";
+import BookingScreen from "../screens/Booking/BookingScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -220,6 +222,8 @@ function HomeStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name={ROUTES.AppointmentListScreen} component={AppointmentListScreen} />
+      <Stack.Screen name={ROUTES.Services} component={Services} />
+      <Stack.Screen name={ROUTES.BookingScreen} component={BookingScreen} />
     </Stack.Navigator>
   );
 }
