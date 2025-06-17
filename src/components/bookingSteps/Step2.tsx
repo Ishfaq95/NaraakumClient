@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView, Dimensions, I18nManager } from 'react-native';
 import moment, { Moment } from 'moment';
 import 'moment-hijri';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
@@ -14,11 +14,21 @@ import RightArrow from '../../assets/icons/RightArrow';
 import ServiceProviderCard from './ServiceProviderCard';
 import { generateSlots, generateSlotsForDate, getUniqueAvailableSlots } from '../../utils/timeUtils';
 import FullScreenLoader from "../../components/FullScreenLoader";
+import { useTranslation } from 'react-i18next';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
 const MIN_CARD_WIDTH = 48;
 const MAX_CARD_WIDTH = 60;
+const { width: deviceWidth } = Dimensions.get('window');
+const minItemWidth = 48;
+const numVisibleItems = 8; // 7 days + 1 calendar icon
+const totalMargin = CARD_MARGIN * 2 * numVisibleItems;
+const calculatedItemWidth = (deviceWidth - totalMargin) / numVisibleItems;
+const itemWidth = calculatedItemWidth < minItemWidth ? minItemWidth : calculatedItemWidth;
+const listWidth = itemWidth * numVisibleItems + totalMargin;
+const isScrollable = calculatedItemWidth < minItemWidth;
 
 interface DayItem {
   day: string;
@@ -111,7 +121,12 @@ const Step2 = () => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [selectedDateCareProviderAvailability, setSelectedDateCareProviderAvailability] = useState<any[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
-  const isRTL = true; // Since the app is in Arabic
+  const { i18n } = useTranslation();
+  const [isCalendarVisible, setCalendarVisible] = useState(false);
+  const isRTL = I18nManager.isRTL;
+  const currentLang = i18n.language;
+  const [customDateSelected, setCustomDateSelected] = useState(false);
+  const [changedSelectedDate, setChangedSelectedDate] = useState(moment());
 
   const getServiceIds = () => {
     if (selectedSpecialtyOrService?.CatLevelId === 3) {
@@ -180,7 +195,7 @@ const Step2 = () => {
     }
   };
 
-  const fetchInitialAvailability = async () => {
+  const fetchInitialAvailability = async (date?:any) => {
     try {
       setLoader2(true);
       const serviceIds = getServiceIds();
@@ -188,15 +203,16 @@ const Step2 = () => {
       const requestBody = {
         CatServiceId: serviceIds,
         CatSpecialtyId: 0,
-        StartDate: moment().format('YYYY-MM-DD'),
+        StartDate:date ? moment(date).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
         PageNumber: 1,
         PageSize: 20
       }
-
+      
       const response = await bookingService.getServiceProviderSchedulingAvailability(requestBody);
+
       setAllAvailabilityData(response?.SchedulingAvailability || []);
       // Set initial availability for selected date
-      filterAvailabilityForDate(moment(), response?.SchedulingAvailability || []);
+      filterAvailabilityForDate(date ? moment(date) : moment(), response?.SchedulingAvailability || []);
     } catch (error) {
       console.error('Error fetching initial availability:', error);
     } finally {
@@ -210,79 +226,16 @@ const Step2 = () => {
     setAvailability(filteredData);
   };
 
-  // useEffect(() => {
-  //   console.log("selectedDate", selectedDate);
-  //   if(serviceProviders.length>0 && availability.length>0){
-  //     console.log('i am called')
-  //     getCurrentDateCareProviderAvailability();
-  //   }
-
-  // }, [availability]);
-
-  // const getCurrentDateCareProviderAvailability = async () => {
-  //   try {
-  //     setLoading(true);
-  //     console.log("start date",new Date())
-  //     // Create a temporary array to store providers with availability
-  //     const providersWithAvailability = serviceProviders
-  //       .map(provider => {
-  //         // Filter availability details for this provider
-  //         const providerAvailability = availability.flatMap(avail => 
-  //           avail.Detail.filter((detail: any) => detail.ServiceProviderId === provider.UserId)
-  //         );
-
-  //         // If provider has availability, add them to the array with slots
-  //         if (providerAvailability.length > 0) {
-  //           return {
-  //             ...provider,
-  //             Slots: getUniqueAvailableSlots(providerAvailability, provider.SlotDuration || 30, selectedDate.format('YYYY-MM-DD'))
-  //           };
-  //         }
-  //         return null;
-  //       })
-  //       .filter(Boolean); // Remove null entries
-
-  //     // Update the state with providers that have availability
-  //     setSelectedDateCareProviderAvailability(providersWithAvailability);
-  //   } catch (error) {
-  //     console.error('Error in getCurrentDateCareProviderAvailability:', error);
-  //   } finally {
-  //     console.log('called')
-  //     console.log("end date",new Date())
-  //     setLoading(false);
-  //   }
-  // };
-
-  const fetchAvailabilityForDate = async (date: Moment) => {
-    try {
-      setLoading(true);
-      const serviceIds = getServiceIds();
-
-      const response = await bookingService.getServiceProviderSchedulingAvailability({
-        CatServiceId: serviceIds,
-        CatSpecialtyId: 0,
-        StartDate: date.format('YYYY-MM-DD'),
-        PageNumber: 1,
-        PageSize: 20
-      });
-      setAllAvailabilityData(response?.data || []);
-      setAvailability(response?.data || []);
-    } catch (error) {
-      console.error('Error fetching availability for date:', error);
-    } finally {
-      // setLoading(false);
-    }
-  };
-
-  const generateDays = () => {
-    const today = moment();
+  const generateDays = (startDate?: moment.Moment) => {
+    const baseDate = startDate ? moment(startDate) : moment();
     const daysArray: DayItem[] = [];
-
-    // Generate 7 days starting from today
+  
+    // Generate 7 days starting from the given base date
     for (let i = 0; i < 7; i++) {
-      const currentDate = moment().add(i, 'days');
+      const currentDate = moment(baseDate).add(i, 'days');
       const englishDay = currentDate.format('dddd');
       const hijriDate = currentDate.format('iD').replace('i', '');
+      
       daysArray.push({
         day: ARABIC_DAYS[englishDay as keyof typeof ARABIC_DAYS],
         date: currentDate.format('D'),
@@ -292,36 +245,65 @@ const Step2 = () => {
         hijriMonth: currentDate.format('iM').replace('i', ''),
       });
     }
-
+  
     // Add calendar icon as the 8th item
     daysArray.push({ day: '', date: '', icon: true });
-
+  
     setDays(daysArray);
   };
 
   const handleDateSelect = (date: Moment) => {
     setSelectedDate(date);
 
-    // Check if the selected date is within the next 7 days
-    const isWithinSevenDays = date.isBetween(
-      moment().startOf('day'),
-      moment().add(6, 'days').endOf('day'),
-      'day',
-      '[]'
-    );
+    console.log("date",date)
+    console.log("selectedDate",selectedDate)
+
+    const baseDate = changedSelectedDate
+    ? moment(changedSelectedDate).local().startOf('day')  // Force local timezone
+    : moment().startOf('day');
+  
+    console.log("baseDate",baseDate)
+  const isWithinSevenDays = moment(date).local().isBetween(
+    baseDate,
+    moment(baseDate).add(6, 'days').endOf('day'),
+    'day',
+    '[]'
+  );
+
+    console.log("isWithinSevenDays",isWithinSevenDays)
 
     if (isWithinSevenDays) {
-      // Filter existing data if within 7 days
+      
       filterAvailabilityForDate(date, allAvailabilityData);
     } else {
-      // Fetch new data if outside 7 days
-      fetchAvailabilityForDate(date);
+      setChangedSelectedDate(date)
+      const formattedDate = date.format('YYYY-MM-DD');
+      generateDays(moment(formattedDate));
+      fetchInitialAvailability(moment(formattedDate));
     }
   };
 
   const handleCalendarPress = () => {
-    // When calendar is opened, we'll handle the date selection in handleDateSelect
-    console.log('Open calendar picker');
+    setCalendarVisible(true);
+  };
+
+  const handleCalendarConfirm = (date: Date) => {
+    setCalendarVisible(false);
+    // If Arabic, convert to Hijri moment
+    // if (currentLang === 'ar') {
+    //   const hijriMoment = moment(date).locale('ar-sa').format('iYYYY-iMM-iDD');
+    //   // Use moment-hijri to parse
+    //   const hijriDate = moment(hijriMoment, 'iYYYY-iMM-iDD');
+    //   console.log("hijriDate",hijriDate)
+    //   handleDateSelect(hijriDate);
+    // } else {
+    
+      handleDateSelect(moment(date));
+    // }
+  };
+
+  const handleCalendarCancel = () => {
+    setCalendarVisible(false);
   };
 
   const handleNext = () => {
@@ -446,21 +428,24 @@ const Step2 = () => {
         <FlatList
           data={days}
           horizontal
-          showsHorizontalScrollIndicator={false}
+          showsHorizontalScrollIndicator={isScrollable}
           keyExtractor={(item) => item.icon ? 'calendar-icon' : item.fullDate?.format('YYYY-MM-DD') || ''}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { width: isScrollable ? listWidth : '100%' }]}
           renderItem={({ item, index }) => (
             <TouchableOpacity
               onPress={() => item.icon ? handleCalendarPress() : item.fullDate && handleDateSelect(item.fullDate)}
               style={[
                 styles.card,
                 {
+                  width: itemWidth,
                   backgroundColor: item.fullDate && selectedDate.isSame(item.fullDate, 'day') ? '#179c8e' : '#f7f7f7',
                 },
               ]}
             >
               {item.icon ? (
-                <CalendarIcon width={24} height={24} color="#179c8e" />
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', width: itemWidth }}>
+                  <CalendarIcon width={24} height={24} color="#179c8e" />
+                </View>
               ) : (
                 <>
                   <Text style={[styles.date, item.fullDate && selectedDate.isSame(item.fullDate, 'day') && { color: '#fff' }]}>
@@ -544,6 +529,16 @@ const Step2 = () => {
       </View>
 
       <FullScreenLoader visible={loading || loader2} />
+      <DateTimePickerModal
+        isVisible={isCalendarVisible}
+        mode="date"
+        onConfirm={handleCalendarConfirm}
+        onCancel={handleCalendarCancel}
+        locale={currentLang === 'ar' ? 'ar-SA' : 'en'}
+        minimumDate={new Date()}
+        maximumDate={moment().add(30, 'days').toDate()}
+        display="default"
+      />
     </View>
   );
 };

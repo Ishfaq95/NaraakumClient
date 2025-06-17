@@ -132,10 +132,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   const isRTL = true;
 
   useEffect(() => {
-    console.log("timeSlots",timeSlots);
-  }, [timeSlots]);
-
-  useEffect(() => {
     if (timeSlots.length > 0) {
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -171,8 +167,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
         }
       }
     }, 1000);
-      console.log("Current time:", currentTime);
-      console.log("Next available slot index:", nextSlotIndex);
     }
   }, [timeSlots]);
 
@@ -238,7 +232,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
           )}
         </View>
         <View style={{ width: '70%' }}>
-          <Text style={styles.providerName}>{provider.FullnamePlang}</Text>
+          <Text style={styles.providerName}>{provider.FullnameSlang}</Text>
           <View style={{ flexDirection: 'row', marginVertical: 2 }}>
             <Text style={styles.ratingText}>{provider.AccumulativeRatingAvg.toFixed(1)}</Text>
             <Text style={{ color: '#888', fontSize: 12 }}> ({provider.AccumulativeRatingNum} تقييم)</Text>
@@ -246,11 +240,13 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
           </View>
         </View>
       </View>
-{selectedSpecialtyOrService.CatLevelId == 3 ? 
-      <View style={{ width: '100%',paddingVertical:10,backgroundColor:'#f7f7f7',borderRadius:10,paddingHorizontal:10,marginVertical:10 }}>
-        <Text style={styles.priceText}>{`سعر ${Number(provider.Prices).toFixed(0)}`}</Text>
+      {selectedSpecialtyOrService.CatLevelId == 3 ? 
+      <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
+        <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
+          {isRTL ? `سعر ${Number(provider.Prices).toFixed(0)}` : `Price ${Number(provider.Prices).toFixed(0)}`}
+        </Text>
       </View> : 
-      <View style={{ flexDirection: 'row', width: '100%',paddingVertical:10,backgroundColor:'#f7f7f7',borderRadius:10,paddingHorizontal:10,marginVertical:10  }}>
+      <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
         {(() => {
           const serviceIds = provider.ServiceIds.split(',');
           const prices = provider.Prices.split(',');
@@ -261,7 +257,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
             const price = prices[index];
             // Only include if both service and price exist and price is a valid number
             if (service && price && !isNaN(Number(price))) {
-              return { id, price, title: service.TitleSlang };
+              return { 
+                id, 
+                price, 
+                title: isRTL ? service.TitleSlang : service.TitlePlang 
+              };
             }
             return null;
           }).filter((service): service is { id: string; price: string; title: string } => service !== null);
@@ -269,8 +269,10 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
           if (validServices.length === 1) {
             const service = validServices[0];
             return (
-              <View style={{flexDirection:'row',alignItems:'center',gap:10, width: '100%', justifyContent: 'center' }}>
-                <Text style={styles.priceText}>{`${service.title}: ${Number(service.price).toFixed(0)}`}</Text>
+              <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '100%', justifyContent: 'center' }}>
+                <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
+                  {`${service.title}: ${Number(service.price).toFixed(0)}`}
+                </Text>
                 <View style={[styles.checkbox, selectedService == "Specialist" && styles.checkedBox]}>
                   {selectedService == "Specialist" && <CheckIcon width={12} height={12} />}
                 </View>
@@ -280,15 +282,19 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
             const [firstService, secondService] = validServices;
             return (
               <>
-                <View style={{flexDirection:'row',alignItems:'center',gap:10, width: '50%' }}>
-                  <Text style={styles.priceText}>{`${firstService.title}: ${Number(firstService.price).toFixed(0)}`}</Text>
+                <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '50%' }}>
+                  <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
+                    {`${firstService.title}: ${Number(firstService.price).toFixed(0)}`}
+                  </Text>
                   <View style={[styles.checkbox, selectedService == "Specialist" && styles.checkedBox]}>
                     {selectedService == "Specialist" && <CheckIcon width={12} height={12} />}
                   </View>
                 </View>
-                <View style={{width: 1, height: '100%', backgroundColor: '#e0e0e0', marginHorizontal: 10}} />
-                <View style={{flexDirection:'row', alignItems:'center',gap:10, width: '50%' }}>
-                  <Text style={styles.priceText}>{`${secondService.title}: ${Number(secondService.price).toFixed(0)}`}</Text>
+                <View style={{ width: 1, height: '100%', backgroundColor: '#e0e0e0', marginHorizontal: 10 }} />
+                <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '50%' }}>
+                  <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
+                    {`${secondService.title}: ${Number(secondService.price).toFixed(0)}`}
+                  </Text>
                   <View style={[styles.checkbox, selectedService == "Consultant" && styles.checkedBox]}>
                     {selectedService == "Consultant" && <CheckIcon width={12} height={12} />}
                   </View>
@@ -361,7 +367,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   };
 
   const scrollTimeSlots = (direction: 'left' | 'right') => {
-    console.log("timeSlots",direction);
+   
     if (timeSlotsScrollViewRef.current) {
       const slotWidth = 104;
       const scrollAmount = slotWidth * 2;
@@ -490,15 +496,15 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
                 key={`time-${slot.start_time}-${index}`}
                 style={[
                   styles.timeButton,
-                  (!slot.available || !isPastTime(slot)) && styles.disabledTimeButton
+                  (!slot.available || isPastTime(slot)) && styles.disabledTimeButton
                 ]}
                 onPress={() => slot.available && onTimeSelect?.(slot.start_time)}
                 activeOpacity={0.7}
-                disabled={!slot.available || !isPastTime(slot)}
+                disabled={!slot.available || isPastTime(slot)}
               >
                 <Text style={[
                   styles.timeButtonText,
-                  (!slot.available || !isPastTime(slot)) && styles.disabledTimeButtonText
+                  (!slot.available || isPastTime(slot)) && styles.disabledTimeButtonText
                 ]}>{slot.start_time}</Text>
               </TouchableOpacity>
             ))}
