@@ -26,7 +26,7 @@ const BookingScreen = ({navigation}:any ) => {
     switch (currentStep) {
       case 1: return <Specialties onPressSpecialty={onPressSpecialty} />;
       case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
-      case 3: return <ReviewOrder />;
+      case 3: return <ReviewOrder onPressNext={() => setCurrentStep(4)} onPressBack={() => setCurrentStep(2)} />;
       case 4: return <Step4 />;
       default: return null;
     }
