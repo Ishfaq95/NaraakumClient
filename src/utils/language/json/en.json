@@ -31,5 +31,7 @@
   "settings": "Settings",
   "login_with": "Login with",
   "booking": "Booking",
-  "createNewAccount": "Create New Account"
+  "createNewAccount": "Create New Account",
+  "back": "Back",
+  "next": "Next"
 }

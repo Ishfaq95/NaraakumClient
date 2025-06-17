@@ -13,7 +13,7 @@ import LeftArrow from '../../assets/icons/LeftArrow';
 import RightArrow from '../../assets/icons/RightArrow';
 import ServiceProviderCard from './ServiceProviderCard';
 import { generateSlots, generateSlotsForDate, getUniqueAvailableSlots } from '../../utils/timeUtils';
-import FullScreenLoader from "../../components/FullScreenLoader";
+import FullScreenLoader from "../FullScreenLoader";
 import { useTranslation } from 'react-i18next';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 // import BottomSheet from '@gorhom/bottom-sheet';
@@ -105,11 +105,10 @@ const TIME_SLOTS = [
   { label: '04:00 م', value: '16:00' },
 ];
 
-const Step2 = () => {
+const DoctorListing = ({onPressNext,onPressBack}:any) => {
   const [selectedDate, setSelectedDate] = useState<Moment>(moment());
   const [days, setDays] = useState<DayItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
   const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
   const [allAvailabilityData, setAllAvailabilityData] = useState<any[]>([]);
@@ -118,6 +117,7 @@ const Step2 = () => {
   const selectedSpecialtyOrService = useSelector((state: any) => state.root.booking.selectedSpecialtyOrService);
   const services = useSelector((state: any) => state.root.booking.services);
   const category = useSelector((state: any) => state.root.booking.category);
+  const cardItems = useSelector((state: any) => state.root.booking.cardItems);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [selectedDateCareProviderAvailability, setSelectedDateCareProviderAvailability] = useState<any[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -127,7 +127,7 @@ const Step2 = () => {
   const currentLang = i18n.language;
   const [customDateSelected, setCustomDateSelected] = useState(false);
   const [changedSelectedDate, setChangedSelectedDate] = useState(moment());
-
+  const { t } = useTranslation();
   const getServiceIds = () => {
     if (selectedSpecialtyOrService?.CatLevelId === 3) {
       // If level 3 is selected, return only that service ID
@@ -307,11 +307,11 @@ const Step2 = () => {
   };
 
   const handleNext = () => {
-    console.log('Next pressed');
+    onPressNext();
   };
 
   const handleBack = () => {
-    console.log('Back pressed');
+    onPressBack();
   };
 
   const handleSearch = (text: string) => {
@@ -321,11 +321,6 @@ const Step2 = () => {
 
   const handleFilterPress = () => {
     // bottomSheetRef.current?.expand();
-  };
-
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
-    // bottomSheetRef.current?.close();
   };
 
   const scrollByAmount = (direction: 'left' | 'right') => {
@@ -349,14 +344,14 @@ const Step2 = () => {
             key={slot.value}
             style={[
               styles.timeSlot,
-              selectedTime === slot.value && styles.selectedTimeSlot,
+              false && styles.selectedTimeSlot,
             ]}
-            onPress={() => handleTimeSelect(slot.value)}
+            onPress={() => {}}
           >
             <Text
               style={[
                 styles.timeSlotText,
-                selectedTime === slot.value && styles.selectedTimeSlotText,
+                false && styles.selectedTimeSlotText,
               ]}
             >
               {slot.label}
@@ -474,15 +469,6 @@ const Step2 = () => {
           </TouchableOpacity>
         </View>
       </View>
-      {/* <BottomSheet
-        ref={bottomSheetRef}
-        snapPoints={['50%']}
-        enablePanDownToClose
-        backgroundStyle={styles.bottomSheetBackground}
-        handleIndicatorStyle={styles.bottomSheetIndicator}
-      >
-        {renderFilterContent()}
-      </BottomSheet> */}
       {/* Service Providers List */}
       {serviceProviders.length > 0 && availability.length > 0 && 
       <View style={{flex:1,paddingBottom:50,paddingTop:10}}> 
@@ -507,7 +493,6 @@ const Step2 = () => {
             return <ServiceProviderCard
               provider={item}
               selectedDate={selectedDate}
-              onTimeSelect={handleTimeSelect}
               availability={providerAvailability[0]}
             />
           } else {
@@ -521,10 +506,14 @@ const Step2 = () => {
       }
       <View style={styles.BottomContainer}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Text style={styles.backButtonText}>رجوع</Text>
+          <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>التالي</Text>
+        <TouchableOpacity 
+          style={[styles.nextButton, cardItems.length === 0 && styles.disabledNextButton]} 
+          onPress={handleNext}
+          disabled={cardItems.length === 0}
+        >
+          <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -650,7 +639,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    height:60,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     position: 'absolute',
@@ -660,15 +649,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    width:"34%",
+    height:50,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#179c8e',
+    alignItems:"center",
+    justifyContent:"center",
   },
   nextButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    width:"64%",
+    height:50,
+    alignItems:"center",
+    justifyContent:"center",
     borderRadius: 8,
     backgroundColor: '#179c8e',
   },
@@ -791,6 +784,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7f7f7',
     marginHorizontal: 2,
   },
+  disabledNextButton: {
+    backgroundColor: '#ccc',
+  },
 });
 
-export default Step2; 
+export default DoctorListing; 

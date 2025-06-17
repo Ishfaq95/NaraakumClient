@@ -3,7 +3,7 @@ import { StatusBar, TouchableOpacity, View, Image, Text } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { ROUTES } from "../shared/utils/routes";
 import { useTranslation } from "react-i18next";
 
@@ -41,11 +41,41 @@ const HamburgerManu = () => (
 );
 
 function RenderTabIcon({ routeName, isFocused }: RenderTabIconProps) {
+  const cardItems = useSelector((state: any) => state.root.booking.cardItems);
+  const cardItemsCount = cardItems.length;
+
   switch (routeName) {
     case "HomeStack":
       return isFocused ? <AppointmentIconSelected width={32} height={32} color="#22A6A7" /> : <AppointmentIconNotSelected width={32} height={32} color="#22A6A7" />;
     case "CartStack":
-      return isFocused ? <CartIconSelected /> : <CartIconNotSelected />;
+      return (
+        <View style={{ position: 'relative' }}>
+          {isFocused ? <CartIconSelected /> : <CartIconNotSelected />}
+          {cardItemsCount > 0 && (
+            <View style={{
+              position: 'absolute',
+              top: -8,
+              right: -8,
+              backgroundColor: '#FF3B30',
+              borderRadius: 10,
+              minWidth: 20,
+              height: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 2,
+              borderColor: '#FFFFFF',
+            }}>
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: 12,
+                fontWeight: 'bold',
+              }}>
+                {cardItemsCount}
+              </Text>
+            </View>
+          )}
+        </View>
+      );
     case "ProfileStack":
       return isFocused ? <ProfileIconSelected /> : <ProfileIconNotSelected />;
     case "SettingsStack":
@@ -68,7 +98,7 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
             },
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
-              marginTop:  10,
+              // marginTop:  5,
             },
           ]}
         >{t('appointments')}</Text>
@@ -83,7 +113,7 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
             },
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
-              marginTop: 10,
+              // marginTop: 10,
             },
           ]}
         >{t('cart')}</Text>
@@ -98,7 +128,7 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
             },
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
-              marginTop: 10,
+              // marginTop: 10,
             },
           ]}
         >{t('profile')}</Text>
@@ -113,7 +143,7 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
             },
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
-              marginTop: 10,
+              // marginTop: 10,
             },
           ]}
         >{t('settings')}</Text>
@@ -135,7 +165,7 @@ function CustomTabbar({ state, descriptors, navigation }: CustomTabbarProps) {
     <View style={{ backgroundColor: "#ffffff", paddingBottom: insets.bottom }}>
       <View style={[{
         flexDirection: 'row',
-        height: 86,
+        height: 70,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#FFFFFF',

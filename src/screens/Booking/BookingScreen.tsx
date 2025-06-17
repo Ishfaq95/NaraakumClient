@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Button, StyleSheet, SafeAreaView, TouchableOpacity, Text } from 'react-native';
 import Stepper from '../../components/Stepper';
-import Step2 from '../../components/bookingSteps/Step2';
-import Step3 from '../../components/bookingSteps/Step3';
+import DoctorListing from '../../components/bookingSteps/DoctorListing';
+import ReviewOrder from '../../components/bookingSteps/ReviewOrder';
 import Step4 from '../../components/bookingSteps/Step4';
 import Header from '../../components/common/Header';
 import { useTranslation } from 'react-i18next';
@@ -25,8 +25,8 @@ const BookingScreen = ({navigation}:any ) => {
   const renderStep = () => {
     switch (currentStep) {
       case 1: return <Specialties onPressSpecialty={onPressSpecialty} />;
-      case 2: return <Step2 />;
-      case 3: return <Step3 />;
+      case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
+      case 3: return <ReviewOrder />;
       case 4: return <Step4 />;
       default: return null;
     }

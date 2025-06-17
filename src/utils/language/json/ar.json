@@ -35,5 +35,7 @@
   "settings": "الإعدادات",
   "login_with": "تسجيل الدخول باستخدام",
   "booking": "الحجز",
-  "createNewAccount": "إنشاء حساب جديد"
+  "createNewAccount": "إنشاء حساب جديد",
+  "back": "خلف",
+  "next": "التالي"
 }

@@ -6,7 +6,8 @@ import LeftArrow from '../../assets/icons/LeftArrow';
 import RightArrow from '../../assets/icons/RightArrow';
 import { generateSlotsForDate } from '../../utils/timeUtils';
 import CheckIcon from '../../assets/icons/CheckIcon';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { addCardItem, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
 
 interface Specialty {
   CatSpecialtyId: string;
@@ -118,8 +119,10 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   selectedDate,
   availability
 }) => {
+  const dispatch = useDispatch();
   const selectedSpecialtyOrService = useSelector((state: any) => state.root.booking.selectedSpecialtyOrService);
   const services = useSelector((state: any) => state.root.booking.services);
+  const cardItems = useSelector((state: any) => state.root.booking.cardItems);
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -130,6 +133,10 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   const specialtiesScrollViewRef = useRef<ScrollView>(null);
   const timeSlotsScrollViewRef = useRef<ScrollView>(null);
   const isRTL = true;
+
+  // Check if this provider is selected
+  const isProviderSelected = cardItems.some((item: any) => item.providerId === provider.UserId);
+  const selectedCardItem = cardItems.find((item: any) => item.providerId === provider.UserId);
 
   useEffect(() => {
     if (timeSlots.length > 0) {
@@ -219,7 +226,10 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
     <>
-      <View style={{ flexDirection: 'row', width: '100%' }}>
+      <View style={[{ flexDirection: 'row', width: '100%' },isProviderSelected && styles.selectedProviderCard]}>
+          {isProviderSelected && <View style={{position:'absolute',right:10,bottom:10,alignItems:'center',justifyContent:'center'}}>
+          <CheckIcon width={40} height={40} color="#fff" />
+          </View>}
         <View style={{ width: '30%' }}>
           {provider.ImagePath ? (
             <Image
@@ -306,7 +316,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
         })()}
       </View>}
     </>
-  ), [provider]);
+  ), [provider,isProviderSelected]);
 
   const specialtiesSection = useMemo(() => (
     <View style={styles.specialtyContainer}>
@@ -431,6 +441,23 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
     return !isPastTime(slot);
   }
 
+  const handleSlotSelect = (time: string) => {
+    const cardItem = {
+      providerId: provider.UserId,
+      providerName: provider.FullnameSlang,
+      selectedSlot: time,
+      selectedDate: selectedDate.format('YYYY-MM-DD'),
+      provider: provider
+    };
+
+    dispatch(addCardItem(cardItem));
+    
+    // Call the parent callback if provided
+    if (onTimeSelect) {
+      onTimeSelect(time);
+    }
+  };
+
   const renderTimeSlots = () => {
     if (isLoadingSlots) {
       return (
@@ -491,23 +518,28 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
           contentContainerStyle={styles.timeSlotsContent}
         >
           <View style={styles.specialtiesRow}>
-            {timeSlots.map((slot, index) => (
-              <TouchableOpacity
-                key={`time-${slot.start_time}-${index}`}
-                style={[
-                  styles.timeButton,
-                  (!slot.available || isPastTime(slot)) && styles.disabledTimeButton
-                ]}
-                onPress={() => slot.available && onTimeSelect?.(slot.start_time)}
-                activeOpacity={0.7}
-                disabled={!slot.available || isPastTime(slot)}
-              >
-                <Text style={[
-                  styles.timeButtonText,
-                  (!slot.available || isPastTime(slot)) && styles.disabledTimeButtonText
-                ]}>{slot.start_time}</Text>
-              </TouchableOpacity>
-            ))}
+            {timeSlots.map((slot, index) => {
+              const isSelected = isProviderSelected && selectedCardItem?.selectedSlot === slot.start_time;
+              return (
+                <TouchableOpacity
+                  key={`time-${slot.start_time}-${index}`}
+                  style={[
+                    styles.timeButton,
+                    isSelected && styles.selectedTimeButton,
+                    (!slot.available || isPastTime(slot)) && styles.disabledTimeButton
+                  ]}
+                  onPress={() => slot.available && !isPastTime(slot) && handleSlotSelect(slot.start_time)}
+                  activeOpacity={0.7}
+                  disabled={!slot.available || isPastTime(slot)}
+                >
+                  <Text style={[
+                    styles.timeButtonText,
+                    isSelected && styles.selectedTimeButtonText,
+                    (!slot.available || isPastTime(slot)) && styles.disabledTimeButtonText
+                  ]}>{slot.start_time}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </ScrollView>
 
@@ -523,7 +555,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   };
 
   return (
-    <View style={styles.providerCard}>
+    <View style={[styles.providerCard]}>
       {providerInfo}
       {specialtiesSection}
 
@@ -538,6 +570,13 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
      </View>
 
       {renderTimeSlots()}
+{/*       
+      {isProviderSelected && (
+        <View style={styles.selectedIndicator}>
+          <CheckIcon width={16} height={16} />
+          <Text style={styles.selectedIndicatorText}>تم الاختيار</Text>
+        </View>
+      )} */}
     </View>
   );
 };
@@ -726,6 +765,29 @@ const styles = StyleSheet.create({
   },
   checkedBox: {
     backgroundColor: '#008080',
+  },
+  selectedProviderCard: {
+    backgroundColor: 'rgba(35, 162, 164, .4)',
+  },
+  selectedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: '#179c8e',
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  selectedIndicatorText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  selectedTimeButton: {
+    backgroundColor: '#179c8e',
+  },
+  selectedTimeButtonText: {
+    color: '#fff',
   },
 });
 
