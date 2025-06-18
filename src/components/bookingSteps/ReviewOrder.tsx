@@ -1,31 +1,36 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput } from 'react-native';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
 import SettingIconSelected from '../../assets/icons/SettingIconSelected';
+import { useTranslation } from 'react-i18next';
+import CommonRadioButton from '../../components/common/CommonRadioButton';
+import PhoneNumberInput from '../../components/PhoneNumberInput';
+import { countries } from '../../utils/countryData';
 
-const ReviewOrder = ({onPressNext,onPressBack}:any) => {
-  const DoctorsNameArray =[
+const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
+  const { t } = useTranslation();
+  const DoctorsNameArray = [
     {
-      name:"د. سامي محمد",
-      service:"استشارة عن بعد / طبيب عام",
-      image:"https://via.placeholder.com/80x80.png?text=Dr+Sami",
+      name: "د. سامي محمد",
+      service: "استشارة عن بعد / طبيب عام",
+      image: "https://via.placeholder.com/80x80.png?text=Dr+Sami",
       date: "17/06/2025",
       time: "05:00 م",
       duration: "1 ساعة"
     },
     {
-      name:"د. أحمد علي",
-      service:"استشارة عن بعد / طبيب أطفال",
-      image:"https://via.placeholder.com/80x80.png?text=Dr+Ahmed",
+      name: "د. أحمد علي",
+      service: "استشارة عن بعد / طبيب أطفال",
+      image: "https://via.placeholder.com/80x80.png?text=Dr+Ahmed",
       date: "18/06/2025",
       time: "06:00 م",
       duration: "1 ساعة"
     },
     {
-      name:"د. فاطمة حسن",
-      service:"استشارة عن بعد / طبيب نساء",
-      image:"https://via.placeholder.com/80x80.png?text=Dr+Fatima",
+      name: "د. فاطمة حسن",
+      service: "استشارة عن بعد / طبيب نساء",
+      image: "https://via.placeholder.com/80x80.png?text=Dr+Fatima",
       date: "19/06/2025",
       time: "07:00 م",
       duration: "1 ساعة"
@@ -33,6 +38,11 @@ const ReviewOrder = ({onPressNext,onPressBack}:any) => {
   ];
 
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selected, setSelected] = useState('myself');
+  const [fullNumber, setFullNumber] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [isValidNumber, setIsValidNumber] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<any | undefined>(countries.find(c => c.code === 'sa'));
   const selectedDoctor = DoctorsNameArray[selectedIndex];
 
   const renderDoctorTag = ({ item, index }: { item: any; index: number }) => (
@@ -49,9 +59,29 @@ const ReviewOrder = ({onPressNext,onPressBack}:any) => {
     </TouchableOpacity>
   );
 
+  useEffect(() => {
+    if (mobileNumber) {
+      handlePhoneNumberChange({ phoneNumber: mobileNumber, isValid: isValidNumber, countryCode: '', fullNumber: '' });
+    }
+  }, [selectedCountry]);
+
+  const handleNext = () => {
+    onPressNext();
+  };
+
+  const handleBack = () => {
+    onPressBack();
+  };
+
+  const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
+    setMobileNumber(data.phoneNumber);
+    setIsValidNumber(data.isValid);
+    setFullNumber(data.fullNumber);
+  };
+
   return (
     <View style={styles.container}>
-      <View style={{height:100}}>
+      <View style={{ height: 100 }}>
         {/* Doctor tags */}
         <FlatList
           data={DoctorsNameArray}
@@ -64,7 +94,7 @@ const ReviewOrder = ({onPressNext,onPressBack}:any) => {
         />
       </View>
 
-      <ScrollView style={{flex:1}}>
+      <ScrollView style={{ flex: 1, marginBottom: 60 }}>
         {/* Details card for selected doctor */}
         <View style={styles.detailsCard}>
           <View style={styles.detailsHeader}>
@@ -80,21 +110,21 @@ const ReviewOrder = ({onPressNext,onPressBack}:any) => {
           {/* Session info with icons */}
           <View style={styles.sessionInfoDetailsContainer}>
             <View style={styles.sessionInfoDetailItem}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <CalendarIcon width={18} height={18} />
                 <Text style={styles.sessionInfoLabel}>تاريخ الجلسة</Text>
               </View>
               <Text style={styles.sessionInfoValue}>{selectedDoctor.date}</Text>
             </View>
             <View style={styles.sessionInfoDetailItem}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <ClockIcon width={18} height={18} />
                 <Text style={styles.sessionInfoLabel}>توقيت الجلسة</Text>
               </View>
               <Text style={styles.sessionInfoValue}>{selectedDoctor.time}</Text>
             </View>
             <View style={styles.sessionInfoDetailItem}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <SettingIconSelected width={18} height={18} />
                 <Text style={styles.sessionInfoLabel}>المدة</Text>
               </View>
@@ -102,15 +132,125 @@ const ReviewOrder = ({onPressNext,onPressBack}:any) => {
             </View>
           </View>
         </View>
+
+        <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>المرضى المراد حجز الجلسة لهم</Text>
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <CommonRadioButton
+            selected={selected === 'myself'}
+            onPress={() => setSelected('myself')}
+            label="نفسي"
+            style={{ width: "48%", }}
+          />
+          <CommonRadioButton
+            selected={selected === 'other'}
+            onPress={() => setSelected('other')}
+            label="للغير"
+            style={{ width: "48%" }}
+          />
+        </View>
+        <View style={{ width: "100%", alignItems: "flex-start" }}>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }}>اسمك</Text>
+          <TextInput
+            style={{ width: "100%", height: 50, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, paddingHorizontal: 10, textAlign: "right" }}
+            placeholder="اسمك"
+          />
+          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }}>رقم الجوال</Text>
+          <PhoneNumberInput
+            value={mobileNumber}
+            onChangePhoneNumber={handlePhoneNumberChange}
+            placeholder={t('mobile_number')}
+            errorText={t('mobile_number_not_valid')}
+          />
+        </View>
+        <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>وصف الشكوى المرضية (إختياري)</Text>
+        </View>
+        <View style={{ width: "100%", alignItems: "flex-start", marginBottom: 24 }}>
+          <TextInput
+            style={{
+              width: "100%",
+              minHeight: 80,
+              borderWidth: 1,
+              borderColor: "#e0e0e0",
+              borderRadius: 10,
+              paddingHorizontal: 10,
+              paddingVertical: 8,
+              textAlign: "right",
+              fontSize: 15,
+              backgroundColor: "#fff"
+            }}
+            placeholder="الوصف النصي"
+            multiline
+            numberOfLines={4}
+          />
+        </View>
+
+        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'left', paddingVertical: 16 }}>
+          صف شكواك بالتسجيل الصوتي (إختياري)
+        </Text>
+
+        <View style={{
+          width: "100%",
+          backgroundColor: "#f6fafd",
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: "#e0e0e0",
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 10,
+          marginBottom: 12
+        }}>
+          {/* Fake audio player UI */}
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
+            <View style={{
+              width: 32, height: 32, borderRadius: 16, backgroundColor: "#e0e0e0",
+              alignItems: "center", justifyContent: "center", marginRight: 8
+            }}>
+              <Text style={{ fontSize: 18, color: "#888" }}>▶</Text>
+            </View>
+            <Text style={{ color: "#888", fontSize: 14 }}>0:00 / 0:00</Text>
+            <View style={{ flex: 1 }} />
+            <View style={{
+              width: 24, height: 24, borderRadius: 12, backgroundColor: "#e0e0e0",
+              alignItems: "center", justifyContent: "center", marginLeft: 8
+            }}>
+              <Text style={{ fontSize: 16, color: "#888" }}>⋮</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={{ width: "100%", alignItems: "flex-end" }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#e4f1ef",
+              borderRadius: 8,
+              paddingVertical: 8,
+              paddingHorizontal: 18,
+              marginTop: 4
+            }}
+            // onPress={handleStartRecording}
+          >
+            {/* Use your own MicrophoneIcon component if available */}
+            <Text style={{ fontSize: 18, color: "#23a2a4", marginLeft: 6 }}>🎤</Text>
+            <Text style={{ color: "#23a2a4", fontWeight: "bold", fontSize: 16 }}>بدء التسجيل</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* Buttons */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={onPressBack}>
-          <Text style={styles.backButtonText}>رجوع</Text>
+      <View style={styles.BottomContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.nextButton} onPress={onPressNext}>
-          <Text style={styles.nextButtonText}>التالي</Text>
+        <TouchableOpacity
+          style={[styles.nextButton, styles.disabledNextButton]}
+          onPress={handleNext}
+        >
+          <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -140,7 +280,7 @@ const styles = StyleSheet.create({
   },
   tagsContainer: {
     paddingHorizontal: 8,
-    alignItems:'center',
+    alignItems: 'center',
   },
   doctorTag: {
     backgroundColor: '#FFFFFF',
@@ -201,11 +341,11 @@ const styles = StyleSheet.create({
   detailsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     marginBottom: 8,
-    backgroundColor:'#e4f1ef',
-    paddingHorizontal:10,
-    },
+    backgroundColor: '#e4f1ef',
+    paddingHorizontal: 10,
+  },
   detailsHeaderText: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -224,13 +364,13 @@ const styles = StyleSheet.create({
   selectedServiceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     marginBottom: 12,
-    borderWidth:1,
-    borderColor:'#ddd',
-    paddingHorizontal:10,
-    paddingVertical:10,
-    borderRadius:10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   selectedServiceCircle: {
     width: 28,
@@ -265,9 +405,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sessionInfoDetailItem: {
-    flexDirection:'row',
-    justifyContent:'space-between',
-    alignItems:'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   sessionInfoLabel: {
     fontSize: 13,
@@ -289,16 +429,19 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    width: "34%",
+    height: 50,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#179c8e',
-    backgroundColor: '#FFFFFF',
+    alignItems: "center",
+    justifyContent: "center",
   },
   nextButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    width: "64%",
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 8,
     backgroundColor: '#179c8e',
   },
@@ -311,6 +454,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  BottomContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    height: 60,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+  },
+  disabledNextButton: {
+    opacity: 0.5,
   },
 });
 

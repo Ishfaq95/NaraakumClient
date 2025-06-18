@@ -66,10 +66,22 @@ export const getServiceProviderListByService = async (params: {
     }
 };
 
+// New API: GetUpdatedWallet
+export const getUpdatedWallet = async (payload: { UserLoginInfoId: number }): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('payment/GetUpdatedWallet', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error fetching updated wallet:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
     getAllSpecialties,
     getServiceProviderSchedulingAvailability,
-    getServiceProviderListByService
+    getServiceProviderListByService,
+    getUpdatedWallet,
 }; 

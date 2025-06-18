@@ -3,7 +3,6 @@ import { View, Button, StyleSheet, SafeAreaView, TouchableOpacity, Text } from '
 import Stepper from '../../components/Stepper';
 import DoctorListing from '../../components/bookingSteps/DoctorListing';
 import ReviewOrder from '../../components/bookingSteps/ReviewOrder';
-import Step4 from '../../components/bookingSteps/Step4';
 import Header from '../../components/common/Header';
 import { useTranslation } from 'react-i18next';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
@@ -11,6 +10,7 @@ import Specialties from '../../components/bookingSteps/Specialties';
 import LinearGradient from 'react-native-linear-gradient';
 import { setSelectedSpecialtyOrService } from '../../shared/redux/reducers/bookingReducer';
 import { useDispatch } from 'react-redux';
+import Payment from '../../components/bookingSteps/Payment';
 
 const BookingScreen = ({navigation}:any ) => {
   const { t } = useTranslation();
@@ -27,7 +27,7 @@ const BookingScreen = ({navigation}:any ) => {
       case 1: return <Specialties onPressSpecialty={onPressSpecialty} />;
       case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
       case 3: return <ReviewOrder onPressNext={() => setCurrentStep(4)} onPressBack={() => setCurrentStep(2)} />;
-      case 4: return <Step4 />;
+      case 4: return <Payment onPressNext={() => setCurrentStep(5)} onPressBack={() => setCurrentStep(3)} />;
       default: return null;
     }
   };
