@@ -7,19 +7,18 @@ interface CardItem {
   selectedSlot: string;
   selectedDate: string;
   provider: any; // Full provider object
+  selectedSpecialtyOrService: any; // Now each cardItem has its own
 }
 
 interface State {
   category: any;
   services: any;
-  selectedSpecialtyOrService: any;
   cardItems: CardItem[];
 }
 
 const initialState = {
   category: null,
   services: null,
-  selectedSpecialtyOrService: null,
   cardItems: [],
 } as State;
 
@@ -33,12 +32,9 @@ export const bookingReducer = createSlice({
     setServices: (state, action) => {
       state.services = action.payload;
     },
-    setSelectedSpecialtyOrService: (state, action) => {
-      state.selectedSpecialtyOrService = action.payload;
-    },
     addCardItem: (state, action) => {
       // Remove any existing selection and add new one
-      state.cardItems = [action.payload];
+      state.cardItems = action.payload;
     },
     removeCardItem: (state, action) => {
       state.cardItems = state.cardItems.filter(item => item.providerId !== action.payload);
@@ -49,5 +45,5 @@ export const bookingReducer = createSlice({
   },
 });
 
-export const {setCategory, setServices, setSelectedSpecialtyOrService, addCardItem, removeCardItem, clearCardItems} = bookingReducer.actions;
+export const {setCategory, setServices, addCardItem, removeCardItem, clearCardItems} = bookingReducer.actions;
 export default bookingReducer.reducer;

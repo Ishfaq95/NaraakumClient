@@ -114,7 +114,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   const [allAvailabilityData, setAllAvailabilityData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loader2, setLoader2] = useState(false);
-  const selectedSpecialtyOrService = useSelector((state: any) => state.root.booking.selectedSpecialtyOrService);
+  const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const services = useSelector((state: any) => state.root.booking.services);
   const category = useSelector((state: any) => state.root.booking.category);
   const cardItems = useSelector((state: any) => state.root.booking.cardItems);
@@ -127,7 +127,12 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   const currentLang = i18n.language;
   const [customDateSelected, setCustomDateSelected] = useState(false);
   const [changedSelectedDate, setChangedSelectedDate] = useState(moment());
+  const [isFlatListReady, setIsFlatListReady] = useState(false);
   const { t } = useTranslation();
+  const selectedSpecialtyOrService = CardArray[CardArray.length - 1]?.selectedSpecialtyOrService;
+
+  console.log("CardArray",services)
+
   const getServiceIds = () => {
     if (selectedSpecialtyOrService?.CatLevelId === 3) {
       // If level 3 is selected, return only that service ID
@@ -135,7 +140,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
     } else {
       // Otherwise, return all service IDs except level 3, comma-separated
       return services
-        .filter((service: any) => service.CatLevelId !== 3)
+        .filter((service: any) => service?.CatLevelId !== 3)
         .map((service: any) => service.Id)
         .join(',');
     }
@@ -270,7 +275,6 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
     '[]'
   );
 
-    console.log("isWithinSevenDays",isWithinSevenDays)
 
     if (isWithinSevenDays) {
       
@@ -474,6 +478,12 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
       <View style={{flex:1,paddingBottom:50,paddingTop:10}}> 
         <FlatList
         data={serviceProviders}
+        onLayout={() => {
+          setIsFlatListReady(true);
+        }}
+        onContentSizeChange={(w, h) => {
+          setIsFlatListReady(false);
+        }}
         keyExtractor={(item) => item.RowId}
         renderItem={({ item }) => {
           const providerAvailability = availability.flatMap(avail =>
@@ -517,7 +527,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
         </TouchableOpacity>
       </View>
 
-      <FullScreenLoader visible={loading || loader2} />
+      <FullScreenLoader visible={loading || loader2 || isFlatListReady} />
       <DateTimePickerModal
         isVisible={isCalendarVisible}
         mode="date"

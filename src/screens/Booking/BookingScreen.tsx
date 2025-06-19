@@ -8,17 +8,23 @@ import { useTranslation } from 'react-i18next';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
 import Specialties from '../../components/bookingSteps/Specialties';
 import LinearGradient from 'react-native-linear-gradient';
-import { setSelectedSpecialtyOrService } from '../../shared/redux/reducers/bookingReducer';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Payment from '../../components/bookingSteps/Payment';
+import { addCardItem } from '../../shared/redux/reducers/bookingReducer';
 
-const BookingScreen = ({navigation}:any ) => {
+const BookingScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const dispatch = useDispatch();
-  
+  const existingCardItems = useSelector((state: any) => state.root.booking.cardItems);
+
   const onPressSpecialty = (specialty: any) => {
-    dispatch(setSelectedSpecialtyOrService(specialty));
+    const cardItem = {
+      selectedSpecialtyOrService: specialty,
+    }
+
+    const tempCardItems = [...existingCardItems, cardItem];
+    dispatch(addCardItem(tempCardItems));
     setCurrentStep(2);
   }
 
@@ -34,17 +40,17 @@ const BookingScreen = ({navigation}:any ) => {
 
   const renderHeader = () => (
     <Header
-        centerComponent={
-            <Text style={styles.headerTitle}>{t('booking')}</Text>
-        }
-        leftComponent={
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.bookButton}>
-                <ArrowRightIcon />
-            </TouchableOpacity>
-        }
-        containerStyle={styles.headerContainer}
+      centerComponent={
+        <Text style={styles.headerTitle}>{t('booking')}</Text>
+      }
+      leftComponent={
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.bookButton}>
+          <ArrowRightIcon />
+        </TouchableOpacity>
+      }
+      containerStyle={styles.headerContainer}
     />
-);
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -54,11 +60,11 @@ const BookingScreen = ({navigation}:any ) => {
         end={{ x: 0.515, y: 0.5 }}
         style={styles.container}
       >
-      {renderHeader()}
-      <Stepper currentStep={currentStep} />
-      <View style={styles.content}>
-        {renderStep()}
-      </View>
+        {renderHeader()}
+        <Stepper currentStep={currentStep} />
+        <View style={styles.content}>
+          {renderStep()}
+        </View>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -66,7 +72,7 @@ const BookingScreen = ({navigation}:any ) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1},
+  content: { flex: 1 },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -80,13 +86,13 @@ const styles = StyleSheet.create({
   headerContainer: {
     backgroundColor: '#fff',
     shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   bookButton: {
-    padding:5,
+    padding: 5,
     backgroundColor: '#fff',
     borderRadius: 10,
   }
