@@ -7,7 +7,7 @@ import RightArrow from '../../assets/icons/RightArrow';
 import { generateSlotsForDate } from '../../utils/timeUtils';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
-import { addCardItem, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, manageTempSlotDetail, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
 
 interface Specialty {
   CatSpecialtyId: string;
@@ -103,7 +103,7 @@ interface ServiceProvider {
   SlotDuration: number;
   Specialties: Specialty[];
   ServiceServe: any[];
-  Slots?: any[];
+  slots?: any[];
 }
 
 interface ServiceProviderCardProps {
@@ -123,6 +123,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const services = useSelector((state: any) => state.root.booking.services);
   const cardItems = useSelector((state: any) => state.root.booking.cardItems);
+  const tempSlotDetail = useSelector((state: any) => state.root.booking.tempSlotDetail);
   const selectedSpecialtyOrService = CardArray[CardArray.length - 1];
 
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
@@ -136,7 +137,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   const timeSlotsScrollViewRef = useRef<ScrollView>(null);
   const isRTL = true;
 
-  const lastCardItem = cardItems.length > 0 ? cardItems[cardItems.length - 1] : null;
+  const lastCardItem = tempSlotDetail;
   const isProviderSelected = lastCardItem && lastCardItem.providerId === provider.UserId;
   const selectedCardItem = isProviderSelected ? lastCardItem : null;
 
@@ -180,48 +181,48 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   }, [timeSlots]);
 
   // Generate time slots asynchronously
-  useEffect(() => {
-    const generateTimeSlots = async () => {
-      if (!availability || !selectedDate) {
-        setTimeSlots([]);
-        return;
-      }
+  // useEffect(() => {
+  //   const generateTimeSlots = async () => {
+  //     if (!availability || !selectedDate) {
+  //       setTimeSlots([]);
+  //       return;
+  //     }
 
-      setIsLoadingSlots(true);
-      setSlotsError(null);
+  //     setIsLoadingSlots(true);
+  //     setSlotsError(null);
 
-      try {
-        // Use setTimeout to make it async and prevent blocking
-        const slots = await new Promise<TimeSlot[]>((resolve, reject) => {
-          setTimeout(() => {
-            try {
-              const formattedDate = selectedDate.format('YYYY-MM-DD');
-              const slotDuration = provider.SlotDuration || 30;
-              const generatedSlots = generateSlotsForDate(
-                availability,
-                formattedDate,
-                slotDuration,
-                'Asia/Karachi' // Your timezone
-              );
-              resolve(generatedSlots);
-            } catch (error) {
-              reject(error);
-            }
-          }, 0);
-        });
+  //     try {
+  //       // Use setTimeout to make it async and prevent blocking
+  //       const slots = await new Promise<TimeSlot[]>((resolve, reject) => {
+  //         setTimeout(() => {
+  //           try {
+  //             const formattedDate = selectedDate.format('YYYY-MM-DD');
+  //             const slotDuration = provider.SlotDuration || 30;
+  //             const generatedSlots = generateSlotsForDate(
+  //               availability,
+  //               formattedDate,
+  //               slotDuration,
+  //               'Asia/Karachi' // Your timezone
+  //             );
+  //             resolve(generatedSlots);
+  //           } catch (error) {
+  //             reject(error);
+  //           }
+  //         }, 0);
+  //       });
 
-        setTimeSlots(slots);
-      } catch (error) {
-        console.error('Error generating time slots:', error);
-        setSlotsError('Failed to load time slots');
-        setTimeSlots([]);
-      } finally {
-        setIsLoadingSlots(false);
-      }
-    };
+  //       setTimeSlots(slots);
+  //     } catch (error) {
+  //       console.error('Error generating time slots:', error);
+  //       setSlotsError('Failed to load time slots');
+  //       setTimeSlots([]);
+  //     } finally {
+  //       setIsLoadingSlots(false);
+  //     }
+  //   };
 
-    generateTimeSlots();
-  }, [availability, selectedDate, provider.SlotDuration]);
+  //   generateTimeSlots();
+  // }, [availability, selectedDate, provider.SlotDuration]);
 
 
 
@@ -444,65 +445,42 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   }
 
   const handleSlotSelect = (time: any) => {
-    const updatedCardArray = [...CardArray];
 
-    // Update last item
-    updatedCardArray[CardArray.length - 1] = {
-      ...updatedCardArray[CardArray.length - 1],
-      providerId: provider.UserId,
-      providerName: provider.FullnameSlang,
-      selectedSlot: time.start_time,
-      selectedDate: selectedDate.format('YYYY-MM-DD'),
-      provider: provider,
-      availability: availability
-    };
+    const tempSlotDetail={
+        providerId: provider.UserId,
+        providerName: provider.FullnameSlang,
+        selectedSlot: time.start_time,
+        selectedDate: selectedDate.format('YYYY-MM-DD'),
+        provider: provider,
+        availability: availability
+      };
 
-    // Dispatch updated array
-    dispatch(addCardItem(updatedCardArray));
+    dispatch(manageTempSlotDetail(tempSlotDetail))
+
+    // const updatedCardArray = [...CardArray];
+
+    // // Update last item
+    // updatedCardArray[CardArray.length - 1] = {
+    //   ...updatedCardArray[CardArray.length - 1],
+    //   providerId: provider.UserId,
+    //   providerName: provider.FullnameSlang,
+    //   selectedSlot: time.start_time,
+    //   selectedDate: selectedDate.format('YYYY-MM-DD'),
+    //   provider: provider,
+    //   availability: availability
+    // };
+
+    // // Dispatch updated array
+    // dispatch(addCardItem(updatedCardArray));
 
     // Call the parent callback if provided
-    if (onTimeSelect) {
-      onTimeSelect(time);
-    }
+    // if (onTimeSelect) {
+    //   onTimeSelect(time);
+    // }
   };
 
   const renderTimeSlots = () => {
-    if (isLoadingSlots) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#179c8e" />
-          <Text style={styles.loadingText}>جاري تحميل المواعيد...</Text>
-        </View>
-      );
-    }
-
-    if (slotsError) {
-      return (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{slotsError}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => {
-              setIsLoadingSlots(true);
-              setSlotsError(null);
-              // Trigger re-generation
-              setTimeSlots([]);
-            }}
-          >
-            <Text style={styles.retryButtonText}>إعادة المحاولة</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    if (timeSlots.length === 0) {
-      return (
-        <View style={styles.noSlotsContainer}>
-          <Text style={styles.noSlotsText}>لا توجد مواعيد متاحة لهذا اليوم</Text>
-        </View>
-      );
-    }
-
+    
     return (
       <View style={styles.specialtyContainer}>
         <TouchableOpacity
@@ -526,7 +504,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
           contentContainerStyle={styles.timeSlotsContent}
         >
           <View style={styles.specialtiesRow}>
-            {timeSlots.map((slot, index) => {
+            {provider.slots && provider.slots.map((slot:any, index:any) => {
               const isSelected = isProviderSelected && selectedCardItem?.selectedSlot === slot.start_time;
               return (
                 <TouchableOpacity
@@ -578,13 +556,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
       </View>
 
       {renderTimeSlots()}
-      {/*       
-      {isProviderSelected && (
-        <View style={styles.selectedIndicator}>
-          <CheckIcon width={16} height={16} />
-          <Text style={styles.selectedIndicatorText}>تم الاختيار</Text>
-        </View>
-      )} */}
+      
     </View>
   );
 };

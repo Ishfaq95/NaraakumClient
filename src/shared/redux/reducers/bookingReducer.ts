@@ -16,6 +16,7 @@ interface State {
   services: any;
   cardItems: any;
   apiResponse: any;
+  tempSlotDetail: any;
 }
 
 const initialState = {
@@ -23,6 +24,7 @@ const initialState = {
   services: null,
   cardItems: [],
   apiResponse: null,
+  tempSlotDetail: null,
 } as State;
 
 export const bookingReducer = createSlice({
@@ -52,8 +54,11 @@ export const bookingReducer = createSlice({
       // Add new items to the beginning of the array
       state.cardItems = [...action.payload, ...state.cardItems];
     },
+    manageTempSlotDetail: (state, action) => {
+      state.tempSlotDetail = action.payload;
+    }
   },
 });
 
-export const {setCategory, setServices, addCardItem, removeCardItem, clearCardItems, setApiResponse, prependCardItems} = bookingReducer.actions;
+export const {setCategory, setServices, addCardItem, removeCardItem, clearCardItems, setApiResponse, prependCardItems, manageTempSlotDetail} = bookingReducer.actions;
 export default bookingReducer.reducer;

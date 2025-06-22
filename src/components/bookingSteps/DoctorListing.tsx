@@ -107,7 +107,7 @@ const TIME_SLOTS = [
   { label: '04:00 م', value: '16:00' },
 ];
 
-const DoctorListing = ({onPressNext,onPressBack}:any) => {
+const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [selectedDate, setSelectedDate] = useState<Moment>(moment());
   const [days, setDays] = useState<DayItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,29 +116,31 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   const [allAvailabilityData, setAllAvailabilityData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loader2, setLoader2] = useState(false);
+  const [slotsLoaded, setSlotsLoaded] = useState(false);
+  const [changeDateLoader, setChangeDateLoader] = useState(false);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const user = useSelector((state: any) => state.root.user.user);
   const services = useSelector((state: any) => state.root.booking.services);
   const category = useSelector((state: any) => state.root.booking.category);
-  const cardItems = useSelector((state: any) => state.root.booking.cardItems);
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [selectedDateCareProviderAvailability, setSelectedDateCareProviderAvailability] = useState<any[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const { i18n } = useTranslation();
   const [isCalendarVisible, setCalendarVisible] = useState(false);
+  const [ProviderWithSlots, setProviderWithSlots] = useState<any[]>([]);
   const isRTL = I18nManager.isRTL;
   const currentLang = i18n.language;
   const [customDateSelected, setCustomDateSelected] = useState(false);
   const [changedSelectedDate, setChangedSelectedDate] = useState(moment());
   const [isFlatListReady, setIsFlatListReady] = useState(false);
   const { t } = useTranslation();
-  const selectedSpecialtyOrService = CardArray[CardArray.length - 1];
-  const dispatch = useDispatch(); 
+  // const [selectedSpecialtyOrService, setSelectedSpecialtyOrService] = useState<any>(CardArray[CardArray.length - 1]);
+  const [selectedSpecialtyOrService, setSelectedSpecialtyOrService] = useState<any>({"CatCategoryId": "42", "CatCategoryTypeId": 4, "CatLevelId": 3, "CatServiceCategoryId": "1", "CatServiceServeTypeId": 1, "DescriptionPlang": "We offer in Narakum Home Healthcare the service of home visits by doctors to conduct medical examinations on patients and diagnose their medical conditions at home. Afterwards, they prescribe suitable medications or direct them to undergo necessary radiological and laboratory tests if the condition requires it. The doctor also follows up on the patients treatment until recovery and ensures their well-being.", "DescriptionSlang": "نقدّم في نرعاكم للرعاية الطبية المنزلية خدمة الزيارة المنزلية للأطباء لإجراء كشف طبي على المرضى وتشخيص حالاتهم المرضية في المنزل، ومن ثم وصف الدواء المناسب لهم، أو توجيههم لإجراء الأشعة والتحاليل اللازمة إذا احتاجت الحالة لذلك. كما يقوم الطبيب بمتابعة علاج المريض حتى الشفاء والاطمئنان على صحته", "FeatureExcludedPlang": "FeatureIncludedPlang", "FeatureExcludedSlang": "FeatureIncludedPlang", "FeatureIncludedPlang": "FeatureIncludedPlang", "FeatureIncludedSlang": "FeatureIncludedPlang", "Id": "105", "ImagePath": "https://hhcmedia.innotech-sa.com/api//uploads/Catalogue/Services/105/image/20241224-143419.svg", "Price": 49, "TitlePlang": "General Physician", "TitleSlang": "طبيب عام", "iswithNurse": false});
+  
+  const dispatch = useDispatch();
   const createOrderMainBeforePayment = async () => {
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
-      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray,false)
+      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray, false)
     }
 
     const response = await bookingService.createOrderMainBeforePayment(payload);
@@ -150,13 +152,13 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
       try {
-        const response = await bookingService.getUnPaidUserOrders({UserLoginInfoId:user.Id});
-        console.log("response===>",response.Cart)
-        
+        const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
+        console.log("response===>", response.Cart)
+
         if (response.Cart && response.Cart.length > 0) {
           // Convert API response to cardItems format
           const convertedCardItems = response.Cart;
-          
+
           // Add the converted items to the beginning of existing cardItems
           dispatch(prependCardItems(convertedCardItems));
         }
@@ -167,7 +169,44 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
     getUnPaidUserOrders();
   }, [user]);
 
-  console.log("cardItems===>",cardItems)
+  useEffect(() => {
+    console.log("serviceProviders===>", serviceProviders.length, availability.length)
+    if (serviceProviders.length > 0 && availability.length > 0) {
+      getSlotsWithProvider()
+    }
+  }, [serviceProviders, availability])
+
+  const getSlotsWithProvider = async () => {
+    setSlotsLoaded(true)
+    const tempProvider: any = []
+    serviceProviders.map((provider: any) => {
+      const providerAvailability = availability.flatMap(avail =>
+        avail.Detail.filter((detail: any) => detail.ServiceProviderId === provider.UserId)
+      );
+
+      const slotDuration = provider.SlotDuration || 30;
+      const formattedDate = selectedDate.format('YYYY-MM-DD');
+      
+      if (providerAvailability.length > 0) {
+        const DoctorAvailable: any = generateSlotsForDate(
+          providerAvailability[0],
+          formattedDate,
+          slotDuration,
+        );
+        
+        const tempDoctorObj = {
+          ...provider,
+          slots: DoctorAvailable
+        }
+        
+        tempProvider.push(tempDoctorObj)
+      }
+    })
+
+    setSlotsLoaded(false)
+    console.log("tempProvider===>",tempProvider)
+    setProviderWithSlots(tempProvider)
+  }
 
   const getServiceIds = () => {
     if (selectedSpecialtyOrService?.CatLevelId === 3) {
@@ -185,6 +224,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   useEffect(() => {
     // Call both APIs when component mounts
     if (category.Id && services.length > 0 && selectedSpecialtyOrService.Id) {
+      console.log("category===>1111")
       fetchServiceProviders();
       fetchInitialAvailability();
     }
@@ -195,9 +235,9 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
     try {
       setLoading(true);
       const serviceIds = getServiceIds();
-      let requestBody:any = {};
-      if(selectedSpecialtyOrService.CatLevelId == 3){
-         requestBody = {
+      let requestBody: any = {};
+      if (selectedSpecialtyOrService.CatLevelId == 3) {
+        requestBody = {
           CatcategoryId: category.Id,
           ServiceIds: serviceIds,
           Search: searchQuery,
@@ -208,8 +248,8 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
           PageNumber: 0,
           PageSize: 100,
         }
-      }else{
-         requestBody = {
+      } else {
+        requestBody = {
           CatcategoryId: category.Id,
           ServiceIds: serviceIds,
           Search: searchQuery,
@@ -219,13 +259,10 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
           Gender: 2,
           PageNumber: 0,
           PageSize: 100,
-          SpecialtyIds:selectedSpecialtyOrService.Id
+          SpecialtyIds: selectedSpecialtyOrService.Id
         }
       }
 
-      
-
-      console.log("requestBody",requestBody);
       const response = await bookingService.getServiceProviderListByService(requestBody);
 
       setServiceProviders(response?.ServiceProviderList || []);
@@ -236,7 +273,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
     }
   };
 
-  const fetchInitialAvailability = async (date?:any) => {
+  const fetchInitialAvailability = async (date?: any) => {
     try {
       setLoader2(true);
       const serviceIds = getServiceIds();
@@ -244,11 +281,11 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
       const requestBody = {
         CatServiceId: serviceIds,
         CatSpecialtyId: 0,
-        StartDate:date ? moment(date).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
+        StartDate: date ? moment(date).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
         PageNumber: 1,
         PageSize: 20
       }
-      
+
       const response = await bookingService.getServiceProviderSchedulingAvailability(requestBody);
 
       setAllAvailabilityData(response?.SchedulingAvailability || []);
@@ -270,13 +307,13 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   const generateDays = (startDate?: moment.Moment) => {
     const baseDate = startDate ? moment(startDate) : moment();
     const daysArray: DayItem[] = [];
-  
+
     // Generate 7 days starting from the given base date
     for (let i = 0; i < 7; i++) {
       const currentDate = moment(baseDate).add(i, 'days');
       const englishDay = currentDate.format('dddd');
       const hijriDate = currentDate.format('iD').replace('i', '');
-      
+
       daysArray.push({
         day: ARABIC_DAYS[englishDay as keyof typeof ARABIC_DAYS],
         date: currentDate.format('D'),
@@ -286,34 +323,32 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
         hijriMonth: currentDate.format('iM').replace('i', ''),
       });
     }
-  
+
     // Add calendar icon as the 8th item
     daysArray.push({ day: '', date: '', icon: true });
-  
+    setChangeDateLoader(false)
     setDays(daysArray);
   };
 
   const handleDateSelect = (date: Moment) => {
+    setChangeDateLoader(true)
     setSelectedDate(date);
 
-    console.log("date",date)
-    console.log("selectedDate",selectedDate)
-
     const baseDate = changedSelectedDate
-    ? moment(changedSelectedDate).local().startOf('day')  // Force local timezone
-    : moment().startOf('day');
-  
-    console.log("baseDate",baseDate)
-  const isWithinSevenDays = moment(date).local().isBetween(
-    baseDate,
-    moment(baseDate).add(6, 'days').endOf('day'),
-    'day',
-    '[]'
-  );
+      ? moment(changedSelectedDate).local().startOf('day')  // Force local timezone
+      : moment().startOf('day');
+
+    console.log("baseDate", baseDate)
+    const isWithinSevenDays = moment(date).local().isBetween(
+      baseDate,
+      moment(baseDate).add(6, 'days').endOf('day'),
+      'day',
+      '[]'
+    );
 
 
     if (isWithinSevenDays) {
-      
+      setChangeDateLoader(false)
       filterAvailabilityForDate(date, allAvailabilityData);
     } else {
       setChangedSelectedDate(date)
@@ -329,17 +364,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
 
   const handleCalendarConfirm = (date: Date) => {
     setCalendarVisible(false);
-    // If Arabic, convert to Hijri moment
-    // if (currentLang === 'ar') {
-    //   const hijriMoment = moment(date).locale('ar-sa').format('iYYYY-iMM-iDD');
-    //   // Use moment-hijri to parse
-    //   const hijriDate = moment(hijriMoment, 'iYYYY-iMM-iDD');
-    //   console.log("hijriDate",hijriDate)
-    //   handleDateSelect(hijriDate);
-    // } else {
-    
-      handleDateSelect(moment(date));
-    // }
+    handleDateSelect(moment(date));
   };
 
   const handleCalendarCancel = () => {
@@ -363,99 +388,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
     // bottomSheetRef.current?.expand();
   };
 
-  const scrollByAmount = (direction: 'left' | 'right') => {
-    if (scrollViewRef.current) {
-      const scrollAmount = 100; // Adjust this value as needed
-      const currentPosition = scrollPosition;
-      const newPosition = direction === 'left'
-        ? Math.max(0, currentPosition - scrollAmount)
-        : currentPosition + scrollAmount;
-
-      scrollViewRef.current.scrollTo({ x: newPosition, animated: true });
-    }
-  };
-
-  const renderFilterContent = () => (
-    <View style={styles.filterContent}>
-      <Text style={styles.filterTitle}>اختر الموعد</Text>
-      <View style={styles.timeSlotsContainer}>
-        {TIME_SLOTS.map((slot) => (
-          <TouchableOpacity
-            key={slot.value}
-            style={[
-              styles.timeSlot,
-              false && styles.selectedTimeSlot,
-            ]}
-            onPress={() => {}}
-          >
-            <Text
-              style={[
-                styles.timeSlotText,
-                false && styles.selectedTimeSlotText,
-              ]}
-            >
-              {slot.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-
-  // Helper to render specialties/tags
-  const renderSpecialties = (specialties: Specialty[]) => (
-    <View style={styles.specialtyContainer}>
-      <TouchableOpacity
-        onPress={() => scrollByAmount('left')}
-        style={styles.scrollButton}
-      >
-        {isRTL ? <RightArrow /> : <LeftArrow />}
-      </TouchableOpacity>
-
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.specialtiesScrollView}
-        onScroll={(event) => {
-          setScrollPosition(event.nativeEvent.contentOffset.x);
-        }}
-        scrollEventThrottle={16}
-      >
-        <View style={styles.specialtiesRow}>
-          {specialties.map((spec, index) => (
-            <View key={`${spec.CatSpecialtyId}-${spec.UserloginInfoId}-${index}`} style={styles.specialtyPill}>
-              <Text style={styles.specialtyText}>
-                {isRTL ? spec.TitleSlang : spec.TitlePlang}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-
-      <TouchableOpacity
-        onPress={() => scrollByAmount('right')}
-        style={styles.scrollButton}
-      >
-        {isRTL ? <LeftArrow /> : <RightArrow />}
-      </TouchableOpacity>
-    </View>
-  );
-
-  // Helper to render available times
-  const renderTimes = (times: string[]) => (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-      {/* Left arrow */}
-      <TouchableOpacity style={styles.arrowButton}><Text>{'<'}</Text></TouchableOpacity>
-      {times.map((time) => (
-        <TouchableOpacity key={`time-${time}`} style={styles.timeButton}>
-          <Text style={styles.timeButtonText}>{time}</Text>
-        </TouchableOpacity>
-      ))}
-      {/* Right arrow */}
-      <TouchableOpacity style={styles.arrowButton}><Text>{'>'}</Text></TouchableOpacity>
-    </View>
-  );
+  console.log('testing re-render')
 
   return (
     <View style={styles.mainContainer}>
@@ -510,18 +443,13 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
         </View>
       </View>
       {/* Service Providers List */}
-      {serviceProviders.length > 0 && availability.length > 0 && 
+      {serviceProviders.length > 0 && 
       <View style={{flex:1,paddingBottom:50,paddingTop:10}}> 
         <FlatList
-        data={serviceProviders}
-        onLayout={() => {
-          // setIsFlatListReady(true);
-        }}
-        onContentSizeChange={(w, h) => {
-          setIsFlatListReady(false);
-        }}
+        data={ProviderWithSlots}
         keyExtractor={(item) => item.RowId}
-        renderItem={({ item }) => {
+        renderItem={({ item,index }) => {
+          console.log("item===>",index)
           const providerAvailability = availability.flatMap(avail =>
             avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
           );
@@ -554,16 +482,16 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.nextButton, cardItems.length === 0 && styles.disabledNextButton]} 
+        <TouchableOpacity
+          style={[styles.nextButton, CardArray.length === 0 && styles.disabledNextButton]}
           onPress={handleNext}
-          disabled={cardItems.length === 0}
+          disabled={CardArray.length === 0}
         >
           <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
       </View>
 
-      <FullScreenLoader visible={loading || loader2 || isFlatListReady} />
+      <FullScreenLoader visible={loading || loader2 || slotsLoaded || changeDateLoader} />
       <DateTimePickerModal
         isVisible={isCalendarVisible}
         mode="date"
@@ -685,7 +613,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    height:60,
+    height: 60,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     position: 'absolute',
@@ -695,19 +623,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   backButton: {
-    width:"34%",
-    height:50,
+    width: "34%",
+    height: 50,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#179c8e',
-    alignItems:"center",
-    justifyContent:"center",
+    alignItems: "center",
+    justifyContent: "center",
   },
   nextButton: {
-    width:"64%",
-    height:50,
-    alignItems:"center",
-    justifyContent:"center",
+    width: "64%",
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 8,
     backgroundColor: '#179c8e',
   },
