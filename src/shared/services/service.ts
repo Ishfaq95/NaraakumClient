@@ -6,6 +6,7 @@ import { setTopic } from "../redux/reducers/userReducer";
 import messaging from '@react-native-firebase/messaging';
 import moment from 'moment';
 import i18next from 'i18next';
+import { store } from "../redux/store";
 
 export const isTokenExpired = (expiresAt: any) => {
   return new Date() > new Date(expiresAt);
@@ -259,3 +260,114 @@ export const formatTime = (timeString: string) => {
     return timeString;
   }
 };
+
+export const generatePayloadforOrderMainBeforePayment = (CardArray: any,apiResponse:any) => {
+  const user = store.getState().root.user.user;
+  const apiResponseData = store.getState().root.booking.apiResponse;
+ 
+  if(apiResponse){
+    const payload = CardArray.map((item: any) => {
+      // Convert time from 12-hour format with Arabic AM/PM to 24-hour format
+      let schedulingTime = item.selectedSlot;
+      if (schedulingTime) {
+        // Check if the time contains Arabic AM/PM indicators
+        if (schedulingTime.includes('ص')) {
+          // AM time - remove 'ص' and keep as is (already in 12-hour format)
+          schedulingTime = schedulingTime.replace('ص', '').trim();
+          // Convert to 24-hour format
+          const [hours, minutes] = schedulingTime.split(':');
+          const hour24 = parseInt(hours) === 12 ? 0 : parseInt(hours);
+          schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
+        } else if (schedulingTime.includes('م')) {
+          // PM time - remove 'م' and convert to 24-hour format
+          schedulingTime = schedulingTime.replace('م', '').trim();
+          const [hours, minutes] = schedulingTime.split(':');
+          const hour24 = parseInt(hours) === 12 ? 12 : parseInt(hours) + 12;
+          schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
+        }
+      }
+
+      const detailsId = apiResponseData.find((apiData: any) => apiData.CatServiceId === item.selectedSpecialtyOrService.Id)
+
+      return ({
+        "OrderDetailId": detailsId.OrderDetailID,
+        "OrganizationId": item.provider.OrganizationId,
+        "CatCategoryId": item.selectedSpecialtyOrService.CatCategoryId,
+        "CatServiceId": item.selectedSpecialtyOrService.Id,
+        "CatCategoryTypeId": item.selectedSpecialtyOrService.CatCategoryTypeId,
+        "OrganizationServiceId": item.provider.OrganizationServiceIds,
+        "ServiceCharges": item.provider.Prices,
+        "ServiceProviderloginInfoId": item.provider.UserId,
+        "CatSpecialtyId": 0,
+        "OrganizationSpecialtiesId": 0,
+        "OrganizationPackageId": 0,
+        "Quantity": 1,
+        "SchedulingDate": item.selectedDate,
+        "SchedulingTime": schedulingTime,
+        "CatSchedulingAvailabilityTypeId": item.availability.CatAvailabilityTypeId,
+        "AvailabilityId": item.availability.Id,
+        "OrderAddress": "G7WV+7X3, Gulfishan Colony, Lahore, 54000، باكستان",
+        "OrderAddressGoogleLocation": "31.5457536, 74.2948864",
+        "saveinAddress": false,
+        "PatientUserProfileInfoId": user.UserProfileInfoId,
+        "isSelf": true,
+        "TextDescription": "",
+        "AudioDescription": "",
+        "OrderAddressArea": "",
+        "OrderAddressDescription": "",
+        "CatCityId":null,
+        "CatSquareId":null,
+        "UserLocationId": 0,
+      })
+    })
+  
+    return payload
+  }else{
+    const payload = CardArray.map((item: any) => {
+      // Convert time from 12-hour format with Arabic AM/PM to 24-hour format
+      let schedulingTime = item.selectedSlot;
+      if (schedulingTime) {
+        // Check if the time contains Arabic AM/PM indicators
+        if (schedulingTime.includes('ص')) {
+          // AM time - remove 'ص' and keep as is (already in 12-hour format)
+          schedulingTime = schedulingTime.replace('ص', '').trim();
+          // Convert to 24-hour format
+          const [hours, minutes] = schedulingTime.split(':');
+          const hour24 = parseInt(hours) === 12 ? 0 : parseInt(hours);
+          schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
+        } else if (schedulingTime.includes('م')) {
+          // PM time - remove 'م' and convert to 24-hour format
+          schedulingTime = schedulingTime.replace('م', '').trim();
+          const [hours, minutes] = schedulingTime.split(':');
+          const hour24 = parseInt(hours) === 12 ? 12 : parseInt(hours) + 12;
+          schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
+        }
+      }
+  
+      return ({
+        "OrderDetailId": 0,
+        "OrganizationId": item.provider.OrganizationId,
+        "CatCategoryId": item.selectedSpecialtyOrService.CatCategoryId,
+        "CatServiceId": item.selectedSpecialtyOrService.Id,
+        "CatCategoryTypeId": item.selectedSpecialtyOrService.CatCategoryTypeId,
+        "OrganizationServiceId": item.provider.OrganizationServiceIds,
+        "ServiceCharges": item.provider.Prices,
+        "ServiceProviderloginInfoId": item.provider.UserId,
+        "CatSpecialtyId": 0,
+        "OrganizationSpecialtiesId": 0,
+        "OrganizationPackageId": 0,
+        "Quantity": 1,
+        "SchedulingDate": item.selectedDate,
+        "SchedulingTime": schedulingTime,
+        "CatSchedulingAvailabilityTypeId": item.availability.CatAvailabilityTypeId,
+        "AvailabilityId": item.availability.Id,
+        "OrderAddress": "",
+        "OrderAddressGoogleLocation": "",
+        "saveinAddress": false
+      })
+    })
+  
+    return payload
+  }
+  
+}

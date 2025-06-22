@@ -20,7 +20,7 @@ const BookingScreen = ({ navigation }: any) => {
 
   const onPressSpecialty = (specialty: any) => {
     const cardItem = {
-      selectedSpecialtyOrService: specialty,
+      ...specialty,
     }
 
     const tempCardItems = [...existingCardItems, cardItem];

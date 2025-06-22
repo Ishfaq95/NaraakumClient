@@ -80,6 +80,18 @@ export const getUpdatedWallet = async (payload: { UserLoginInfoId: number }): Pr
 export const createOrderMainBeforePayment = async (payload: any): Promise<any> => {
     try {
         const response = await axiosInstance.post('payment/CreateOrderMainBeforePayment', payload);
+        console.log("response===>",response)
+        return response.data;
+    } catch (error: any) {
+        console.error('Error creating order before payment:', error);
+        throw error;
+    }
+};
+
+export const updateOrderMainBeforePayment = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('payment/UpdateOrderMainBeforePayment', payload);
+        console.log("response===>",response)
         return response.data;
     } catch (error: any) {
         console.error('Error creating order before payment:', error);
@@ -97,6 +109,16 @@ export const updateOrderMainToCheckOut = async (payload: any): Promise<any> => {
     }
 };
 
+export const getUnPaidUserOrders = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('payment/GetUserUnpaidOrderList', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error creating order before payment:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
@@ -105,5 +127,7 @@ export const bookingService = {
     getServiceProviderListByService,
     getUpdatedWallet,
     createOrderMainBeforePayment,
+    updateOrderMainBeforePayment,
     updateOrderMainToCheckOut,
+    getUnPaidUserOrders
 }; 

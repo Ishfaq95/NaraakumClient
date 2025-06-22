@@ -123,7 +123,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const services = useSelector((state: any) => state.root.booking.services);
   const cardItems = useSelector((state: any) => state.root.booking.cardItems);
-  const selectedSpecialtyOrService = CardArray[CardArray.length - 1]?.selectedSpecialtyOrService;
+  const selectedSpecialtyOrService = CardArray[CardArray.length - 1];
 
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
@@ -443,7 +443,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
     return !isPastTime(slot);
   }
 
-  const handleSlotSelect = (time: string) => {
+  const handleSlotSelect = (time: any) => {
     const updatedCardArray = [...CardArray];
 
     // Update last item
@@ -451,9 +451,10 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
       ...updatedCardArray[CardArray.length - 1],
       providerId: provider.UserId,
       providerName: provider.FullnameSlang,
-      selectedSlot: time,
+      selectedSlot: time.start_time,
       selectedDate: selectedDate.format('YYYY-MM-DD'),
-      provider: provider
+      provider: provider,
+      availability: availability
     };
 
     // Dispatch updated array
@@ -535,7 +536,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
                     isSelected && styles.selectedTimeButton,
                     (!slot.available || isPastTime(slot)) && styles.disabledTimeButton
                   ]}
-                  onPress={() => slot.available && !isPastTime(slot) && handleSlotSelect(slot.start_time)}
+                  onPress={() => slot.available && !isPastTime(slot) && handleSlotSelect(slot)}
                   activeOpacity={0.7}
                   disabled={!slot.available || isPastTime(slot)}
                 >

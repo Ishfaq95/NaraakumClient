@@ -5,7 +5,7 @@ import 'moment-hijri';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
 import FilterIcon from '../../assets/icons/FilterIcon';
 import SearchInput from '../common/SearchInput';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { bookingService } from '../../services/api/BookingService';
 import UserPlaceholder from '../../assets/icons/UserPlaceholder';
 import { MediaBaseURL } from '../../shared/utils/constants';
@@ -16,6 +16,8 @@ import { generateSlots, generateSlotsForDate, getUniqueAvailableSlots } from '..
 import FullScreenLoader from "../FullScreenLoader";
 import { useTranslation } from 'react-i18next';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { generatePayloadforOrderMainBeforePayment } from '../../shared/services/service';
+import { setApiResponse, prependCardItems } from '../../shared/redux/reducers/bookingReducer';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
@@ -115,6 +117,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   const [loading, setLoading] = useState(false);
   const [loader2, setLoader2] = useState(false);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
+  const user = useSelector((state: any) => state.root.user.user);
   const services = useSelector((state: any) => state.root.booking.services);
   const category = useSelector((state: any) => state.root.booking.category);
   const cardItems = useSelector((state: any) => state.root.booking.cardItems);
@@ -129,9 +132,42 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   const [changedSelectedDate, setChangedSelectedDate] = useState(moment());
   const [isFlatListReady, setIsFlatListReady] = useState(false);
   const { t } = useTranslation();
-  const selectedSpecialtyOrService = CardArray[CardArray.length - 1]?.selectedSpecialtyOrService;
+  const selectedSpecialtyOrService = CardArray[CardArray.length - 1];
+  const dispatch = useDispatch(); 
+  const createOrderMainBeforePayment = async () => {
+    const payload = {
+      "UserLoginInfoId": user.Id,
+      "CatPlatformId": 1,
+      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray,false)
+    }
 
-  console.log("CardArray",services)
+    const response = await bookingService.createOrderMainBeforePayment(payload);
+
+    dispatch(setApiResponse(response.Data))
+    onPressNext();
+  }
+
+  useEffect(() => {
+    const getUnPaidUserOrders = async () => {
+      try {
+        const response = await bookingService.getUnPaidUserOrders({UserLoginInfoId:user.Id});
+        console.log("response===>",response.Cart)
+        
+        if (response.Cart && response.Cart.length > 0) {
+          // Convert API response to cardItems format
+          const convertedCardItems = response.Cart;
+          
+          // Add the converted items to the beginning of existing cardItems
+          dispatch(prependCardItems(convertedCardItems));
+        }
+      } catch (error) {
+        console.error('Error fetching unpaid orders:', error);
+      }
+    }
+    getUnPaidUserOrders();
+  }, [user]);
+
+  console.log("cardItems===>",cardItems)
 
   const getServiceIds = () => {
     if (selectedSpecialtyOrService?.CatLevelId === 3) {
@@ -311,7 +347,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
   };
 
   const handleNext = () => {
-    onPressNext();
+    createOrderMainBeforePayment()
   };
 
   const handleBack = () => {
@@ -479,7 +515,7 @@ const DoctorListing = ({onPressNext,onPressBack}:any) => {
         <FlatList
         data={serviceProviders}
         onLayout={() => {
-          setIsFlatListReady(true);
+          // setIsFlatListReady(true);
         }}
         onContentSizeChange={(w, h) => {
           setIsFlatListReady(false);

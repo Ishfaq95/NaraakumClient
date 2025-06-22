@@ -7,6 +7,10 @@ import { useTranslation } from 'react-i18next';
 import CommonRadioButton from '../../components/common/CommonRadioButton';
 import PhoneNumberInput from '../../components/PhoneNumberInput';
 import { countries } from '../../utils/countryData';
+import { setApiResponse } from '../../shared/redux/reducers/bookingReducer';
+import { bookingService } from '../../services/api/BookingService';
+import { generatePayloadforOrderMainBeforePayment } from '../../shared/services/service';
+import { useDispatch, useSelector } from 'react-redux';
 
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
@@ -44,7 +48,10 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const [isValidNumber, setIsValidNumber] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any | undefined>(countries.find(c => c.code === 'sa'));
   const selectedDoctor = DoctorsNameArray[selectedIndex];
-
+  const user = useSelector((state: any) => state.root.user.user);
+  const CardArray = useSelector((state: any) => state.root.booking.cardItems);
+  const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
+  const dispatch = useDispatch();
   const renderDoctorTag = ({ item, index }: { item: any; index: number }) => (
     <TouchableOpacity
       style={[styles.doctorTag, selectedIndex === index && styles.selectedTag]}
@@ -59,6 +66,21 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     </TouchableOpacity>
   );
 
+  const createOrderMainBeforePayment = async () => {
+    const payload = {
+      "OrderId":apiResponse[0].OrderId,
+      "CatPlatformId": 1,
+      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray,true)
+    }
+
+    console.log("payload===>",payload)
+
+    const response = await bookingService.updateOrderMainBeforePayment(payload);
+    console.log("response===>",response.Data)
+    // dispatch(setApiResponse(response.Data))
+    // onPressNext();
+  }
+
   useEffect(() => {
     if (mobileNumber) {
       handlePhoneNumberChange({ phoneNumber: mobileNumber, isValid: isValidNumber, countryCode: '', fullNumber: '' });
@@ -66,7 +88,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   }, [selectedCountry]);
 
   const handleNext = () => {
-    onPressNext();
+    createOrderMainBeforePayment();
   };
 
   const handleBack = () => {
