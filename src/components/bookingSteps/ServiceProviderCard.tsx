@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Image, ScrollView, ActivityIndicator } from 'react-native';
 import UserPlaceholder from '../../assets/icons/UserPlaceholder';
 import { MediaBaseURL } from '../../shared/utils/constants';
@@ -111,13 +111,17 @@ interface ServiceProviderCardProps {
   onTimeSelect?: (time: string) => void;
   selectedDate: any;
   availability: any;
+  selectedSlotInfo?: {providerId: string, slotTime: string} | null;
+  onSelectSlot: (provider: any, slot: any) => void;
 }
 
-const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
+const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   provider,
   onTimeSelect,
   selectedDate,
-  availability
+  availability,
+  selectedSlotInfo,
+  onSelectSlot
 }) => {
   const dispatch = useDispatch();
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
@@ -140,6 +144,32 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   const lastCardItem = tempSlotDetail;
   const isProviderSelected = lastCardItem && lastCardItem.providerId === provider.UserId;
   const selectedCardItem = isProviderSelected ? lastCardItem : null;
+
+  const isPastTime = useCallback((slot: TimeSlot) => {
+    // Only check past times if the selected date is today
+    const today = new Date();
+    const selectedDateObj = new Date(selectedDate.format('YYYY-MM-DD'));
+    
+    // If selected date is not today, all slots are available
+    if (selectedDateObj.toDateString() !== today.toDateString()) {
+      return false;
+    }
+    
+    const inputTime = slot.fullTime;
+    
+    // Get current time
+    const now = new Date();
+    const slotTime = new Date();
+    const [inputHours, inputMinutes] = inputTime.split(':').map(Number);
+
+    // Set the time of slot date to match the input
+    slotTime.setHours(inputHours);
+    slotTime.setMinutes(inputMinutes);
+    slotTime.setSeconds(0);
+    slotTime.setMilliseconds(0);
+
+    return slotTime < now;
+  }, [selectedDate]);
 
   useEffect(() => {
     if (timeSlots.length > 0) {
@@ -229,8 +259,8 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
     <>
-      <View style={[{ flexDirection: 'row', width: '100%' }, isProviderSelected && styles.selectedProviderCard]}>
-        {isProviderSelected && <View style={{ position: 'absolute', right: 10, bottom: 10, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={[{ flexDirection: 'row', width: '100%' }, selectedSlotInfo?.providerId === provider.UserId  && styles.selectedProviderCard]}>
+        {selectedSlotInfo?.providerId === provider.UserId && <View style={{ position: 'absolute', right: 10, bottom: 10, alignItems: 'center', justifyContent: 'center' }}>
           <CheckIcon width={40} height={40} color="#fff" />
         </View>}
         <View style={{ width: '30%' }}>
@@ -319,7 +349,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
           })()}
         </View>}
     </>
-  ), [provider, isProviderSelected]);
+  ), [provider, isProviderSelected, selectedSlotInfo]);
 
   const specialtiesSection = useMemo(() => (
     <View style={styles.specialtyContainer}>
@@ -379,24 +409,20 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
     }
   };
 
-  const scrollTimeSlots = (direction: 'left' | 'right') => {
-
+  const scrollTimeSlots = useCallback((direction: 'left' | 'right') => {
     if (timeSlotsScrollViewRef.current) {
-      const slotWidth = 104;
-      const scrollAmount = slotWidth * 2;
+      const scrollAmount = 120;
       const currentPosition = timeSlotsScrollPosition;
-      const newPosition = direction === 'right'
+      const newPosition = direction === 'left' 
         ? Math.max(0, currentPosition - scrollAmount)
         : currentPosition + scrollAmount;
 
-      requestAnimationFrame(() => {
-        timeSlotsScrollViewRef.current?.scrollTo({
-          x: newPosition,
-          animated: true
-        });
+      timeSlotsScrollViewRef.current.scrollTo({
+        x: newPosition,
+        animated: true
       });
     }
-  };
+  }, [timeSlotsScrollPosition]);
 
   // Helper to convert Arabic AM/PM to English AM/PM
   const convertArabicTime = (timeStr: string) => {
@@ -420,42 +446,22 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
     }
   };
 
-  // Main check
-  const isPastTime = (slot: TimeSlot) => {
-    const inputTime = slot.fullTime;
-
-    // Get current time
-    const now = new Date();
-    const currentTime = new Date();
-    const [inputHours, inputMinutes] = inputTime.split(':').map(Number);
-
-    // Set the time of current date to match the input
-    currentTime.setHours(inputHours);
-    currentTime.setMinutes(inputMinutes);
-    currentTime.setSeconds(0);
-    currentTime.setMilliseconds(0);
-
-
-
-    return currentTime < now
-  };
-
   const isTimeSlotAvailable = (slot: TimeSlot) => {
     return !isPastTime(slot);
   }
 
-  const handleSlotSelect = (time: any) => {
+  const handleSlotSelect = useCallback((time: any) => {
+    onSelectSlot(provider, time)
+    // const tempSlotDetail={
+    //     providerId: provider.UserId,
+    //     providerName: provider.FullnameSlang,
+    //     selectedSlot: time.start_time,
+    //     selectedDate: selectedDate.format('YYYY-MM-DD'),
+    //     provider: provider,
+    //     availability: availability
+    //   };
 
-    const tempSlotDetail={
-        providerId: provider.UserId,
-        providerName: provider.FullnameSlang,
-        selectedSlot: time.start_time,
-        selectedDate: selectedDate.format('YYYY-MM-DD'),
-        provider: provider,
-        availability: availability
-      };
-
-    dispatch(manageTempSlotDetail(tempSlotDetail))
+    // dispatch(manageTempSlotDetail(tempSlotDetail))
 
     // const updatedCardArray = [...CardArray];
 
@@ -477,10 +483,9 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
     // if (onTimeSelect) {
     //   onTimeSelect(time);
     // }
-  };
+  }, [provider, onSelectSlot]);
 
-  const renderTimeSlots = () => {
-    
+  const renderTimeSlots = useMemo(() => {
     return (
       <View style={styles.specialtyContainer}>
         <TouchableOpacity
@@ -505,23 +510,27 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
         >
           <View style={styles.specialtiesRow}>
             {provider.slots && provider.slots.map((slot:any, index:any) => {
-              const isSelected = isProviderSelected && selectedCardItem?.selectedSlot === slot.start_time;
+              const isSelected = selectedSlotInfo?.providerId === provider.UserId && 
+                                selectedSlotInfo?.slotTime === slot.start_time;
+              const isPast = isPastTime(slot);
+              const isDisabled = !slot.available || isPast;
+              
               return (
                 <TouchableOpacity
                   key={`time-${slot.start_time}-${index}`}
                   style={[
                     styles.timeButton,
                     isSelected && styles.selectedTimeButton,
-                    (!slot.available || isPastTime(slot)) && styles.disabledTimeButton
+                    isDisabled && styles.disabledTimeButton
                   ]}
-                  onPress={() => slot.available && !isPastTime(slot) && handleSlotSelect(slot)}
-                  activeOpacity={0.7}
-                  disabled={!slot.available || isPastTime(slot)}
+                  onPress={() => !isDisabled && handleSlotSelect(slot)}
+                  activeOpacity={0.5}
+                  disabled={isDisabled}
                 >
                   <Text style={[
                     styles.timeButtonText,
                     isSelected && styles.selectedTimeButtonText,
-                    (!slot.available || isPastTime(slot)) && styles.disabledTimeButtonText
+                    isDisabled && styles.disabledTimeButtonText
                   ]}>{slot.start_time}</Text>
                 </TouchableOpacity>
               );
@@ -538,7 +547,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
         </TouchableOpacity>
       </View>
     );
-  };
+  }, [provider.slots, selectedSlotInfo, provider.UserId, isPastTime, handleSlotSelect, scrollTimeSlots]);
 
   return (
     <View style={[styles.providerCard]}>
@@ -555,11 +564,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({
         <Text style={styles.selectTimeLabel}>اختر توقيت الزيارة</Text>
       </View>
 
-      {renderTimeSlots()}
+      {renderTimeSlots}
       
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   providerCard: {

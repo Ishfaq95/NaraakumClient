@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView, Dimensions, I18nManager } from 'react-native';
 import moment, { Moment } from 'moment';
 import 'moment-hijri';
@@ -132,8 +132,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [changedSelectedDate, setChangedSelectedDate] = useState(moment());
   const [isFlatListReady, setIsFlatListReady] = useState(false);
   const { t } = useTranslation();
-  // const [selectedSpecialtyOrService, setSelectedSpecialtyOrService] = useState<any>(CardArray[CardArray.length - 1]);
-  const [selectedSpecialtyOrService, setSelectedSpecialtyOrService] = useState<any>({"CatCategoryId": "42", "CatCategoryTypeId": 4, "CatLevelId": 3, "CatServiceCategoryId": "1", "CatServiceServeTypeId": 1, "DescriptionPlang": "We offer in Narakum Home Healthcare the service of home visits by doctors to conduct medical examinations on patients and diagnose their medical conditions at home. Afterwards, they prescribe suitable medications or direct them to undergo necessary radiological and laboratory tests if the condition requires it. The doctor also follows up on the patients treatment until recovery and ensures their well-being.", "DescriptionSlang": "نقدّم في نرعاكم للرعاية الطبية المنزلية خدمة الزيارة المنزلية للأطباء لإجراء كشف طبي على المرضى وتشخيص حالاتهم المرضية في المنزل، ومن ثم وصف الدواء المناسب لهم، أو توجيههم لإجراء الأشعة والتحاليل اللازمة إذا احتاجت الحالة لذلك. كما يقوم الطبيب بمتابعة علاج المريض حتى الشفاء والاطمئنان على صحته", "FeatureExcludedPlang": "FeatureIncludedPlang", "FeatureExcludedSlang": "FeatureIncludedPlang", "FeatureIncludedPlang": "FeatureIncludedPlang", "FeatureIncludedSlang": "FeatureIncludedPlang", "Id": "105", "ImagePath": "https://hhcmedia.innotech-sa.com/api//uploads/Catalogue/Services/105/image/20241224-143419.svg", "Price": 49, "TitlePlang": "General Physician", "TitleSlang": "طبيب عام", "iswithNurse": false});
+  const [selectedSpecialtyOrService, setSelectedSpecialtyOrService] = useState<any>(CardArray[CardArray.length - 1]);
+  const [selectedSlotInfo, setSelectedSlotInfo] = useState<{providerId: string, slotTime: string} | null>(null);
   
   const dispatch = useDispatch();
   const createOrderMainBeforePayment = async () => {
@@ -333,6 +333,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const handleDateSelect = (date: Moment) => {
     setChangeDateLoader(true)
     setSelectedDate(date);
+    // Clear selected slot when date changes
+    setSelectedSlotInfo(null);
 
     const baseDate = changedSelectedDate
       ? moment(changedSelectedDate).local().startOf('day')  // Force local timezone
@@ -387,6 +389,38 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const handleFilterPress = () => {
     // bottomSheetRef.current?.expand();
   };
+
+  const handleSelectSlot = useCallback((provider: any, slot: any) => {
+    // If the same slot is already selected, deselect it
+    if (selectedSlotInfo?.providerId === provider.UserId && selectedSlotInfo?.slotTime === slot.start_time) {
+      setSelectedSlotInfo(null);
+    } else {
+      // Select the new slot (this will automatically deselect the previous one)
+      setSelectedSlotInfo({
+        providerId: provider.UserId,
+        slotTime: slot.start_time
+      });
+    }
+  }, [selectedSlotInfo]);
+
+  // Memoize filtered providers to prevent unnecessary re-renders
+  const filteredProviders = useMemo(() => {
+    return ProviderWithSlots.filter((item: any) => {
+      const providerAvailability = availability.flatMap(avail =>
+        avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
+      );
+
+      if (providerAvailability.length > 0) {
+        const dayOfWeek = new Date(selectedDate.format('YYYY-MM-DD')).toLocaleString("en-US", {
+          weekday: "long",
+        });
+        
+        const holidays = providerAvailability[0]?.ServiceProviderHolidays?.split(',');
+        return !holidays?.includes(dayOfWeek);
+      }
+      return false;
+    });
+  }, [ProviderWithSlots, availability, selectedDate]);
 
   console.log('testing re-render')
 
@@ -446,32 +480,24 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       {serviceProviders.length > 0 && 
       <View style={{flex:1,paddingBottom:50,paddingTop:10}}> 
         <FlatList
-        data={ProviderWithSlots}
+        data={filteredProviders}
         keyExtractor={(item) => item.RowId}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={5}
+        windowSize={10}
+        initialNumToRender={3}
         renderItem={({ item,index }) => {
-          console.log("item===>",index)
           const providerAvailability = availability.flatMap(avail =>
             avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
           );
 
-          const dayOfWeek = new Date(selectedDate.format('YYYY-MM-DD')).toLocaleString("en-US", {
-            weekday: "long",
-          });
-          
-          const holidays = providerAvailability[0]?.ServiceProviderHolidays?.split(',');
-
-          if (providerAvailability.length > 0) {
-            if(holidays?.includes(dayOfWeek)){
-              return null
-            }
-            return <ServiceProviderCard
-              provider={item}
-              selectedDate={selectedDate}
-              availability={providerAvailability[0]}
-            />
-          } else {
-            return null
-          }
+          return <ServiceProviderCard
+            provider={item}
+            selectedDate={selectedDate}
+            availability={providerAvailability[0]}
+            selectedSlotInfo={selectedSlotInfo}
+            onSelectSlot={handleSelectSlot}
+          />
         }}
         contentContainerStyle={{ padding: 16 }}
         showsVerticalScrollIndicator={false}

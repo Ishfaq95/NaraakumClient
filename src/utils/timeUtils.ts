@@ -8,6 +8,7 @@ interface TimeSlot {
   availability_type_id: string;
   is_holiday: boolean;
   available: boolean;
+  selected: boolean;
 }
 
 interface TimeConfig {
@@ -147,7 +148,8 @@ export const generateSlotsForDate = (
       end_time: end12Hour,
       availability_type_id: CatAvailabilityTypeId,
       is_holiday: isHoliday,
-      available: isAvailable
+      available: isAvailable,
+      selected: false
     });
 
     currentTotalMinutes = nextTotalMinutes;
@@ -266,7 +268,8 @@ export const generateSlots = (
           end_time: end12Hour,
           availability_type_id: CatAvailabilityTypeId,
           is_holiday: isHoliday,
-          available: isAvailable
+          available: isAvailable,
+          selected: false
         });
 
         currentTotalMinutes = nextTotalMinutes;
