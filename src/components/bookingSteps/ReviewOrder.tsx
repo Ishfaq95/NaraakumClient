@@ -53,6 +53,8 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
   const dispatch = useDispatch();
 
+  console.log("CardArray===>", CardArray)
+
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
       try {
@@ -87,6 +89,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             }
           });
 
+          console.log("updatedCardItems===>", updatedCardItems)
           // Dispatch the updated array
           dispatch(addCardItem(updatedCardItems));
         }

@@ -22,13 +22,13 @@ const BookingScreen = ({ navigation }: any) => {
   const [SuccessResponse, setSuccessResponse] = useState(null);
 
   const onPressSpecialty = (specialty: any) => {
-    console.log("specialty===>", specialty)
+    console.log("specialty===>", specialty,category)
     if (specialty.Id == "105") {
       const cardItem = {
         ...specialty,
         "CatCategoryId": category.Id,
         "CatServiceId": specialty.Id,
-        "CatCategoryTypeId": specialty.CatCategoryTypeId,
+        "CatCategoryTypeId": category.CatCategoryTypeId,
       }
       const tempCardItems = [...existingCardItems, cardItem];
       dispatch(addCardItem(tempCardItems));
@@ -37,7 +37,7 @@ const BookingScreen = ({ navigation }: any) => {
         ...specialty,
         "CatCategoryId": category.Id,
         "CatSpecialtyId": specialty.Id,
-        "CatCategoryTypeId": specialty.CatCategoryTypeId,
+        "CatCategoryTypeId": category.CatCategoryTypeId,
       }
       const tempCardItems = [...existingCardItems, cardItem];
       dispatch(addCardItem(tempCardItems));

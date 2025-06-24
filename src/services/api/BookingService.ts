@@ -79,6 +79,7 @@ export const getUpdatedWallet = async (payload: { UserLoginInfoId: number }): Pr
 
 export const createOrderMainBeforePayment = async (payload: any): Promise<any> => {
     try {
+        console.log("payload===>",payload)
         const response = await axiosInstance.post('payment/CreateOrderMainBeforePayment', payload);
         console.log("response===>",response)
         return response.data;

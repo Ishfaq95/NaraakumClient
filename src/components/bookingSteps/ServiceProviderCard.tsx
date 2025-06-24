@@ -218,17 +218,34 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const onServiceSelectUpdate = (providerId: string, service: string) => {
     onSelectService && onSelectService(providerId, service)
 
-    const getServiceId =services.find((item: any) => item.TitlePlang == service)
+    const getServiceId = services.find((item: any) => item.TitlePlang == service);
     const updatedCardArray = [...CardArray];
 
-    // Update last item
-    updatedCardArray[0] = {
-      ...updatedCardArray[0],
-      "CatServiceId": getServiceId?.Id || 0,
-    };
+    // Find the correct price for the selected service
+    const serviceIds = provider.ServiceIds.split(',');
+    const prices = provider.Prices.split(',');
+    const priceIndex = getServiceId ? serviceIds.findIndex(id => id === String(getServiceId.Id)) : -1;
+    const selectedPrice = priceIndex !== -1 ? prices[priceIndex] : "0";
+    const orgSpecilityID = provider.OrganizationServiceIds.split(',')[priceIndex]
 
-    // Dispatch updated array
-    dispatch(addCardItem(updatedCardArray))
+    if(!updatedCardArray[0].CatSpecialtyId){
+      updatedCardArray[0] = {
+        ...updatedCardArray[0],
+        "OrganizationServiceId": provider.OrganizationServiceIds,
+        "ServiceCharges": provider.Prices,
+      };
+    }else{
+      updatedCardArray[0] = {
+        ...updatedCardArray[0],
+        "CatServiceId": getServiceId?.Id || 0,
+        "ServiceCharges": selectedPrice,
+        "OrganizationServiceId": orgSpecilityID,
+      };
+    }
+
+    
+
+    dispatch(addCardItem(updatedCardArray));
   }
   
 
@@ -292,7 +309,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                   <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
                     {`${service.title}: ${Number(service.price).toFixed(0)}`}
                   </Text>
-                  <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox, !selectedService && styles.disabledBox]}>
+                  <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox]}>
                     {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && <CheckIcon width={12} height={12} />}
                   </TouchableOpacity>
                 </View>
@@ -305,7 +322,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                     <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
                       {`${firstService.title}: ${Number(firstService.price).toFixed(0)}`}
                     </Text>
-                    <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox, !selectedService && styles.disabledBox]}>
+                    <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox]}>
                       {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && <CheckIcon width={12} height={12} />}
                     </TouchableOpacity>
                   </View>
@@ -314,7 +331,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                     <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
                       {`${secondService.title}: ${Number(secondService.price).toFixed(0)}`}
                     </Text>
-                    <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Consultant")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && styles.checkedBox, !selectedService && styles.disabledBox]}>
+                    <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Consultant")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && styles.checkedBox]}>
                       {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && <CheckIcon width={12} height={12} />}
                     </TouchableOpacity>
                   </View>
@@ -427,28 +444,53 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }
 
   const handleSlotSelect = useCallback((time: any) => {
-    console.log("time===>CardArray card", CardArray[0])
-    onSelectSlot(provider, time)
+    onSelectSlot(provider, time);
 
-    const getServiceId =selectedService ? services.find((service: any) => service.TitlePlang == selectedService.selectedService) : 0
-
+    const getServiceId = selectedService ? services.find((service: any) => service.TitlePlang == selectedService.selectedService) : 0;
     const updatedCardArray = [...CardArray];
 
-    // Update last item
-    updatedCardArray[0] = {
-      ...updatedCardArray[0],
-      "OrganizationServiceId": provider.OrganizationServiceIds,
-      "ServiceCharges": provider.Prices,
-      "ServiceProviderUserloginInfoId": provider.UserId,
-      "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-      "SchedulingTime": time.start_time,
-      "AvailabilityId": availability.Id,
-      "CatServiceId": getServiceId.Id,
-    };
+    // Find the correct price for the selected service
+    const serviceIds = provider.ServiceIds.split(',');
+    const prices = provider.Prices.split(',');
+    
+    const priceIndex = getServiceId ? serviceIds.findIndex(id => id === String(getServiceId.Id)) : -1;
+    const selectedPrice = priceIndex !== -1 ? prices[priceIndex] : "0";
+    const orgSpecilityID = provider.OrganizationServiceIds.split(',')[priceIndex]
 
-    // Dispatch updated array
-    dispatch(addCardItem(updatedCardArray))
-  }, [provider, onSelectSlot]);
+
+    if(!updatedCardArray[0].CatSpecialtyId){
+      updatedCardArray[0] = {
+        ...updatedCardArray[0],
+        "OrganizationServiceId": provider.OrganizationServiceIds,
+        "OrganizationId": provider.OrganizationId,
+        "ServiceCharges": provider.Prices,
+        "ServiceProviderUserloginInfoId": provider.UserId,
+        "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+        "SchedulingTime": time.start_time,
+        "AvailabilityId": availability.Id,
+        "CatSchedulingAvailabilityTypeId":availability.CatAvailabilityTypeId,
+        "ServiceProviderFullnameSlang":provider.FullnameSlang,
+      };
+    }else{
+      updatedCardArray[0] = {
+        ...updatedCardArray[0],
+        "OrganizationServiceId": orgSpecilityID,
+        "OrganizationId": provider.OrganizationId,
+        "ServiceCharges": selectedPrice,
+        "ServiceProviderUserloginInfoId": provider.UserId,
+        "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+        "SchedulingTime": time.start_time,
+        "AvailabilityId": availability.Id,
+        "CatServiceId": getServiceId?.Id,
+        "CatSchedulingAvailabilityTypeId":availability.CatAvailabilityTypeId,
+        "ServiceProviderFullnameSlang":provider.FullnameSlang,
+      };
+    }
+
+    
+
+    dispatch(addCardItem(updatedCardArray));
+  }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);
 
   const renderTimeSlots = useMemo(() => {
     return (

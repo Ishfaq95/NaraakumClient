@@ -65,6 +65,8 @@ const CartScreen = () => {
     getUnPaidUserOrders();
   }, [user]);
 
+  console.log("CardArray===>", CardArray)
+
   const renderHeader = () => (
     <Header
       centerComponent={
@@ -93,31 +95,51 @@ const CartScreen = () => {
     dispatch(clearCardItems());
   };
 
-  const renderCardItem = ({ item }: { item: any }) => (
-    <View style={styles.cardItem}>
-      <View style={styles.cardItemContent}>
-        <Text style={styles.providerName}>{item?.ServiceProviderFullnameSlang}</Text>
-        {item?.ServiceProviderUserloginInfoId && <View style={styles.slotInfoContainer}>
-          <Text style={styles.slotInfo}>{item.SchedulingTime}</Text>
-          <Text style={styles.dateInfo}>{moment(item.SchedulingDate).format('DD/MM/YYYY')}</Text>
-        </View>}
-      </View>
-      <View style={styles.removeButtonContainer}>
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => handleRemoveItem(item)}
-        >
-          <MinusIcon width={22} height={20} color="#fff" />
-        </TouchableOpacity>
-        <View style={styles.quantityContainer}>
-          {item?.CatCategoryId == "42" ? <Text style={styles.ServiceText}>{`استشارة عن بعد / ${item?.ServiceTitleSlang || item?.TitleSlang}`}</Text> :
-            <Text style={styles.ServiceText}>{`${item?.ServiceTitleSlang || item?.TitleSlang}`}</Text>}
-          {item?.ServiceCharges && <Text style={styles.quantityText}>{`SAR ${item.ServiceCharges}`}</Text>}
+  console.log("CardArray===>", CardArray)
+
+  const renderCardItem = ({ item }: { item: any }) => {
+    let displayDate = '';
+    let displayTime = '';
+
+    if (item.SchedulingDate && item.SchedulingTime) {
+      const datePart = item.SchedulingDate.split('T')[0];
+      const utcDateTime = moment.utc(`${datePart}T${item.SchedulingTime}:00Z`);
+      if (utcDateTime.isValid()) {
+        const localDateTime = utcDateTime.local();
+        displayDate = localDateTime.format('DD/MM/YYYY');
+        displayTime = localDateTime.format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
+      }
+    }
+
+    return (
+      <View style={styles.cardItem}>
+        <View style={styles.cardItemContent}>
+          <Text style={styles.providerName}>{String(item?.ServiceProviderFullnameSlang || '')}</Text>
+          {item?.ServiceProviderUserloginInfoId && <View style={styles.slotInfoContainer}>
+            <Text style={styles.slotInfo}>{displayTime || item?.SchedulingTime}</Text>
+            <Text style={styles.dateInfo}>{displayDate || item?.SchedulingDate}</Text>
+          </View>}
+        </View>
+        <View style={styles.removeButtonContainer}>
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => handleRemoveItem(item)}
+          >
+            <MinusIcon width={22} height={20} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.quantityContainer}>
+            {item?.CatCategoryId == "42"
+              ? <Text style={styles.ServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
+              : <Text style={styles.ServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
+            }
+            {item?.ServiceCharges !== undefined && item?.ServiceCharges !== null &&
+              <Text style={styles.quantityText}>{`SAR ${String(item.ServiceCharges)}`}</Text>
+            }
+          </View>
         </View>
       </View>
-
-    </View>
-  );
+    );
+  };
 
   const renderEmptyCart = () => (
     <View style={styles.emptyContainer}>
@@ -140,7 +162,7 @@ const CartScreen = () => {
         <FlatList
           data={CardArray}
           renderItem={renderCardItem}
-          keyExtractor={(item) => item.providerId}
+          keyExtractor={(item, idx) => String(item.SrNo || item.OrderDetailId || idx)}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={renderEmptyCart}
         />

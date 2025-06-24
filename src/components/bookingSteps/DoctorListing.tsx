@@ -139,6 +139,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [showServiceModal, setShowServiceModal] = useState(false);
   const dispatch = useDispatch();
   const createOrderMainBeforePayment = async () => {
+    console.log("CardArray===>", CardArray)
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
@@ -146,6 +147,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
 
     const response = await bookingService.createOrderMainBeforePayment(payload);
+
+    console.log("response===>", response)
 
     dispatch(setApiResponse(response.Data))
     onPressNext();
@@ -393,15 +396,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setCalendarVisible(false);
   };
 
-  const handleNext = () => {
-    const serviceId = store.getState().root.booking.cardItems[0].CatServiceId
-    if(serviceId == 0 || serviceId ==null || serviceId == "" || serviceId == undefined){
-      setShowServiceModal(true)
-    }else{
-      createOrderMainBeforePayment()
+  const handleNext = useCallback(() => {
+    const serviceId = CardArray[0]?.CatServiceId;
+    if (!serviceId) {
+      setShowServiceModal(true);
+    } else {
+      createOrderMainBeforePayment();
     }
-    
-  };
+  }, [CardArray, createOrderMainBeforePayment]);
 
   const handleBack = () => {
     onPressBack();
@@ -417,7 +419,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
-    const serviceId = store.getState().root.booking.cardItems[0].CatServiceId
+    const serviceId = CardArray[0]?.CatServiceId
     if(serviceId == 0 || serviceId ==null || serviceId == "" || serviceId == undefined){
       setShowServiceModal(true)
     }
@@ -431,7 +433,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         slotTime: slot.start_time
       });
     }
-  }, [selectedSlotInfo]);
+  }, [selectedSlotInfo,CardArray]);
 
   // Memoize filtered providers to prevent unnecessary re-renders
   const filteredProviders = useMemo(() => {
@@ -461,17 +463,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
 
     setSelectedService(obj)
-  }
-
-  const isNextButtonDisabled = () => {
-    const serviceId = store.getState().root.booking.cardItems[0].CatServiceId
-    const ServiceProviderloginInfoId = store.getState().root.booking.cardItems[0].ServiceProviderUserloginInfoId
-    if(serviceId == 0 || serviceId ==null || serviceId == "" || serviceId == undefined){
-      return true
-    }else if(ServiceProviderloginInfoId == 0 || ServiceProviderloginInfoId ==null || ServiceProviderloginInfoId == "" || ServiceProviderloginInfoId == undefined){
-      return true
-    }
-    return false
   }
 
   return (
@@ -561,9 +552,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.nextButton, isNextButtonDisabled() ? styles.disabledNextButton : {}]}
+          style={[styles.nextButton, CardArray[0].CatServiceId == 0 || CardArray[0].CatServiceId ==null || CardArray[0].CatServiceId == "" || CardArray[0].CatServiceId == undefined || CardArray[0].ServiceProviderUserloginInfoId == 0 || CardArray[0].ServiceProviderUserloginInfoId ==null || CardArray[0].ServiceProviderUserloginInfoId == "" || CardArray[0].ServiceProviderUserloginInfoId == undefined ? styles.disabledNextButton : {}]}
           onPress={handleNext}
-          disabled={isNextButtonDisabled()}
+          disabled={CardArray[0].CatServiceId == 0 || CardArray[0].CatServiceId ==null || CardArray[0].CatServiceId == "" || CardArray[0].CatServiceId == undefined || CardArray[0].ServiceProviderUserloginInfoId == 0 || CardArray[0].ServiceProviderUserloginInfoId ==null || CardArray[0].ServiceProviderUserloginInfoId == "" || CardArray[0].ServiceProviderUserloginInfoId == undefined}
         >
           <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>

@@ -284,6 +284,15 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
       }
     }
 
+    // Convert SchedulingDate and SchedulingTime to UTC
+    let schedulingDateUTC = item.SchedulingDate;
+    let schedulingTimeUTC = schedulingTime;
+    if (item.SchedulingDate && schedulingTime) {
+      const localDateTime = new Date(`${item.SchedulingDate}T${schedulingTime}:00`);
+      schedulingDateUTC = localDateTime.toISOString().slice(0, 10); // 'YYYY-MM-DD' in UTC
+      schedulingTimeUTC = localDateTime.toISOString().slice(11, 16); // 'HH:mm' in UTC
+    }
+
     return ({
       "OrderDetailId": item.OrderDetailId || 0,
       "OrganizationId": item.OrganizationId,
@@ -297,8 +306,8 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
       "OrganizationSpecialtiesId": 0,
       "OrganizationPackageId": 0,
       "Quantity": 1,
-      "SchedulingDate": item.SchedulingDate,
-      "SchedulingTime": schedulingTime,
+      "SchedulingDate": schedulingDateUTC,
+      "SchedulingTime": schedulingTimeUTC,
       "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId,
       "AvailabilityId": item.AvailabilityId,
       "OrderAddress": "",
@@ -308,7 +317,6 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
   })
 
   return payload
-
 
 }
 
