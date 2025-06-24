@@ -9,7 +9,7 @@ import bookingReducer from './reducers/bookingReducer';
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['user'],
+  whitelist: ['user','booking'],
 };
 
 const reducers = combineReducers({

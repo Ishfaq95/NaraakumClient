@@ -11,21 +11,43 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import Payment from '../../components/bookingSteps/Payment';
 import { addCardItem } from '../../shared/redux/reducers/bookingReducer';
+import OrderSuccess from '../../components/bookingSteps/OrderSuccess';
 
 const BookingScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const dispatch = useDispatch();
+  const category = useSelector((state: any) => state.root.booking.category);
   const existingCardItems = useSelector((state: any) => state.root.booking.cardItems);
+  const [SuccessResponse, setSuccessResponse] = useState(null);
 
   const onPressSpecialty = (specialty: any) => {
-    const cardItem = {
-      ...specialty,
+    console.log("specialty===>", specialty)
+    if (specialty.Id == "105") {
+      const cardItem = {
+        ...specialty,
+        "CatCategoryId": category.Id,
+        "CatServiceId": specialty.Id,
+        "CatCategoryTypeId": specialty.CatCategoryTypeId,
+      }
+      const tempCardItems = [...existingCardItems, cardItem];
+      dispatch(addCardItem(tempCardItems));
+    } else {
+      const cardItem = {
+        ...specialty,
+        "CatCategoryId": category.Id,
+        "CatSpecialtyId": specialty.Id,
+        "CatCategoryTypeId": specialty.CatCategoryTypeId,
+      }
+      const tempCardItems = [...existingCardItems, cardItem];
+      dispatch(addCardItem(tempCardItems));
     }
-
-    const tempCardItems = [...existingCardItems, cardItem];
-    dispatch(addCardItem(tempCardItems));
     setCurrentStep(2);
+  }
+
+  const onPressCheckoutOrder = (SuccessResponse: any) => {
+    setSuccessResponse(SuccessResponse);
+    setCurrentStep(5);
   }
 
   const renderStep = () => {
@@ -33,7 +55,8 @@ const BookingScreen = ({ navigation }: any) => {
       case 1: return <Specialties onPressSpecialty={onPressSpecialty} />;
       case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
       case 3: return <ReviewOrder onPressNext={() => setCurrentStep(4)} onPressBack={() => setCurrentStep(2)} />;
-      case 4: return <Payment onPressNext={() => setCurrentStep(5)} onPressBack={() => setCurrentStep(3)} />;
+      case 4: return <Payment onPressNext={onPressCheckoutOrder} onPressBack={() => setCurrentStep(3)} />;
+      case 5: return <OrderSuccess SuccessResponse={SuccessResponse} />;
       default: return null;
     }
   };

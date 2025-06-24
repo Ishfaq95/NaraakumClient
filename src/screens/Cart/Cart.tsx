@@ -2,19 +2,68 @@ import Header from "../../components/common/Header";
 import { View, Text, SafeAreaView, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
-import { removeCardItem, clearCardItems } from "../../shared/redux/reducers/bookingReducer";
+import { removeCardItem, clearCardItems, addCardItem } from "../../shared/redux/reducers/bookingReducer";
 import moment from "moment";
 import MinusIcon from "../../assets/icons/MinuesIcon";
+import { bookingService } from "../../services/api/BookingService";
+import { useEffect } from "react";
 
 const CartScreen = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const cardItems = useSelector((state: any) => state.root.booking.cardItems);
   const category = useSelector((state: any) => state.root.booking.category);
   const selectedSpecialtyOrService = useSelector((state: any) => state.root.booking.selectedSpecialtyOrService);
   const user = useSelector((state: any) => state.root.user.user);
+  const CardArray = useSelector((state: any) => state.root.booking.cardItems);
 
-  console.log("user",user)
+  console.log("CardArray", CardArray)
+
+  useEffect(() => {
+    const getUnPaidUserOrders = async () => {
+      try {
+        const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
+
+        if (response.Cart && response.Cart.length > 0) {
+          // Convert API response to cardItems format
+          const convertedCardItems = response.Cart;
+
+          // Check for existing items and replace duplicates instead of adding
+          const existingCardItems = CardArray;
+          const updatedCardItems = [...existingCardItems];
+
+          convertedCardItems.forEach((newItem: any) => {
+            // Find if item already exists by OrderDetailId and OrderId
+            const existingIndex = updatedCardItems.findIndex((existingItem: any) =>
+              existingItem.OrderDetailId === newItem.OrderDetailId &&
+              existingItem.OrderId === newItem.OrderId
+            );
+
+            if (existingIndex !== -1) {
+              // Replace existing item with new one
+              const newItemObject = {
+                SrNo: Math.floor(Math.random() * 10000),
+                ...newItem,
+              }
+              updatedCardItems[existingIndex] = newItemObject;
+            } else {
+              // Add new item if it doesn't exist
+              const newItemObject = {
+                SrNo: Math.floor(Math.random() * 10000),
+                ...newItem,
+              }
+              updatedCardItems.push(newItemObject);
+            }
+          });
+
+          // Dispatch the updated array
+          dispatch(addCardItem(updatedCardItems));
+        }
+      } catch (error) {
+        console.error('Error fetching unpaid orders:', error);
+      }
+    }
+    getUnPaidUserOrders();
+  }, [user]);
 
   const renderHeader = () => (
     <Header
@@ -24,8 +73,20 @@ const CartScreen = () => {
     />
   );
 
-  const handleRemoveItem = (providerId: string) => {
-    dispatch(removeCardItem(providerId));
+  const handleRemoveItem = async (item: any) => {
+    console.log("item===>", item)
+
+    if (item.OrderID && item.OrderDetailId) {
+      const payload = {
+        "UserLoginInfoId": user.Id,
+        "OrderId": item.OrderID,
+        "OrderDetailId": item.OrderDetailId,
+      }
+      const response = await bookingService.deleteOrderMainBeforePayment(payload);
+      dispatch(removeCardItem(item.SrNo));
+    } else {
+      dispatch(removeCardItem(item.SrNo));
+    }
   };
 
   const handleClearAll = () => {
@@ -35,22 +96,23 @@ const CartScreen = () => {
   const renderCardItem = ({ item }: { item: any }) => (
     <View style={styles.cardItem}>
       <View style={styles.cardItemContent}>
-        <Text style={styles.providerName}>{item.providerName}</Text>
-        <View style={styles.slotInfoContainer}>
-          <Text style={styles.slotInfo}>{item.selectedSlot.split(' ')[0]}</Text>
-          <Text style={styles.dateInfo}>{moment(item.selectedDate).format('DD/MM/YYYY')}</Text>
-        </View>
+        <Text style={styles.providerName}>{item?.ServiceProviderFullnameSlang}</Text>
+        {item?.ServiceProviderUserloginInfoId && <View style={styles.slotInfoContainer}>
+          <Text style={styles.slotInfo}>{item.SchedulingTime}</Text>
+          <Text style={styles.dateInfo}>{moment(item.SchedulingDate).format('DD/MM/YYYY')}</Text>
+        </View>}
       </View>
       <View style={styles.removeButtonContainer}>
         <TouchableOpacity
           style={styles.removeButton}
-          onPress={() => handleRemoveItem(item.providerId)}
+          onPress={() => handleRemoveItem(item)}
         >
           <MinusIcon width={22} height={20} color="#fff" />
         </TouchableOpacity>
         <View style={styles.quantityContainer}>
-          <Text style={styles.ServiceText}>{`${category.TitleSlang}/${selectedSpecialtyOrService.TitleSlang}`}</Text>
-          <Text style={styles.quantityText}>{`SAR ${item.provider.Prices}`}</Text>
+          {item?.CatCategoryId == "42" ? <Text style={styles.ServiceText}>{`استشارة عن بعد / ${item?.ServiceTitleSlang || item?.TitleSlang}`}</Text> :
+            <Text style={styles.ServiceText}>{`${item?.ServiceTitleSlang || item?.TitleSlang}`}</Text>}
+          {item?.ServiceCharges && <Text style={styles.quantityText}>{`SAR ${item.ServiceCharges}`}</Text>}
         </View>
       </View>
 
@@ -63,22 +125,20 @@ const CartScreen = () => {
     </View>
   );
 
-  console.log("cardItems", cardItems)
-
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={styles.content}>
-        {cardItems.length > 0 && (
+        {CardArray.length > 0 && (
           <View style={styles.headerActions}>
-            <Text style={styles.itemsCount}>الخدمات المختارة ({cardItems.length})</Text>
+            <Text style={styles.itemsCount}>الخدمات المختارة ({CardArray.length})</Text>
             <View>
-              <Text>{"SAR: " + cardItems.reduce((acc: number, item: any) => acc + Number(item.provider.Prices), 0)}</Text>
+              <Text>{"SAR: " + CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)}</Text>
             </View>
           </View>
         )}
         <FlatList
-          data={cardItems}
+          data={CardArray}
           renderItem={renderCardItem}
           keyExtractor={(item) => item.providerId}
           contentContainerStyle={styles.listContainer}
@@ -87,15 +147,15 @@ const CartScreen = () => {
         <View style={styles.totalContainer}>
           <View style={styles.totalTextContainer}>
             <Text style={styles.totalText}>{"إجمالي الخدمات"}</Text>
-            <Text style={styles.totalText}>{"SAR: " + cardItems.reduce((acc: number, item: any) => acc + Number(item.provider.Prices), 0)}</Text>
+            <Text style={styles.totalText}>{"SAR: " + CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)}</Text>
           </View>
           <View style={styles.totalTextContainer}>
             <Text style={styles.totalText}>{"الضريبة (15%)"}</Text>
-            <Text style={styles.totalText}>{`SAR: ${user.CatNationalityId == "213" ? "0.00" : cardItems.reduce((acc: number, item: any) => acc + Number(item.provider.Prices), 0) * 0.15}`}</Text>
+            <Text style={styles.totalText}>{`SAR: ${user.CatNationalityId == "213" ? "0.00" : CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0) * 0.15}`}</Text>
           </View>
           <View style={styles.totalTextContainer}>
             <Text style={styles.totalText}>{"المجموع"}</Text>
-            <Text style={styles.totalText}>{`SAR: ${user.CatNationalityId == "213" ? cardItems.reduce((acc: number, item: any) => acc + Number(item.provider.Prices), 0) : cardItems.reduce((acc: number, item: any) => acc + Number(item.provider.Prices), 0) * 0.15 + cardItems.reduce((acc: number, item: any) => acc + Number(item.provider.Prices), 0)} `}</Text>
+            <Text style={styles.totalText}>{`SAR: ${user.CatNationalityId == "213" ? CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0) : CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0) * 0.15 + CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)} `}</Text>
           </View>
 
         </View>
@@ -237,10 +297,10 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   totalContainer: {
-    backgroundColor:"#e4f1ef",
-    padding:10,
-    borderRadius:10,
-    marginTop:10,
+    backgroundColor: "#e4f1ef",
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
   },
   totalTextContainer: {
     flexDirection: 'row',

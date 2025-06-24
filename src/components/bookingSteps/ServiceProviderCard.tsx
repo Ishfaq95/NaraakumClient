@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Image, ScrollView, ActivityIndicator, Alert, Modal } from 'react-native';
 import UserPlaceholder from '../../assets/icons/UserPlaceholder';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import LeftArrow from '../../assets/icons/LeftArrow';
@@ -104,6 +104,7 @@ interface ServiceProvider {
   Specialties: Specialty[];
   ServiceServe: any[];
   slots?: any[];
+  OrganizationServiceIds: string;
 }
 
 interface ServiceProviderCardProps {
@@ -111,8 +112,10 @@ interface ServiceProviderCardProps {
   onTimeSelect?: (time: string) => void;
   selectedDate: any;
   availability: any;
-  selectedSlotInfo?: {providerId: string, slotTime: string} | null;
+  selectedSlotInfo?: { providerId: string, slotTime: string } | null;
   onSelectSlot: (provider: any, slot: any) => void;
+  onSelectService?: (providerId: string, service: string) => void;
+  selectedService?: any;
 }
 
 const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
@@ -121,42 +124,44 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   selectedDate,
   availability,
   selectedSlotInfo,
-  onSelectSlot
+  onSelectSlot,
+  onSelectService,
+  selectedService
 }) => {
   const dispatch = useDispatch();
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const services = useSelector((state: any) => state.root.booking.services);
   const cardItems = useSelector((state: any) => state.root.booking.cardItems);
   const tempSlotDetail = useSelector((state: any) => state.root.booking.tempSlotDetail);
-  const selectedSpecialtyOrService = CardArray[CardArray.length - 1];
+  const selectedCard = CardArray[0];
 
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
-  const [selectedService, setSelectedService] = useState("");
+  const [showServiceModal, setShowServiceModal] = useState(false);
 
   const specialtiesScrollViewRef = useRef<ScrollView>(null);
   const timeSlotsScrollViewRef = useRef<ScrollView>(null);
   const isRTL = true;
 
   const lastCardItem = tempSlotDetail;
-  const isProviderSelected = lastCardItem && lastCardItem.providerId === provider.UserId;
+  const isProviderSelected = lastCardItem && lastCardItem?.providerId === provider.UserId;
   const selectedCardItem = isProviderSelected ? lastCardItem : null;
 
   const isPastTime = useCallback((slot: TimeSlot) => {
     // Only check past times if the selected date is today
     const today = new Date();
     const selectedDateObj = new Date(selectedDate.format('YYYY-MM-DD'));
-    
+
     // If selected date is not today, all slots are available
     if (selectedDateObj.toDateString() !== today.toDateString()) {
       return false;
     }
-    
+
     const inputTime = slot.fullTime;
-    
+
     // Get current time
     const now = new Date();
     const slotTime = new Date();
@@ -210,56 +215,27 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     }
   }, [timeSlots]);
 
-  // Generate time slots asynchronously
-  // useEffect(() => {
-  //   const generateTimeSlots = async () => {
-  //     if (!availability || !selectedDate) {
-  //       setTimeSlots([]);
-  //       return;
-  //     }
+  const onServiceSelectUpdate = (providerId: string, service: string) => {
+    onSelectService && onSelectService(providerId, service)
 
-  //     setIsLoadingSlots(true);
-  //     setSlotsError(null);
+    const getServiceId =services.find((item: any) => item.TitlePlang == service)
+    const updatedCardArray = [...CardArray];
 
-  //     try {
-  //       // Use setTimeout to make it async and prevent blocking
-  //       const slots = await new Promise<TimeSlot[]>((resolve, reject) => {
-  //         setTimeout(() => {
-  //           try {
-  //             const formattedDate = selectedDate.format('YYYY-MM-DD');
-  //             const slotDuration = provider.SlotDuration || 30;
-  //             const generatedSlots = generateSlotsForDate(
-  //               availability,
-  //               formattedDate,
-  //               slotDuration,
-  //               'Asia/Karachi' // Your timezone
-  //             );
-  //             resolve(generatedSlots);
-  //           } catch (error) {
-  //             reject(error);
-  //           }
-  //         }, 0);
-  //       });
+    // Update last item
+    updatedCardArray[0] = {
+      ...updatedCardArray[0],
+      "CatServiceId": getServiceId?.Id || 0,
+    };
 
-  //       setTimeSlots(slots);
-  //     } catch (error) {
-  //       console.error('Error generating time slots:', error);
-  //       setSlotsError('Failed to load time slots');
-  //       setTimeSlots([]);
-  //     } finally {
-  //       setIsLoadingSlots(false);
-  //     }
-  //   };
-
-  //   generateTimeSlots();
-  // }, [availability, selectedDate, provider.SlotDuration]);
-
-
+    // Dispatch updated array
+    dispatch(addCardItem(updatedCardArray))
+  }
+  
 
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
     <>
-      <View style={[{ flexDirection: 'row', width: '100%' }, selectedSlotInfo?.providerId === provider.UserId  && styles.selectedProviderCard]}>
+      <View style={[{ flexDirection: 'row', width: '100%' }, selectedSlotInfo?.providerId === provider.UserId && styles.selectedProviderCard]}>
         {selectedSlotInfo?.providerId === provider.UserId && <View style={{ position: 'absolute', right: 10, bottom: 10, alignItems: 'center', justifyContent: 'center' }}>
           <CheckIcon width={40} height={40} color="#fff" />
         </View>}
@@ -283,7 +259,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           </View>
         </View>
       </View>
-      {selectedSpecialtyOrService.CatLevelId == 3 ?
+      {selectedCard.CatLevelId == 3 ?
         <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
           <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
             {isRTL ? `سعر ${Number(provider.Prices).toFixed(0)}` : `Price ${Number(provider.Prices).toFixed(0)}`}
@@ -316,31 +292,31 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                   <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
                     {`${service.title}: ${Number(service.price).toFixed(0)}`}
                   </Text>
-                  <View style={[styles.checkbox, selectedService == "Specialist" && styles.checkedBox]}>
-                    {selectedService == "Specialist" && <CheckIcon width={12} height={12} />}
-                  </View>
+                  <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox, !selectedService && styles.disabledBox]}>
+                    {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && <CheckIcon width={12} height={12} />}
+                  </TouchableOpacity>
                 </View>
               );
             } else if (validServices.length === 2) {
               const [firstService, secondService] = validServices;
               return (
                 <>
-                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '50%' }}>
+                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '46%' }}>
                     <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
                       {`${firstService.title}: ${Number(firstService.price).toFixed(0)}`}
                     </Text>
-                    <View style={[styles.checkbox, selectedService == "Specialist" && styles.checkedBox]}>
-                      {selectedService == "Specialist" && <CheckIcon width={12} height={12} />}
-                    </View>
+                    <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox, !selectedService && styles.disabledBox]}>
+                      {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && <CheckIcon width={12} height={12} />}
+                    </TouchableOpacity>
                   </View>
                   <View style={{ width: 1, height: '100%', backgroundColor: '#e0e0e0', marginHorizontal: 10 }} />
-                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '50%' }}>
+                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '46%' }}>
                     <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
                       {`${secondService.title}: ${Number(secondService.price).toFixed(0)}`}
                     </Text>
-                    <View style={[styles.checkbox, selectedService == "Consultant" && styles.checkedBox]}>
-                      {selectedService == "Consultant" && <CheckIcon width={12} height={12} />}
-                    </View>
+                    <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Consultant")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && styles.checkedBox, !selectedService && styles.disabledBox]}>
+                      {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && <CheckIcon width={12} height={12} />}
+                    </TouchableOpacity>
                   </View>
                 </>
               );
@@ -349,7 +325,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           })()}
         </View>}
     </>
-  ), [provider, isProviderSelected, selectedSlotInfo]);
+  ), [provider, isProviderSelected, selectedSlotInfo, selectedService]);
 
   const specialtiesSection = useMemo(() => (
     <View style={styles.specialtyContainer}>
@@ -413,7 +389,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     if (timeSlotsScrollViewRef.current) {
       const scrollAmount = 120;
       const currentPosition = timeSlotsScrollPosition;
-      const newPosition = direction === 'left' 
+      const newPosition = direction === 'left'
         ? Math.max(0, currentPosition - scrollAmount)
         : currentPosition + scrollAmount;
 
@@ -451,38 +427,27 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }
 
   const handleSlotSelect = useCallback((time: any) => {
+    console.log("time===>CardArray card", CardArray[0])
     onSelectSlot(provider, time)
-    // const tempSlotDetail={
-    //     providerId: provider.UserId,
-    //     providerName: provider.FullnameSlang,
-    //     selectedSlot: time.start_time,
-    //     selectedDate: selectedDate.format('YYYY-MM-DD'),
-    //     provider: provider,
-    //     availability: availability
-    //   };
 
-    // dispatch(manageTempSlotDetail(tempSlotDetail))
+    const getServiceId =selectedService ? services.find((service: any) => service.TitlePlang == selectedService.selectedService) : 0
 
-    // const updatedCardArray = [...CardArray];
+    const updatedCardArray = [...CardArray];
 
-    // // Update last item
-    // updatedCardArray[CardArray.length - 1] = {
-    //   ...updatedCardArray[CardArray.length - 1],
-    //   providerId: provider.UserId,
-    //   providerName: provider.FullnameSlang,
-    //   selectedSlot: time.start_time,
-    //   selectedDate: selectedDate.format('YYYY-MM-DD'),
-    //   provider: provider,
-    //   availability: availability
-    // };
+    // Update last item
+    updatedCardArray[0] = {
+      ...updatedCardArray[0],
+      "OrganizationServiceId": provider.OrganizationServiceIds,
+      "ServiceCharges": provider.Prices,
+      "ServiceProviderUserloginInfoId": provider.UserId,
+      "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+      "SchedulingTime": time.start_time,
+      "AvailabilityId": availability.Id,
+      "CatServiceId": getServiceId.Id,
+    };
 
-    // // Dispatch updated array
-    // dispatch(addCardItem(updatedCardArray));
-
-    // Call the parent callback if provided
-    // if (onTimeSelect) {
-    //   onTimeSelect(time);
-    // }
+    // Dispatch updated array
+    dispatch(addCardItem(updatedCardArray))
   }, [provider, onSelectSlot]);
 
   const renderTimeSlots = useMemo(() => {
@@ -509,12 +474,12 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           contentContainerStyle={styles.timeSlotsContent}
         >
           <View style={styles.specialtiesRow}>
-            {provider.slots && provider.slots.map((slot:any, index:any) => {
-              const isSelected = selectedSlotInfo?.providerId === provider.UserId && 
-                                selectedSlotInfo?.slotTime === slot.start_time;
+            {provider.slots && provider.slots.map((slot: any, index: any) => {
+              const isSelected = selectedSlotInfo?.providerId === provider.UserId &&
+                selectedSlotInfo?.slotTime === slot.start_time;
               const isPast = isPastTime(slot);
               const isDisabled = !slot.available || isPast;
-              
+
               return (
                 <TouchableOpacity
                   key={`time-${slot.start_time}-${index}`}
@@ -565,7 +530,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       </View>
 
       {renderTimeSlots}
-      
     </View>
   );
 });

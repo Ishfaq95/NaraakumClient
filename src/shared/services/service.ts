@@ -250,7 +250,7 @@ export const formatTime = (timeString: string) => {
     if (timeString.includes('T')) {
       return moment.utc(timeString).local().format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
     }
-    
+
     // If timeString is just time (HH:mm)
     const [hours, minutes] = timeString.split(':');
     const date = moment.utc().set({ hours: parseInt(hours), minutes: parseInt(minutes) });
@@ -261,113 +261,119 @@ export const formatTime = (timeString: string) => {
   }
 };
 
-export const generatePayloadforOrderMainBeforePayment = (CardArray: any,apiResponse:any) => {
-  const user = store.getState().root.user.user;
-  const apiResponseData = store.getState().root.booking.apiResponse;
- 
-  if(apiResponse){
-    const payload = CardArray.map((item: any) => {
-      // Convert time from 12-hour format with Arabic AM/PM to 24-hour format
-      let schedulingTime = item.selectedSlot;
-      if (schedulingTime) {
-        // Check if the time contains Arabic AM/PM indicators
-        if (schedulingTime.includes('ص')) {
-          // AM time - remove 'ص' and keep as is (already in 12-hour format)
-          schedulingTime = schedulingTime.replace('ص', '').trim();
-          // Convert to 24-hour format
-          const [hours, minutes] = schedulingTime.split(':');
-          const hour24 = parseInt(hours) === 12 ? 0 : parseInt(hours);
-          schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
-        } else if (schedulingTime.includes('م')) {
-          // PM time - remove 'م' and convert to 24-hour format
-          schedulingTime = schedulingTime.replace('م', '').trim();
-          const [hours, minutes] = schedulingTime.split(':');
-          const hour24 = parseInt(hours) === 12 ? 12 : parseInt(hours) + 12;
-          schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
-        }
-      }
+export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
 
-      const detailsId = apiResponseData.find((apiData: any) => apiData.CatServiceId === item.selectedSpecialtyOrService.Id)
-
-      return ({
-        "OrderDetailId": detailsId.OrderDetailID,
-        "OrganizationId": item.provider.OrganizationId,
-        "CatCategoryId": item.selectedSpecialtyOrService.CatCategoryId,
-        "CatServiceId": item.selectedSpecialtyOrService.Id,
-        "CatCategoryTypeId": item.selectedSpecialtyOrService.CatCategoryTypeId,
-        "OrganizationServiceId": item.provider.OrganizationServiceIds,
-        "ServiceCharges": item.provider.Prices,
-        "ServiceProviderloginInfoId": item.provider.UserId,
-        "CatSpecialtyId": 0,
-        "OrganizationSpecialtiesId": 0,
-        "OrganizationPackageId": 0,
-        "Quantity": 1,
-        "SchedulingDate": item.selectedDate,
-        "SchedulingTime": schedulingTime,
-        "CatSchedulingAvailabilityTypeId": item.availability.CatAvailabilityTypeId,
-        "AvailabilityId": item.availability.Id,
-        "OrderAddress": "G7WV+7X3, Gulfishan Colony, Lahore, 54000، باكستان",
-        "OrderAddressGoogleLocation": "31.5457536, 74.2948864",
-        "saveinAddress": false,
-        "PatientUserProfileInfoId": user.UserProfileInfoId,
-        "isSelf": true,
-        "TextDescription": "",
-        "AudioDescription": "",
-        "OrderAddressArea": "",
-        "OrderAddressDescription": "",
-        "CatCityId":null,
-        "CatSquareId":null,
-        "UserLocationId": 0,
-      })
-    })
-  
-    return payload
-  }else{
-    const payload = CardArray.map((item: any) => {
-      // Convert time from 12-hour format with Arabic AM/PM to 24-hour format
-      let schedulingTime = item.selectedSlot;
-      if (schedulingTime) {
-        // Check if the time contains Arabic AM/PM indicators
-        if (schedulingTime.includes('ص')) {
-          // AM time - remove 'ص' and keep as is (already in 12-hour format)
-          schedulingTime = schedulingTime.replace('ص', '').trim();
-          // Convert to 24-hour format
-          const [hours, minutes] = schedulingTime.split(':');
-          const hour24 = parseInt(hours) === 12 ? 0 : parseInt(hours);
-          schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
-        } else if (schedulingTime.includes('م')) {
-          // PM time - remove 'م' and convert to 24-hour format
-          schedulingTime = schedulingTime.replace('م', '').trim();
-          const [hours, minutes] = schedulingTime.split(':');
-          const hour24 = parseInt(hours) === 12 ? 12 : parseInt(hours) + 12;
-          schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
-        }
+  const payload = CardArray.map((item: any) => {
+    // Convert time from 12-hour format with Arabic AM/PM to 24-hour format
+    let schedulingTime = item.SchedulingTime;
+    if (schedulingTime) {
+      // Check if the time contains Arabic AM/PM indicators
+      if (schedulingTime.includes('ص')) {
+        // AM time - remove 'ص' and keep as is (already in 12-hour format)
+        schedulingTime = schedulingTime.replace('ص', '').trim();
+        // Convert to 24-hour format
+        const [hours, minutes] = schedulingTime.split(':');
+        const hour24 = parseInt(hours) === 12 ? 0 : parseInt(hours);
+        schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
+      } else if (schedulingTime.includes('م')) {
+        // PM time - remove 'م' and convert to 24-hour format
+        schedulingTime = schedulingTime.replace('م', '').trim();
+        const [hours, minutes] = schedulingTime.split(':');
+        const hour24 = parseInt(hours) === 12 ? 12 : parseInt(hours) + 12;
+        schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
       }
-  
-      return ({
-        "OrderDetailId": 0,
-        "OrganizationId": item.provider.OrganizationId,
-        "CatCategoryId": item.selectedSpecialtyOrService.CatCategoryId,
-        "CatServiceId": item.selectedSpecialtyOrService.Id,
-        "CatCategoryTypeId": item.selectedSpecialtyOrService.CatCategoryTypeId,
-        "OrganizationServiceId": item.provider.OrganizationServiceIds,
-        "ServiceCharges": item.provider.Prices,
-        "ServiceProviderloginInfoId": item.provider.UserId,
-        "CatSpecialtyId": 0,
-        "OrganizationSpecialtiesId": 0,
-        "OrganizationPackageId": 0,
-        "Quantity": 1,
-        "SchedulingDate": item.selectedDate,
-        "SchedulingTime": schedulingTime,
-        "CatSchedulingAvailabilityTypeId": item.availability.CatAvailabilityTypeId,
-        "AvailabilityId": item.availability.Id,
-        "OrderAddress": "",
-        "OrderAddressGoogleLocation": "",
-        "saveinAddress": false
-      })
+    }
+
+    return ({
+      "OrderDetailId": item.OrderDetailId || 0,
+      "OrganizationId": item.OrganizationId,
+      "CatCategoryId": item.CatCategoryId,
+      "CatServiceId": item.CatServiceId,
+      "CatCategoryTypeId": item.CatCategoryTypeId,
+      "OrganizationServiceId": item.OrganizationServiceId,
+      "ServiceCharges": item.ServiceCharges,
+      "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId,
+      "CatSpecialtyId": item.CatSpecialtyId,
+      "OrganizationSpecialtiesId": 0,
+      "OrganizationPackageId": 0,
+      "Quantity": 1,
+      "SchedulingDate": item.SchedulingDate,
+      "SchedulingTime": schedulingTime,
+      "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId,
+      "AvailabilityId": item.AvailabilityId,
+      "OrderAddress": "",
+      "OrderAddressGoogleLocation": "",
+      "saveinAddress": false
     })
+  })
+
+  return payload
+
+
+}
+
+export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) => {
+
+  const payload = CardArray.map((item: any) => {
+    return ({
+      "OrderDetailId": item.OrderDetailId,
+      "OrganizationId": item.OrganizationId,
+      "CatCategoryId": item.CatCategoryId,
+      "CatServiceId": item.CatServiceId,
+      "CatCategoryTypeId": item.CatCategoryTypeId,
+      "OrganizationServiceId": item.OrganizationServiceId,
+      "ServiceCharges": item.ServiceCharges,
+      "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId,
+      "CatSpecialtyId": item.CatSpecialtyId,
+      "OrganizationSpecialtiesId": item.OrganizationSpecialtiesId || 0,
+      "OrganizationPackageId": item.OrganizationPackageId || 0,
+      "Quantity": item.Quantity,
+      "SchedulingDate": item.SchedulingDate,
+      "SchedulingTime": item.SchedulingTime,
+      "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId || 0,
+      "AvailabilityId": item.AvailabilityId,
+      "PatientUserProfileInfoId": item.PatientUserProfileInfoId,
+      "TextDescription": item.TextDescription,
+      "OrderAddress": item.OrderAddress,
+      "OrderAddressArea": item.OrderAddressArea,
+      "OrderAddressGoogleLocation": item.OrderAddressGoogleLocation,
+      "saveinAddress": false
+    })
+  })
+
+  return payload
+}
+
+export const generatePayloadForCheckOut = (CardArray: any) => {
   
-    return payload
-  }
-  
+  const payload = CardArray.map((item: any) => {
+    return ({
+      "OrderDetailId": item.OrderDetailId,
+      "OrganizationId": item.OrganizationId,
+      "CatCategoryId": item.CatCategoryId,
+      "CatServiceId": item.CatServiceId,
+      "CatCategoryTypeId": item.CatCategoryTypeId,
+      "OrganizationServiceId": item.OrganizationServiceId,
+      "ServiceCharges": item.ServiceCharges,
+      "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId,
+      "CatSpecialtyId": item.CatSpecialtyId,
+      "OrganizationSpecialtiesId": item.OrganizationSpecialtiesId || 0,
+      "OrganizationPackageId": item.OrganizationPackageId || 0,
+      "Quantity": item.Quantity,
+      "SchedulingDate": item.SchedulingDate,
+      "SchedulingTime": item.SchedulingTime,
+      "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId || 0,
+      "AvailabilityId": item.AvailabilityId || 0,
+      "PatientUserProfileInfoId": item.PatientUserProfileInfoId,
+      "TextDescription": item.TextDescription,
+      "OrderAddress": item.OrderAddress || "",
+      "OrderAddressArea": item.OrderAddressArea || "",
+      "OrderAddressGoogleLocation": item.OrderAddressGoogleLocation || "",
+      "saveinAddress": false,
+      "PromoCodeMainId": item.PromoCodeMainId || null,
+      "DiscountAmount": item.DiscountAmount || null,
+      "DiscountDescription": item.DiscountDescription || null
+    })
+  })
+  return payload
 }

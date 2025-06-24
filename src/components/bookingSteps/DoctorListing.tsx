@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView, Dimensions, I18nManager } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView, Dimensions, I18nManager, Alert, Modal } from 'react-native';
 import moment, { Moment } from 'moment';
 import 'moment-hijri';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
@@ -17,7 +17,8 @@ import FullScreenLoader from "../FullScreenLoader";
 import { useTranslation } from 'react-i18next';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { generatePayloadforOrderMainBeforePayment } from '../../shared/services/service';
-import { setApiResponse, prependCardItems } from '../../shared/redux/reducers/bookingReducer';
+import { setApiResponse, prependCardItems, addCardItem } from '../../shared/redux/reducers/bookingReducer';
+import { store } from '../../shared/redux/store';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
@@ -132,15 +133,16 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [changedSelectedDate, setChangedSelectedDate] = useState(moment());
   const [isFlatListReady, setIsFlatListReady] = useState(false);
   const { t } = useTranslation();
-  const [selectedSpecialtyOrService, setSelectedSpecialtyOrService] = useState<any>(CardArray[CardArray.length - 1]);
+  const [selectedSpecialtyOrService, setSelectedSpecialtyOrService] = useState<any>(CardArray[0]);
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<{providerId: string, slotTime: string} | null>(null);
-  
+  const [selectedService, setSelectedService] = useState(null);
+  const [showServiceModal, setShowServiceModal] = useState(false);
   const dispatch = useDispatch();
   const createOrderMainBeforePayment = async () => {
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
-      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray, false)
+      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray)
     }
 
     const response = await bookingService.createOrderMainBeforePayment(payload);
@@ -159,8 +161,28 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           // Convert API response to cardItems format
           const convertedCardItems = response.Cart;
 
-          // Add the converted items to the beginning of existing cardItems
-          dispatch(prependCardItems(convertedCardItems));
+          // Check for existing items and replace duplicates instead of adding
+          const existingCardItems = CardArray;
+          const updatedCardItems = [...existingCardItems];
+
+          convertedCardItems.forEach((newItem: any) => {
+            // Find if item already exists by OrderDetailId and OrderId
+            const existingIndex = updatedCardItems.findIndex((existingItem: any) => 
+              existingItem.OrderDetailId === newItem.OrderDetailId && 
+              existingItem.OrderId === newItem.OrderId
+            );
+
+            if (existingIndex !== -1) {
+              // Replace existing item with new one
+              updatedCardItems[existingIndex] = newItem;
+            } else {
+              // Add new item if it doesn't exist
+              updatedCardItems.push(newItem);
+            }
+          });
+
+          // Dispatch the updated array
+          dispatch(addCardItem(updatedCardItems));
         }
       } catch (error) {
         console.error('Error fetching unpaid orders:', error);
@@ -170,7 +192,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }, [user]);
 
   useEffect(() => {
-    console.log("serviceProviders===>", serviceProviders.length, availability.length)
     if (serviceProviders.length > 0 && availability.length > 0) {
       getSlotsWithProvider()
     }
@@ -224,7 +245,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   useEffect(() => {
     // Call both APIs when component mounts
     if (category.Id && services.length > 0 && selectedSpecialtyOrService.Id) {
-      console.log("category===>1111")
       fetchServiceProviders();
       fetchInitialAvailability();
     }
@@ -374,7 +394,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleNext = () => {
-    createOrderMainBeforePayment()
+    const serviceId = store.getState().root.booking.cardItems[0].CatServiceId
+    if(serviceId == 0 || serviceId ==null || serviceId == "" || serviceId == undefined){
+      setShowServiceModal(true)
+    }else{
+      createOrderMainBeforePayment()
+    }
+    
   };
 
   const handleBack = () => {
@@ -391,6 +417,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
+    const serviceId = store.getState().root.booking.cardItems[0].CatServiceId
+    if(serviceId == 0 || serviceId ==null || serviceId == "" || serviceId == undefined){
+      setShowServiceModal(true)
+    }
     // If the same slot is already selected, deselect it
     if (selectedSlotInfo?.providerId === provider.UserId && selectedSlotInfo?.slotTime === slot.start_time) {
       setSelectedSlotInfo(null);
@@ -423,6 +453,26 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }, [ProviderWithSlots, availability, selectedDate]);
 
   console.log('testing re-render')
+
+  const handleSelectService = (providerId: string, service: string) => {
+    const obj:any={
+      selectedService: service,
+      providerId: providerId,
+    }
+
+    setSelectedService(obj)
+  }
+
+  const isNextButtonDisabled = () => {
+    const serviceId = store.getState().root.booking.cardItems[0].CatServiceId
+    const ServiceProviderloginInfoId = store.getState().root.booking.cardItems[0].ServiceProviderUserloginInfoId
+    if(serviceId == 0 || serviceId ==null || serviceId == "" || serviceId == undefined){
+      return true
+    }else if(ServiceProviderloginInfoId == 0 || ServiceProviderloginInfoId ==null || ServiceProviderloginInfoId == "" || ServiceProviderloginInfoId == undefined){
+      return true
+    }
+    return false
+  }
 
   return (
     <View style={styles.mainContainer}>
@@ -497,6 +547,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             availability={providerAvailability[0]}
             selectedSlotInfo={selectedSlotInfo}
             onSelectSlot={handleSelectSlot}
+            onSelectService={handleSelectService}
+            selectedService={selectedService}
           />
         }}
         contentContainerStyle={{ padding: 16 }}
@@ -509,9 +561,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.nextButton, CardArray.length === 0 && styles.disabledNextButton]}
+          style={[styles.nextButton, isNextButtonDisabled() ? styles.disabledNextButton : {}]}
           onPress={handleNext}
-          disabled={CardArray.length === 0}
+          disabled={isNextButtonDisabled()}
         >
           <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
@@ -528,6 +580,34 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         maximumDate={moment().add(30, 'days').toDate()}
         display="default"
       />
+      <Modal
+        visible={showServiceModal}
+        onRequestClose={() => setShowServiceModal(false)}
+        transparent={true}
+        animationType='fade'
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>تحذير</Text>
+              <TouchableOpacity onPress={() => setShowServiceModal(false)}>
+                <Text style={styles.closeIcon}>×</Text>
+              </TouchableOpacity>
+            </View>
+            {/* Message and Button */}
+            <View style={styles.modalContent}>
+              <Text style={styles.modalMessage}>يرجى اختيار خدمة واحدة</Text>
+              <TouchableOpacity
+                onPress={() => setShowServiceModal(false)}
+                style={styles.modalButton}
+              >
+                <Text style={styles.modalButtonText}>يغلق</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -786,6 +866,67 @@ const styles = StyleSheet.create({
   },
   disabledNextButton: {
     backgroundColor: '#ccc',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: 320,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#e8f3f2',
+    padding: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#2d3a3a',
+  },
+  closeIcon: {
+    fontSize: 22,
+    color: '#888',
+  },
+  modalContent: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#2d3a3a',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#27a6a1',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 36,
+    alignItems: 'center',
+    alignSelf: 'center',
+    shadowColor: '#27a6a1',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

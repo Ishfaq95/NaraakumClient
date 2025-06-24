@@ -119,7 +119,18 @@ export const getUnPaidUserOrders = async (payload: any): Promise<any> => {
     }
 };
 
-export const bookingService = {
+export const deleteOrderMainBeforePayment = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('payment/DeleteUnpaidServiceFromCart', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error deleting order before payment:', error);
+        throw error;
+    }
+};
+
+    export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
     getAllSpecialties,
@@ -129,5 +140,6 @@ export const bookingService = {
     createOrderMainBeforePayment,
     updateOrderMainBeforePayment,
     updateOrderMainToCheckOut,
-    getUnPaidUserOrders
+    getUnPaidUserOrders,
+    deleteOrderMainBeforePayment
 }; 

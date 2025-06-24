@@ -7,9 +7,9 @@ import { useTranslation } from 'react-i18next';
 import CommonRadioButton from '../../components/common/CommonRadioButton';
 import PhoneNumberInput from '../../components/PhoneNumberInput';
 import { countries } from '../../utils/countryData';
-import { setApiResponse } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, setApiResponse } from '../../shared/redux/reducers/bookingReducer';
 import { bookingService } from '../../services/api/BookingService';
-import { generatePayloadforOrderMainBeforePayment } from '../../shared/services/service';
+import { generatePayloadforOrderMainBeforePayment, generatePayloadforUpdateOrderMainBeforePayment } from '../../shared/services/service';
 import { useDispatch, useSelector } from 'react-redux';
 
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
@@ -52,6 +52,51 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    const getUnPaidUserOrders = async () => {
+      try {
+        const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
+
+        if (response.Cart && response.Cart.length > 0) {
+          // Convert API response to cardItems format
+          const convertedCardItems = response.Cart;
+
+          // Check for existing items and replace duplicates instead of adding
+          const existingCardItems: any[] = [];
+          const updatedCardItems = [...existingCardItems];
+
+          convertedCardItems.forEach((newItem: any) => {
+            // Find if item already exists by OrderDetailId and OrderId
+            const existingIndex = updatedCardItems.findIndex((existingItem: any) => 
+              existingItem.OrderDetailId === newItem.OrderDetailId && 
+              existingItem.OrderId === newItem.OrderId
+            );
+
+            if (existingIndex !== -1) {
+              // Replace existing item with new one
+              updatedCardItems[existingIndex] = newItem;
+            } else {
+              // Add new item if it doesn't exist
+              const newItemObject= {
+                ...newItem,
+                PatientUserProfileInfoId: user.UserProfileInfoId,
+                TextDescription: "",
+              }
+              updatedCardItems.push(newItemObject);
+            }
+          });
+
+          // Dispatch the updated array
+          dispatch(addCardItem(updatedCardItems));
+        }
+      } catch (error) {
+        console.error('Error fetching unpaid orders:', error);
+      }
+    }
+    getUnPaidUserOrders();
+  }, [user]);
+
   const renderDoctorTag = ({ item, index }: { item: any; index: number }) => (
     <TouchableOpacity
       style={[styles.doctorTag, selectedIndex === index && styles.selectedTag]}
@@ -68,17 +113,15 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
   const createOrderMainBeforePayment = async () => {
     const payload = {
-      "OrderId":apiResponse[0].OrderId,
+      "OrderId":CardArray[0].OrderID,
       "CatPlatformId": 1,
-      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray,true)
+      "OrderDetail": generatePayloadforUpdateOrderMainBeforePayment(CardArray)
     }
-
-    console.log("payload===>",payload)
 
     const response = await bookingService.updateOrderMainBeforePayment(payload);
     console.log("response===>",response.Data)
-    // dispatch(setApiResponse(response.Data))
-    // onPressNext();
+    dispatch(setApiResponse(response.Data))
+    onPressNext();
   }
 
   useEffect(() => {

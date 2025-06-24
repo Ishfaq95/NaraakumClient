@@ -42,7 +42,7 @@ export const bookingReducer = createSlice({
       state.cardItems = action.payload;
     },
     removeCardItem: (state, action) => {
-      state.cardItems = state.cardItems.filter(item => item.providerId !== action.payload);
+      state.cardItems = state.cardItems.filter((item: any) => item.SrNo !== action.payload);
     },
     clearCardItems: (state) => {
       state.cardItems = [];
