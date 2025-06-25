@@ -33,5 +33,6 @@
   "booking": "Booking",
   "createNewAccount": "Create New Account",
   "back": "Back",
-  "next": "Next"
+  "next": "Next",
+  "service_provider": "Service Provider"
 }

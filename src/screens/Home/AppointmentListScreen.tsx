@@ -37,8 +37,6 @@ const AppointmentListScreen = ({navigation}: any) => {
     return Platform.OS === 'ios' ? requestiOSPermissions() : requestAndroidPermissions();
   };
 
-  console.log("webSocketService",webSocketService.isSocketConnected())
-
   // Handle WebSocket connection
   // useEffect(() => {
     
@@ -69,7 +67,6 @@ const AppointmentListScreen = ({navigation}: any) => {
         }
       }); 
     } catch (error) {
-      console.log('error', error);
     }
   }
 

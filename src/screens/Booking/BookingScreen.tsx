@@ -10,8 +10,9 @@ import Specialties from '../../components/bookingSteps/Specialties';
 import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import Payment from '../../components/bookingSteps/Payment';
-import { addCardItem } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
 import OrderSuccess from '../../components/bookingSteps/OrderSuccess';
+import { generateUniqueId } from '../../shared/services/service';
 
 const BookingScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
@@ -21,25 +22,30 @@ const BookingScreen = ({ navigation }: any) => {
   const existingCardItems = useSelector((state: any) => state.root.booking.cardItems);
   const [SuccessResponse, setSuccessResponse] = useState(null);
 
+  console.log("existingCardItems===>",existingCardItems)
+
   const onPressSpecialty = (specialty: any) => {
-    console.log("specialty===>", specialty,category)
     if (specialty.Id == "105") {
       const cardItem = {
         ...specialty,
+        "ItemUniqueId": generateUniqueId(),
         "CatCategoryId": category.Id,
         "CatServiceId": specialty.Id,
         "CatCategoryTypeId": category.CatCategoryTypeId,
       }
       const tempCardItems = [...existingCardItems, cardItem];
+      dispatch(setSelectedUniqueId(cardItem.ItemUniqueId));
       dispatch(addCardItem(tempCardItems));
     } else {
       const cardItem = {
         ...specialty,
+        "ItemUniqueId": generateUniqueId(),
         "CatCategoryId": category.Id,
         "CatSpecialtyId": specialty.Id,
         "CatCategoryTypeId": category.CatCategoryTypeId,
       }
       const tempCardItems = [...existingCardItems, cardItem];
+      dispatch(setSelectedUniqueId(cardItem.ItemUniqueId));
       dispatch(addCardItem(tempCardItems));
     }
     setCurrentStep(2);

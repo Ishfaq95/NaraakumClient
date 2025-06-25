@@ -133,7 +133,8 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const services = useSelector((state: any) => state.root.booking.services);
   const cardItems = useSelector((state: any) => state.root.booking.cardItems);
   const tempSlotDetail = useSelector((state: any) => state.root.booking.tempSlotDetail);
-  const selectedCard = CardArray[0];
+  const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
+  const selectedCard = CardArray.find((item: any) => item.ItemUniqueId === selectedUniqueId);
 
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
@@ -228,26 +229,29 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     const selectedPrice = priceIndex !== -1 ? prices[priceIndex] : "0";
     const orgSpecilityID = provider.OrganizationServiceIds.split(',')[priceIndex]
 
-    if(!updatedCardArray[0].CatSpecialtyId){
-      updatedCardArray[0] = {
-        ...updatedCardArray[0],
-        "OrganizationServiceId": provider.OrganizationServiceIds,
-        "ServiceCharges": provider.Prices,
-      };
-    }else{
-      updatedCardArray[0] = {
-        ...updatedCardArray[0],
-        "CatServiceId": getServiceId?.Id || 0,
-        "ServiceCharges": selectedPrice,
-        "OrganizationServiceId": orgSpecilityID,
-      };
-    }
+    // Find the index of the item that matches the selectedUniqueId
+    const selectedIndex = updatedCardArray.findIndex(item => item.ItemUniqueId === selectedUniqueId);
 
-    
+    if (selectedIndex !== -1) {
+      if (!updatedCardArray[selectedIndex].CatSpecialtyId) {
+        updatedCardArray[selectedIndex] = {
+          ...updatedCardArray[selectedIndex],
+          "OrganizationServiceId": provider.OrganizationServiceIds,
+          "ServiceCharges": provider.Prices,
+        };
+      } else {
+        updatedCardArray[selectedIndex] = {
+          ...updatedCardArray[selectedIndex],
+          "CatServiceId": getServiceId?.Id || 0,
+          "ServiceCharges": selectedPrice,
+          "OrganizationServiceId": orgSpecilityID,
+        };
+      }
+    }
 
     dispatch(addCardItem(updatedCardArray));
   }
-  
+
 
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
@@ -452,42 +456,45 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     // Find the correct price for the selected service
     const serviceIds = provider.ServiceIds.split(',');
     const prices = provider.Prices.split(',');
-    
+
     const priceIndex = getServiceId ? serviceIds.findIndex(id => id === String(getServiceId.Id)) : -1;
     const selectedPrice = priceIndex !== -1 ? prices[priceIndex] : "0";
     const orgSpecilityID = provider.OrganizationServiceIds.split(',')[priceIndex]
 
+    // Find the index of the item that matches the selectedUniqueId
+    const selectedIndex = updatedCardArray.findIndex(item => item.ItemUniqueId === selectedUniqueId);
 
-    if(!updatedCardArray[0].CatSpecialtyId){
-      updatedCardArray[0] = {
-        ...updatedCardArray[0],
-        "OrganizationServiceId": provider.OrganizationServiceIds,
-        "OrganizationId": provider.OrganizationId,
-        "ServiceCharges": provider.Prices,
-        "ServiceProviderUserloginInfoId": provider.UserId,
-        "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-        "SchedulingTime": time.start_time,
-        "AvailabilityId": availability.Id,
-        "CatSchedulingAvailabilityTypeId":availability.CatAvailabilityTypeId,
-        "ServiceProviderFullnameSlang":provider.FullnameSlang,
-      };
-    }else{
-      updatedCardArray[0] = {
-        ...updatedCardArray[0],
-        "OrganizationServiceId": orgSpecilityID,
-        "OrganizationId": provider.OrganizationId,
-        "ServiceCharges": selectedPrice,
-        "ServiceProviderUserloginInfoId": provider.UserId,
-        "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-        "SchedulingTime": time.start_time,
-        "AvailabilityId": availability.Id,
-        "CatServiceId": getServiceId?.Id,
-        "CatSchedulingAvailabilityTypeId":availability.CatAvailabilityTypeId,
-        "ServiceProviderFullnameSlang":provider.FullnameSlang,
-      };
+    if (selectedIndex !== -1) {
+      if (!updatedCardArray[selectedIndex].CatSpecialtyId) {
+        updatedCardArray[selectedIndex] = {
+          ...updatedCardArray[selectedIndex],
+          "OrganizationServiceId": provider.OrganizationServiceIds,
+          "OrganizationId": provider.OrganizationId,
+          "ServiceCharges": provider.Prices,
+          "ServiceProviderUserloginInfoId": provider.UserId,
+          "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+          "SchedulingTime": time.start_time,
+          "AvailabilityId": availability.Id,
+          "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
+          "ServiceProviderFullnameSlang": provider.FullnameSlang,
+        };
+      } else {
+        updatedCardArray[selectedIndex] = {
+          ...updatedCardArray[selectedIndex],
+          "OrganizationServiceId": orgSpecilityID,
+          "OrganizationId": provider.OrganizationId,
+          "ServiceCharges": selectedPrice,
+          "ServiceProviderUserloginInfoId": provider.UserId,
+          "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+          "SchedulingTime": time.start_time,
+          "AvailabilityId": availability.Id,
+          "CatServiceId": getServiceId?.Id,
+          "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
+          "ServiceProviderFullnameSlang": provider.FullnameSlang,
+        };
+      }
     }
 
-    
 
     dispatch(addCardItem(updatedCardArray));
   }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);

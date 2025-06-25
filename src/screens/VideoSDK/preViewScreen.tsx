@@ -180,7 +180,6 @@ const PreViewScreen = ({navigation, route}: any) => {
   };
 
   const disposeVideoTrack = async () => {
-    console.log('disposeVideoTrack');
     try {
       const currentTrack = tracks;
       if (currentTrack) {
@@ -268,7 +267,6 @@ const PreViewScreen = ({navigation, route}: any) => {
 
       setMicon(true);
       setVideoOn(true);
-      console.log('paramsVal', paramsVal);
       if(meetingId){
         navigation.navigate(ROUTES.Meeting, paramsVal);
       }else{

@@ -41,8 +41,6 @@ class WebSocketService {
       this.socket = new WebSocket(url);
       this.userId = userId;
 
-      console.log("this.socket",this.socket)
-
       this.socket.onopen = async () => {
         this.isConnected = true;
       };

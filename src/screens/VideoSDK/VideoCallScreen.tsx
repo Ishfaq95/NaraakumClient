@@ -157,7 +157,6 @@ const VideoCallScreen = ({
     };
 
     const response = await notificationService.sendNotificationForMeeting(reciverId, data);
-    console.log('Notification sent', response);
   };
 
   const {score} = useParticipantStat({

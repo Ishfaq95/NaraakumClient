@@ -288,9 +288,39 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
     let schedulingDateUTC = item.SchedulingDate;
     let schedulingTimeUTC = schedulingTime;
     if (item.SchedulingDate && schedulingTime) {
-      const localDateTime = new Date(`${item.SchedulingDate}T${schedulingTime}:00`);
-      schedulingDateUTC = localDateTime.toISOString().slice(0, 10); // 'YYYY-MM-DD' in UTC
-      schedulingTimeUTC = localDateTime.toISOString().slice(11, 16); // 'HH:mm' in UTC
+      try {
+        // Validate date format and create a proper date string
+        const dateStr = item.SchedulingDate;
+        const timeStr = schedulingTime;
+        
+        // Ensure we have valid date and time strings
+        if (dateStr && timeStr && dateStr.includes('-') && timeStr.includes(':')) {
+          // Create ISO string with proper format
+          const dateTimeString = `${dateStr}T${timeStr}:00`;
+          const localDateTime = new Date(dateTimeString);
+          
+          // Check if the date is valid
+          if (!isNaN(localDateTime.getTime())) {
+            schedulingDateUTC = localDateTime.toISOString().slice(0, 10); // 'YYYY-MM-DD' in UTC
+            schedulingTimeUTC = localDateTime.toISOString().slice(11, 16); // 'HH:mm' in UTC
+          } else {
+            console.warn('Invalid date/time combination:', dateStr, timeStr);
+            // Keep original values if conversion fails
+            schedulingDateUTC = item.SchedulingDate;
+            schedulingTimeUTC = schedulingTime;
+          }
+        } else {
+          console.warn('Invalid date or time format:', dateStr, timeStr);
+          // Keep original values if format is invalid
+          schedulingDateUTC = item.SchedulingDate;
+          schedulingTimeUTC = schedulingTime;
+        }
+      } catch (error) {
+        console.error('Error converting date/time to UTC:', error);
+        // Keep original values if conversion fails
+        schedulingDateUTC = item.SchedulingDate;
+        schedulingTimeUTC = schedulingTime;
+      }
     }
 
     return ({
@@ -385,3 +415,12 @@ export const generatePayloadForCheckOut = (CardArray: any) => {
   })
   return payload
 }
+
+export const generateUniqueId = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+  for (let i = 0; i < 6; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+};

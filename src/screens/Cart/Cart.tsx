@@ -16,7 +16,6 @@ const CartScreen = () => {
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
 
-  console.log("CardArray", CardArray)
 
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
@@ -65,8 +64,6 @@ const CartScreen = () => {
     getUnPaidUserOrders();
   }, [user]);
 
-  console.log("CardArray===>", CardArray)
-
   const renderHeader = () => (
     <Header
       centerComponent={
@@ -76,7 +73,6 @@ const CartScreen = () => {
   );
 
   const handleRemoveItem = async (item: any) => {
-    console.log("item===>", item)
 
     if (item.OrderID && item.OrderDetailId) {
       const payload = {
@@ -94,8 +90,6 @@ const CartScreen = () => {
   const handleClearAll = () => {
     dispatch(clearCardItems());
   };
-
-  console.log("CardArray===>", CardArray)
 
   const renderCardItem = ({ item }: { item: any }) => {
     let displayDate = '';

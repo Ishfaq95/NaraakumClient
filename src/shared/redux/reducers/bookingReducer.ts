@@ -17,6 +17,7 @@ interface State {
   cardItems: any;
   apiResponse: any;
   tempSlotDetail: any;
+  selectedUniqueId: any;
 }
 
 const initialState = {
@@ -25,6 +26,7 @@ const initialState = {
   cardItems: [],
   apiResponse: null,
   tempSlotDetail: null,
+  selectedUniqueId: null,
 } as State;
 
 export const bookingReducer = createSlice({
@@ -56,9 +58,12 @@ export const bookingReducer = createSlice({
     },
     manageTempSlotDetail: (state, action) => {
       state.tempSlotDetail = action.payload;
+    },
+    setSelectedUniqueId: (state, action) => {
+      state.selectedUniqueId = action.payload;
     }
   },
 });
 
-export const {setCategory, setServices, addCardItem, removeCardItem, clearCardItems, setApiResponse, prependCardItems, manageTempSlotDetail} = bookingReducer.actions;
+export const {setCategory, setServices, addCardItem, removeCardItem, clearCardItems, setApiResponse, prependCardItems, manageTempSlotDetail, setSelectedUniqueId} = bookingReducer.actions;
 export default bookingReducer.reducer;

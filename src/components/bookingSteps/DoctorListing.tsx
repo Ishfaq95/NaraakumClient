@@ -123,6 +123,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const user = useSelector((state: any) => state.root.user.user);
   const services = useSelector((state: any) => state.root.booking.services);
   const category = useSelector((state: any) => state.root.booking.category);
+  const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
   const scrollViewRef = useRef<ScrollView>(null);
   const { i18n } = useTranslation();
   const [isCalendarVisible, setCalendarVisible] = useState(false);
@@ -133,13 +134,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [changedSelectedDate, setChangedSelectedDate] = useState(moment());
   const [isFlatListReady, setIsFlatListReady] = useState(false);
   const { t } = useTranslation();
-  const [selectedSpecialtyOrService, setSelectedSpecialtyOrService] = useState<any>(CardArray[0]);
+  console.log("selectedUniqueId===>",selectedUniqueId)
+  const SelectedCardItem = CardArray.find((item: any) => item.ItemUniqueId === selectedUniqueId);
+  console.log("SelectedCardItem===>",SelectedCardItem)
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<{providerId: string, slotTime: string} | null>(null);
   const [selectedService, setSelectedService] = useState(null);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const dispatch = useDispatch();
   const createOrderMainBeforePayment = async () => {
-    console.log("CardArray===>", CardArray)
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
@@ -147,8 +149,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
 
     const response = await bookingService.createOrderMainBeforePayment(payload);
-
-    console.log("response===>", response)
 
     dispatch(setApiResponse(response.Data))
     onPressNext();
@@ -158,12 +158,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     const getUnPaidUserOrders = async () => {
       try {
         const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
-        console.log("response===>", response.Cart)
 
         if (response.Cart && response.Cart.length > 0) {
           // Convert API response to cardItems format
           const convertedCardItems = response.Cart;
-
           // Check for existing items and replace duplicates instead of adding
           const existingCardItems = CardArray;
           const updatedCardItems = [...existingCardItems];
@@ -228,14 +226,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     })
 
     setSlotsLoaded(false)
-    console.log("tempProvider===>",tempProvider)
+    
     setProviderWithSlots(tempProvider)
   }
 
   const getServiceIds = () => {
-    if (selectedSpecialtyOrService?.CatLevelId === 3) {
+    if (SelectedCardItem?.CatLevelId === 3) {
       // If level 3 is selected, return only that service ID
-      return selectedSpecialtyOrService.Id;
+      return SelectedCardItem.Id;
     } else {
       // Otherwise, return all service IDs except level 3, comma-separated
       return services
@@ -247,19 +245,19 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
   useEffect(() => {
     // Call both APIs when component mounts
-    if (category.Id && services.length > 0 && selectedSpecialtyOrService.Id) {
+    if (category.Id && services.length > 0) {
       fetchServiceProviders();
       fetchInitialAvailability();
     }
     generateDays();
-  }, [category, services, selectedSpecialtyOrService]);
+  }, [category, services]);
 
   const fetchServiceProviders = async () => {
     try {
       setLoading(true);
       const serviceIds = getServiceIds();
       let requestBody: any = {};
-      if (selectedSpecialtyOrService.CatLevelId == 3) {
+      if (SelectedCardItem?.CatLevelId == 3) {
         requestBody = {
           CatcategoryId: category.Id,
           ServiceIds: serviceIds,
@@ -282,12 +280,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           Gender: 2,
           PageNumber: 0,
           PageSize: 100,
-          SpecialtyIds: selectedSpecialtyOrService.Id
+          SpecialtyIds: SelectedCardItem?.CatSpecialtyId
         }
       }
 
       const response = await bookingService.getServiceProviderListByService(requestBody);
-
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
       console.error('Error fetching service providers:', error);
@@ -363,7 +360,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       ? moment(changedSelectedDate).local().startOf('day')  // Force local timezone
       : moment().startOf('day');
 
-    console.log("baseDate", baseDate)
     const isWithinSevenDays = moment(date).local().isBetween(
       baseDate,
       moment(baseDate).add(6, 'days').endOf('day'),
@@ -397,7 +393,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleNext = useCallback(() => {
-    const serviceId = CardArray[0]?.CatServiceId;
+    const serviceId = SelectedCardItem?.CatServiceId;
     if (!serviceId) {
       setShowServiceModal(true);
     } else {
@@ -419,7 +415,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
-    const serviceId = CardArray[0]?.CatServiceId
+    const serviceId = SelectedCardItem?.CatServiceId
     if(serviceId == 0 || serviceId ==null || serviceId == "" || serviceId == undefined){
       setShowServiceModal(true)
     }
@@ -453,8 +449,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       return false;
     });
   }, [ProviderWithSlots, availability, selectedDate]);
-
-  console.log('testing re-render')
 
   const handleSelectService = (providerId: string, service: string) => {
     const obj:any={
@@ -552,9 +546,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.nextButton, CardArray[0].CatServiceId == 0 || CardArray[0].CatServiceId ==null || CardArray[0].CatServiceId == "" || CardArray[0].CatServiceId == undefined || CardArray[0].ServiceProviderUserloginInfoId == 0 || CardArray[0].ServiceProviderUserloginInfoId ==null || CardArray[0].ServiceProviderUserloginInfoId == "" || CardArray[0].ServiceProviderUserloginInfoId == undefined ? styles.disabledNextButton : {}]}
+          style={[styles.nextButton, SelectedCardItem?.CatServiceId == 0 || SelectedCardItem?.CatServiceId ==null || SelectedCardItem?.CatServiceId == "" || SelectedCardItem?.CatServiceId == undefined || SelectedCardItem?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem?.ServiceProviderUserloginInfoId ==null || SelectedCardItem?.ServiceProviderUserloginInfoId == "" || SelectedCardItem?.ServiceProviderUserloginInfoId == undefined ? styles.disabledNextButton : {}]}
           onPress={handleNext}
-          disabled={CardArray[0].CatServiceId == 0 || CardArray[0].CatServiceId ==null || CardArray[0].CatServiceId == "" || CardArray[0].CatServiceId == undefined || CardArray[0].ServiceProviderUserloginInfoId == 0 || CardArray[0].ServiceProviderUserloginInfoId ==null || CardArray[0].ServiceProviderUserloginInfoId == "" || CardArray[0].ServiceProviderUserloginInfoId == undefined}
+          disabled={SelectedCardItem?.CatServiceId == 0 || SelectedCardItem?.CatServiceId ==null || SelectedCardItem?.CatServiceId == "" || SelectedCardItem?.CatServiceId == undefined || SelectedCardItem?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem?.ServiceProviderUserloginInfoId ==null || SelectedCardItem?.ServiceProviderUserloginInfoId == "" || SelectedCardItem?.ServiceProviderUserloginInfoId == undefined}
         >
           <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>

@@ -9,8 +9,10 @@ import PhoneNumberInput from '../../components/PhoneNumberInput';
 import { countries } from '../../utils/countryData';
 import { addCardItem, setApiResponse } from '../../shared/redux/reducers/bookingReducer';
 import { bookingService } from '../../services/api/BookingService';
-import { generatePayloadforOrderMainBeforePayment, generatePayloadforUpdateOrderMainBeforePayment } from '../../shared/services/service';
+import { generatePayloadforOrderMainBeforePayment, generatePayloadforUpdateOrderMainBeforePayment, generateUniqueId } from '../../shared/services/service';
 import { useDispatch, useSelector } from 'react-redux';
+import { MediaBaseURL } from '../../shared/utils/constants';
+import moment from 'moment';
 
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
@@ -47,13 +49,15 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const [mobileNumber, setMobileNumber] = useState('');
   const [isValidNumber, setIsValidNumber] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any | undefined>(countries.find(c => c.code === 'sa'));
-  const selectedDoctor = DoctorsNameArray[selectedIndex];
+
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
+  const [showGroupedArray, setShowGroupedArray] = useState([]);
+  const selectedDoctor: any = showGroupedArray[selectedIndex];
   const dispatch = useDispatch();
 
-  console.log("CardArray===>", CardArray)
+  console.log("CardArray===>", user)
 
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
@@ -70,8 +74,8 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
           convertedCardItems.forEach((newItem: any) => {
             // Find if item already exists by OrderDetailId and OrderId
-            const existingIndex = updatedCardItems.findIndex((existingItem: any) => 
-              existingItem.OrderDetailId === newItem.OrderDetailId && 
+            const existingIndex = updatedCardItems.findIndex((existingItem: any) =>
+              existingItem.OrderDetailId === newItem.OrderDetailId &&
               existingItem.OrderId === newItem.OrderId
             );
 
@@ -80,8 +84,9 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
               updatedCardItems[existingIndex] = newItem;
             } else {
               // Add new item if it doesn't exist
-              const newItemObject= {
+              const newItemObject = {
                 ...newItem,
+                "ItemUniqueId": generateUniqueId(),
                 PatientUserProfileInfoId: user.UserProfileInfoId,
                 TextDescription: "",
               }
@@ -89,40 +94,79 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             }
           });
 
-          console.log("updatedCardItems===>", updatedCardItems)
           // Dispatch the updated array
+          const groupedArray: any = groupArrayByUniqueIdAsArray(updatedCardItems);
+          setShowGroupedArray(groupedArray);
           dispatch(addCardItem(updatedCardItems));
         }
       } catch (error) {
-        console.error('Error fetching unpaid orders:', error);
       }
     }
     getUnPaidUserOrders();
   }, [user]);
 
-  const renderDoctorTag = ({ item, index }: { item: any; index: number }) => (
-    <TouchableOpacity
-      style={[styles.doctorTag, selectedIndex === index && styles.selectedTag]}
-      onPress={() => setSelectedIndex(index)}
-      activeOpacity={0.8}
-    >
-      <Image source={{ uri: item.image }} style={styles.doctorImage} />
-      <View style={styles.doctorInfoCol}>
-        <Text style={styles.doctorName}>{item.name}</Text>
-        <Text style={styles.serviceName}>{item.service}</Text>
+  const groupArrayByUniqueIdAsArray = (dataArray: any) => {
+    if (!Array.isArray(dataArray)) {
+      console.warn('Input is not an array');
+      return [];
+    }
+
+    const groupedObject: any = {};
+
+    dataArray.forEach((obj) => {
+      const uniqueId = `${obj.ServiceProviderUserloginInfoId}_${obj.OrganizationId}_${obj.PatientUserProfileInfoId}_${obj.CatCategoryId}`;
+
+      if (!groupedObject[uniqueId]) {
+        groupedObject[uniqueId] = [];
+      }
+
+      groupedObject[uniqueId].push(obj);
+    });
+
+    // Convert to array format with uniqueId as property
+    return Object.keys(groupedObject).map(uniqueId => ({
+      uniqueId: uniqueId,
+      items: groupedObject[uniqueId]
+    }));
+  };
+
+  const renderDoctorTag = ({ item, index }: { item: any; index: number }) => {
+    const selectedItem = item.items[0];
+
+    const imagePath = selectedItem.ServiceProviderImagePath ? `${MediaBaseURL}${selectedItem.ServiceProviderImagePath}` : `${MediaBaseURL}${selectedItem.LogoImagePath}`;
+    const name = selectedItem.ServiceProviderFullnameSlang ? selectedItem.ServiceProviderFullnameSlang : selectedItem.orgTitleSlang;
+
+
+    return (
+      <View style={styles.doctorTagContainer}>
+        <TouchableOpacity
+          style={[styles.doctorTag, selectedIndex === index && styles.selectedTag]}
+          onPress={() => setSelectedIndex(index)}
+          activeOpacity={0.8}
+        >
+          <Image source={{ uri: imagePath }} style={styles.doctorImage} />
+          <View style={styles.doctorInfoCol}>
+            <Text style={[styles.doctorName, selectedIndex === index && { color: '#fff' }]}>{t('service_provider')}</Text>
+            <Text style={[styles.serviceName, selectedIndex === index && { color: '#fff' }]}>{name}</Text>
+          </View>
+        </TouchableOpacity>
+        {/* Arrow below the tag */}
+        {selectedIndex === index && <View style={[styles.arrowIndicatorSimple]}>
+          <Text style={styles.arrowText}>▼</Text>
+        </View>}
       </View>
-    </TouchableOpacity>
-  );
+    )
+  }
 
   const createOrderMainBeforePayment = async () => {
     const payload = {
-      "OrderId":CardArray[0].OrderID,
+      "OrderId": CardArray[0].OrderID,
       "CatPlatformId": 1,
       "OrderDetail": generatePayloadforUpdateOrderMainBeforePayment(CardArray)
     }
 
     const response = await bookingService.updateOrderMainBeforePayment(payload);
-    console.log("response===>",response.Data)
+
     dispatch(setApiResponse(response.Data))
     onPressNext();
   }
@@ -147,12 +191,95 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     setFullNumber(data.fullNumber);
   };
 
+  // Function to calculate duration between start and end time
+  const calculateDuration = (startTime: string, endTime: string) => {
+    if (!startTime || !endTime) return '';
+
+    try {
+      // Parse times (assuming format HH:mm)
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+
+      // Convert to total minutes
+      const startTotalMinutes = startHours * 60 + startMinutes;
+      const endTotalMinutes = endHours * 60 + endMinutes;
+
+      // Calculate difference
+      const diffMinutes = endTotalMinutes - startTotalMinutes;
+
+      if (diffMinutes <= 0) return '';
+
+      // Convert to hours and minutes
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+
+      if (hours > 0 && minutes > 0) {
+        return `${hours} ساعة ${minutes} دقيقة`;
+      } else if (hours > 0) {
+        return `${hours} ساعة`;
+      } else {
+        return `${minutes} دقيقة`;
+      }
+    } catch (error) {
+      console.error('Error calculating duration:', error);
+      return '';
+    }
+  };
+
+  // Function to extract country code and phone number from full number
+  const extractPhoneInfo = (fullNumber: string) => {
+    if (!fullNumber) return { countryCode: 'SA', phoneNumber: '' };
+    
+    // Remove any spaces or special characters
+    const cleanNumber = fullNumber.replace(/\s/g, '');
+    
+    // Check for Saudi Arabia number (+966)
+    if (cleanNumber.startsWith('+966')) {
+      const phoneNumber = cleanNumber.substring(4); // Remove +966
+      return { countryCode: 'SA', phoneNumber };
+    }
+    
+    // Check for other country codes (you can add more as needed)
+    const countryCodeMap: { [key: string]: string } = {
+      '+971': 'AE', // UAE
+      '+973': 'BH', // Bahrain
+      '+964': 'IQ', // Iraq
+      '+98': 'IR',  // Iran
+      '+962': 'JO', // Jordan
+      '+965': 'KW', // Kuwait
+      '+961': 'LB', // Lebanon
+      '+968': 'OM', // Oman
+      '+970': 'PS', // Palestine
+      '+974': 'QA', // Qatar
+      '+963': 'SY', // Syria
+      '+90': 'TR',  // Turkey
+      '+967': 'YE'  // Yemen
+    };
+    
+    for (const [code, country] of Object.entries(countryCodeMap)) {
+      if (cleanNumber.startsWith(code)) {
+        const phoneNumber = cleanNumber.substring(code.length);
+        return { countryCode: country, phoneNumber };
+      }
+    }
+    
+    // Default to Saudi Arabia if no match found
+    return { countryCode: 'SA', phoneNumber: cleanNumber.replace(/^\+/, '') };
+  };
+
+  // Extract phone info from user
+  const phoneInfo = extractPhoneInfo(user?.CellNumber || '');
+  const defaultCountryCode = phoneInfo.countryCode;
+  const defaultPhoneNumber = phoneInfo.phoneNumber;
+
+  console.log("selectedDoctor===>", selectedDoctor?.items?.length)
+
   return (
     <View style={styles.container}>
-      <View style={{ height: 100 }}>
+      <View style={{ height: 120 }}>
         {/* Doctor tags */}
         <FlatList
-          data={DoctorsNameArray}
+          data={showGroupedArray}
           renderItem={renderDoctorTag}
           keyExtractor={(item, index) => `doctor-${index}`}
           horizontal
@@ -162,44 +289,66 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         />
       </View>
 
-      <ScrollView style={{ flex: 1, marginBottom: 60 }}>
+      {selectedDoctor?.uniqueId && <ScrollView style={{ flex: 1, marginBottom: 60 }}>
         {/* Details card for selected doctor */}
-        <View style={styles.detailsCard}>
-          <View style={styles.detailsHeader}>
-            <Text style={styles.detailsHeaderText}>الخدمات المختارة (1)</Text>
-            <TouchableOpacity style={styles.editButton}>
-              <Text style={styles.editButtonText}>✎</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.selectedServiceRow}>
-            <Text style={styles.selectedServiceText}>{selectedDoctor.service}</Text>
-            <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>1</Text></View>
-          </View>
-          {/* Session info with icons */}
-          <View style={styles.sessionInfoDetailsContainer}>
-            <View style={styles.sessionInfoDetailItem}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <CalendarIcon width={18} height={18} />
-                <Text style={styles.sessionInfoLabel}>تاريخ الجلسة</Text>
+        {
+          selectedDoctor?.items?.map((item: any, index: number) => {
+            let displayDate = '';
+            let displayTime = '';
+
+            if (item.SchedulingDate && item.SchedulingTime) {
+              const datePart = item.SchedulingDate.split('T')[0];
+              const utcDateTime = moment.utc(`${datePart}T${item.SchedulingTime}:00Z`);
+              if (utcDateTime.isValid()) {
+                const localDateTime = utcDateTime.local();
+                displayDate = localDateTime.format('DD/MM/YYYY');
+                displayTime = localDateTime.format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
+              }
+            }
+            
+            return (
+              <View style={styles.detailsCard}>
+                <View style={styles.detailsHeader}>
+                  <Text style={styles.detailsHeaderText}>الخدمات المختارة (1)</Text>
+                  <TouchableOpacity style={styles.editButton}>
+                    <Text style={styles.editButtonText}>✎</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.selectedServiceRow}>
+                  {item?.CatCategoryId == "42"
+                    ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
+                    : <Text style={styles.selectedServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
+                  }
+                  <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>1</Text></View>
+                </View>
+                {/* Session info with icons */}
+                <View style={styles.sessionInfoDetailsContainer}>
+                  <View style={styles.sessionInfoDetailItem}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <CalendarIcon width={18} height={18} />
+                      <Text style={styles.sessionInfoLabel}>تاريخ الجلسة</Text>
+                    </View>
+                    <Text style={styles.sessionInfoValue}>{displayDate}</Text>
+                  </View>
+                  <View style={styles.sessionInfoDetailItem}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <ClockIcon width={18} height={18} />
+                      <Text style={styles.sessionInfoLabel}>توقيت الجلسة</Text>
+                    </View>
+                    <Text style={styles.sessionInfoValue}>{displayTime}</Text>
+                  </View>
+                  <View style={styles.sessionInfoDetailItem}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <SettingIconSelected width={18} height={18} />
+                      <Text style={styles.sessionInfoLabel}>المدة</Text>
+                    </View>
+                    <Text style={styles.sessionInfoValue}>{calculateDuration(item?.SchedulingTime, item?.SchedulingEndTime)}</Text>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.sessionInfoValue}>{selectedDoctor.date}</Text>
-            </View>
-            <View style={styles.sessionInfoDetailItem}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <ClockIcon width={18} height={18} />
-                <Text style={styles.sessionInfoLabel}>توقيت الجلسة</Text>
-              </View>
-              <Text style={styles.sessionInfoValue}>{selectedDoctor.time}</Text>
-            </View>
-            <View style={styles.sessionInfoDetailItem}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <SettingIconSelected width={18} height={18} />
-                <Text style={styles.sessionInfoLabel}>المدة</Text>
-              </View>
-              <Text style={styles.sessionInfoValue}>{selectedDoctor.duration}</Text>
-            </View>
-          </View>
-        </View>
+            )
+          })
+        }
 
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
           <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>المرضى المراد حجز الجلسة لهم</Text>
@@ -221,15 +370,19 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         <View style={{ width: "100%", alignItems: "flex-start" }}>
           <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }}>اسمك</Text>
           <TextInput
-            style={{ width: "100%", height: 50, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, paddingHorizontal: 10, textAlign: "right" }}
+            style={{ width: "100%", color: "#000", height: 50, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, paddingHorizontal: 10, textAlign: "right" }}
             placeholder="اسمك"
+            value={user?.FullnameSlang}
+            editable={false}
           />
           <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }}>رقم الجوال</Text>
           <PhoneNumberInput
-            value={mobileNumber}
+            value={defaultPhoneNumber}
             onChangePhoneNumber={handlePhoneNumberChange}
             placeholder={t('mobile_number')}
             errorText={t('mobile_number_not_valid')}
+            defaultCountry={defaultCountryCode}
+            editable={false}
           />
         </View>
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
@@ -300,14 +453,15 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
               paddingHorizontal: 18,
               marginTop: 4
             }}
-            // onPress={handleStartRecording}
+          // onPress={handleStartRecording}
           >
             {/* Use your own MicrophoneIcon component if available */}
             <Text style={{ fontSize: 18, color: "#23a2a4", marginLeft: 6 }}>🎤</Text>
             <Text style={{ color: "#23a2a4", fontWeight: "bold", fontSize: 16 }}>بدء التسجيل</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </ScrollView>}
+
 
       {/* Buttons */}
       <View style={styles.BottomContainer}>
@@ -350,6 +504,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: 'center',
   },
+  doctorTagContainer: {
+    position: 'relative',
+  },
   doctorTag: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
@@ -369,7 +526,7 @@ const styles = StyleSheet.create({
   },
   selectedTag: {
     borderColor: '#23a2a4',
-    backgroundColor: 'rgba(35,162,164,0.08)',
+    backgroundColor: '#23a2a4',
   },
   doctorImage: {
     width: 48,
@@ -388,12 +545,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 2,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   serviceName: {
     fontSize: 13,
     color: '#666',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   separator: {
     width: 8,
@@ -539,6 +696,27 @@ const styles = StyleSheet.create({
   },
   disabledNextButton: {
     opacity: 0.5,
+  },
+  arrowIndicator: {
+    position: 'absolute',
+    bottom: -20,
+    left: 0,
+    right: 0,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  arrowText: {
+    fontSize: 20,
+    color: '#23a2a4',
+    fontWeight: 'bold',
+  },
+  arrowIndicatorSimple: {
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -10,
   },
 });
 

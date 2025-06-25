@@ -10,7 +10,6 @@ export const getServices = async (): Promise<any> => {
 };
 
 export const getOfferedServicesListByCategory = async (params: any): Promise<any> => {
-    console.log("params", params);
     try {
         const response = await axiosInstance.post('offeredServices/GetOfferedServicesListByCategory', params);
         return response.data;
@@ -59,6 +58,7 @@ export const getServiceProviderListByService = async (params: {
 }): Promise<any> => {
     try {
         const response = await axiosInstance.post('offeredServices/GetServiceProviderListByService', params);
+
         return response.data;
     } catch (error: any) {
         console.error('Error fetching service provider list:', error);
@@ -79,9 +79,8 @@ export const getUpdatedWallet = async (payload: { UserLoginInfoId: number }): Pr
 
 export const createOrderMainBeforePayment = async (payload: any): Promise<any> => {
     try {
-        console.log("payload===>",payload)
         const response = await axiosInstance.post('payment/CreateOrderMainBeforePayment', payload);
-        console.log("response===>",response)
+
         return response.data;
     } catch (error: any) {
         console.error('Error creating order before payment:', error);
@@ -92,7 +91,7 @@ export const createOrderMainBeforePayment = async (payload: any): Promise<any> =
 export const updateOrderMainBeforePayment = async (payload: any): Promise<any> => {
     try {
         const response = await axiosInstance.post('payment/UpdateOrderMainBeforePayment', payload);
-        console.log("response===>",response)
+
         return response.data;
     } catch (error: any) {
         console.error('Error creating order before payment:', error);

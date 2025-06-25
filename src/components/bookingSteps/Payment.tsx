@@ -71,7 +71,6 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
       try {
         const res = await bookingService.getUpdatedWallet({ UserLoginInfoId: user.Id });
 
-        console.log("res===>", res)
 
         if (res?.ResponseStatus.STATUSCODE === 200) {
           setWallet(res?.Wallet[0]?.TotalAmount ?? 0);
@@ -88,7 +87,6 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   }, [user]);
 
   const handleNext = async () => {
-    console.log("CardArray===>", CardArray)
     const payload = {
       "UserLoginInfoId": user.Id,
       "OrderId": CardArray[0].OrderID,

@@ -59,6 +59,7 @@ interface Props {
   placeholder?: string;
   errorText?: string;
   defaultCountry?: string;
+  editable?: boolean;
 }
 
 const PhoneNumberInput: React.FC<Props> = ({
@@ -69,7 +70,8 @@ const PhoneNumberInput: React.FC<Props> = ({
   errorStyle,
   placeholder,
   errorText = 'Invalid phone number',
-  defaultCountry = 'SA'
+  defaultCountry = 'SA',
+  editable = true
 }) => {
   const [selectedCountry, setSelectedCountry] = useState<ICountry | null>(null);
   const [isValid, setIsValid] = useState(false);
@@ -140,6 +142,7 @@ const PhoneNumberInput: React.FC<Props> = ({
           defaultCountry={defaultCountry as any}
           showOnly={ALLOWED_COUNTRIES}
           rtl={isRTL}
+          editable={editable}
           phoneInputStyles={{
             container: {
               alignItems: 'center',
