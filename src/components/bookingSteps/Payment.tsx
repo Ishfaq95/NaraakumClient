@@ -1,6 +1,6 @@
 import CustomSwitch from '../../components/common/CustomSwitch';
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { bookingService } from '../../services/api/BookingService';
 import { useTranslation } from 'react-i18next';
@@ -12,8 +12,9 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const user = useSelector((state: any) => state.root.user.user);
   const [enabled, setEnabled] = useState(false);
-  const [wallet, setWallet] = useState<number | null>(null);
+  const [wallet, setWallet] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const [showPaymentAlertModal, setShowPaymentAlertModal] = useState(false);
   const dispatch = useDispatch();
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
@@ -75,10 +76,10 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
         if (res?.ResponseStatus.STATUSCODE === 200) {
           setWallet(res?.Wallet[0]?.TotalAmount ?? 0);
         } else {
-          setWallet(null);
+          setWallet(0);
         }
       } catch (e) {
-        setWallet(null);
+        setWallet(0);
       } finally {
         setLoading(false);
       }
@@ -87,26 +88,37 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   }, [user]);
 
   const handleNext = async () => {
-    const payload = {
-      "UserLoginInfoId": user.Id,
-      "OrderId": CardArray[0].OrderID,
-      "NetAmountRecieved": CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0),
-      "TransactionId": "NK" + Date.now().toString(),
-      "Currency": "682",
-      "Language": "Ar",
-      "MerchantIdentifier": "1000004407",
-      "PaymentOption": "Card",
-      "MerchantStatus": "Pending",
-      "SecureHash": "44fcc9371621f0ea10e0eba928df2cacc823b6ee504a48ed70e5ea6a56bfa80f",
-      "CardType": 1,
-      "CatPlatformId": 1,
-      "BookingFromWallet": 1,
-      "OrderDetail": generatePayloadForCheckOut(CardArray)
+    if(wallet < CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)){
+      setShowPaymentAlertModal(true);
+      return;
     }
-
-    const response = await bookingService.updateOrderMainToCheckOut(payload);
+    if(enabled){
+      const payload = {
+        "UserLoginInfoId": user.Id,
+        "OrderId": CardArray[0].OrderID,
+        "NetAmountRecieved": CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0),
+        "TransactionId": "NK" + Date.now().toString(),
+        "Currency": "682",
+        "Language": "Ar",
+        "MerchantIdentifier": "1000004407",
+        "PaymentOption": "Card",
+        "MerchantStatus": "Pending",
+        "SecureHash": "44fcc9371621f0ea10e0eba928df2cacc823b6ee504a48ed70e5ea6a56bfa80f",
+        "CardType": 1,
+        "CatPlatformId": 1,
+        "BookingFromWallet": 1,
+        "OrderDetail": generatePayloadForCheckOut(CardArray)
+      }
+  
+      const response = await bookingService.updateOrderMainToCheckOut(payload);
+      console.log("response===>", response)
+      if(response?.ResponseStatus?.STATUSCODE === 200){
+        onPressNext(response);
+      }
+      
+      
+    }
     
-    onPressNext(response);
   };
 
   const handleBack = () => {
@@ -136,12 +148,41 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.nextButton, styles.disabledNextButton]}
+          style={[styles.nextButton]}
           onPress={handleNext}
         >
           <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={showPaymentAlertModal}
+        onRequestClose={() => setShowPaymentAlertModal(false)}
+        transparent={true}
+        animationType='fade'
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>تحذير</Text>
+              <TouchableOpacity onPress={() => setShowPaymentAlertModal(false)}>
+                <Text style={styles.closeIcon}>×</Text>
+              </TouchableOpacity>
+            </View>
+            {/* Message and Button */}
+            <View style={styles.modalContent}>
+              <Text style={styles.modalMessage}>يرجى اختيار خدمة واحدة</Text>
+              <TouchableOpacity
+                onPress={() => setShowPaymentAlertModal(false)}
+                style={styles.modalButton}
+              >
+                <Text style={styles.modalButtonText}>يغلق</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -197,6 +238,67 @@ const styles = StyleSheet.create({
   },
   disabledNextButton: {
     opacity: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: 320,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#e8f3f2',
+    padding: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  modalTitle: {
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#2d3a3a',
+  },
+  closeIcon: {
+    fontSize: 22,
+    color: '#888',
+  },
+  modalContent: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#2d3a3a',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#27a6a1',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 36,
+    alignItems: 'center',
+    alignSelf: 'center',
+    shadowColor: '#27a6a1',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 })
 

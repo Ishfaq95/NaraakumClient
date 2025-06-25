@@ -10,7 +10,7 @@ import Specialties from '../../components/bookingSteps/Specialties';
 import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import Payment from '../../components/bookingSteps/Payment';
-import { addCardItem, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, clearCardItems, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
 import OrderSuccess from '../../components/bookingSteps/OrderSuccess';
 import { generateUniqueId } from '../../shared/services/service';
 
@@ -52,8 +52,9 @@ const BookingScreen = ({ navigation }: any) => {
   }
 
   const onPressCheckoutOrder = (SuccessResponse: any) => {
-    setSuccessResponse(SuccessResponse);
-    setCurrentStep(5);
+    dispatch(clearCardItems());
+    console.log("SuccessResponse===>", SuccessResponse)
+    // navigation.navigate("OrderSuccess", { SuccessResponse });
   }
 
   const renderStep = () => {
@@ -62,7 +63,6 @@ const BookingScreen = ({ navigation }: any) => {
       case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
       case 3: return <ReviewOrder onPressNext={() => setCurrentStep(4)} onPressBack={() => setCurrentStep(2)} />;
       case 4: return <Payment onPressNext={onPressCheckoutOrder} onPressBack={() => setCurrentStep(3)} />;
-      case 5: return <OrderSuccess SuccessResponse={SuccessResponse} />;
       default: return null;
     }
   };

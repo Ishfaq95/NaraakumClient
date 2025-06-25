@@ -14,6 +14,7 @@ import AuthWelcomeScreen from '../screens/AuthWelcomeScreen';
 import AppNavigator from './AppNavigator';
 import Services from '../screens/Booking/Services';
 import BookingScreen from '../screens/Booking/BookingScreen';
+import OrderSuccess from '../components/bookingSteps/OrderSuccess';
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +33,7 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name={ROUTES.OrderSuccess} component={OrderSuccess} />
       <Stack.Screen name={ROUTES.AppNavigator} component={AppNavigator} />
       <Stack.Screen name={ROUTES.AppointmentList} component={AppointmentListScreen} />
       <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
@@ -40,6 +42,8 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.preViewCall} component={PreViewScreen} />
       <Stack.Screen name={ROUTES.VideoCallScreen} component={VideoCallScreen} />
       <Stack.Screen name={ROUTES.Meeting} component={meeting} />
+
+      
 
       
     </Stack.Navigator>

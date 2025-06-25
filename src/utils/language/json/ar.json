@@ -38,5 +38,12 @@
   "createNewAccount": "إنشاء حساب جديد",
   "back": "خلف",
   "next": "التالي",
-  "service_provider": "مقدم الخدمة"
+  "service_provider": "مقدم الخدمة",
+  "transaction_status":"حالة المعاملة",
+  "transaction_number":"رقم المعاملة",
+  "transaction_date":"تاريخ المعاملة",
+  "transaction_amount":"مبلغ المعاملة",
+  "booking_successful":"تم الحجز بنجاح",
+  "track_order":"تتبع الطلب",
+  "download_invoice":"تحميل الفاتورة"
 }

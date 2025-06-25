@@ -34,5 +34,12 @@
   "createNewAccount": "Create New Account",
   "back": "Back",
   "next": "Next",
-  "service_provider": "Service Provider"
+  "service_provider": "Service Provider",
+  "transaction_status":"Transaction Status",
+  "transaction_number":"Transaction Number",
+  "transaction_date":"Transaction date",
+  "transaction_amount":"Transaction amount",
+  "booking_successful":"Booking successful",
+  "track_order":"Track Order",
+  "download_invoice":"Download the invoice"
 }

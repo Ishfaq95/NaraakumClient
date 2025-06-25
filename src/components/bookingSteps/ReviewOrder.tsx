@@ -469,7 +469,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           <Text style={styles.backButtonText}>{t('back')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.nextButton, styles.disabledNextButton]}
+          style={[styles.nextButton]}
           onPress={handleNext}
         >
           <Text style={styles.nextButtonText}>{t('next')}</Text>
