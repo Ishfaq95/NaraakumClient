@@ -33,7 +33,7 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name={ROUTES.OrderSuccess} component={OrderSuccess} />
+      
       <Stack.Screen name={ROUTES.AppNavigator} component={AppNavigator} />
       <Stack.Screen name={ROUTES.AppointmentList} component={AppointmentListScreen} />
       <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
@@ -44,7 +44,7 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.Meeting} component={meeting} />
 
       
-
+      <Stack.Screen name={ROUTES.OrderSuccess} component={OrderSuccess} />
       
     </Stack.Navigator>
   );

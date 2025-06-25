@@ -53,8 +53,7 @@ const BookingScreen = ({ navigation }: any) => {
 
   const onPressCheckoutOrder = (SuccessResponse: any) => {
     dispatch(clearCardItems());
-    console.log("SuccessResponse===>", SuccessResponse)
-    // navigation.navigate("OrderSuccess", { SuccessResponse });
+    navigation.navigate("OrderSuccess", { SuccessResponse });
   }
 
   const renderStep = () => {
