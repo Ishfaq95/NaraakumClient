@@ -1,35 +1,80 @@
 import React from 'react'
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native'
 import LottieAnimation from '../common/LottieAnimation'
 import { LOTTIE_ANIMATIONS } from '../../assets/animation'
+import { generateAndDownloadInvoice } from '../../services/InvoiceService'
 import Header from '../../components/common/Header';
 import { useTranslation } from 'react-i18next';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
 import { ROUTES } from '../../shared/utils/routes';
+import moment from 'moment';
 
 const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
   console.log("SuccessResponse",SuccessResponse)
   const { t } = useTranslation();
 
-  const handleDownloadInvoice = () => {
- 
+  const handleDownloadInvoice = async () => {
+    try {
+      // if (SuccessResponse && SuccessResponse.Data) {
+        const invoiceData = {
+          OrderId: '000000',
+          TitleSlangService: 'خدمة طبية',
+          TitleSlangSpecialty: '',
+          CardNumber: '',
+          TaxAmt: 0,
+          ServiceCharges: 0,
+          ServicePrice: 0,
+          ServiceProviderSName: 'مقدم الخدمة',
+          SchedulingDate: new Date().toISOString(),
+          SchedulingTime: '00:00',
+          PatientSName: 'المريض',
+          PatientPhone: '+966000000000',
+          PatientEmail: 'patient@example.com',
+        };
+
+        // Generate and download the invoice
+         await generateAndDownloadInvoice(invoiceData);
+        
+        // Show success message
+        // Alert.alert(
+        //   'تم التحميل بنجاح',
+        //   'تم حفظ الفاتورة في مجلد المستندات',
+        //   [
+        //     {
+        //       text: 'حسناً',
+        //       onPress: () => {
+        //         // Navigate to appointment tab after successful download
+        //         navigation.reset({
+        //           index: 0,
+        //           routes: [{ name: 'MainTabNavigator', params: { screen: 'AppointmentTab' } }],
+        //         });
+        //       }
+        //     }
+        //   ]
+        // );
+        
+      // } else {
+      //   Alert.alert('خطأ', 'لا توجد بيانات الفاتورة متاحة');
+      // }
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      Alert.alert('خطأ', 'حدث خطأ أثناء إنشاء الفاتورة');
+    }
   };
 
   const handleTrackOrder = () => {
-    navigation.navigate(ROUTES.AppNavigator, {
-      screen: ROUTES.HomeStack,
-      params: {
-        screen: ROUTES.AppointmentListScreen,
-      }
+    // Navigate to appointment tab with deep linking
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'MainTabNavigator', params: { screen: 'AppointmentTab' } }],
     });
   };
 
   const handleBackToHome = () => {
-    navigation.navigate(ROUTES.AppNavigator, {
-      screen: ROUTES.HomeStack,
-      params: {
-        screen: ROUTES.AppointmentListScreen,
-      }
+    // Navigate to appointment tab instead of going back
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'MainTabNavigator', params: { screen: 'AppointmentTab' } }],
     });
   };
 
@@ -67,15 +112,21 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
           <Text style={{fontSize:16,fontWeight:'bold',color:"#23a2a4"}}>{t('transaction_number')}</Text>
-          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>{t('تمت العملية بنجاح')}</Text>
+          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>
+            {SuccessResponse?.Data?.OrderId ? `NAR-${SuccessResponse.Data.OrderId}` : 'N/A'}
+          </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
           <Text style={{fontSize:16,fontWeight:'bold',color:"#23a2a4"}}>{t('transaction_date')}</Text>
-          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>{t('تمت العملية بنجاح')}</Text>
+          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>
+            {SuccessResponse?.Data?.CreatedDate ? moment(SuccessResponse.Data.CreatedDate).format('DD/MM/YYYY') : moment().format('DD/MM/YYYY')}
+          </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
           <Text style={{fontSize:16,fontWeight:'bold',color:"#23a2a4"}}>{t('transaction_amount')}</Text>
-          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>{t('تمت العملية بنجاح')}</Text>
+          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>
+            {SuccessResponse?.Data?.TotalAmount ? `${SuccessResponse.Data.TotalAmount} SAR` : 'N/A'}
+          </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8,paddingTop:30 }}>
           <TouchableOpacity 

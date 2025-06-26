@@ -24,5 +24,6 @@ export const ROUTES = {
     Services: "Services",
     BookingScreen: "BookingScreen",
     OrderSuccess: "OrderSuccess",
+    LocationScreen: "LocationScreen",
   };
   

@@ -89,7 +89,7 @@ const Services = ({ navigation }: any) => {
 
     const onPressHomeVisit = (service: any) => {
         dispatch(setCategory(service));
-        navigation.navigate(ROUTES.BookingScreen);
+        navigation.navigate(ROUTES.LocationScreen);
     }
 
     return (

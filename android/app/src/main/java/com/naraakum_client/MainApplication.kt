@@ -13,6 +13,7 @@ import com.facebook.soloader.SoLoader
 import org.devio.rn.splashscreen.SplashScreenReactPackage
 import live.videosdk.rnwebrtc.WebRTCModulePackage
 import com.facebook.react.modules.i18nmanager.I18nUtil
+import com.christopherdro.htmltopdf.RNHTMLtoPDFPackage;
 
 class MainApplication : Application(), ReactApplication {
 
