@@ -67,7 +67,7 @@ target 'Naraakum_client' do
 
   pod 'RNInAppBrowser', :path => '../node_modules/react-native-inappbrowser-reborn'
   pod 'react-native-webrtc', :path => '../node_modules/@videosdk.live/react-native-webrtc'
-  pod 'GoogleSignIn', '~> 8.0'
+  pod 'GoogleSignIn', '~> 7.1'
   # pod 'react-native-maps', :path => '../node_modules/react-native-maps'
 
   pod 'RNFBApp', :path => '../node_modules/@react-native-firebase/app'

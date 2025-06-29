@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Dimensions, Platform } from 'react-native';
-import MapView, { Marker, MapPressEvent, Region } from 'react-native-maps';
-import * as Location from 'expo-location'; // If you use expo, otherwise use RN geolocation
-import Icon from 'react-native-vector-icons/MaterialIcons'; // For cross and location icons
+// import MapView, { Marker, MapPressEvent, Region } from 'react-native-maps';
+// import * as Location from 'expo-location'; // If you use expo, otherwise use RN geolocation
+// import Icon from 'react-native-vector-icons/MaterialIcons'; // For cross and location icons
 
 const { width, height } = Dimensions.get('window');
 const CARD_HEIGHT = 110;
@@ -15,40 +15,40 @@ const DEFAULT_REGION = {
 };
 
 const MapTab = () => {
-  const [region, setRegion] = useState<Region>(DEFAULT_REGION);
+  // const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [marker, setMarker] = useState<{ latitude: number; longitude: number } | null>(null);
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(false);
-  const mapRef = useRef<MapView>(null);
+  // const mapRef = useRef<MapView>(null);
 
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      let location = await Location.getCurrentPositionAsync({});
-      setRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      });
-    })();
-  }, []);
+  // useEffect(() => {
+  //   (async () => {
+  //     let { status } = await Location.requestForegroundPermissionsAsync();
+  //     if (status !== 'granted') return;
+  //     let location = await Location.getCurrentPositionAsync({});
+  //     setRegion({
+  //       latitude: location.coords.latitude,
+  //       longitude: location.coords.longitude,
+  //       latitudeDelta: 0.05,
+  //       longitudeDelta: 0.05,
+  //     });
+  //   })();
+  // }, []);
 
-  const handleMapPress = async (e: MapPressEvent) => {
-    const { latitude, longitude } = e.nativeEvent.coordinate;
-    setMarker({ latitude, longitude });
-    setLoading(true);
-    // TODO: Replace with real reverse geocoding API call
-    // Example: fetch address from Google Geocoding API
-    // For now, use placeholder
-    setTimeout(() => {
-      setAddress('87W8+C9, Block M 8 Khan Wardag Dera Afghana, Lahore, باكستان');
-      setCity('Lahore');
-      setLoading(false);
-    }, 1000);
-  };
+  // const handleMapPress = async (e: MapPressEvent) => {
+  //   const { latitude, longitude } = e.nativeEvent.coordinate;
+  //   setMarker({ latitude, longitude });
+  //   setLoading(true);
+  //   // TODO: Replace with real reverse geocoding API call
+  //   // Example: fetch address from Google Geocoding API
+  //   // For now, use placeholder
+  //   setTimeout(() => {
+  //     setAddress('87W8+C9, Block M 8 Khan Wardag Dera Afghana, Lahore, باكستان');
+  //     setCity('Lahore');
+  //     setLoading(false);
+  //   }, 1000);
+  // };
 
   const handleClear = () => {
     setMarker(null);
@@ -68,12 +68,12 @@ const MapTab = () => {
         />
         {marker && (
           <TouchableOpacity style={styles.clearButton} onPress={handleClear}>
-            <Icon name="close" size={22} color="#333" />
+            {/* <Icon name="close" size={22} color="#333" /> */}
           </TouchableOpacity>
         )}
       </View>
       {/* Map */}
-      <MapView
+      {/* <MapView
         ref={mapRef}
         style={styles.map}
         initialRegion={region}
@@ -82,7 +82,7 @@ const MapTab = () => {
         showsUserLocation
       >
         {marker && <Marker coordinate={marker} />}
-      </MapView>
+      </MapView> */}
       {/* Address Card below map */}
       <View style={styles.cardContainer}>
         <Text style={styles.cardTitle}>موقع الزيارة</Text>

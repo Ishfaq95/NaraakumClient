@@ -63,6 +63,8 @@
 	<string>Access to your photo library is needed to save images of medical reports or other patient-related files directly to your device for future reference.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Access to your photo library is required to select images of medical reports and other files for uploading and managing patient records within the app.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
