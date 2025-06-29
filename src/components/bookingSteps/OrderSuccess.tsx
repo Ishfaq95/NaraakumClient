@@ -63,18 +63,20 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
   };
 
   const handleTrackOrder = () => {
-    // Navigate to appointment tab with deep linking
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'MainTabNavigator', params: { screen: 'AppointmentTab' } }],
+    navigation.navigate(ROUTES.AppNavigator, {
+      screen: ROUTES.HomeStack,
+      params: {
+        screen: ROUTES.AppointmentListScreen,
+      }
     });
   };
 
   const handleBackToHome = () => {
-    // Navigate to appointment tab instead of going back
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'MainTabNavigator', params: { screen: 'AppointmentTab' } }],
+    navigation.navigate(ROUTES.AppNavigator, {
+      screen: ROUTES.HomeStack,
+      params: {
+        screen: ROUTES.AppointmentListScreen,
+      }
     });
   };
 

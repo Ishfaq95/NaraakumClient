@@ -1,6 +1,6 @@
 import OnlineDoctorIcon from '../assets/icons/OnlineDoctorIcon';
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 interface ServiceCardProps {
@@ -18,7 +18,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ item, style, onPress }) => {
         end={{ x: 1, y: 0 }}
         style={[styles.card, style]}
       >
-        <View style={{ height: '45%' }}>
+        <View style={[{ height: '45%' },Platform.OS === 'ios' ? {paddingLeft:30} : {}]}>
           <Text style={{ fontSize: 16,alignSelf:'flex-start', fontWeight: 'bold', color: '#209092' }}>خدمات</Text>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.subtitle}>{item.description}</Text>
@@ -35,10 +35,11 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ item, style, onPress }) => {
 
 const styles = StyleSheet.create({
   card: {
-    height: 300,
-    width: '100%',
+    height: Platform.OS === 'ios' ? 300 : 300,
+    width:'100%',
     borderRadius: 16,
-    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 0 : 10,
+    paddingHorizontal: Platform.OS === 'ios' ? 16 : 16,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

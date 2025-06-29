@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, ScrollView, FlatList, I18nManager } from 'react-native'
+import { View, Text, SafeAreaView, TouchableOpacity, StyleSheet, ScrollView, FlatList, I18nManager, Platform } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import Header from '../../components/common/Header';
@@ -110,7 +110,7 @@ const Services = ({ navigation }: any) => {
                         contentContainerStyle={{ padding: 10 }}
                     />
                 ) : (
-                    <ScrollView>
+                    <ScrollView showsVerticalScrollIndicator={false}>
                         <View style={styles.servicesContainer}>
                             {services.map(service => (
                                 <ServiceCard
@@ -155,8 +155,8 @@ export const styles = StyleSheet.create({
         elevation: 5,
     },
     servicesContainer: {
-        padding: 10,
-        paddingTop: 20,
+        padding: Platform.OS === 'ios' ? 0 : 10,
+        paddingTop: Platform.OS === 'ios' ? 20 : 20,
     },
     serviceItem: {
         height: 300,
