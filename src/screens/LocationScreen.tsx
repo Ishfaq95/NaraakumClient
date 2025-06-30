@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import Header from '../components/common/Header';
 import MapTab from '../components/LocationTabs/MapTab';
-import ButtonTab from '../components/LocationTabs/ButtonTab';
+import SavedAddresses from '../components/LocationTabs/SavedAddresses';
 import ArrowRightIcon from '../assets/icons/RightArrow';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '../shared/utils/routes';
 
 const TABS = [
     { key: 'map', label: 'الخريطة' },
@@ -29,6 +30,10 @@ const LocationScreen = ({ navigation }: any) => {
         />
     );
 
+    const onPressLocation = () => {
+        navigation.navigate(ROUTES.BookingScreen);
+    }
+
     return (
         <SafeAreaView style={styles.container}>
 
@@ -45,7 +50,7 @@ const LocationScreen = ({ navigation }: any) => {
                 ))}
             </View>
             <View style={{ flex: 1 }}>
-                {activeTab === 'map' ? <MapTab /> : <ButtonTab />}
+                {activeTab === 'map' ? <MapTab onPressLocation={() => onPressLocation()} /> : <SavedAddresses onPressLocation={() => onPressLocation()} />}
             </View>
         </SafeAreaView>
 

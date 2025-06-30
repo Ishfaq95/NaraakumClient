@@ -13,34 +13,56 @@ const Specialties = ({onPressSpecialty}: {onPressSpecialty: (specialty: any) => 
   const [search, setSearch] = useState('');
   const [offeredServices, setOfferedServices] = useState<any>(null);
   const [specialties, setSpecialties] = useState<any[]>([]);
+  const [offeredServicesData, setOfferedServicesData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
+
+  console.log('category', category);
   
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const offered = await bookingService.getOfferedServicesListByCategory({ abc: category?.Id, Search: '' });
-        const specs = await bookingService.getAllSpecialties();
-        setOfferedServices(offered);
-        // Merge CatLevelId==3 object at the start of specialties
-        let merged = Array.isArray(specs?.list) ? [...specs.list] : [];
-        const general = offered?.OfferedServices?.find((item: any) => item.CatLevelId === 3);
-        if (general) {
-          merged = [general, ...merged];
-        }
-        dispatch(setServices(offered.OfferedServices));
-        setSpecialties(merged); 
-      } catch (error) {
-        console.error('Error fetching booking data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     if (category) {
-      fetchData();
+      if(category.Id == "42" || category.Id == "32") {
+      fetchServicesAndSpecialtiesData();
+      }else{
+        fetchOfferedServicesData();
+      }
     }
   }, [category]);
+
+  const fetchServicesAndSpecialtiesData = async () => {
+    try {
+      setLoading(true);
+      const offered = await bookingService.getOfferedServicesListByCategory({ abc: category?.Id, Search: '' });
+      const specs = await bookingService.getAllSpecialties();
+      setOfferedServices(offered);
+      // Merge CatLevelId==3 object at the start of specialties
+      let merged = Array.isArray(specs?.list) ? [...specs.list] : [];
+      const general = offered?.OfferedServices?.find((item: any) => item.CatLevelId === 3);
+      if (general) {
+        merged = [general, ...merged];
+      }
+      dispatch(setServices(offered.OfferedServices));
+      setSpecialties(merged); 
+    } catch (error) {
+      console.error('Error fetching booking data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchOfferedServicesData = async () => {
+    try {
+      setLoading(true);
+      const offered = await bookingService.getOfferedServicesListByCategory({ abc: category?.Id, Search: '' });
+      console.log('offered', offered);
+      setOfferedServicesData(offered);
+      // dispatch(setServices(offered.OfferedServices));
+    } catch (error) {
+      console.error('Error fetching booking data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Filter specialties by search
   const filteredSpecialties = useMemo(() => {
@@ -49,6 +71,14 @@ const Specialties = ({onPressSpecialty}: {onPressSpecialty: (specialty: any) => 
       (item.TitleSlang || '').toLowerCase().includes(search.toLowerCase())
     );
   }, [search, specialties]);
+
+  // Filter offeredServicesData by search
+  const filteredOfferedServices = useMemo(() => {
+    if (!search) return offeredServicesData?.OfferedServices || [];
+    return (offeredServicesData?.OfferedServices || []).filter((item: any) =>
+      (item.TitleSlang || '').toLowerCase().includes(search.toLowerCase())
+    );
+  }, [search, offeredServicesData]);
 
   const getSanitizedImageUrl = (path: string) => {
     if (!path) return '';
@@ -90,6 +120,7 @@ const Specialties = ({onPressSpecialty}: {onPressSpecialty: (specialty: any) => 
       />
       <View style={{ flex: 1, paddingTop: 12 }}>
         
+      {(category.Id == "42" || category.Id == "32") ?
       <FlatList
         data={filteredSpecialties}
         renderItem={renderItem}
@@ -98,7 +129,16 @@ const Specialties = ({onPressSpecialty}: {onPressSpecialty: (specialty: any) => 
         columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12, columnGap: 8 }}
         contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}
-      />
+      />:
+      <FlatList
+        data={filteredOfferedServices}
+        renderItem={renderItem}
+        keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
+        numColumns={2}
+        columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12, columnGap: 8 }}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
+        showsVerticalScrollIndicator={false}
+      />}
       </View>
       <FullScreenLoader visible={loading} />
     </View>

@@ -41,5 +41,6 @@
   "transaction_amount":"Transaction amount",
   "booking_successful":"Booking successful",
   "track_order":"Track Order",
-  "download_invoice":"Download the invoice"
+  "download_invoice":"Download the invoice",
+  "savedAddresses":"Select one of the saved addresses"
 }

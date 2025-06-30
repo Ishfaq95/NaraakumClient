@@ -130,7 +130,18 @@ export const deleteOrderMainBeforePayment = async (payload: any): Promise<any> =
     }
 };
 
-    export const bookingService = {
+export const getUserSavedAddresses = async (payload: any): Promise<any> => {
+    console.log(payload);
+    try {
+        const response = await axiosInstance.post('user/GetUserLocations', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error deleting order before payment:', error);
+        throw error;
+    }
+};
+
+export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
     getAllSpecialties,
@@ -141,5 +152,6 @@ export const deleteOrderMainBeforePayment = async (payload: any): Promise<any> =
     updateOrderMainBeforePayment,
     updateOrderMainToCheckOut,
     getUnPaidUserOrders,
-    deleteOrderMainBeforePayment
+    deleteOrderMainBeforePayment,
+    getUserSavedAddresses
 }; 

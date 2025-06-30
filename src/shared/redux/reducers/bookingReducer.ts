@@ -9,6 +9,7 @@ interface CardItem {
   provider: any; // Full provider object
   selectedSpecialtyOrService: any; // Now each cardItem has its own
   availability: any;
+  selectedLocation: any;
 }
 
 interface State {
@@ -18,6 +19,7 @@ interface State {
   apiResponse: any;
   tempSlotDetail: any;
   selectedUniqueId: any;
+  selectedLocation: any;
 }
 
 const initialState = {
@@ -27,6 +29,7 @@ const initialState = {
   apiResponse: null,
   tempSlotDetail: null,
   selectedUniqueId: null,
+  selectedLocation: null,
 } as State;
 
 export const bookingReducer = createSlice({
@@ -61,9 +64,12 @@ export const bookingReducer = createSlice({
     },
     setSelectedUniqueId: (state, action) => {
       state.selectedUniqueId = action.payload;
+    },
+    setSelectedLocation: (state, action) => {
+      state.selectedLocation = action.payload;
     }
   },
 });
 
-export const {setCategory, setServices, addCardItem, removeCardItem, clearCardItems, setApiResponse, prependCardItems, manageTempSlotDetail, setSelectedUniqueId} = bookingReducer.actions;
+export const {setCategory, setServices, addCardItem, removeCardItem, clearCardItems, setApiResponse, prependCardItems, manageTempSlotDetail, setSelectedUniqueId, setSelectedLocation} = bookingReducer.actions;
 export default bookingReducer.reducer;

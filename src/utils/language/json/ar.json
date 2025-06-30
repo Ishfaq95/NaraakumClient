@@ -45,5 +45,6 @@
   "transaction_amount":"مبلغ المعاملة",
   "booking_successful":"تم الحجز بنجاح",
   "track_order":"تتبع الطلب",
-  "download_invoice":"تحميل الفاتورة"
+  "download_invoice":"تحميل الفاتورة",
+  "savedAddresses":"اختر احد العنواين المسجلة"
 }
