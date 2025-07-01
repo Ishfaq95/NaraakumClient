@@ -8,11 +8,29 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1417A200EA094EE4B24F5CCB /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		2FCC8615A42A4D4E8C80FCC3 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		30C068B6DC0F4AAD93F85166 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
 		330D9FCB9662FE2C9F85C55A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 94E6BEDD9D7EACDB0834334C /* PrivacyInfo.xcprivacy */; };
+		454359546053408F9B854C54 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		5466456D882E47C68306DE29 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		5625E0F318A34E7DBCD9C527 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		565C3A6EC3304161A1929012 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		5FBBDA81A58445A69EB6E5DD /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		6A1891A9416A4145A2AFFE99 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		6B59C7D2D34D4E70BE495142 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		74F66C0FB2F34D048A67ED25 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		80C93EC62CC7957300EB637C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 80C93EC52CC7957200EB637C /* GoogleService-Info.plist */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		87F0F3033C9600F327B9D723 /* Pods_Naraakum_client.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88453F941C004938BE965E6D /* Pods_Naraakum_client.framework */; };
+		8835E033A2734F22AF1CDD10 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		91F8F1D1515B41B88C203947 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		9256F53735694C4C9DE4837F /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		97C80975A86045169571DE94 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		A5E3B671C9814507993E59CA /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		D7B85106524C42F3B5513FD1 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
+		DE401380BAEB4F29B5429692 /* BuildFile in Resources */ = {isa = PBXBuildFile; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -82,6 +100,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				D84269C2DC9F40048D3660D9 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -103,6 +122,14 @@
 				0F6433622B29E809CD662E3A /* Pods-Naraakum_client.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		D84269C2DC9F40048D3660D9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Resources;
+			path = "";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -171,6 +198,24 @@
 				80C93EC62CC7957300EB637C /* GoogleService-Info.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				330D9FCB9662FE2C9F85C55A /* PrivacyInfo.xcprivacy in Resources */,
+				9256F53735694C4C9DE4837F /* BuildFile in Resources */,
+				5FBBDA81A58445A69EB6E5DD /* BuildFile in Resources */,
+				D7B85106524C42F3B5513FD1 /* BuildFile in Resources */,
+				6A1891A9416A4145A2AFFE99 /* BuildFile in Resources */,
+				5466456D882E47C68306DE29 /* BuildFile in Resources */,
+				91F8F1D1515B41B88C203947 /* BuildFile in Resources */,
+				454359546053408F9B854C54 /* BuildFile in Resources */,
+				1417A200EA094EE4B24F5CCB /* BuildFile in Resources */,
+				74F66C0FB2F34D048A67ED25 /* BuildFile in Resources */,
+				6B59C7D2D34D4E70BE495142 /* BuildFile in Resources */,
+				5625E0F318A34E7DBCD9C527 /* BuildFile in Resources */,
+				97C80975A86045169571DE94 /* BuildFile in Resources */,
+				DE401380BAEB4F29B5429692 /* BuildFile in Resources */,
+				A5E3B671C9814507993E59CA /* BuildFile in Resources */,
+				2FCC8615A42A4D4E8C80FCC3 /* BuildFile in Resources */,
+				565C3A6EC3304161A1929012 /* BuildFile in Resources */,
+				30C068B6DC0F4AAD93F85166 /* BuildFile in Resources */,
+				8835E033A2734F22AF1CDD10 /* BuildFile in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -13,6 +13,7 @@ import org.devio.rn.splashscreen.SplashScreenReactPackage
 import live.videosdk.rnwebrtc.WebRTCModulePackage;
 import com.facebook.react.modules.i18nmanager.I18nUtil
 import com.christopherdro.htmltopdf.RNHTMLtoPDFPackage;
+import com.oblador.vectoricons.VectorIconsPackage;
 
 class MainApplication : Application(), ReactApplication {
 
@@ -22,6 +23,7 @@ class MainApplication : Application(), ReactApplication {
             PackageList(this).packages.apply {
               // Manually add AlarmPackage to the list of packages
               add(WebRTCModulePackage())
+              add(VectorIconsPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

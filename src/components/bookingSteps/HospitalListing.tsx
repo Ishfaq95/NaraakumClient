@@ -109,7 +109,7 @@ const TIME_SLOTS = [
   { label: '04:00 م', value: '16:00' },
 ];
 
-const DoctorListing = ({ onPressNext, onPressBack }: any) => {
+const HospitalListing = ({ onPressNext, onPressBack }: any) => {
   const [selectedDate, setSelectedDate] = useState<Moment>(moment());
   const [days, setDays] = useState<DayItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -144,7 +144,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [displayCategory, setDisplayCategory] = useState<any>(null);
   const dispatch = useDispatch();
   const createOrderMainBeforePayment = async () => {
-    
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
@@ -152,7 +151,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
     
     const response = await bookingService.createOrderMainBeforePayment(payload);
-    
     dispatch(setApiResponse(response.Data))
     onPressNext();
   }
@@ -196,8 +194,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }, [user]);
 
   useEffect(() => {
-    console.log("serviceProviders",serviceProviders.length)
-    console.log("availability",availability.length)
     if (serviceProviders.length > 0 && availability.length > 0) {
       getSlotsWithProvider()
     }
@@ -225,7 +221,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           ...provider,
           slots: DoctorAvailable
         }
-        console.log("tempDoctorObj",tempDoctorObj)
+        
         tempProvider.push(tempDoctorObj)
       }
     })
@@ -273,9 +269,16 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }
 
   const getServiceIds = () => {
+    if (SelectedCardItem[0]?.CatLevelId === 3) {
+      // If level 3 is selected, return only that service ID
+      return SelectedCardItem[0]?.Id;
+    } else {
+      // Otherwise, return all service IDs except level 3, comma-separated
       return services
+        .filter((service: any) => service?.CatLevelId !== 3)
         .map((service: any) => service.Id)
         .join(',');
+    }
   };
 
   useEffect(() => {
@@ -284,7 +287,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setDisplayCategory(displayCategory);
     // Call both APIs when component mounts
     
-    if (displayCategory?.Display == "CP") {
+    if (displayCategory?.Display == "CP" && services.length > 0) {
       fetchServiceProviders();
       fetchInitialAvailability();
     }else{
@@ -324,21 +327,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     filterAvailabilityForDate(date ? moment(date) : moment(), response?.SchedulingAvailability || []);
   }
 
-  const getServiceIdsFromCardArray = () => {
-    const serviceIds = SelectedCardItem.map((item: any) => item.CatServiceId);
-    return serviceIds.join(',');
-  }
-
   const fetchServiceProviders = async () => {
     try {
       setLoading(true);
-      let serviceIds = "";
-      if(services == null){
-        serviceIds = getServiceIdsFromCardArray();
-      }else{
-        serviceIds = getServiceIds();
-      }
-      
+      const serviceIds = getServiceIds();
       let requestBody: any = {};
       if (SelectedCardItem[0]?.CatLevelId == 3) {
         requestBody = {
@@ -353,7 +345,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           PageSize: 100,
         }
       } else {
-         requestBody = {
+        requestBody = {
           CatcategoryId: category.Id,
           ServiceIds: serviceIds,
           Search: searchQuery,
@@ -363,13 +355,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           Gender: 2,
           PageNumber: 0,
           PageSize: 100,
-          SpecialtyIds: SelectedCardItem[0]?.CatSpecialtyId || 0
+          SpecialtyIds: SelectedCardItem[0]?.CatSpecialtyId
         }
       }
 
-      console.log("requestBody",requestBody)
+      
       const response = await bookingService.getServiceProviderListByService(requestBody);
-      console.log("response",response)
+      
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
       console.error('Error fetching service providers:', error);
@@ -381,12 +373,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const fetchInitialAvailability = async (date?: any) => {
     try {
       setLoader2(true);
-      let serviceIds = "";
-      if(services == null){
-        serviceIds = getServiceIdsFromCardArray();
-      }else{
-        serviceIds = getServiceIds();
-      }
+      const serviceIds = getServiceIds();
 
       const requestBody = {
         CatServiceId: serviceIds,
@@ -591,7 +578,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }else{
       return selectedSlotInfo ? false : true
     }
-  }, [selectedSlotInfo,CardArray])
+  }, [selectedSlotInfo])
+
+  console.log("displayCategory?.Display", displayCategory?.Display);
+  console.log("serviceProviders.length",serviceProviders.length)
+  console.log("hospitalList.length",hospitalList.length)
+  console.log("filteredProviders",filteredProviders)
+
 
   return (
     <View style={styles.mainContainer}>
@@ -660,6 +653,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             const providerAvailability = availability.flatMap(avail =>
               avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
             );
+
+            console.log("item", item);
+            console.log("providerAvailability", providerAvailability);
   
             return <ServiceProviderCard
               provider={item}
@@ -1076,4 +1072,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DoctorListing; 
+export default HospitalListing; 

@@ -262,7 +262,8 @@ export const formatTime = (timeString: string) => {
 };
 
 export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
-
+  
+  const selectedLocation = store.getState().root.booking.selectedLocation;
   const payload = CardArray.map((item: any) => {
     // Convert time from 12-hour format with Arabic AM/PM to 24-hour format
     let schedulingTime = item.SchedulingTime;
@@ -340,8 +341,8 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
       "SchedulingTime": schedulingTimeUTC,
       "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId,
       "AvailabilityId": item.AvailabilityId,
-      "OrderAddress": "",
-      "OrderAddressGoogleLocation": "",
+      "OrderAddress": selectedLocation?.address || "",
+      "OrderAddressGoogleLocation": selectedLocation?.latitude + "," + selectedLocation?.longitude || "",
       "saveinAddress": false
     })
   })
@@ -372,9 +373,9 @@ export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) =
       "AvailabilityId": item.AvailabilityId,
       "PatientUserProfileInfoId": item.PatientUserProfileInfoId,
       "TextDescription": item.TextDescription,
-      "OrderAddress": item.OrderAddress,
-      "OrderAddressArea": item.OrderAddressArea,
-      "OrderAddressGoogleLocation": item.OrderAddressGoogleLocation,
+      "OrderAddress": item.Address,
+      "OrderAddressArea": item.Area,
+      "OrderAddressGoogleLocation": item.GoogleLocation,
       "saveinAddress": false
     })
   })
@@ -393,7 +394,7 @@ export const generatePayloadForCheckOut = (CardArray: any) => {
       "CatCategoryTypeId": item.CatCategoryTypeId,
       "OrganizationServiceId": item.OrganizationServiceId,
       "ServiceCharges": item.ServiceCharges,
-      "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId,
+      "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId || 0,
       "CatSpecialtyId": item.CatSpecialtyId,
       "OrganizationSpecialtiesId": item.OrganizationSpecialtiesId || 0,
       "OrganizationPackageId": item.OrganizationPackageId || 0,
@@ -404,9 +405,9 @@ export const generatePayloadForCheckOut = (CardArray: any) => {
       "AvailabilityId": item.AvailabilityId || 0,
       "PatientUserProfileInfoId": item.PatientUserProfileInfoId,
       "TextDescription": item.TextDescription,
-      "OrderAddress": item.OrderAddress || "",
-      "OrderAddressArea": item.OrderAddressArea || "",
-      "OrderAddressGoogleLocation": item.OrderAddressGoogleLocation || "",
+      "OrderAddress": item.OrderAddress || "200 Geary St, San Francisco, CA 94102، الولايات المتحدة",
+      "OrderAddressArea": item.OrderAddressArea || "200 Geary St, San Francisco, CA 94102، الولايات المتحدة",
+      "OrderAddressGoogleLocation": item.OrderAddressGoogleLocation || "37.785834,-122.406417",
       "saveinAddress": false,
       "PromoCodeMainId": item.PromoCodeMainId || null,
       "DiscountAmount": item.DiscountAmount || null,

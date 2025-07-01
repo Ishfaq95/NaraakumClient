@@ -59,7 +59,6 @@ const MapTab = ({ onPressLocation }: { onPressLocation: () => void }) => {
         getAddressFromCoordinates(latitude, longitude);
       },
       (error) => {
-        console.log('Error getting location:', error);
         Alert.alert('Location Error', 'Unable to get your current location. Please select a location on the map.');
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
@@ -103,7 +102,6 @@ const MapTab = ({ onPressLocation }: { onPressLocation: () => void }) => {
         setCity('موقع غير معروف');
       }
     } catch (error) {
-      console.log('Error getting address:', error);
       // Fallback if API call fails
       setAddress(`الموقع (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
       setCity('موقع غير معروف');

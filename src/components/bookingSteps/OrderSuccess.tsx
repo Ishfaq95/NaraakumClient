@@ -10,7 +10,6 @@ import { ROUTES } from '../../shared/utils/routes';
 import moment from 'moment';
 
 const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
-  console.log("SuccessResponse",SuccessResponse)
   const { t } = useTranslation();
 
   const handleDownloadInvoice = async () => {
@@ -97,7 +96,8 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{flex:1,paddingHorizontal:16,alignItems:"center", }}>
-        <View style={styles.gifContainer}>
+        <Text>Order Success</Text>
+        {/* <View style={styles.gifContainer}>
           <LottieAnimation
             source={LOTTIE_ANIMATIONS.ORDER_SUCCESS}
             style={styles.successLottie}
@@ -143,7 +143,7 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
           >
             <Text style={{color:'#fff',textAlign:'center'}}>{t('track_order')}</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
     </SafeAreaView>
   )

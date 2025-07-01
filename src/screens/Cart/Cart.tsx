@@ -16,7 +16,6 @@ const CartScreen = () => {
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
 
-
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
       try {
@@ -108,7 +107,7 @@ const CartScreen = () => {
     return (
       <View style={styles.cardItem}>
         <View style={styles.cardItemContent}>
-          <Text style={styles.providerName}>{String(item?.ServiceProviderFullnameSlang || '')}</Text>
+          <Text style={styles.providerName}>{String(item?.ServiceProviderFullnameSlang || item?.orgTitleSlang || '')}</Text>
           {item?.ServiceProviderUserloginInfoId && <View style={styles.slotInfoContainer}>
             <Text style={styles.slotInfo}>{displayTime || item?.SchedulingTime}</Text>
             <Text style={styles.dateInfo}>{displayDate || item?.SchedulingDate}</Text>

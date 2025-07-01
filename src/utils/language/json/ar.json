@@ -46,5 +46,6 @@
   "booking_successful":"تم الحجز بنجاح",
   "track_order":"تتبع الطلب",
   "download_invoice":"تحميل الفاتورة",
-  "savedAddresses":"اختر احد العنواين المسجلة"
+  "savedAddresses":"اختر احد العنواين المسجلة",
+  "service_details":"تفاصيل الخدمة"
 }

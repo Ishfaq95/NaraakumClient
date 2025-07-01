@@ -1,5 +1,16 @@
 import axiosInstance from "../axios/axiosConfig";
 
+export const categoriesList = [
+    { Id: 10, Name: "Nursing Visit", Display: "HP", CatLinkingTypeId: "3", CatCategoryTypeId: "3" }, //New Request --payment received
+    { Id: 32, Name: "Doctor Visit", Display: "CP", CatLinkingTypeId: "2", CatCategoryTypeId: "2" },
+    //{ Id: 33, Name: "Telemedicine", Display: "CP", CatLinkingTypeId: "2", CatCategoryTypeId:"2"},
+    { Id: 34, Name: "Physiotherapy", Display: "CP", CatLinkingTypeId: "1", CatCategoryTypeId: "3" },
+    { Id: 35, Name: "Laboratory Analysis", Display: "HP", CatLinkingTypeId: "3", CatCategoryTypeId: "1" },
+    { Id: 36, Name: "Caregiver", Display: "CP", CatLinkingTypeId: "1", CatCategoryTypeId: "3" },
+    { Id: 41, Name: "Home dialysis", NameSLang: "غسيل الكلي المنزلي", Display: "HP", CatLinkingTypeId: "1", CatCategoryTypeId: "3" },
+    { Id: 42, Name: "Remote Consultation", NameSLang: "استشارة عن بعد ", Display: "CP", CatLinkingTypeId: "2", CatCategoryTypeId: "4" },
+]
+
 export const getServices = async (): Promise<any> => {
     try {
         const response = await axiosInstance.get('offeredServices/GetOfferedServicesCategories');
@@ -131,9 +142,31 @@ export const deleteOrderMainBeforePayment = async (payload: any): Promise<any> =
 };
 
 export const getUserSavedAddresses = async (payload: any): Promise<any> => {
-    console.log(payload);
+    
     try {
         const response = await axiosInstance.post('user/GetUserLocations', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error deleting order before payment:', error);
+        throw error;
+    }
+};
+
+export const getOrganizationSchedulingAvailability = async (payload: any): Promise<any> => {
+    
+    try {
+        const response = await axiosInstance.post('organization/GetOrganizationSchedulingAvailability', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error deleting order before payment:', error);
+        throw error;
+    }
+};
+
+export const getHospitalListByServices = async (payload: any): Promise<any> => {
+    
+    try {
+        const response = await axiosInstance.post('offeredServices/GetHospitalListByServices', payload);
         return response.data;
     } catch (error: any) {
         console.error('Error deleting order before payment:', error);
@@ -153,5 +186,7 @@ export const bookingService = {
     updateOrderMainToCheckOut,
     getUnPaidUserOrders,
     deleteOrderMainBeforePayment,
-    getUserSavedAddresses
+    getUserSavedAddresses,
+    getOrganizationSchedulingAvailability,
+    getHospitalListByServices
 }; 

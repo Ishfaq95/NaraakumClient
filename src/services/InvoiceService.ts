@@ -400,8 +400,6 @@ const generateInvoicePDF = async (data: InvoiceData): Promise<string> => {
     const html = generateInvoiceHTML(data);
     const fileName = `Naraakum_Invoice_${data.OrderId}`;
 
-    console.log("html", html);
-
     const options = {
       html,
       fileName,
@@ -412,7 +410,7 @@ const generateInvoicePDF = async (data: InvoiceData): Promise<string> => {
     const file = await RNHTMLtoPDF.convert(options);
 
     if (file.filePath) {
-      console.log('PDF generated successfully:', file.filePath);
+      
       return file.filePath;
     } else {
       throw new Error('Failed to generate PDF');
@@ -486,9 +484,7 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
         try {
           destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
           await RNFS.copyFile(filePath, destinationPath);
-          console.log('File saved to external Downloads:', destinationPath);
         } catch (externalError) {
-          console.log('External storage failed, trying internal:', externalError);
           // Fallback to internal Downloads
           destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
           await RNFS.copyFile(filePath, destinationPath);
@@ -517,16 +513,13 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
 };
 
 // Generate and download invoice
-export const generateAndDownloadInvoice = async (data: InvoiceData) => {
-  console.log("data", data);
+export const generateAndDownloadInvoice = async (data: InvoiceData) => {  
   try {
     const filePath = await generateInvoicePDF(data);
     const fileName = `Naraakum_Invoice_${data.OrderId}`;
-
-    console.log("filePath", filePath);
+  
     const downloadPath = await downloadFile(filePath, fileName);
-    console.log("Downloaded to:", downloadPath);
-
+    
     return downloadPath;
   } catch (error) {
     console.error('Error in generateAndDownloadInvoice:', error);

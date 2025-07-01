@@ -57,8 +57,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const selectedDoctor: any = showGroupedArray[selectedIndex];
   const dispatch = useDispatch();
 
-  console.log("CardArray===>", user)
-
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
       try {
@@ -97,6 +95,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           // Dispatch the updated array
           const groupedArray: any = groupArrayByUniqueIdAsArray(updatedCardItems);
           setShowGroupedArray(groupedArray);
+          console.log("groupedArray", groupedArray);
           dispatch(addCardItem(updatedCardItems));
         }
       } catch (error) {
@@ -271,8 +270,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const phoneInfo = extractPhoneInfo(user?.CellNumber || '');
   const defaultCountryCode = phoneInfo.countryCode;
   const defaultPhoneNumber = phoneInfo.phoneNumber;
-
-  console.log("selectedDoctor===>", selectedDoctor?.items?.length)
 
   return (
     <View style={styles.container}>

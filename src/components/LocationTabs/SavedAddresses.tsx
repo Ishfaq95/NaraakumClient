@@ -42,7 +42,6 @@ const SavedAddresses = ({ onPressLocation }: { onPressLocation: () => void }) =>
     dispatch(setSelectedLocation(locationObject));
 
     onPressLocation();
-    console.log('onPressConfirmLocation', locationObject);
   }
 
   const renderItem = ({ item }: { item: any }) => {
