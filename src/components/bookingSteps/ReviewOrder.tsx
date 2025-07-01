@@ -95,7 +95,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           // Dispatch the updated array
           const groupedArray: any = groupArrayByUniqueIdAsArray(updatedCardItems);
           setShowGroupedArray(groupedArray);
-          console.log("groupedArray", groupedArray);
+          
           dispatch(addCardItem(updatedCardItems));
         }
       } catch (error) {

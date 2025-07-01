@@ -580,12 +580,6 @@ const HospitalListing = ({ onPressNext, onPressBack }: any) => {
     }
   }, [selectedSlotInfo])
 
-  console.log("displayCategory?.Display", displayCategory?.Display);
-  console.log("serviceProviders.length",serviceProviders.length)
-  console.log("hospitalList.length",hospitalList.length)
-  console.log("filteredProviders",filteredProviders)
-
-
   return (
     <View style={styles.mainContainer}>
       <View style={styles.container}>
@@ -653,9 +647,6 @@ const HospitalListing = ({ onPressNext, onPressBack }: any) => {
             const providerAvailability = availability.flatMap(avail =>
               avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
             );
-
-            console.log("item", item);
-            console.log("providerAvailability", providerAvailability);
   
             return <ServiceProviderCard
               provider={item}

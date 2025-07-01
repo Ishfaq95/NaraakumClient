@@ -116,7 +116,7 @@ const BookingScreen = ({ navigation }: any) => {
     }else{
       const getServices= services.filter((service: any) => service.CatLevelId != 3);
       const getServicesWithNurse= getServices.filter((service: any) => service.iswithNurse == withNurse);
-      console.log("getServices",getServicesWithNurse)
+      
       const cardItem = {
         ...selectedSpecialty,
         "ItemUniqueId": generateUniqueId(),

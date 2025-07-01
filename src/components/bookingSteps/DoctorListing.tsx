@@ -196,8 +196,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }, [user]);
 
   useEffect(() => {
-    console.log("serviceProviders",serviceProviders.length)
-    console.log("availability",availability.length)
     if (serviceProviders.length > 0 && availability.length > 0) {
       getSlotsWithProvider()
     }
@@ -225,7 +223,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           ...provider,
           slots: DoctorAvailable
         }
-        console.log("tempDoctorObj",tempDoctorObj)
+        
         tempProvider.push(tempDoctorObj)
       }
     })
@@ -367,9 +365,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         }
       }
 
-      console.log("requestBody",requestBody)
+      
       const response = await bookingService.getServiceProviderListByService(requestBody);
-      console.log("response",response)
+      
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
       console.error('Error fetching service providers:', error);
