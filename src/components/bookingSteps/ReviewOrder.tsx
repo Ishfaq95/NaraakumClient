@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, Alert } from 'react-native';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
 import SettingIconSelected from '../../assets/icons/SettingIconSelected';
@@ -166,8 +166,12 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
     const response = await bookingService.updateOrderMainBeforePayment(payload);
 
-    dispatch(setApiResponse(response.Data))
-    onPressNext();
+    if(response.ResponseStatus.STATUSCODE == 200){
+      dispatch(setApiResponse(response.Data))
+      onPressNext();
+    }else{
+      Alert.alert(response.ResponseStatus.MESSAGE)
+    }
   }
 
   useEffect(() => {

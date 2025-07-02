@@ -134,7 +134,10 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const cardItems = useSelector((state: any) => state.root.booking.cardItems);
   const tempSlotDetail = useSelector((state: any) => state.root.booking.tempSlotDetail);
   const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
-  const selectedCard = CardArray.find((item: any) => item.ItemUniqueId === selectedUniqueId);
+  const selectedCard = CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId);
+  const category = useSelector((state: any) => state.root.booking.category);
+
+  console.log("selectedCard",selectedCard)
 
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
@@ -252,6 +255,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     dispatch(addCardItem(updatedCardArray));
   }
 
+  const calculateTotalPrice = (pricesString: string): number => {
+    if (!pricesString) return 0;
+    const prices = pricesString.split(',').map(price => parseFloat(price.trim()) || 0);
+    return prices.reduce((sum, price) => sum + price, 0);
+  };
 
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
@@ -280,71 +288,80 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           </View>
         </View>
       </View>
-      {selectedCard.CatLevelId == 3 ?
-        <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
-          <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
-            {isRTL ? `سعر ${Number(provider.Prices).toFixed(0)}` : `Price ${Number(provider.Prices).toFixed(0)}`}
-          </Text>
-        </View> :
-        <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
-          {(() => {
-            const serviceIds = provider.ServiceIds.split(',');
-            const prices = provider.Prices.split(',');
+      {category.Id != "42" && category.Id != "32" ?
 
-            // Filter out services that don't exist in the services array or don't have a valid price
-            const validServices = serviceIds.map((id, index) => {
-              const service = services.find((s: Service) => s.Id === id);
-              const price = prices[index];
-              // Only include if both service and price exist and price is a valid number
-              if (service && price && !isNaN(Number(price))) {
-                return {
-                  id,
-                  price,
-                  title: isRTL ? service.TitleSlang : service.TitlePlang
-                };
-              }
-              return null;
-            }).filter((service): service is { id: string; price: string; title: string } => service !== null);
+        <>
+          <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
+            <Text style={[styles.priceText, { textAlign: 'left' }]}>
+              {/* {isRTL ? `سعر ${calculateTotalPrice(provider?.Prices).toFixed(0)}` : `Price ${calculateTotalPrice(provider?.Prices).toFixed(0)}`} */}
+            </Text>
+          </View>
+        </>
+        : selectedCard[0].CatLevelId == 3 ?
+          <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
+            <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
+              {isRTL ? `سعر ${Number(provider.Prices).toFixed(0)}` : `Price ${Number(provider.Prices).toFixed(0)}`}
+            </Text>
+          </View> :
+          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
+            {(() => {
+              const serviceIds = provider.ServiceIds.split(',');
+              const prices = provider.Prices.split(',');
 
-            if (validServices.length === 1) {
-              const service = validServices[0];
-              return (
-                <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '100%', justifyContent: 'center' }}>
-                  <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
-                    {`${service.title}: ${Number(service.price).toFixed(0)}`}
-                  </Text>
-                  <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox]}>
-                    {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && <CheckIcon width={12} height={12} />}
-                  </TouchableOpacity>
-                </View>
-              );
-            } else if (validServices.length === 2) {
-              const [firstService, secondService] = validServices;
-              return (
-                <>
-                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '46%' }}>
+              // Filter out services that don't exist in the services array or don't have a valid price
+              const validServices = serviceIds.map((id, index) => {
+                const service = services.find((s: Service) => s.Id === id);
+                const price = prices[index];
+                // Only include if both service and price exist and price is a valid number
+                if (service && price && !isNaN(Number(price))) {
+                  return {
+                    id,
+                    price,
+                    title: isRTL ? service.TitleSlang : service.TitlePlang
+                  };
+                }
+                return null;
+              }).filter((service): service is { id: string; price: string; title: string } => service !== null);
+
+              if (validServices.length === 1) {
+                const service = validServices[0];
+                return (
+                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '100%', justifyContent: 'center' }}>
                     <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
-                      {`${firstService.title}: ${Number(firstService.price).toFixed(0)}`}
+                      {`${service.title}: ${Number(service.price).toFixed(0)}`}
                     </Text>
                     <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox]}>
                       {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && <CheckIcon width={12} height={12} />}
                     </TouchableOpacity>
                   </View>
-                  <View style={{ width: 1, height: '100%', backgroundColor: '#e0e0e0', marginHorizontal: 10 }} />
-                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '46%' }}>
-                    <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
-                      {`${secondService.title}: ${Number(secondService.price).toFixed(0)}`}
-                    </Text>
-                    <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Consultant")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && styles.checkedBox]}>
-                      {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && <CheckIcon width={12} height={12} />}
-                    </TouchableOpacity>
-                  </View>
-                </>
-              );
-            }
-            return null;
-          })()}
-        </View>}
+                );
+              } else if (validServices.length === 2) {
+                const [firstService, secondService] = validServices;
+                return (
+                  <>
+                    <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '46%' }}>
+                      <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
+                        {`${firstService.title}: ${Number(firstService.price).toFixed(0)}`}
+                      </Text>
+                      <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Specialist")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && styles.checkedBox]}>
+                        {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Specialist") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Specialist")) && <CheckIcon width={12} height={12} />}
+                      </TouchableOpacity>
+                    </View>
+                    <View style={{ width: 1, height: '100%', backgroundColor: '#e0e0e0', marginHorizontal: 10 }} />
+                    <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '46%' }}>
+                      <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
+                        {`${secondService.title}: ${Number(secondService.price).toFixed(0)}`}
+                      </Text>
+                      <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, "Consultant")} style={[styles.checkbox, (selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && styles.checkedBox]}>
+                        {(selectedSlotInfo ? (selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == "Consultant") : (selectedService?.providerId === provider.UserId && selectedService?.selectedService == "Consultant")) && <CheckIcon width={12} height={12} />}
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                );
+              }
+              return null;
+            })()}
+          </View>}
     </>
   ), [provider, isProviderSelected, selectedSlotInfo, selectedService]);
 
@@ -369,7 +386,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         contentContainerStyle={styles.specialtiesContent}
       >
         <View style={styles.specialtiesRow}>
-          {provider.Specialties.map((spec, index) => (
+          {provider?.Specialties?.map((spec, index) => (
             <View key={`${spec.CatSpecialtyId}-${spec.UserloginInfoId}-${index}`} style={styles.specialtyPill}>
               <Text style={styles.specialtyText}>
                 {isRTL ? spec.TitleSlang : spec.TitlePlang}
@@ -450,53 +467,97 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const handleSlotSelect = useCallback((time: any) => {
     onSelectSlot(provider, time);
 
-    const getServiceId = selectedService ? services.find((service: any) => service.TitlePlang == selectedService.selectedService) : 0;
-    const updatedCardArray = [...CardArray];
+    if (category.Id == "42" || category.Id == "32") {
+      const getServiceId = selectedService ? services.find((service: any) => service.TitlePlang == selectedService.selectedService) : 0;
+      const updatedCardArray = [...CardArray];
 
-    // Find the correct price for the selected service
-    const serviceIds = provider.ServiceIds.split(',');
-    const prices = provider.Prices.split(',');
+      // Find the correct price for the selected service
+      const serviceIds = provider.ServiceIds.split(',');
+      const prices = provider.Prices.split(',');
 
-    const priceIndex = getServiceId ? serviceIds.findIndex(id => id === String(getServiceId.Id)) : -1;
-    const selectedPrice = priceIndex !== -1 ? prices[priceIndex] : "0";
-    const orgSpecilityID = provider.OrganizationServiceIds.split(',')[priceIndex]
+      const priceIndex = getServiceId ? serviceIds.findIndex(id => id === String(getServiceId.Id)) : -1;
+      const selectedPrice = priceIndex !== -1 ? prices[priceIndex] : "0";
+      const orgSpecilityID = provider.OrganizationServiceIds.split(',')[priceIndex]
 
-    // Find the index of the item that matches the selectedUniqueId
-    const selectedIndex = updatedCardArray.findIndex(item => item.ItemUniqueId === selectedUniqueId);
+      // Find the index of the item that matches the selectedUniqueId
+      const selectedIndex = updatedCardArray.findIndex(item => item.ItemUniqueId === selectedUniqueId);
 
-    if (selectedIndex !== -1) {
-      if (!updatedCardArray[selectedIndex].CatSpecialtyId) {
-        updatedCardArray[selectedIndex] = {
-          ...updatedCardArray[selectedIndex],
-          "OrganizationServiceId": provider.OrganizationServiceIds,
-          "OrganizationId": provider.OrganizationId,
-          "ServiceCharges": provider.Prices,
-          "ServiceProviderUserloginInfoId": provider.UserId,
-          "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-          "SchedulingTime": time.start_time,
-          "AvailabilityId": availability.Id,
-          "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
-          "ServiceProviderFullnameSlang": provider.FullnameSlang,
-        };
-      } else {
-        updatedCardArray[selectedIndex] = {
-          ...updatedCardArray[selectedIndex],
-          "OrganizationServiceId": orgSpecilityID,
-          "OrganizationId": provider.OrganizationId,
-          "ServiceCharges": selectedPrice,
-          "ServiceProviderUserloginInfoId": provider.UserId,
-          "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-          "SchedulingTime": time.start_time,
-          "AvailabilityId": availability.Id,
-          "CatServiceId": getServiceId?.Id,
-          "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
-          "ServiceProviderFullnameSlang": provider.FullnameSlang,
-        };
+      if (selectedIndex !== -1) {
+        if (!updatedCardArray[selectedIndex].CatSpecialtyId) {
+          updatedCardArray[selectedIndex] = {
+            ...updatedCardArray[selectedIndex],
+            "OrganizationServiceId": provider.OrganizationServiceIds,
+            "OrganizationId": provider.OrganizationId,
+            "ServiceCharges": provider.Prices,
+            "ServiceProviderUserloginInfoId": provider.UserId,
+            "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+            "SchedulingTime": time.start_time,
+            "AvailabilityId": availability.Id,
+            "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
+            "ServiceProviderFullnameSlang": provider.FullnameSlang,
+          };
+        } else {
+          updatedCardArray[selectedIndex] = {
+            ...updatedCardArray[selectedIndex],
+            "OrganizationServiceId": orgSpecilityID,
+            "OrganizationId": provider.OrganizationId,
+            "ServiceCharges": selectedPrice,
+            "ServiceProviderUserloginInfoId": provider.UserId,
+            "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+            "SchedulingTime": time.start_time,
+            "AvailabilityId": availability.Id,
+            "CatServiceId": getServiceId?.Id,
+            "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
+            "ServiceProviderFullnameSlang": provider.FullnameSlang,
+          };
+        }
       }
+
+
+      dispatch(addCardItem(updatedCardArray));
+    } else {
+      const updatedCardArray = [...CardArray];
+
+      // Find the correct price for the selected service
+      const serviceIds = provider?.ServiceIds.split(',');
+      const prices = provider?.Prices.split(',');
+
+      // Update each selected item with service-specific values
+      selectedCard.forEach((selectedItem: any) => {
+        const itemIndex = updatedCardArray.findIndex(cardItem =>
+          cardItem.ItemUniqueId === selectedItem.ItemUniqueId &&
+          cardItem.CatServiceId === selectedItem.CatServiceId
+        );
+
+        if (itemIndex !== -1) {
+          // Get the specific price for this service
+          const serviceId = selectedItem.CatServiceId;
+          const servicePriceIndex = serviceIds.findIndex((id: string) => id === serviceId);
+          const servicePrice = servicePriceIndex !== -1 ? prices[servicePriceIndex] : "0";
+          const serviceOrgId = provider?.OrganizationServiceIds.split(',')[servicePriceIndex];
+
+          console.log("servicePrice",servicePrice)
+
+          updatedCardArray[itemIndex] = {
+            ...updatedCardArray[itemIndex],
+            "OrganizationServiceId": serviceOrgId,
+            "OrganizationId": provider?.OrganizationId,
+            "ServiceCharges": servicePrice,
+            "ServiceProviderUserloginInfoId": provider.UserId,
+            "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+            "SchedulingTime": time.start_time,
+            "AvailabilityId": availability.Id,
+            "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
+            "ServiceProviderFullnameSlang": provider?.FullnameSlang,
+            "orgTitleSlang": provider?.FullnameSlang,
+          };
+        }
+      });
+
+      dispatch(addCardItem(updatedCardArray));
     }
 
 
-    dispatch(addCardItem(updatedCardArray));
   }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);
 
   const renderTimeSlots = useMemo(() => {
@@ -566,7 +627,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   return (
     <View style={[styles.providerCard]}>
       {providerInfo}
-      {specialtiesSection}
+      {provider?.Specialties?.length > 0 && specialtiesSection}
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, width: '100%' }}>
         <Text style={styles.videoInfo}>استشارة طبية فيديو :</Text>

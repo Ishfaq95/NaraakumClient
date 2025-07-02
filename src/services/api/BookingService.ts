@@ -69,7 +69,7 @@ export const getServiceProviderListByService = async (params: {
 }): Promise<any> => {
     try {
         const response = await axiosInstance.post('offeredServices/GetServiceProviderListByService', params);
-
+        console.log("response",response)
         return response.data;
     } catch (error: any) {
         console.error('Error fetching service provider list:', error);
@@ -174,6 +174,17 @@ export const getHospitalListByServices = async (payload: any): Promise<any> => {
     }
 };
 
+export const getOrganizationByPackage = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('offeredServices/GetOrganizationByPackage', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error deleting order before payment:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
@@ -188,5 +199,6 @@ export const bookingService = {
     deleteOrderMainBeforePayment,
     getUserSavedAddresses,
     getOrganizationSchedulingAvailability,
-    getHospitalListByServices
+    getHospitalListByServices,
+    getOrganizationByPackage
 }; 

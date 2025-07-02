@@ -2,11 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import CheckIcon from '../assets/icons/CheckIcon';
 
-const Stepper = ({ currentStep }: { currentStep: number }) => {
-  const steps = [1, 2, 3, 4];
+const Stepper = ({ currentStep,steps }: { currentStep: number,steps: any }) => {
   return (
     <View style={styles.container}>
-      {steps.map((step, idx) => {
+      {steps?.map((step:any, idx:any) => {
         const isCompleted = step < currentStep;
         const isActive = step === currentStep;
         return (

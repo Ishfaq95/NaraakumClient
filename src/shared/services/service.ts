@@ -7,6 +7,8 @@ import messaging from '@react-native-firebase/messaging';
 import moment from 'moment';
 import i18next from 'i18next';
 import { store } from "../redux/store";
+import CryptoJS from 'crypto-js';
+import { encode as btoa } from 'base-64';
 
 export const isTokenExpired = (expiresAt: any) => {
   return new Date() > new Date(expiresAt);
@@ -425,3 +427,12 @@ export const generateUniqueId = () => {
   }
   return id;
 };
+
+export function encryptText(text:any, key:any) {
+  console.log("text",text)
+  console.log("key",key)
+  const encrypted = CryptoJS.AES.encrypt(text, key).toString();
+  console.log("encrypted",encrypted)
+  console.log('encrypted',encrypted)
+  return btoa(encrypted);
+}

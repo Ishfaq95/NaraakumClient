@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Button, StyleSheet, SafeAreaView, TouchableOpacity, Text, Modal, Image } from 'react-native';
 import Stepper from '../../components/Stepper';
 import DoctorListing from '../../components/bookingSteps/DoctorListing';
@@ -15,10 +15,12 @@ import OrderSuccess from '../../components/bookingSteps/OrderSuccess';
 import { generateUniqueId } from '../../shared/services/service';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import CheckIcon from '../../assets/icons/CheckIcon';
+import FullScreenLoader from '../../components/FullScreenLoader';
+import { bookingService } from '../../services/api/BookingService';
 
 const BookingScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const dispatch = useDispatch();
   const category = useSelector((state: any) => state.root.booking.category);
   const services = useSelector((state: any) => state.root.booking.services);
@@ -27,7 +29,7 @@ const BookingScreen = ({ navigation }: any) => {
   const [showNurseModal, setShowNurseModal] = useState(false);
   const [withNurse, setWithNurse] = useState(false);
   const [selectedSpecialty, setSelectedSpecialty] = useState<any>(null);
-
+  const steps = [1, 2, 3, 4];
   const onPressSpecialty = (specialty: any) => {
     if (category.Id == "32") {
       setSelectedSpecialty(specialty);
@@ -134,6 +136,28 @@ const BookingScreen = ({ navigation }: any) => {
     setCurrentStep(2);
   }
 
+  useEffect(() => {
+    if(category.Id == "41"){
+      getServices();
+      setCurrentStep(2);
+    }else{
+      setCurrentStep(1);
+    }
+  }, [category])
+
+  const getServices = async () => {
+    const offered = await bookingService.getOfferedServicesListByCategory({ abc: category?.Id, Search: '' });
+    dispatch(setServices(offered?.OfferedServices));
+  }
+
+  if(currentStep == 0){
+    return (
+      <FullScreenLoader visible={true} />
+    )
+  }
+
+  console.log("category.Id",category.Id)
+
   const renderStep = () => {
     switch (currentStep) {
       case 1: return <Specialties onPressSpecialty={onPressSpecialty} onContinueWithService={onContinueWithService} />;
@@ -167,7 +191,7 @@ const BookingScreen = ({ navigation }: any) => {
         style={styles.container}
       >
         {renderHeader()}
-        <Stepper currentStep={currentStep} />
+        <Stepper currentStep={currentStep} steps={steps} />
         <View style={styles.content}>
           {renderStep()}
         </View>

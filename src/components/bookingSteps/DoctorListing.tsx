@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView, Dimensions, I18nManager, Alert, Modal } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView, Dimensions, I18nManager, Alert, Modal, SafeAreaView } from 'react-native';
 import moment, { Moment } from 'moment';
 import 'moment-hijri';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
@@ -20,6 +20,9 @@ import { generatePayloadforOrderMainBeforePayment } from '../../shared/services/
 import { setApiResponse, prependCardItems, addCardItem } from '../../shared/redux/reducers/bookingReducer';
 import { store } from '../../shared/redux/store';
 import HospitalCard from './HospitalCard';
+import HomeDialysis from './HomeDialysis';
+import CustomBottomSheet from '../common/CustomBottomSheet';
+import HomeDialysisBookingScreen from '../../screens/Booking/HomeDialysisBookingScreen';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
@@ -138,23 +141,34 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
   const SelectedCardItem = CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId);
   const [hospitalList, setHospitalList] = useState<any[]>([]);
+  const [organizationList, setOrganizationList] = useState<any[]>([]);
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<any>(null);
   const [selectedService, setSelectedService] = useState(null);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [displayCategory, setDisplayCategory] = useState<any>(null);
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [selectedOrganization, setSelectedOrganization] = useState<any>(null);
+  const [showPackageList, setShowPackageList] = useState(false);
   const dispatch = useDispatch();
+
+  console.log("organizationList", organizationList)
+
   const createOrderMainBeforePayment = async () => {
-    
+
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
       "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray)
     }
-    
+
     const response = await bookingService.createOrderMainBeforePayment(payload);
-    
-    dispatch(setApiResponse(response.Data))
-    onPressNext();
+
+    if (response.ResponseStatus.STATUSCODE == 200) {
+      dispatch(setApiResponse(response.Data))
+      onPressNext();
+    } else {
+      Alert.alert(response.ResponseStatus.MESSAGE)
+    }
   }
 
   useEffect(() => {
@@ -171,8 +185,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
           convertedCardItems.forEach((newItem: any) => {
             // Find if item already exists by OrderDetailId and OrderId
-            const existingIndex = updatedCardItems.findIndex((existingItem: any) => 
-              existingItem.OrderDetailId === newItem.OrderDetailId && 
+            const existingIndex = updatedCardItems.findIndex((existingItem: any) =>
+              existingItem.OrderDetailId === newItem.OrderDetailId &&
               existingItem.OrderId === newItem.OrderId
             );
 
@@ -211,25 +225,25 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
       const slotDuration = provider.SlotDuration || 30;
       const formattedDate = selectedDate.format('YYYY-MM-DD');
-      
+
       if (providerAvailability.length > 0) {
         const DoctorAvailable: any = generateSlotsForDate(
           providerAvailability[0],
           formattedDate,
           slotDuration,
         );
-        
+
         const tempDoctorObj = {
           ...provider,
           slots: DoctorAvailable
         }
-        
+
         tempProvider.push(tempDoctorObj)
       }
     })
 
     setSlotsLoaded(false)
-    
+
     setProviderWithSlots(tempProvider)
   }
 
@@ -249,14 +263,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
       const slotDuration = hospital.SlotDuration || 30;
       const formattedDate = selectedDate.format('YYYY-MM-DD');
-      
+
       if (hospitalAvailability.length > 0) {
         const HospitalAvailable: any = generateSlotsForDate(
           hospitalAvailability[0],
           formattedDate,
           slotDuration,
         );
-        
+
         const tempHospitalObj = {
           ...hospital,
           slots: HospitalAvailable
@@ -266,31 +280,49 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     })
 
     setSlotsLoaded(false)
-    
+
     setHospitalWithSlots(tempHospital)
   }
 
   const getServiceIds = () => {
-      return services
-        .map((service: any) => service.Id)
-        .join(',');
+    return services
+      .map((service: any) => service.Id)
+      .join(',');
   };
 
   useEffect(() => {
-    
+
     const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
     setDisplayCategory(displayCategory);
     // Call both APIs when component mounts
-    
+    console.log("displayCategory", displayCategory)
     if (displayCategory?.Display == "CP") {
       fetchServiceProviders();
       fetchInitialAvailability();
-    }else{
-      fetchHospitalListByServices();
-      fetchOrganizationSchedulingAvailability();
+    } else {
+      if (category.Id == "41") {
+        getOrganizationByPackage();
+      } else {
+        fetchHospitalListByServices();
+        fetchOrganizationSchedulingAvailability();
+      }
     }
     generateDays();
   }, [category, services]);
+
+  const getOrganizationByPackage = async () => {
+    const payload = {
+      "Search": "",
+      "CatCityId": null,
+      "PatientLocation": null,
+      "CatSquareId": null,
+      "PageNumber": 0,
+      "PageSize": 10
+    }
+    const response = await bookingService.getOrganizationByPackage(payload);
+
+    setOrganizationList(response?.OrganizationList || []);
+  }
 
   const fetchHospitalListByServices = async () => {
     const payload = {
@@ -305,7 +337,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
 
     const response = await bookingService.getHospitalListByServices(payload);
-    
+
     setHospitalList(response?.HospitalList || []);
   }
 
@@ -318,7 +350,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
     const response = await bookingService.getOrganizationSchedulingAvailability(payload);
     setAllAvailabilityData(response?.SchedulingAvailability || []);
-      // Set initial availability for selected date
+    // Set initial availability for selected date
     filterAvailabilityForDate(date ? moment(date) : moment(), response?.SchedulingAvailability || []);
   }
 
@@ -331,14 +363,43 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     try {
       setLoading(true);
       let serviceIds = "";
-      if(services == null){
+      if (services == null) {
         serviceIds = getServiceIdsFromCardArray();
-      }else{
+      } else {
         serviceIds = getServiceIds();
       }
-      
+
+      console.log("serviceIds", SelectedCardItem[0])
+
       let requestBody: any = {};
-      if (SelectedCardItem[0]?.CatLevelId == 3) {
+      if (category.Id == "42" || category.Id == "32") {
+        if (SelectedCardItem[0]?.CatLevelId == 3) {
+          requestBody = {
+            CatcategoryId: category.Id,
+            ServiceIds: serviceIds,
+            Search: searchQuery,
+            PatientLocation: null,
+            CatCityId: null,
+            CatSquareId: null,
+            Gender: 2,
+            PageNumber: 0,
+            PageSize: 100,
+          }
+        } else {
+          requestBody = {
+            CatcategoryId: category.Id,
+            ServiceIds: serviceIds,
+            Search: searchQuery,
+            PatientLocation: null,
+            CatCityId: null,
+            CatSquareId: null,
+            Gender: 2,
+            PageNumber: 0,
+            PageSize: 100,
+            SpecialtyIds: SelectedCardItem[0]?.CatSpecialtyId || 0
+          }
+        }
+      } else {
         requestBody = {
           CatcategoryId: category.Id,
           ServiceIds: serviceIds,
@@ -350,24 +411,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           PageNumber: 0,
           PageSize: 100,
         }
-      } else {
-         requestBody = {
-          CatcategoryId: category.Id,
-          ServiceIds: serviceIds,
-          Search: searchQuery,
-          PatientLocation: null,
-          CatCityId: null,
-          CatSquareId: null,
-          Gender: 2,
-          PageNumber: 0,
-          PageSize: 100,
-          SpecialtyIds: SelectedCardItem[0]?.CatSpecialtyId || 0
-        }
       }
+      console.log("requestBody", requestBody)
 
-      
       const response = await bookingService.getServiceProviderListByService(requestBody);
-      
+
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
       console.error('Error fetching service providers:', error);
@@ -380,9 +428,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     try {
       setLoader2(true);
       let serviceIds = "";
-      if(services == null){
+      if (services == null) {
         serviceIds = getServiceIdsFromCardArray();
-      }else{
+      } else {
         serviceIds = getServiceIds();
       }
 
@@ -481,17 +529,17 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleNext = useCallback(() => {
-    if(displayCategory?.Display == "CP"){
+    if (displayCategory?.Display == "CP") {
       const serviceId = SelectedCardItem[0]?.CatServiceId;
       if (!serviceId) {
         setShowServiceModal(true);
       } else {
         createOrderMainBeforePayment();
       }
-    }else{
+    } else {
       createOrderMainBeforePayment();
     }
-    
+
   }, [CardArray, createOrderMainBeforePayment]);
 
   const handleBack = () => {
@@ -509,7 +557,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
     const serviceId = SelectedCardItem[0]?.CatServiceId
-    if(serviceId == 0 || serviceId ==null || serviceId == "" || serviceId == undefined){
+    if (serviceId == 0 || serviceId == null || serviceId == "" || serviceId == undefined) {
       setShowServiceModal(true)
     }
     // If the same slot is already selected, deselect it
@@ -522,7 +570,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         slotTime: slot.start_time
       });
     }
-  }, [selectedSlotInfo,CardArray]);
+  }, [selectedSlotInfo, CardArray]);
 
   const handleSelectHospitalSlot = (hospital: any, slot: any) => {
     if (selectedSlotInfo?.OrganizationId === hospital.OrganizationId && selectedSlotInfo?.slotTime === slot.start_time) {
@@ -547,7 +595,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         const dayOfWeek = new Date(selectedDate.format('YYYY-MM-DD')).toLocaleString("en-US", {
           weekday: "long",
         });
-        
+
         const holidays = providerAvailability[0]?.ServiceProviderHolidays?.split(',');
         return !holidays?.includes(dayOfWeek);
       }
@@ -566,7 +614,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         const dayOfWeek = new Date(selectedDate.format('YYYY-MM-DD')).toLocaleString("en-US", {
           weekday: "long",
         });
-        
+
         const holidays = hospitalAvailability[0]?.ServiceProviderHolidays?.split(',');
         return !holidays?.includes(dayOfWeek);
       }
@@ -575,7 +623,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }, [HospitalWithSlots, availability, selectedDate]);
 
   const handleSelectService = (providerId: string, service: string) => {
-    const obj:any={
+    const obj: any = {
       selectedService: service,
       providerId: providerId,
     }
@@ -583,13 +631,19 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setSelectedService(obj)
   }
 
+  const handleSelectOrganization = (organization: any) => {
+    console.log("organization", organization)
+    setSelectedOrganization(organization)
+    setIsBottomSheetVisible(true)
+  }
+
   const getNextButtonEnabled = useCallback(() => {
-    if(displayCategory?.Display == "CP"){
-      return SelectedCardItem[0]?.CatServiceId == 0 || SelectedCardItem[0]?.CatServiceId ==null || SelectedCardItem[0]?.CatServiceId == "" || SelectedCardItem[0]?.CatServiceId == undefined || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem[0]?.ServiceProviderUserloginInfoId ==null || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == "" || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == undefined
-    }else{
+    if (displayCategory?.Display == "CP") {
+      return SelectedCardItem[0]?.CatServiceId == 0 || SelectedCardItem[0]?.CatServiceId == null || SelectedCardItem[0]?.CatServiceId == "" || SelectedCardItem[0]?.CatServiceId == undefined || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == null || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == "" || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == undefined
+    } else {
       return selectedSlotInfo ? false : true
     }
-  }, [selectedSlotInfo,CardArray])
+  }, [selectedSlotInfo, CardArray])
 
   return (
     <View style={styles.mainContainer}>
@@ -645,58 +699,74 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       </View>
       {/* Service Providers List */}
       {/* {displayCategory?.Display == "CP" ? serviceProviders.length > 0 : hospitalList.length > 0 &&  */}
-      <View style={{flex:1,paddingBottom:50,paddingTop:10}}> 
+      <View style={{ flex: 1, paddingBottom: 50, paddingTop: 10 }}>
         {
           displayCategory?.Display == "CP" ? <FlatList
-          data={filteredProviders}
-          keyExtractor={(item) => item.RowId}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={5}
-          windowSize={10}
-          initialNumToRender={3}
-          renderItem={({ item,index }) => {
-            const providerAvailability = availability.flatMap(avail =>
-              avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
-            );
-  
-            return <ServiceProviderCard
-              provider={item}
-              selectedDate={selectedDate}
-              availability={providerAvailability[0]}
-              selectedSlotInfo={selectedSlotInfo}
-              onSelectSlot={handleSelectSlot}
-              onSelectService={handleSelectService}
-              selectedService={selectedService}
-            />
-          }}
-          contentContainerStyle={{ padding: 16 }}
-          showsVerticalScrollIndicator={false}
-        />
-        :
-        <FlatList
-        data={filteredHospitals}
-        keyExtractor={(item) => item.UserId}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={5}
-        windowSize={10}
-        initialNumToRender={3}
-        renderItem={({ item,index }) => {
-          const providerAvailability = availability.flatMap(avail =>
-            avail.Detail.filter((detail: any) => detail.OrganizationId === item.OrganizationId)
-          );
-          
-          return <HospitalCard
-            hospital={item}
-            selectedDate={selectedDate}
-            availability={providerAvailability[0]}
-            selectedSlotInfo={selectedSlotInfo}
-            onSelectSlot={handleSelectHospitalSlot}
-            selectedService={selectedService}
+            data={filteredProviders}
+            keyExtractor={(item) => item.RowId}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={5}
+            windowSize={10}
+            initialNumToRender={3}
+            renderItem={({ item, index }) => {
+              const providerAvailability = availability.flatMap(avail =>
+                avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
+              );
+
+              return <ServiceProviderCard
+                provider={item}
+                selectedDate={selectedDate}
+                availability={providerAvailability[0]}
+                selectedSlotInfo={selectedSlotInfo}
+                onSelectSlot={handleSelectSlot}
+                onSelectService={handleSelectService}
+                selectedService={selectedService}
+              />
+            }}
+            contentContainerStyle={{ padding: 16 }}
+            showsVerticalScrollIndicator={false}
           />
-        }}
-        contentContainerStyle={{ padding: 16 }}
-        showsVerticalScrollIndicator={false}
-        />
+            : category.Id == "41" ? <FlatList
+              data={organizationList}
+              keyExtractor={(item) => item.OrganizationId}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={5}
+              windowSize={10}
+              initialNumToRender={3}
+              renderItem={({ item, index }) => {
+                  return <HomeDialysis hospital={item} onPressContinue={() => handleSelectOrganization(item)} onPressPackageList={() => {
+                    console.log("item",item)
+                    setShowPackageList(true)
+                    handleSelectOrganization(item)
+                  }} />
+              }}
+              contentContainerStyle={{ padding: 16 }}
+              showsVerticalScrollIndicator={false}
+            /> :
+              <FlatList
+                data={filteredHospitals}
+                keyExtractor={(item) => item.UserId}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={5}
+                windowSize={10}
+                initialNumToRender={3}
+                renderItem={({ item, index }) => {
+                  const providerAvailability = availability.flatMap(avail =>
+                    avail.Detail.filter((detail: any) => detail.OrganizationId === item.OrganizationId)
+                  );
+
+                  return <HospitalCard
+                    hospital={item}
+                    selectedDate={selectedDate}
+                    availability={providerAvailability[0]}
+                    selectedSlotInfo={selectedSlotInfo}
+                    onSelectSlot={handleSelectHospitalSlot}
+                    selectedService={selectedService}
+                  />
+                }}
+                contentContainerStyle={{ padding: 16 }}
+                showsVerticalScrollIndicator={false}
+              />
         }
       </View>
       {/* } */}
@@ -752,6 +822,93 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           </View>
         </View>
       </Modal>
+
+      <CustomBottomSheet
+        visible={isBottomSheetVisible}
+        onClose={() => setIsBottomSheetVisible(false)}
+        height="80%"
+      >
+        {
+          showPackageList ? 
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+          {/* Sticky Header */}
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: 8,
+            borderBottomWidth: 1,
+            borderColor: '#f0f0f0',
+            backgroundColor: '#fff',
+            zIndex: 2,
+          }}>
+            <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
+              <Text style={{ fontSize: 24, color: '#222' }}>×</Text>
+            </TouchableOpacity>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#222', textAlign: 'center', flex: 1 }}>
+              باقات غسيل الكلى المنزلي
+            </Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          {/* Sub-header */}
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: '#f7fafd',
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 16,
+            margin: 12,
+            marginBottom: 0,
+          }}>
+            <Text style={{ fontSize: 16, color: '#222', fontWeight: 'bold' }}>مركز عبر الطبي</Text>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#e6f7f7', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
+              {/* Replace with your WhatsApp icon if available */}
+              <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 18, marginRight: 4 }}></Text>
+              <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 14 }}>للاستفسارات</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Scrollable List */}
+          <ScrollView style={{ flex: 1, backgroundColor: '#f7fafd', margin: 12, marginTop: 8, borderRadius: 16, padding: 8 }} contentContainerStyle={{paddingHorizontal: 8, paddingBottom: 16 }}>
+            {/* Example package data */}
+            {selectedOrganization?.PackageDetail?.map((pkg: any) => (
+              <View key={pkg.id} style={{
+                backgroundColor: '#fff',
+                borderRadius: 12,
+                width: '100%',
+                padding: 16,
+                marginBottom: 12,
+                shadowColor: '#000',
+                shadowOpacity: 0.04,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 1,
+              }}>
+                <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 16, marginBottom: 8, textAlign: 'left' }}>{pkg.TitleSlang}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
+                  <Text style={{ color: '#888', fontSize: 14, marginLeft: 4 }}>سعر الجلسة /</Text>
+                  <Text style={{ color: '#ff6b57', fontWeight: 'bold', fontSize: 16 }}>{pkg.SessionPrice} ريال</Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Sticky Bottom Button */}
+          <View style={{ backgroundColor: '#fff', padding: 16, borderTopWidth: 1, borderColor: '#f0f0f0' }}>
+            <TouchableOpacity onPress={() => setShowPackageList(false)} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>حجز موعد</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>:
+        <HomeDialysisBookingScreen />
+        }
+        
+      </CustomBottomSheet>
     </View>
   );
 };

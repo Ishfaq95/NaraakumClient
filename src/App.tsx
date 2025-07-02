@@ -20,6 +20,7 @@ import crashlytics from '@react-native-firebase/crashlytics';
 import {initializeI18Next} from './utils/language/i18nextConfig';
 import {CrashlyticsProvider} from './components/CrashlyticsProvider';
 import AppInitializer from './components/AppInitializer';
+import "react-native-get-random-values"
 
 const App = () => {
   useEffect(() => {

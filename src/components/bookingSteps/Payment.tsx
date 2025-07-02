@@ -329,6 +329,8 @@ import {ROUTES} from '../../shared/utils/routes';
 import {useNavigation} from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearCardItems } from '../../shared/redux/reducers/bookingReducer';
+import { encryptText } from '../../shared/services/service';
+import { WEBSITE_URL } from '../../shared/utils/constants';
 
 const Payment = ({ onPressNext, onPressBack }: any) => {
   const [loading, setLoading] = useState(true);
@@ -374,13 +376,20 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   const user = useSelector((state: any) => state.root.user.user);
 
   const generatePaymentUrl = async () => {
-    return "https://dvx.innotech-sa.com/hhc/web/service/payment?mudfp=VTJGc2RHVmtYMTlzYnJqZjlkVG5YRnJwenJNTG5BN3I0dWxnMDdiV253M3E1ODdyM3BYaVBHMDVtRXYvUHZsWG1ldlBkdTNmZHVOa092eE8wYlQ2eGttR25IRW15QzdOOXZjT0N4SjVpMlA4VlVEbjh4T1lLMmlYcU51aUx4SjI="
+    console.log("user here 1")
+    const dataUser = {Id:user.Id,FullNameSlang:user.FullnameSlang}
+    const paramsJson = JSON.stringify(dataUser);
+    const encryptedVisitData = encryptText(paramsJson, '!naarakum@789');
+    console.log("encryptedVisitData",`${WEBSITE_URL}service/payment?mudfp=${encryptedVisitData}`)
+    return `${WEBSITE_URL}service/payment?mudfp=${encryptedVisitData}`
   }
 
   useEffect(() => {
+    console.log("user here")
     const getPaymentUrl = async () => {
       setLoading(true);
       const paymentUrl:any = await generatePaymentUrl()
+      console.log("paymentUrl",paymentUrl)
       setCurrentUrl(paymentUrl);
       setLoading(false);
     }

@@ -7,6 +7,7 @@ import moment from "moment";
 import MinusIcon from "../../assets/icons/MinuesIcon";
 import { bookingService } from "../../services/api/BookingService";
 import { useEffect } from "react";
+import { useIsFocused } from "@react-navigation/native";
 
 const CartScreen = () => {
   const { t } = useTranslation();
@@ -15,7 +16,7 @@ const CartScreen = () => {
   const selectedSpecialtyOrService = useSelector((state: any) => state.root.booking.selectedSpecialtyOrService);
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
-
+  const isFocused = useIsFocused();
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
       try {
@@ -61,7 +62,7 @@ const CartScreen = () => {
       }
     }
     getUnPaidUserOrders();
-  }, [user]);
+  }, [user,isFocused]);
 
   const renderHeader = () => (
     <Header
