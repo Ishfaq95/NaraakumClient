@@ -149,6 +149,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState<any>(null);
   const [showPackageList, setShowPackageList] = useState(false);
+  const [isHomeDialysisBooking, setIsHomeDialysisBooking] = useState(false);
   const dispatch = useDispatch();
 
   console.log("organizationList", organizationList)
@@ -416,6 +417,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
       const response = await bookingService.getServiceProviderListByService(requestBody);
 
+      console.log("response", response)
+
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
       console.error('Error fetching service providers:', error);
@@ -635,6 +638,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     console.log("organization", organization)
     setSelectedOrganization(organization)
     setIsBottomSheetVisible(true)
+  }
+
+  const handleStepsForHomeDialysisBooking = () => {
+    setIsHomeDialysisBooking(true)
+    setTimeout(() => {
+      setIsHomeDialysisBooking(false)
+    }, 100);
   }
 
   const getNextButtonEnabled = useCallback(() => {
@@ -905,7 +915,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             </TouchableOpacity>
           </View>
         </SafeAreaView>:
-        <HomeDialysisBookingScreen />
+        isHomeDialysisBooking ? null : <HomeDialysisBookingScreen SetInitialStep={handleStepsForHomeDialysisBooking}/> 
         }
         
       </CustomBottomSheet>

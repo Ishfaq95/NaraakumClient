@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, TouchableOpacity } from 'react-native';
 import Stepper from '../../components/Stepper';
 import { useTranslation } from 'react-i18next';
@@ -9,8 +9,9 @@ import DoctorListing from '../../components/HomeDialysisBookingSteps/DoctorListi
 import UploadFileStep from '../../components/HomeDialysisBookingSteps/UploadFileStep';
 import AddMoreService from '../../components/HomeDialysisBookingSteps/AddMoreService';
 import Header from '../../components/common/Header';
+import FullScreenLoader from '../../components/FullScreenLoader';
 
-const HomeDialysisBookingScreen = ({ navigation }: any) => {
+const HomeDialysisBookingScreen = ({SetInitialStep}: any) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const steps = [1, 2, 3];
@@ -23,8 +24,6 @@ const HomeDialysisBookingScreen = ({ navigation }: any) => {
       default: return null;
     }
   };
-
-  console.log("currentStep",currentStep)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,7 +43,7 @@ const HomeDialysisBookingScreen = ({ navigation }: any) => {
         {/* Sticky Bottom Button */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', backgroundColor: '#fff', padding: 16, borderTopWidth: 1, borderColor: '#f0f0f0' }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '48%' }}>
-            {currentStep > 1 && <TouchableOpacity onPress={() => currentStep >1 && setCurrentStep(currentStep - 1)} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '48%' }}>
+            {currentStep > 1 && <TouchableOpacity onPress={() => currentStep !=2 ? setCurrentStep(currentStep - 1) : SetInitialStep()} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '48%' }}>
               <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>السابق</Text>
             </TouchableOpacity>}
             <TouchableOpacity style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '48%' }}>
