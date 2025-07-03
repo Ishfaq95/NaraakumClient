@@ -18,9 +18,10 @@ import CheckIcon from '../../assets/icons/CheckIcon';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { bookingService } from '../../services/api/BookingService';
 
-const BookingScreen = ({ navigation }: any) => {
+const BookingScreen = ({ navigation, route }: any) => {
+  console.log("route",route)
   const { t } = useTranslation();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(route.params?.currentStep || 1);
   const dispatch = useDispatch();
   const category = useSelector((state: any) => state.root.booking.category);
   const services = useSelector((state: any) => state.root.booking.services);
@@ -99,11 +100,11 @@ const BookingScreen = ({ navigation }: any) => {
   }
 
   const goWithNurse = () => {
-    
-    if(selectedSpecialty?.CatLevelId == 3){
-      const getServices= services.filter((service: any) => service.CatLevelId == 3);
-      const getServicesWithNurse= getServices.filter((service: any) => service.iswithNurse == withNurse);
-      
+
+    if (selectedSpecialty?.CatLevelId == 3) {
+      const getServices = services.filter((service: any) => service.CatLevelId == 3);
+      const getServicesWithNurse = getServices.filter((service: any) => service.iswithNurse == withNurse);
+
       const cardItem = {
         ...selectedSpecialty,
         "ItemUniqueId": generateUniqueId(),
@@ -115,10 +116,10 @@ const BookingScreen = ({ navigation }: any) => {
       dispatch(setServices(null));
       dispatch(setSelectedUniqueId(cardItem.ItemUniqueId));
       dispatch(addCardItem(tempCardItems));
-    }else{
-      const getServices= services.filter((service: any) => service.CatLevelId != 3);
-      const getServicesWithNurse= getServices.filter((service: any) => service.iswithNurse == withNurse);
-      
+    } else {
+      const getServices = services.filter((service: any) => service.CatLevelId != 3);
+      const getServicesWithNurse = getServices.filter((service: any) => service.iswithNurse == withNurse);
+
       const cardItem = {
         ...selectedSpecialty,
         "ItemUniqueId": generateUniqueId(),
@@ -131,32 +132,32 @@ const BookingScreen = ({ navigation }: any) => {
       dispatch(setSelectedUniqueId(cardItem.ItemUniqueId));
       dispatch(addCardItem(tempCardItems));
     }
-    
+
     setShowNurseModal(false);
     setCurrentStep(2);
   }
 
-  useEffect(() => {
-    if(category.Id == "41"){
-      getServices();
-      setCurrentStep(2);
-    }else{
-      setCurrentStep(1);
-    }
-  }, [category])
+  // useEffect(() => {
+  //   if(category.Id == "41"){
+  //     getServices();
+  //     setCurrentStep(2);
+  //   }else{
+  //     setCurrentStep(1);
+  //   }
+  // }, [category])
 
   const getServices = async () => {
     const offered = await bookingService.getOfferedServicesListByCategory({ abc: category?.Id, Search: '' });
     dispatch(setServices(offered?.OfferedServices));
   }
 
-  if(currentStep == 0){
+  if (currentStep == 0) {
     return (
       <FullScreenLoader visible={true} />
     )
   }
 
-  console.log("category.Id",category.Id)
+  console.log("category.Id", category.Id)
 
   const renderStep = () => {
     switch (currentStep) {

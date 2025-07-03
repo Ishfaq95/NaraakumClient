@@ -659,7 +659,7 @@ const ChatScreen = ({
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      let url = `${MediaBaseURL}common/upload`;
+      let url = `${MediaBaseURL}/common/upload`;
       let ResourceCategoryId = '2';
 
       let fileType = file.name.split('.').pop();

@@ -231,7 +231,7 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
         <View style={{ width: '30%' }}>
           {hospital?.ImagePath ? (
             <Image
-              source={{ uri: `${MediaBaseURL}${hospital?.ImagePath}` }}
+              source={{ uri: `${MediaBaseURL}/${hospital?.ImagePath}` }}
               style={styles.providerImage}
               resizeMode="cover"
             />

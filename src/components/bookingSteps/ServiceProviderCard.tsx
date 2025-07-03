@@ -271,7 +271,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         <View style={{ width: '30%' }}>
           {provider.ImagePath ? (
             <Image
-              source={{ uri: `${MediaBaseURL}${provider.ImagePath}` }}
+              source={{ uri: `${MediaBaseURL}/${provider.ImagePath}` }}
               style={styles.providerImage}
               resizeMode="cover"
             />

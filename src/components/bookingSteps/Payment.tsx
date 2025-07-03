@@ -331,6 +331,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { clearCardItems } from '../../shared/redux/reducers/bookingReducer';
 import { encryptText } from '../../shared/services/service';
 import { WEBSITE_URL } from '../../shared/utils/constants';
+import FullScreenLoader from '../../components/FullScreenLoader';
 
 const Payment = ({ onPressNext, onPressBack }: any) => {
   const [loading, setLoading] = useState(true);
@@ -374,7 +375,7 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   `;
 
   const user = useSelector((state: any) => state.root.user.user);
-
+  const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const generatePaymentUrl = async () => {
     console.log("user here 1")
     const dataUser = {Id:user.Id,FullNameSlang:user.FullnameSlang}
@@ -418,13 +419,13 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
 
   const onNavigationStateChange = (url: any) => {
     if(url.url.includes("PaymentSuccess")){
+      const tempCard = CardArray;
       dispatch(clearCardItems());
-      navigation.navigate("OrderSuccess", { OrderId:1 });
+      navigation.navigate("OrderSuccess", { SuccessResponse:tempCard });
     }
-    // else if(url.url.includes("PaymentFailed")){
-    //   onPressBack();
-    // }
-    console.log("url",url)
+    else if(url.url.includes("PaymentError")){
+      navigation.navigate("OrderSuccess", { SuccessResponse:"Error in payment" });
+    }
   };
 
   if(currentUrl == null){
@@ -507,13 +508,7 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
         )}
       </View>
       {loading && (
-        <View style={styles.loader}>
-          <LoaderKit
-            style={{width: 100, height: 100}}
-            name={'BallSpinFadeLoader'}
-            color={'green'}
-          />
-        </View>
+        <FullScreenLoader visible={loading} />
       )}
     </View>
   );

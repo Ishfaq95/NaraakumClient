@@ -27,7 +27,7 @@ const HomeDialysis: React.FC<any> = React.memo(({
                     <View style={{ width: '30%' }}>
                         {hospital?.ImagePath || hospital?.LogoImagePath ? (
                             <Image
-                                source={{ uri: `${MediaBaseURL}${hospital?.ImagePath || hospital?.LogoImagePath}` }}
+                                source={{ uri: `${MediaBaseURL}/${hospital?.ImagePath || hospital?.LogoImagePath}` }}
                                 style={styles.providerImage}
                                 resizeMode="cover"
                             />

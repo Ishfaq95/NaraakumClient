@@ -60,7 +60,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
       {/* Doctor Info */}
       <View style={styles.headerRow}>
         <View style={styles.avatarPlaceholder}>
-          {appointment.ImagePath ? <Image source={{ uri: `${MediaBaseURL}${appointment.ImagePath}` }} style={styles.avatarImage} /> : <Person width={32} height={32} />}
+          {appointment.ImagePath ? <Image source={{ uri: `${MediaBaseURL}/${appointment.ImagePath}` }} style={styles.avatarImage} /> : <Person width={32} height={32} />}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.doctorName} numberOfLines={1}>

@@ -8,8 +8,9 @@ import MinusIcon from "../../assets/icons/MinuesIcon";
 import { bookingService } from "../../services/api/BookingService";
 import { useEffect } from "react";
 import { useIsFocused } from "@react-navigation/native";
+import { ROUTES } from "../../shared/utils/routes";
 
-const CartScreen = () => {
+const CartScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const category = useSelector((state: any) => state.root.booking.category);
@@ -175,6 +176,19 @@ const CartScreen = () => {
           </View>
 
         </View>
+        <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton, CardArray.length == 0 && {backgroundColor: '#ccc'}]} onPress={() => {
+           navigation.navigate(ROUTES.AppNavigator, {
+            screen: ROUTES.HomeStack,
+            params: {
+              screen: ROUTES.BookingScreen,
+              params: {
+                currentStep: 3,
+              }
+            }
+          });
+        }}>
+          <Text style={styles.checkoutButtonText}>{"تأكيد الخدمات"}</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -325,6 +339,18 @@ const styles = StyleSheet.create({
   },
   totalText: {
     fontSize: 16,
+  },
+  checkoutButton: {
+    backgroundColor: '#23a2a4',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  checkoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

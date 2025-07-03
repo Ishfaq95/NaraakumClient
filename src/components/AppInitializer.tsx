@@ -116,7 +116,9 @@ const AppInitializer = () => {
       });
 
       const data = await response.json();
-      if (data.status === '200') {
+      console.log('data media token', data);
+      if (data.status == '200') {
+        console.log('data.access_token', data.access_token);
         dispatch(setMediaToken({
           token: data.access_token,
           expiresAt: data.expires,

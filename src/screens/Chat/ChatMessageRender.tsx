@@ -83,7 +83,7 @@ const ChatMessageRender = ({item}: {item: Message}) => {
     if (isDownloading) return;
 
     setIsDownloading(true);
-    const fileURL = `${MediaBaseURL}${url}`;
+    const fileURL = `${MediaBaseURL}/${url}`;
     let fileName = getFileNameFromUrl(fileURL);
     if (Platform.OS === 'ios') {
       downloadFIleForIOS(fileURL, fileName);

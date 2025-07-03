@@ -37,7 +37,6 @@ import {changeLanguage} from '../../utils/language/i18nextConfig';
 import {LangCode} from '../../utils/language/LanguageUtils';
 import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
 import Svg, {Path} from 'react-native-svg';
-import AudioRecord from 'react-native-audio-record';
 import RightArrowIcon from '../../assets/icons/RightArrow';
 import { getVideoSDKToken } from '../../services/api/MessagesAndCallService';
 
@@ -71,11 +70,6 @@ const PreViewScreen = ({navigation, route}: any) => {
       checkPermission();
     }
 
-    // AudioRecord.on('data', data => {
-    //   const volume = calculateVolume(data); // You can use a method to calculate volume
-    //   
-    //   setVolume(volume);
-    // });
   }, []);
 
   const checkPermission = async () => {
@@ -93,31 +87,7 @@ const PreViewScreen = ({navigation, route}: any) => {
 
   const prepareRecording = () => {
     // Initialize audio record settings
-    AudioRecord.init({
-      sampleRate: 16000, // default 44100
-      channels: 1, // 1 or 2, default 1
-      bitsPerSample: 16, // 8 or 16, default 16
-      audioSource: 6, // android only (see below)
-      wavFile: 'test.wav', // default 'audio.wav'
-    });
-  };
-
-  const startRecording = async () => {
-    try {
-      setRecording(true);
-      AudioRecord.start();
-    } catch (error) {
-      console.error('Recording error: ', error);
-    }
-  };
-
-  const stopRecording = async () => {
-    try {
-      setRecording(false);
-      AudioRecord.stop();
-    } catch (error) {
-      console.error('Stop recording error: ', error);
-    }
+    
   };
 
   const calculateVolume = base64Data => {
@@ -281,14 +251,6 @@ const PreViewScreen = ({navigation, route}: any) => {
     changeLanguage(newLanguage);
   };
 
-  const micFunctionality = () => {
-    if (micOn) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-    setMicon(!micOn);
-  };
 
   // Add effect to check session expiration
   useEffect(() => {
