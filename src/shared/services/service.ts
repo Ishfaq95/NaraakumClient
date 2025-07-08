@@ -433,3 +433,35 @@ export function encryptText(text:any, key:any) {
   const encrypted = CryptoJS.AES.encrypt(text, key).toString();
   return btoa(encrypted);
 }
+
+export const generatePayloadForUploadMedicalhistoryReports = (homeDialysisFilePaths: any) => {
+  const payload = homeDialysisFilePaths.map((item: any) => {
+    console.log("item", item)
+    let ResourceCategoryId = '2';
+    let fileType = item.split('.').pop();
+      if (fileType == 'pdf' || fileType == 'PDF') ResourceCategoryId = '4';
+      else if (
+        fileType == 'jpg' ||
+        fileType == 'jpeg' ||
+        fileType == 'gif' ||
+        fileType == 'png' ||
+        fileType == 'JPG' ||
+        fileType == 'JPEG' ||
+        fileType == 'GIF' ||
+        fileType == 'PNG'
+      )
+        ResourceCategoryId = '1';
+
+
+    console.log("ResourceCategoryId", ResourceCategoryId)
+    return ({
+      "CatFileTypeId": ResourceCategoryId,
+      "CatPatientUploadedFileTypeId": 8,
+      "FileName": "HemoDiyalsis Report",
+      "FilePath": item
+    })
+  })
+
+  console.log("payload", payload)
+  return payload
+}

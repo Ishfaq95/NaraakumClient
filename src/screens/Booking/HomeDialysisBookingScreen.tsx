@@ -11,18 +11,19 @@ import AddMoreService from '../../components/HomeDialysisBookingSteps/AddMoreSer
 import Header from '../../components/common/Header';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { bookingService } from '../../services/api/BookingService';
-import { setServices } from '../../shared/redux/reducers/bookingReducer';
+import { addHomeDialysisCardItem, setHomeDialysisFilePaths, setServices } from '../../shared/redux/reducers/bookingReducer';
 import moment, { Moment } from 'moment';
 import { generateSlotsForDate } from '../../utils/timeUtils';
-import { generatePayloadforOrderMainBeforePayment } from '../../shared/services/service';
+import { generatePayloadforOrderMainBeforePayment, generatePayloadForUploadMedicalhistoryReports } from '../../shared/services/service';
 
-const HomeDialysisBookingScreen = ({ selectedOrganization, SetInitialStep }: any) => {
+const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrganization, SetInitialStep }: any) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const category = useSelector((state: any) => state.root.booking.category);
   const services = useSelector((state: any) => state.root.booking.services);
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.homeDialysisCardItems);
+  const homeDialysisFilePaths = useSelector((state: any) => state.root.booking.homeDialysisFilePaths);
   const [serviceProviders, setServiceProviders] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Moment>(moment());
@@ -32,6 +33,7 @@ const HomeDialysisBookingScreen = ({ selectedOrganization, SetInitialStep }: any
   const [loader2, setLoader2] = useState(false);
   const [slotsLoaded, setSlotsLoaded] = useState(false);
   const dispatch = useDispatch();
+  const [orderId, setOrderId] = useState<any>(null);
 
   console.log("selectedOrganization",selectedOrganization)
 
@@ -216,20 +218,43 @@ const HomeDialysisBookingScreen = ({ selectedOrganization, SetInitialStep }: any
     console.log("response", response)
 
     if (response.ResponseStatus.STATUSCODE == 200) {
-      return response;
+      dispatch(addHomeDialysisCardItem([]));
+      return response.Data;
     } else {
       Alert.alert(response.ResponseStatus.MESSAGE)
     }
   }
 
-  console.log("currentStep", currentStep)
+  const uploadMedicalhistoryReports = async () => {
+    const payload = {
+      "UserProfileInfoId": user.Id,
+      "OrderId": orderId,
+      "Files": generatePayloadForUploadMedicalhistoryReports(homeDialysisFilePaths)
+    }
+
+    console.log("payload", payload)
+
+    const response = await bookingService.UploadMedicalhistoryReports(payload);
+
+    if(response.ResponseStatus.STATUSCODE == 200){
+      dispatch(setHomeDialysisFilePaths([]));
+      setCurrentStep(currentStep + 1)
+    }else{
+      Alert.alert(response.ResponseStatus.MESSAGE)
+    }
+  }
 
   const handleNextStep = async () => {
     if (currentStep == 2) {
-      // const response = await createOrderMainBeforePayment()
-      
-        setCurrentStep(4)
-      
+      const response = await createOrderMainBeforePayment()
+      if(response){
+        console.log("response", response)
+        setOrderId(response[0].OrderId)
+        setCurrentStep(currentStep + 1)
+      }
+    }else if(currentStep == 3){
+      // uploadMedicalhistoryReports()
+      setCurrentStep(currentStep + 1)
     }else{
       setCurrentStep(currentStep + 1)
     }
@@ -240,8 +265,8 @@ const HomeDialysisBookingScreen = ({ selectedOrganization, SetInitialStep }: any
     switch (currentStep) {
       case 1: return <PackageListDetails selectedOrganization={selectedOrganization} onPressNext={() => setCurrentStep(2)} onPressBack={() => setCurrentStep(1)} />;
       case 2: return <DoctorListing filteredProviders={filteredProviders} selectedDate={selectedDate} availability={availability} onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
-      case 3: return <UploadFileStep onPressNext={() => setCurrentStep(4)} onPressBack={() => setCurrentStep(2)} />;
-      case 4: return <AddMoreService onPressNext={() => { }} onPressBack={() => setCurrentStep(3)} />;
+      case 3: return <UploadFileStep  />;
+      case 4: return <AddMoreService onPressNext={onPressContinue} onPressBack={onPressBack} />;
       default: return null;
     }
   };
@@ -262,7 +287,7 @@ const HomeDialysisBookingScreen = ({ selectedOrganization, SetInitialStep }: any
           {renderStep()}
         </View>
         {/* Sticky Bottom Button */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', backgroundColor: '#fff', padding: 16, borderTopWidth: 1, borderColor: '#f0f0f0' }}>
+        {currentStep != 4 && <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', backgroundColor: '#fff', padding: 16, borderTopWidth: 1, borderColor: '#f0f0f0' }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '48%' }}>
             {currentStep > 1 && <TouchableOpacity onPress={() => currentStep != 2 ? setCurrentStep(currentStep - 1) : SetInitialStep()} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '48%' }}>
               <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>السابق</Text>
@@ -273,10 +298,11 @@ const HomeDialysisBookingScreen = ({ selectedOrganization, SetInitialStep }: any
 
           </View>
 
-          <TouchableOpacity onPress={() => { handleNextStep()}} disabled={currentStep == 2 && CardArray.length == 0} style={{ backgroundColor: (currentStep == 2 && CardArray.length == 0) ? '#ccc' : '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '30%' }}>
+          {/* <TouchableOpacity onPress={() => { handleNextStep()}} disabled={(currentStep == 2 && CardArray.length == 0) || (currentStep == 3 && homeDialysisFilePaths.length == 0)} style={{ backgroundColor: (currentStep == 2 && CardArray.length == 0) || (currentStep == 3 && homeDialysisFilePaths.length == 0) ? '#ccc' : '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '30%' }}> */}
+          <TouchableOpacity onPress={() => { handleNextStep()}} disabled={(currentStep == 2 && CardArray.length == 0)} style={{ backgroundColor: (currentStep == 2 && CardArray.length == 0) ? '#ccc' : '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '30%' }}>
             <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>التالي</Text>
           </TouchableOpacity>
-        </View>
+        </View>}
       </LinearGradient>
     </SafeAreaView>
   );

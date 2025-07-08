@@ -631,6 +631,18 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setIsBottomSheetVisible(true)
   }
 
+  const continueFromHomeDialysisBooking = () => {
+    setIsHomeDialysisBooking(false)
+    setIsBottomSheetVisible(false)
+
+    onPressNext()
+  }
+
+  const closeBottomSheetHomeDialysisBooking = () => {
+    setIsBottomSheetVisible(false)
+    setIsHomeDialysisBooking(false)
+  }
+
   const handleStepsForHomeDialysisBooking = () => {
     setIsHomeDialysisBooking(true)
     setTimeout(() => {
@@ -905,7 +917,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             </TouchableOpacity>
           </View>
         </SafeAreaView>:
-        isHomeDialysisBooking ? null : <HomeDialysisBookingScreen selectedOrganization={selectedOrganization} SetInitialStep={handleStepsForHomeDialysisBooking}/> 
+        isHomeDialysisBooking ? null : <HomeDialysisBookingScreen onPressContinue={continueFromHomeDialysisBooking} onPressBack={closeBottomSheetHomeDialysisBooking} selectedOrganization={selectedOrganization} SetInitialStep={handleStepsForHomeDialysisBooking}/> 
         }
         
       </CustomBottomSheet>

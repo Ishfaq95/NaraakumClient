@@ -21,6 +21,7 @@ interface State {
   selectedUniqueId: any;
   selectedLocation: any;
   homeDialysisCardItems: any;
+  homeDialysisFilePaths: any;
 }
 
 const initialState = {
@@ -32,6 +33,7 @@ const initialState = {
   selectedUniqueId: null,
   selectedLocation: null,
   homeDialysisCardItems: [],
+  homeDialysisFilePaths: [],
 } as State;
 
 export const bookingReducer = createSlice({
@@ -73,9 +75,12 @@ export const bookingReducer = createSlice({
     },
     setSelectedLocation: (state, action) => {
       state.selectedLocation = action.payload;
+    },
+    setHomeDialysisFilePaths: (state, action) => {
+      state.homeDialysisFilePaths = action.payload;
     }
   },
 });
 
-export const {setCategory, setServices, addCardItem, addHomeDialysisCardItem, removeCardItem, clearCardItems, setApiResponse, prependCardItems, manageTempSlotDetail, setSelectedUniqueId, setSelectedLocation} = bookingReducer.actions;
+export const {setCategory, setServices, addCardItem, addHomeDialysisCardItem, removeCardItem, clearCardItems, setApiResponse, prependCardItems, manageTempSlotDetail, setSelectedUniqueId, setSelectedLocation, setHomeDialysisFilePaths} = bookingReducer.actions;
 export default bookingReducer.reducer;

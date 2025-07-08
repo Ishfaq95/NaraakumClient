@@ -184,6 +184,17 @@ export const getOrganizationByPackage = async (payload: any): Promise<any> => {
     }
 };
 
+export const UploadMedicalhistoryReports = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/UploadMedicalhistoryReports', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error uploading medical history reports:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
@@ -199,5 +210,6 @@ export const bookingService = {
     getUserSavedAddresses,
     getOrganizationSchedulingAvailability,
     getHospitalListByServices,
-    getOrganizationByPackage
+    getOrganizationByPackage,
+    UploadMedicalhistoryReports
 }; 

@@ -19,9 +19,9 @@ const DoctorListing = ({ filteredProviders, selectedDate, availability, onPressN
   return (
     <View style={{ flex: 1 }}>
       <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000', textAlign: 'left' }}>حجز موعد </Text>
-      <View style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, marginTop: 8 }}>
+      {/* <View style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, marginTop: 8 }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff', textAlign: 'left' }}>حدد موعد الاستشارة الطبية عن بعد</Text>
-      </View>
+      </View> */}
       <View style={{ flex: 1, marginTop: 10 }}>
         <FlatList
           data={filteredProviders}
