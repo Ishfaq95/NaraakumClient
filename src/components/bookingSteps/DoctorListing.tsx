@@ -152,8 +152,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [isHomeDialysisBooking, setIsHomeDialysisBooking] = useState(false);
   const dispatch = useDispatch();
 
-  console.log("organizationList", organizationList)
-
   const createOrderMainBeforePayment = async () => {
 
     const payload = {
@@ -296,7 +294,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
     setDisplayCategory(displayCategory);
     // Call both APIs when component mounts
-    console.log("displayCategory", displayCategory)
     if (displayCategory?.Display == "CP") {
       fetchServiceProviders();
       fetchInitialAvailability();
@@ -370,8 +367,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         serviceIds = getServiceIds();
       }
 
-      console.log("serviceIds", SelectedCardItem[0])
-
       let requestBody: any = {};
       if (category.Id == "42" || category.Id == "32") {
         if (SelectedCardItem[0]?.CatLevelId == 3) {
@@ -413,11 +408,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           PageSize: 100,
         }
       }
-      console.log("requestBody", requestBody)
 
       const response = await bookingService.getServiceProviderListByService(requestBody);
-
-      console.log("response", response)
 
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
@@ -635,7 +627,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }
 
   const handleSelectOrganization = (organization: any) => {
-    console.log("organization", organization)
     setSelectedOrganization(organization)
     setIsBottomSheetVisible(true)
   }
@@ -745,7 +736,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               initialNumToRender={3}
               renderItem={({ item, index }) => {
                   return <HomeDialysis hospital={item} onPressContinue={() => handleSelectOrganization(item)} onPressPackageList={() => {
-                    console.log("item",item)
                     setShowPackageList(true)
                     handleSelectOrganization(item)
                   }} />
@@ -915,7 +905,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             </TouchableOpacity>
           </View>
         </SafeAreaView>:
-        isHomeDialysisBooking ? null : <HomeDialysisBookingScreen SetInitialStep={handleStepsForHomeDialysisBooking}/> 
+        isHomeDialysisBooking ? null : <HomeDialysisBookingScreen selectedOrganization={selectedOrganization} SetInitialStep={handleStepsForHomeDialysisBooking}/> 
         }
         
       </CustomBottomSheet>

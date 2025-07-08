@@ -6,6 +6,7 @@ import SavedAddresses from '../components/LocationTabs/SavedAddresses';
 import ArrowRightIcon from '../assets/icons/RightArrow';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../shared/utils/routes';
+import { useSelector } from 'react-redux';
 
 const TABS = [
     { key: 'map', label: 'الخريطة' },
@@ -15,6 +16,7 @@ const TABS = [
 const LocationScreen = ({ navigation }: any) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('map');
+    const category = useSelector((state: any) => state.root.booking.category);
 
     const renderHeader = () => (
         <Header
@@ -31,7 +33,11 @@ const LocationScreen = ({ navigation }: any) => {
     );
 
     const onPressLocation = () => {
-        navigation.navigate(ROUTES.BookingScreen);
+        if (category.Id == "41") {
+            navigation.navigate(ROUTES.BookingScreen, { currentStep: 2 });
+        } else {
+            navigation.navigate(ROUTES.BookingScreen);
+        }
     }
 
     return (

@@ -28,8 +28,6 @@ const MapTab = ({ onPressLocation }: { onPressLocation: () => void }) => {
     getCurrentLocation();
   }, []);
 
-
-
   const getCurrentLocation = () => {
     Geolocation.getCurrentPosition(
       (position) => {

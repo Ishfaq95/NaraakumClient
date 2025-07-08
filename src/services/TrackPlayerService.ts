@@ -5,7 +5,6 @@ export class TrackPlayerService {
 
   static async setupPlayer() {
     if (TrackPlayerService.initialized) {
-      console.log('Track player already initialized');
       return;
     }
     try {
@@ -26,7 +25,6 @@ export class TrackPlayerService {
         ],
       });
       TrackPlayerService.initialized = true;
-      console.log('Track player initialized successfully');
     } catch (error) {
       console.error('Error setting up track player:', error);
       throw error;
@@ -139,14 +137,14 @@ export class TrackPlayerService {
 // Event listeners for track player
 export const setupTrackPlayerListeners = () => {
   TrackPlayer.addEventListener(Event.PlaybackTrackChanged, async (event) => {
-    console.log('Track changed:', event);
+    
   });
 
   TrackPlayer.addEventListener(Event.PlaybackState, async (event) => {
-    console.log('Playback state changed:', event.state);
+    
   });
 
   TrackPlayer.addEventListener(Event.PlaybackError, async (event) => {
-    console.error('Playback error:', event);
+    
   });
 }; 

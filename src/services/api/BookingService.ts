@@ -69,7 +69,6 @@ export const getServiceProviderListByService = async (params: {
 }): Promise<any> => {
     try {
         const response = await axiosInstance.post('offeredServices/GetServiceProviderListByService', params);
-        console.log("response",response)
         return response.data;
     } catch (error: any) {
         console.error('Error fetching service provider list:', error);

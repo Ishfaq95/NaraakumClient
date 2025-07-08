@@ -137,8 +137,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const selectedCard = CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId);
   const category = useSelector((state: any) => state.root.booking.category);
 
-  console.log("selectedCard",selectedCard)
-
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -535,8 +533,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           const servicePriceIndex = serviceIds.findIndex((id: string) => id === serviceId);
           const servicePrice = servicePriceIndex !== -1 ? prices[servicePriceIndex] : "0";
           const serviceOrgId = provider?.OrganizationServiceIds.split(',')[servicePriceIndex];
-
-          console.log("servicePrice",servicePrice)
 
           updatedCardArray[itemIndex] = {
             ...updatedCardArray[itemIndex],

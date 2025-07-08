@@ -12,8 +12,6 @@ import moment from 'moment';
 const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
   const { t } = useTranslation();
 
-  console.log("SuccessResponse",SuccessResponse)
-
   const handleDownloadInvoice = async () => {
     try {
       // if (SuccessResponse && SuccessResponse.Data) {

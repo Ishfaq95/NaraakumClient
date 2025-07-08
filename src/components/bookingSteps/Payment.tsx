@@ -377,20 +377,16 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const generatePaymentUrl = async () => {
-    console.log("user here 1")
     const dataUser = {Id:user.Id,FullNameSlang:user.FullnameSlang}
     const paramsJson = JSON.stringify(dataUser);
     const encryptedVisitData = encryptText(paramsJson, '!naarakum@789');
-    console.log("encryptedVisitData",`${WEBSITE_URL}service/payment?mudfp=${encryptedVisitData}`)
     return `${WEBSITE_URL}service/payment?mudfp=${encryptedVisitData}`
   }
 
   useEffect(() => {
-    console.log("user here")
     const getPaymentUrl = async () => {
       setLoading(true);
       const paymentUrl:any = await generatePaymentUrl()
-      console.log("paymentUrl",paymentUrl)
       setCurrentUrl(paymentUrl);
       setLoading(false);
     }

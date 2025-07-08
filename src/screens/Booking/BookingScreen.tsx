@@ -19,7 +19,6 @@ import FullScreenLoader from '../../components/FullScreenLoader';
 import { bookingService } from '../../services/api/BookingService';
 
 const BookingScreen = ({ navigation, route }: any) => {
-  console.log("route",route)
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(route.params?.currentStep || 1);
   const dispatch = useDispatch();
@@ -156,8 +155,6 @@ const BookingScreen = ({ navigation, route }: any) => {
       <FullScreenLoader visible={true} />
     )
   }
-
-  console.log("category.Id", category.Id)
 
   const renderStep = () => {
     switch (currentStep) {

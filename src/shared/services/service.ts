@@ -267,6 +267,7 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
   
   const selectedLocation = store.getState().root.booking.selectedLocation;
   const payload = CardArray.map((item: any) => {
+    console.log("item", item)
     // Convert time from 12-hour format with Arabic AM/PM to 24-hour format
     let schedulingTime = item.SchedulingTime;
     if (schedulingTime) {
@@ -334,7 +335,7 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
       "CatCategoryTypeId": item.CatCategoryTypeId,
       "OrganizationServiceId": item.OrganizationServiceId,
       "ServiceCharges": item.ServiceCharges,
-      "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId,
+      "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId || item.ServiceProviderloginInfoId,
       "CatSpecialtyId": item.CatSpecialtyId,
       "OrganizationSpecialtiesId": 0,
       "OrganizationPackageId": 0,
@@ -429,10 +430,6 @@ export const generateUniqueId = () => {
 };
 
 export function encryptText(text:any, key:any) {
-  console.log("text",text)
-  console.log("key",key)
   const encrypted = CryptoJS.AES.encrypt(text, key).toString();
-  console.log("encrypted",encrypted)
-  console.log('encrypted',encrypted)
   return btoa(encrypted);
 }
