@@ -47,5 +47,19 @@
   "track_order":"تتبع الطلب",
   "download_invoice":"تحميل الفاتورة",
   "savedAddresses":"اختر احد العنواين المسجلة",
-  "service_details":"تفاصيل الخدمة"
+  "service_details":"تفاصيل الخدمة",
+  "update_profile":"تحديث الحساب",
+  "delete_account":"حذف الحساب",
+  "delete_account_title":"حذف حسابي",
+  "delete_account_description":"لحذف الحساب، أدخل كلمة المرور",
+  "delete_account_button":"حذف",
+  "user_favorites":"مفضلتي",
+  "no_favorites":"لا يوجد مفضلات",
+  "beneficiaries":"المستفيدين",
+  "no_beneficiaries":"لا يوجد مستفيدين",
+  "add_beneficiary":"إضافة مستفيد",
+  "my_addresses":"عناويني",
+  "no_addresses":"لا يوجد عناوين",
+  "add_address":"إضافة عنوان",
+  "wallet_balance":"رصيد المحفظة"
 }

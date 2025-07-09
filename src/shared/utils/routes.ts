@@ -25,5 +25,20 @@ export const ROUTES = {
     BookingScreen: "BookingScreen",
     OrderSuccess: "OrderSuccess",
     LocationScreen: "LocationScreen",
+
+    // Profile section
+    updateProfile: "updateProfile",
+    visitOrderList: "visitOrderList",
+    remoteOrderList: "remoteOrderList",
+    visit_consultant_log: "visit_consultant_log",
+    reservationReceived: "reservationReceived",
+    remoteMonitoring: "remoteMonitoring",
+    myRating: "myRating",
+    walletBalance: "walletBalance",
+    myAddresses: "myAddresses",
+    beneficiaries: "beneficiaries",
+    favorites: "favorites",
+    delete: "delete",
+    logout: "logout",
   };
   

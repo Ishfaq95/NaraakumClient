@@ -15,6 +15,18 @@ import AppNavigator from './AppNavigator';
 import Services from '../screens/Booking/Services';
 import BookingScreen from '../screens/Booking/BookingScreen';
 import OrderSuccess from '../components/bookingSteps/OrderSuccess';
+import VisitOrderListScreen from '../screens/Profile/VisitOrderListScreen';
+import RemoteOrderListScreen from '../screens/Profile/RemoteOrderListScreen';
+import VisitConsultantLogScreen from '../screens/Profile/VisitConsultantLogScreen';
+import ReservationReceivedScreen from '../screens/Profile/ReservationReceivedScreen';
+import RemoteMonitoringScreen from '../screens/Profile/RemoteMonitoringScreen';
+import MyRatingScreen from '../screens/Profile/MyRatingScreen';
+import WalletBalanceScreen from '../screens/Profile/WalletBalanceScreen';
+import MyAddressesScreen from '../screens/Profile/MyAddressesScreen';
+import BeneficiariesScreen from '../screens/Profile/BeneficiariesScreen';
+import FavoritesScreen from '../screens/Profile/FavoritesScreen';
+import DeleteScreen from '../screens/Profile/DeleteScreen';
+import UpdateProfileScreen from '../screens/Profile/UpdateProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +56,20 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.Meeting} component={meeting} />
 
       <Stack.Screen name={ROUTES.OrderSuccess} component={OrderSuccess} />
+
+      {/* Profile section */}
+      <Stack.Screen name={ROUTES.updateProfile} component={UpdateProfileScreen} />
+      <Stack.Screen name={ROUTES.visitOrderList} component={VisitOrderListScreen} />
+      <Stack.Screen name={ROUTES.remoteOrderList} component={RemoteOrderListScreen} />
+      <Stack.Screen name={ROUTES.visit_consultant_log} component={VisitConsultantLogScreen} />
+      <Stack.Screen name={ROUTES.reservationReceived} component={ReservationReceivedScreen} />
+      <Stack.Screen name={ROUTES.remoteMonitoring} component={RemoteMonitoringScreen} />
+      <Stack.Screen name={ROUTES.myRating} component={MyRatingScreen} />
+      <Stack.Screen name={ROUTES.walletBalance} component={WalletBalanceScreen} />
+      <Stack.Screen name={ROUTES.myAddresses} component={MyAddressesScreen} />
+      <Stack.Screen name={ROUTES.beneficiaries} component={BeneficiariesScreen} />
+      <Stack.Screen name={ROUTES.favorites} component={FavoritesScreen} />
+      <Stack.Screen name={ROUTES.delete} component={DeleteScreen} />
     </Stack.Navigator>
   );
 };

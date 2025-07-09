@@ -7,29 +7,49 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import Feather from 'react-native-vector-icons/Feather';
 import { useTranslation } from 'react-i18next';
 import Header from '../../components/common/Header';
+import { ROUTES } from '../../shared/utils/routes';
+import { useNavigation } from '@react-navigation/native';
+import { setTopic, setUser } from '../../shared/redux/reducers/userReducer';
+import WebSocketService from '../../components/WebSocketService';
+import { useDispatch } from 'react-redux';
 
 const walletBalance = 12475799.0; // Mocked value
 
 const menuItems = [
-  { label: 'حسابي', icon: <Icon name="person" size={20} color="#239EA0" />, key: 'account' },
-  { label: 'طلباتي', icon: <FontAwesome name="clipboard-list" size={18} color="#239EA0" />, key: 'orders' },
-  { label: 'مواعيدي للاستشارات عن بعد', icon: <FontAwesome name="calendar-alt" size={18} color="#239EA0" />, key: 'appointments' },
-  { label: 'سجل الزيارات / الاستشارات', icon: <FontAwesome name="file-alt" size={18} color="#239EA0" />, key: 'history' },
-  { label: 'الحجوزات المستلمة', icon: <FontAwesome name="stethoscope" size={18} color="#239EA0" />, key: 'received' },
-  { label: 'تقييماتي', icon: <FontAwesome name="star" size={18} color="#239EA0" />, key: 'reviews' },
-  { label: 'رصيد محفظتي', icon: <FontAwesome name="wallet" size={18} color="#239EA0" />, key: 'wallet', isWallet: true },
-  { label: 'عناويني', icon: <Ionicons name="location-outline" size={20} color="#239EA0" />, key: 'addresses' },
-  { label: 'المستفيدون', icon: <FontAwesome name="users" size={18} color="#239EA0" />, key: 'beneficiaries' },
-  { label: 'مفضلتي', icon: <FontAwesome name="heart" size={18} color="#239EA0" />, key: 'favorites' },
-  { label: 'حذف الحساب', icon: <Feather name="trash-2" size={18} color="#239EA0" />, key: 'delete' },
+  { label: 'حسابي', icon: <Icon name="person" size={20} color="#239EA0" />, key: 'account', route: ROUTES.updateProfile },
+  { label: 'طلباتي', icon: <FontAwesome name="clipboard-list" size={18} color="#239EA0" />, key: 'orders', route: ROUTES.visitOrderList },
+  { label: 'مواعيدي للاستشارات عن بعد', icon: <FontAwesome name="calendar-alt" size={18} color="#239EA0" />, key: 'appointments', route: ROUTES.remoteOrderList },
+  { label: 'سجل الزيارات / الاستشارات', icon: <FontAwesome name="file-alt" size={18} color="#239EA0" />, key: 'history', route: ROUTES.visit_consultant_log },
+  { label: 'الحجوزات المستلمة', icon: <FontAwesome name="stethoscope" size={18} color="#239EA0" />, key: 'received', route: ROUTES.reservationReceived },
+  { label: 'تقييماتي', icon: <FontAwesome name="star" size={18} color="#239EA0" />, key: 'reviews', route: ROUTES.myRating },
+  { label: 'رصيد محفظتي', icon: <FontAwesome name="wallet" size={18} color="#239EA0" />, key: 'wallet', isWallet: true, route: ROUTES.walletBalance },
+  { label: 'عناويني', icon: <Ionicons name="location-outline" size={20} color="#239EA0" />, key: 'addresses', route: ROUTES.myAddresses },
+  { label: 'المستفيدون', icon: <FontAwesome name="users" size={18} color="#239EA0" />, key: 'beneficiaries', route: ROUTES.beneficiaries },
+  { label: 'مفضلتي', icon: <FontAwesome name="heart" size={18} color="#239EA0" />, key: 'favorites', route: ROUTES.favorites },
+  { label: 'حذف الحساب', icon: <Feather name="trash-2" size={18} color="#239EA0" />, key: 'delete', route: ROUTES.delete },
   { label: 'تسجيل الخروج', icon: <Entypo name="log-out" size={20} color="#239EA0" />, key: 'logout' },
 ];
 
 const ProfileScreen = () => {
   const { t } = useTranslation();
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const webSocketService = WebSocketService.getInstance();
+
+  const onLogout = () => {
+    dispatch(setTopic(null));
+    webSocketService.disconnect();
+    dispatch(setUser(null));
+  };
 
   const renderItem = ({ item }: any) => (
-    <TouchableOpacity activeOpacity={0.7} style={styles.row}>
+    <TouchableOpacity activeOpacity={0.7} style={styles.row} onPress={() => {
+      if (item.key === 'logout') {
+        onLogout();
+      } else {
+        navigation.navigate(item.route as never);
+      }
+    }}>
       {/* Left arrow */}
       <Icon name="chevron-left" size={22} color="#239EA0" style={styles.leftArrow} />
       {item.isWallet && <View style={styles.walletPill}>

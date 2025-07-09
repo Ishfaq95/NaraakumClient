@@ -40,8 +40,26 @@ export const loginWithSocialMedia = async (googleUser: any) => {
     }
 };
 
+export const deleteAccount = async (credentials: any) => {
+  try {
+    const response = await axiosInstance.post(
+      `user/AuthenticatedUserDeleteAccount`,
+      credentials
+    );
+    return response.data;
+  } catch (error: any) {
+    console.log("error", error);
+    throw {
+      message: error?.response?.data?.message || 'Delete account failed',
+      status: error?.response?.status,
+      code: error?.response?.data?.code
+    };
+  }
+};
+
 // Export all auth related functions
 export const authService = {
     login,
-    loginWithSocialMedia
+    loginWithSocialMedia,
+    deleteAccount
 }; 

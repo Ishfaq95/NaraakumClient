@@ -128,11 +128,6 @@ const AppointmentListScreen = ({navigation}: any) => {
 
   const renderHeader = () => (
     <Header
-      leftComponent={
-        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-          <Text style={styles.logoutButtonText}>{t('logout')}</Text>
-        </TouchableOpacity>
-      }
       centerComponent={
         <Text style={styles.headerTitle}>{t('appointments')}</Text>
       }

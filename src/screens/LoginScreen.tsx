@@ -145,6 +145,7 @@ const LoginScreen = () => {
     try {
       setIsLoading(true);
       const googleUser = await signInWithGoogle();
+      console.log("googleUser", googleUser);
 
       const data = {
         "FullName": googleUser.name,

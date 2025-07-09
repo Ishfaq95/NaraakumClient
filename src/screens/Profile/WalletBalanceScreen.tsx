@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,90 +8,68 @@ import {
   AppState,
   Linking,
   Text,
+  TouchableOpacity,
+  SafeAreaView,
 } from 'react-native';
 import LoaderKit from 'react-native-loader-kit';
-import {WebView} from 'react-native-webview';
+import { WebView } from 'react-native-webview';
 
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
-import {ROUTES} from '../../shared/utils/routes';
-import {useNavigation} from '@react-navigation/native';
+import { ROUTES } from '../../shared/utils/routes';
+import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearCardItems } from '../../shared/redux/reducers/bookingReducer';
 import { encryptText } from '../../shared/services/service';
 import { WEBSITE_URL } from '../../shared/utils/constants';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { useTranslation } from 'react-i18next';
+import Header from '../../components/common/Header';
+import ArrowRightIcon from '../../assets/icons/RightArrow';
 
-const Payment = ({ onPressNext, onPressBack }: any) => {
+const WalletBalanceScreen = () => {
   const [loading, setLoading] = useState(true);
   const [currentUrl, setCurrentUrl] = useState<any>(null);
   const [reloadWebView, setReloadWebView] = useState(false);
-  const [latestUrl, setLatestUrl] = useState('');
   const webViewRef = useRef(null);
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const injectedJavaScript = `
-    (function() {
-      // Helper function to log messages to React Native
-      function logToReactNative(message) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ log: message }));
-      }
-
-      // Function to send token and user info to React Native app
-      function sendTokenAndUserInfoToReactNativeApp() {
-        try {
-          var token = NK.Common.webAPIAccessToken;
-          var userInfo = NK.Common.getLoggedInUser();
-          var data = { token: token };
-          if (userInfo) {
-            data.userInfo = userInfo;
-          }
-          window.ReactNativeWebView.postMessage(JSON.stringify(data));
-        } catch (error) {
-          logToReactNative("Error in sendTokenAndUserInfoToReactNativeApp: " + error.message);
-        }
-      }
-
-      // Overwrite window.open to send the full URL and query params to React Native app
-      window.open = function(url) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ url: url }));
-      };
-
-      // Call the function to send token and user info immediately
-      sendTokenAndUserInfoToReactNativeApp();
-    })();
-    true;
-  `;
-
+  const { t } = useTranslation();
   const user = useSelector((state: any) => state.root.user.user);
-  const CardArray = useSelector((state: any) => state.root.booking.cardItems);
+
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
+  const renderHeader = () => (
+    <Header
+      centerComponent={
+        <Text style={styles.headerTitle}>{t('wallet_balance')}</Text>
+      }
+      leftComponent={
+        <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
+          <ArrowRightIcon />
+        </TouchableOpacity>
+      }
+      containerStyle={styles.headerContainer}
+    />
+  );
+
   const generatePaymentUrl = async () => {
-    const dataUser = {Id:user.Id,FullNameSlang:user.FullnameSlang}
+    const dataUser = { Id: user.Id, FullNameSlang: user.FullnameSlang }
     const paramsJson = JSON.stringify(dataUser);
     const encryptedVisitData = encryptText(paramsJson, '!naarakum@789');
-    return `${WEBSITE_URL}service/payment?mudfp=${encryptedVisitData}`
+    return `${WEBSITE_URL}Service/WalletPurchase?mudfp=${encryptedVisitData}`
   }
 
   useEffect(() => {
     const getPaymentUrl = async () => {
       setLoading(true);
-      const paymentUrl:any = await generatePaymentUrl()
+      const paymentUrl: any = await generatePaymentUrl()
       setCurrentUrl(paymentUrl);
       setLoading(false);
     }
     getPaymentUrl();
   }, [])
-
-  const handleMessage = async (event: any) => {
-    const {
-      url,
-      userInfo,
-      event: eventHandler,
-      data,
-      fileName,
-    } = JSON.parse(event.nativeEvent.data);
-
-  };
 
   const handleLoadError = (event: any) => {
     setLoading(false);
@@ -102,32 +80,25 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   };
 
 
-  const onNavigationStateChange = (url: any) => {
-    if(url.url.includes("PaymentSuccess")){
-      const tempCard = CardArray;
-      dispatch(clearCardItems());
-      navigation.navigate("OrderSuccess", { SuccessResponse:tempCard });
+  const onNavigationStateChange = async (url: any) => {
+    if (url.url.includes("PaymentSuccess")) {
+      const webviewUrl = await generatePaymentUrl();
+      setCurrentUrl(webviewUrl);
     }
-    else if(url.url.includes("PaymentError")){
-      navigation.navigate("OrderSuccess", { SuccessResponse:"Error in payment" });
+    else if (url.url.includes("PaymentError")) {
+      const webviewUrl = await generatePaymentUrl();
+      setCurrentUrl(webviewUrl);
     }
   };
 
-  if(currentUrl == null){
-    return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
-    )
-  }
-
   return (
-    <View style={styles.container}>
-      <View style={styles.webviewContainer}>
+    <SafeAreaView style={styles.container}>
+      {renderHeader()}
+      {currentUrl ? <View style={styles.webviewContainer}>
         {reloadWebView ? (
           <View style={styles.loader}>
             <LoaderKit
-              style={{width: 100, height: 100}}
+              style={{ width: 100, height: 100 }}
               name={'BallSpinFadeLoader'}
               color={'green'}
             />
@@ -135,7 +106,7 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
         ) : Platform.OS === 'ios' ? (
           <WebView
             ref={webViewRef}
-            source={{uri: currentUrl}}
+            source={{ uri: currentUrl }}
             useWebKit={true}
             javaScriptEnabled={true}
             domStorageEnabled={true}
@@ -155,8 +126,6 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
             originWhitelist={['https://*', 'http://*', 'file://*', 'sms://*']}
             geolocationEnabled={true}
             javaScriptEnabledAndroid={true}
-            injectedJavaScript={injectedJavaScript}
-            onMessage={handleMessage}
             onError={handleLoadError}
             onNavigationStateChange={onNavigationStateChange}
             style={styles.webview}
@@ -164,7 +133,7 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
         ) : (
           <WebView
             ref={webViewRef}
-            source={{uri: currentUrl}}
+            source={{ uri: currentUrl }}
             useWebKit={true}
             javaScriptEnabled={true}
             domStorageEnabled={true}
@@ -184,25 +153,51 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
             originWhitelist={['https://*', 'http://*', 'file://*', 'sms://*']}
             geolocationEnabled={true}
             javaScriptEnabledAndroid={true}
-            injectedJavaScript={injectedJavaScript}
-            onMessage={handleMessage}
             onError={handleLoadError}
             onNavigationStateChange={onNavigationStateChange}
             style={styles.webview}
           />
         )}
-      </View>
-      {loading && (
-        <FullScreenLoader visible={loading} />
-      )}
-    </View>
+      </View> :
+        <View style={styles.contentContainer}>
+          <Text>Loading...</Text>
+        </View>}
+
+      <FullScreenLoader visible={loading} />
+
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'relative',
+    backgroundColor: '#fff'
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000'
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  bookButton: {
+    padding: 5,
+    backgroundColor: '#fff',
+    borderRadius: 10,
   },
   webviewContainer: {
     flex: 1,
@@ -223,4 +218,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Payment;
+export default WalletBalanceScreen;

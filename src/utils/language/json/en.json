@@ -44,4 +44,18 @@
   "download_invoice":"Download the invoice",
   "savedAddresses":"Select one of the saved addresses",
   "service_details":"Service details",
+  "update_profile":"Update profile",
+  "delete_account":"Delete account",
+  "delete_account_title":"Delete account",
+  "delete_account_description":"To delete your account, enter your password",
+  "delete_account_button":"Delete",
+  "user_favorites":"Favorites",
+  "no_favorites":"No favorites",
+  "beneficiaries":"Beneficiaries",
+  "no_beneficiaries":"No beneficiaries",
+  "add_beneficiary":"Add beneficiary",
+  "my_addresses":"My addresses",
+  "no_addresses":"No addresses",
+  "add_address":"Add address",
+  "wallet_balance":"Wallet balance"
 }
