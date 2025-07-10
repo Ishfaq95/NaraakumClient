@@ -141,6 +141,7 @@ const PhoneNumberInput: React.FC<Props> = ({
           style={[styles.input, inputStyle]}
           defaultCountry={defaultCountry as any}
           showOnly={ALLOWED_COUNTRIES}
+          disabled={!editable}
           rtl={isRTL}
           editable={editable}
           phoneInputStyles={{
