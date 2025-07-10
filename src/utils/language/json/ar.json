@@ -61,5 +61,7 @@
   "my_addresses":"عناويني",
   "no_addresses":"لا يوجد عناوين",
   "add_address":"إضافة عنوان",
-  "wallet_balance":"رصيد المحفظة"
+  "wallet_balance":"رصيد المحفظة",
+  "patient_rating":"تقييم المريض",
+  "select_patient":"اختر المريض"
 }

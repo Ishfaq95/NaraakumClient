@@ -40,9 +40,20 @@ export const getUserAddresses = async (payload: any): Promise<any> => {
     }
 };
 
+export const getPatientRating = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('user/GetUserRatingForPatient', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting patient rating:', error);
+        throw error;
+    }
+};
+
 export const profileService = {
     getUserFavorites,
     removeFromFavorites,
     getBeneficiaries,
     getUserAddresses,
+    getPatientRating,
 };  

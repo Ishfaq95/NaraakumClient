@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, SafeAreaView, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome5';
@@ -8,12 +8,13 @@ import Feather from 'react-native-vector-icons/Feather';
 import { useTranslation } from 'react-i18next';
 import Header from '../../components/common/Header';
 import { ROUTES } from '../../shared/utils/routes';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { setTopic, setUser } from '../../shared/redux/reducers/userReducer';
 import WebSocketService from '../../components/WebSocketService';
-import { useDispatch } from 'react-redux';
-
-const walletBalance = 12475799.0; // Mocked value
+import { useDispatch, useSelector } from 'react-redux';  
+import { useState } from 'react';
+import { bookingService } from '../../services/api/BookingService';
+import { RootState } from '../../shared/redux/store';
 
 const menuItems = [
   { label: 'حسابي', icon: <Icon name="person" size={20} color="#239EA0" />, key: 'account', route: ROUTES.updateProfile },
@@ -35,12 +36,29 @@ const ProfileScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const webSocketService = WebSocketService.getInstance();
+  const [walletBalance, setWalletBalance] = useState(0);
+  const user = useSelector((state: RootState) => state.root.user.user);
+  const isFocused = useIsFocused();
 
   const onLogout = () => {
     dispatch(setTopic(null));
     webSocketService.disconnect();
     dispatch(setUser(null));
   };
+
+  useEffect(() => {
+    getWalletBalance();
+  }, [isFocused]);
+
+  const getWalletBalance = async () => {
+    const payload = {
+      "UserLoginInfoId": user?.Id,
+    }
+    const response = await bookingService.getUpdatedWallet(payload);
+    if(response?.ResponseStatus?.STATUSCODE == 200){
+      setWalletBalance(response?.Wallet[0]?.TotalAmount || 0);
+    }
+  }
 
   const renderItem = ({ item }: any) => (
     <TouchableOpacity activeOpacity={0.7} style={styles.row} onPress={() => {

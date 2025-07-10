@@ -57,5 +57,7 @@
   "my_addresses":"My addresses",
   "no_addresses":"No addresses",
   "add_address":"Add address",
-  "wallet_balance":"Wallet balance"
+  "wallet_balance":"Wallet balance",
+  "patient_rating":"Patient rating",
+  "select_patient":"Select patient"
 }

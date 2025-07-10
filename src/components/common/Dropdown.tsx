@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -45,6 +45,11 @@ const Dropdown: React.FC<DropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value);
 
+  // Sync selectedValue with value prop changes
+  useEffect(() => {
+    setSelectedValue(value);
+  }, [value]);
+
   const handleSelect = (item: DropdownItem) => {
     setSelectedValue(item.value);
     onChange(item.value);
@@ -52,6 +57,8 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   const selectedItem = data.find(item => item.value === selectedValue);
+
+  console.log("Data", data);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -79,7 +86,7 @@ const Dropdown: React.FC<DropdownProps> = ({
           <View style={styles.modalContent}>
             <FlatList
               data={data}
-              keyExtractor={(item) => item.value.toString()}
+              keyExtractor={(item) => item?.value?.toString()}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
@@ -96,7 +103,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                       item.value === selectedValue && [styles.selectedItemText, selectedItemTextStyle],
                     ]}
                   >
-                    {item.label}
+                    {item?.label}
                   </Text>
                 </TouchableOpacity>
               )}
