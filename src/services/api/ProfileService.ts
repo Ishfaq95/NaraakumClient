@@ -50,10 +50,44 @@ export const getPatientRating = async (payload: any): Promise<any> => {
     }
 };
 
+export const getVisitOrderList = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('user/GetUserOrderList', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting visit order list:', error);
+        throw error;
+    }
+};
+
+export const getVisitConsultantLog = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('visitRecord/GetVisitRecordListByLoginUserId', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting visit consultant log:', error);
+        throw error;    
+    }
+};
+
+export const getCpAddedOrders = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('user/GetCPAddedOrderList', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting cp added orders:', error);
+        throw error;    
+    }
+};
+
 export const profileService = {
     getUserFavorites,
     removeFromFavorites,
     getBeneficiaries,
     getUserAddresses,
     getPatientRating,
+    getVisitOrderList,
+    getVisitConsultantLog,
+    getCpAddedOrders
 };  

@@ -63,5 +63,10 @@
   "add_address":"إضافة عنوان",
   "wallet_balance":"رصيد المحفظة",
   "patient_rating":"تقييم المريض",
-  "select_patient":"اختر المريض"
+  "select_patient":"اختر المريض",
+  "cancelled": "ملغي",
+  "visit_order_list":"طلباتي",
+  "remote_orders":"مواعيدي للاستشارات عن بعد",
+  "visit_consultant_log":"سجل الزيارات",
+  "sar":"ريال"
 }

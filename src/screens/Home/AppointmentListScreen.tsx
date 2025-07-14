@@ -82,12 +82,6 @@ const AppointmentListScreen = ({navigation}: any) => {
     }
   }, [user, isFocused]);
 
-  const onLogout = () => {
-    dispatch(setTopic(null));
-    webSocketService.disconnect();
-    dispatch(setUser(null));
-  };
-
   const handleJoinMeeting = (appointment: any) => {
 
     // Parse the date and time separately

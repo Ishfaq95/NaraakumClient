@@ -59,5 +59,10 @@
   "add_address":"Add address",
   "wallet_balance":"Wallet balance",
   "patient_rating":"Patient rating",
-  "select_patient":"Select patient"
+  "select_patient":"Select patient",
+  "cancelled":"Cancelled",
+  "visit_order_list":"My requests",
+  "remote_orders":"My remote orders",
+  "visit_consultant_log":"Visit consultant log",
+  "sar":"SAR"
 }

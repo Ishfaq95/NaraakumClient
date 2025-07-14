@@ -11,7 +11,7 @@ import { ROUTES } from '../../shared/utils/routes';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { setTopic, setUser } from '../../shared/redux/reducers/userReducer';
 import WebSocketService from '../../components/WebSocketService';
-import { useDispatch, useSelector } from 'react-redux';  
+import { useDispatch, useSelector } from 'react-redux';
 import { useState } from 'react';
 import { bookingService } from '../../services/api/BookingService';
 import { RootState } from '../../shared/redux/store';
@@ -55,7 +55,7 @@ const ProfileScreen = () => {
       "UserLoginInfoId": user?.Id,
     }
     const response = await bookingService.getUpdatedWallet(payload);
-    if(response?.ResponseStatus?.STATUSCODE == 200){
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
       setWalletBalance(response?.Wallet[0]?.TotalAmount || 0);
     }
   }
@@ -68,21 +68,12 @@ const ProfileScreen = () => {
         navigation.navigate(item.route as never);
       }
     }}>
-      {/* Left arrow */}
       <Icon name="chevron-left" size={22} color="#239EA0" style={styles.leftArrow} />
       {item.isWallet && <View style={styles.walletPill}>
-          <Text style={styles.walletText}>SAR {walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
-        </View>}
-      {/* Label */}
+        <Text style={styles.walletText}>SAR {walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+      </View>}
       <Text style={styles.label}>{item.label}</Text>
-      {/* Wallet pill or icon */}
-      {/* {item.isWallet ? (
-        <View style={styles.walletPill}>
-          <Text style={styles.walletText}>SAR {walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
-        </View>
-      ) : ( */}
-        <View style={styles.iconBox}>{item.icon}</View>
-      {/* )} */}
+      <View style={styles.iconBox}>{item.icon}</View>
     </TouchableOpacity>
   );
 
