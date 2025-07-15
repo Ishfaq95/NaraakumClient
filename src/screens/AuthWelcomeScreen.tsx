@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Dimensions,
 } from 'react-native';
+import { globalTextStyles } from '../styles/globalStyles';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,6 +23,10 @@ const AuthWelcomeScreen = ({ navigation }: any) => {
       resizeMode="cover"
     >
       <SafeAreaView style={styles.safeArea}>
+        
+
+        
+
         
         {/* Buttons */}
         <View style={styles.buttonContainer}>
@@ -76,9 +81,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   loginButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    ...globalTextStyles.buttonLarge,
   },
   createButton: {
     borderWidth: 1.5,
@@ -90,15 +93,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   createButtonText: {
+    ...globalTextStyles.buttonMedium,
     color: '#22A6A7',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   versionText: {
     color: '#bdbdbd',
     fontSize: 14,
     marginTop: 8,
   },
+
+
 });
 
 export default AuthWelcomeScreen; 

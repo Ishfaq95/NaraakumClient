@@ -92,8 +92,6 @@ const UpdateProfileScreen = () => {
   const defaultCountryCode = phoneInfo.countryCode;
   const defaultPhoneNumber = phoneInfo.phoneNumber;
 
-  console.log("user", user);
-
   useEffect(() => {
     setName(user?.FullnameSlang);
     setEmail(user?.Email);

@@ -28,6 +28,7 @@ import FavoritesScreen from '../screens/Profile/FavoritesScreen';
 import DeleteScreen from '../screens/Profile/DeleteScreen';
 import UpdateProfileScreen from '../screens/Profile/UpdateProfileScreen';
 
+
 const Stack = createNativeStackNavigator();
 
 const RootNavigator = () => {
