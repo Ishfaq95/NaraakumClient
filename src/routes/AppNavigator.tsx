@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import { ROUTES } from "../shared/utils/routes";
 import { useTranslation } from "react-i18next";
+import { globalTextStyles } from "../styles/globalStyles";
 
 import CartScreen from "../screens/Cart/Cart";
 import ProfileScreen from "../screens/Profile/Profile";
@@ -37,7 +38,7 @@ const HamburgerManu = () => (
     width: 24, height: 24, borderRadius: 12, backgroundColor: '#ccc',
     alignItems: 'center', justifyContent: 'center'
   }}>
-    <Text style={{ fontSize: 16, color: '#888' }}>≡</Text>
+    <Text style={[globalTextStyles.bodyMedium, { color: '#888' }]}>≡</Text>
   </View>
 );
 
@@ -66,11 +67,7 @@ function RenderTabIcon({ routeName, isFocused }: RenderTabIconProps) {
               borderWidth: 2,
               borderColor: '#FFFFFF',
             }}>
-              <Text style={{
-                color: '#FFFFFF',
-                fontSize: 12,
-                fontWeight: 'bold',
-              }}>
+              <Text style={[globalTextStyles.caption, { color: '#FFFFFF', fontWeight: 'bold' }]}>
                 {cardItemsCount}
               </Text>
             </View>
@@ -93,10 +90,7 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
       return (
         <Text
           style={[
-            {
-              fontSize: 14,
-              fontWeight: '600',
-            },
+            globalTextStyles.bodySmall,
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
               // marginTop:  5,
@@ -108,10 +102,7 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
       return (
         <Text
           style={[
-            {
-              fontSize: 14,
-              fontWeight: '600',
-            },
+            globalTextStyles.bodySmall,
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
               // marginTop: 10,
@@ -123,10 +114,7 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
       return (
         <Text
           style={[
-            {
-              fontSize: 14,
-              fontWeight: '600',
-            },
+            globalTextStyles.bodySmall,
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
               // marginTop: 10,
@@ -138,10 +126,7 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
       return (
         <Text
           style={[
-            {
-              fontSize: 14,
-              fontWeight: '600',
-            },
+            globalTextStyles.bodySmall,
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
               // marginTop: 10,

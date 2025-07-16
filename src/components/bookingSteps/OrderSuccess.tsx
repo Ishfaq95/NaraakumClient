@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
 import { ROUTES } from '../../shared/utils/routes';
 import moment from 'moment';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
   const { t } = useTranslation();
@@ -96,7 +97,7 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{flex:1,paddingHorizontal:16,alignItems:"center", }}>
-        <Text>Order Success</Text>
+        <Text style={globalTextStyles.h4}>Order Success</Text>
         {/* <View style={styles.gifContainer}>
           <LottieAnimation
             source={LOTTIE_ANIMATIONS.ORDER_SUCCESS}
@@ -106,27 +107,27 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
           />
         </View>
         <View style={{ alignItems:"center",justifyContent:"center",marginBottom:15}}>
-          <Text style={{fontSize:22,fontWeight:"700",color:"#000"}}>{t('booking_successful')}</Text>
+          <Text style={globalTextStyles.h3}>{t('booking_successful')}</Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
-          <Text style={{fontSize:16,fontWeight:'bold',color:"#23a2a4"}}>{t('transaction_status')}</Text>
-          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>{t('تمت العملية بنجاح')}</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_status')}</Text>
+          <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>{t('تمت العملية بنجاح')}</Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
-          <Text style={{fontSize:16,fontWeight:'bold',color:"#23a2a4"}}>{t('transaction_number')}</Text>
-          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_number')}</Text>
+          <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
             {SuccessResponse?.Data?.OrderId ? `NAR-${SuccessResponse.Data.OrderId}` : 'N/A'}
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
-          <Text style={{fontSize:16,fontWeight:'bold',color:"#23a2a4"}}>{t('transaction_date')}</Text>
-          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_date')}</Text>
+          <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
             {SuccessResponse?.Data?.CreatedDate ? moment(SuccessResponse.Data.CreatedDate).format('DD/MM/YYYY') : moment().format('DD/MM/YYYY')}
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
-          <Text style={{fontSize:16,fontWeight:'bold',color:"#23a2a4"}}>{t('transaction_amount')}</Text>
-          <Text style={{fontSize:14,fontWeight:"600",color:"#23a2a4"}}>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_amount')}</Text>
+          <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
             {SuccessResponse?.Data?.TotalAmount ? `${SuccessResponse.Data.TotalAmount} SAR` : 'N/A'}
           </Text>
         </View>
@@ -135,13 +136,13 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
             style={{width:'48%',backgroundColor:'#23a2a4',padding:10,borderRadius:10}}
             onPress={handleDownloadInvoice}
           >
-            <Text style={{color:'#fff',textAlign:'center'}}>{t('download_invoice')}</Text>
+            <Text style={[globalTextStyles.buttonMedium, { color: '#fff', textAlign: 'center' }]}>{t('download_invoice')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={{width:'48%',backgroundColor:'#23a2a4',padding:10,borderRadius:10}}
             onPress={handleTrackOrder}
           >
-            <Text style={{color:'#fff',textAlign:'center'}}>{t('track_order')}</Text>
+            <Text style={[globalTextStyles.buttonMedium, { color: '#fff', textAlign: 'center' }]}>{t('track_order')}</Text>
           </TouchableOpacity>
         </View> */}
       </View>
@@ -153,8 +154,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
 
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#000'
   },
   headerContainer: {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import CheckIcon from '../assets/icons/CheckIcon';
+import { globalTextStyles } from '../styles/globalStyles';
 
 const Stepper = ({ currentStep,steps }: { currentStep: number,steps: any }) => {
   return (
@@ -60,9 +61,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff'
   },
   stepText: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#888',
-    fontWeight: 'bold'
+    fontFamily: globalTextStyles.h5.fontFamily
   },
   line: {
     width: 60,

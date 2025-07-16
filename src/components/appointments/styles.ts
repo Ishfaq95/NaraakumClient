@@ -1,4 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native';
+import { globalTextStyles } from '../../styles/globalStyles';
 const windowHeight = Dimensions.get('window').height;
 
 export const styles = StyleSheet.create({
@@ -26,8 +27,8 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   tabLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...globalTextStyles.bodySmall,
+    fontFamily: globalTextStyles.h5.fontFamily,
     textTransform: 'none',
   },
   indicator: {
@@ -48,8 +49,7 @@ export const styles = StyleSheet.create({
     width: 80,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...globalTextStyles.h4,
     color: '#000000',
     textAlign: 'center',
   },
@@ -61,8 +61,8 @@ export const styles = StyleSheet.create({
     width: 80,
   },
   logoutButtonText: {
+    ...globalTextStyles.caption,
     color: '#FFFFFF',
-    fontSize: 12,
     textAlign: 'center',
   },
   bookButton: {
@@ -73,15 +73,15 @@ export const styles = StyleSheet.create({
     width: 80,
   },
   bookButtonText: {
+    ...globalTextStyles.caption,
     color: '#FFFFFF',
-    fontSize: 12,
     textAlign: 'center',
   },
   tabView: {
     flex: 1,
   },
   text: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#000',
   },
 }); 

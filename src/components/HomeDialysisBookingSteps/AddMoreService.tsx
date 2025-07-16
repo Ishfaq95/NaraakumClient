@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import { globalTextStyles } from '../../styles/globalStyles'
 
 const AddMoreService = ({onPressNext,onPressBack}:any) => {
   return (
@@ -11,13 +12,13 @@ const AddMoreService = ({onPressNext,onPressBack}:any) => {
         </View>
         <Ionicons name='cart' size={100} color='#000' />
       </View>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>تم إضافة الخدمة الى السلة بنجاح</Text>
-      <Text style={{ fontSize: 16, color: '#000' }}>استشارة عن بعد / غسيل كلى منزلي</Text>
+      <Text style={[globalTextStyles.h4, { color: '#000' }]}>تم إضافة الخدمة الى السلة بنجاح</Text>
+      <Text style={[globalTextStyles.bodyMedium, { color: '#000' }]}>استشارة عن بعد / غسيل كلى منزلي</Text>
       <TouchableOpacity onPress={onPressNext} style={{ backgroundColor: '#239ea0', borderRadius: 10, padding: 12, alignItems: 'center', width: '100%', marginTop: 20 }}>
-        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}> اتمام الحجز</Text>
+        <Text style={[globalTextStyles.buttonMedium, { color: '#fff' }]}> اتمام الحجز</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={onPressBack} style={{ borderWidth: 1, borderColor: '#239ea0', borderRadius: 10, padding: 12, alignItems: 'center', width: '100%', marginTop: 20 }}>
-        <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 16 }}>اضافة المزيد من الخدمات</Text>
+        <Text style={[globalTextStyles.buttonMedium, { color: '#239ea0' }]}>اضافة المزيد من الخدمات</Text>
       </TouchableOpacity>
     </View>
   )

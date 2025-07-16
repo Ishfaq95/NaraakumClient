@@ -12,6 +12,7 @@ import { MediaBaseURL } from '../../shared/utils/constants';
 import UserPlaceholder from '../../assets/icons/UserPlaceholder';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const FavoritesScreen = () => {
   const { t } = useTranslation();
@@ -87,7 +88,7 @@ const FavoritesScreen = () => {
           <Text style={styles.providerName}>{item.FullnameSlang}</Text>
           <View style={{ flexDirection: 'row', marginVertical: 2 }}>
             <Text style={styles.ratingText}>{item.AccumulativeRatingAvg.toFixed(1)}</Text>
-            <Text style={{ color: '#888', fontSize: 12 }}> ({item.AccumulativeRatingNum} تقييم)</Text>
+            <Text style={[globalTextStyles.caption, { color: '#888' }]}> ({item.AccumulativeRatingNum} تقييم)</Text>
             <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
           </View>
         </View>
@@ -96,7 +97,7 @@ const FavoritesScreen = () => {
         </View>
       </View>
       <TouchableOpacity onPress={() => handleRemoveFromFavorites(item.Id)} style={{ height: 50, backgroundColor: '#23a2a4',marginHorizontal: 10, marginBottom: 10, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>{t('delete_account_button')}</Text>
+        <Text style={[globalTextStyles.buttonMedium, { color: '#fff' }]}>{t('delete_account_button')}</Text>
       </TouchableOpacity>
       </View>
     )
@@ -106,8 +107,8 @@ const FavoritesScreen = () => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{paddingHorizontal: 16, paddingVertical: 10,alignItems:'center',}}>
-      <Text style={{fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 10}}>قائمة المفضلة</Text>
-      <Text style={{fontSize: 14, fontWeight: '500', color: '#000', marginBottom: 10}}>سيظهر مقدمو الخدمات المفضلون لديك في أوائل النتائج عند طلب أي خدمة</Text>
+      <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', marginBottom: 10 }]}>قائمة المفضلة</Text>
+      <Text style={[globalTextStyles.bodySmall, { fontWeight: '500', color: '#000', marginBottom: 10 }]}>سيظهر مقدمو الخدمات المفضلون لديك في أوائل النتائج عند طلب أي خدمة</Text>
       </View>
       
       <View style={styles.contentContainer}>
@@ -115,7 +116,7 @@ const FavoritesScreen = () => {
           data={favorites}
           renderItem={renderItem}
           keyExtractor={(item) => item.Id.toString()}
-          ListEmptyComponent={() => <Text>{t('no_favorites')}</Text>}
+          ListEmptyComponent={() => <Text style={globalTextStyles.bodyMedium}>{t('no_favorites')}</Text>}
         />
       </View>
 
@@ -137,8 +138,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#000'
   },
   headerContainer: {

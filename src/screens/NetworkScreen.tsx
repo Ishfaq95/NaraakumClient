@@ -3,6 +3,7 @@ import { View, Text, Button, StyleSheet } from 'react-native';
 import { ROUTES } from '../shared/utils/routes';
 import { useNetInfo } from "@react-native-community/netinfo";
 import LoaderKit from 'react-native-loader-kit';
+import { globalTextStyles } from '../styles/globalStyles';
 
 const NetworkErrorScreen = ({ navigation }:any) => {
     const netInfo = useNetInfo();
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    fontSize: 18,
+    ...globalTextStyles.h4,
     color: '#333',
     textAlign: 'center',
     marginBottom: 10,

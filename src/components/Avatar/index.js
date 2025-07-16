@@ -3,6 +3,7 @@ import React from "react";
 import { View, Text } from "react-native";
 import colors from "../../styles/colors";
 import { convertRFValue } from "../../styles/spacing";
+import { globalTextStyles } from "../../styles/globalStyles";
 
 export default function Avatar({
   fullName,
@@ -32,6 +33,7 @@ export default function Avatar({
       >
         <Text
           style={{
+            ...globalTextStyles.bodyMedium,
             fontSize: convertRFValue(fontSize),
             color: colors.primary[100],
           }}

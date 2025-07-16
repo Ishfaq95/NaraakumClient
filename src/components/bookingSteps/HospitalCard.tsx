@@ -8,6 +8,7 @@ import { generateSlotsForDate } from '../../utils/timeUtils';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
 import { addCardItem, manageTempSlotDetail, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 interface Specialty {
   CatSpecialtyId: string;
@@ -243,7 +244,7 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
           <Text style={styles.providerName}>{hospital?.TitleSlang}</Text>
           <View style={{ flexDirection: 'row',alignItems: 'center', marginVertical: 2 }}>
             <Text style={styles.ratingText}>{hospital?.AccumulativeRatingAvg.toFixed(1)}</Text>
-            <Text style={{ color: '#888', fontSize: 12 }}> ({hospital?.AccumulativeRatingNum} تقييم)</Text>
+            <Text style={[globalTextStyles.caption, { color: '#888' }]}> ({hospital?.AccumulativeRatingNum} تقييم)</Text>
             <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
           </View>
         </View>

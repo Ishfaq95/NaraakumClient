@@ -9,6 +9,7 @@ import { bookingService } from "../../services/api/BookingService";
 import { useEffect } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { ROUTES } from "../../shared/utils/routes";
+import { globalTextStyles } from "../../styles/globalStyles";
 
 const CartScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
@@ -138,7 +139,7 @@ const CartScreen = ({ navigation }: any) => {
 
   const renderEmptyCart = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>لا توجد مواعيد محجوزة</Text>
+      <Text style={[globalTextStyles.bodyMedium, { color: '#666' }]}>لا توجد مواعيد محجوزة</Text>
     </View>
   );
 
@@ -204,8 +205,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#239EA0',
   },
   headerActions: {
@@ -216,8 +216,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   itemsCount: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...globalTextStyles.bodyMedium,
+    fontFamily: globalTextStyles.h5.fontFamily,
     color: '#333',
   },
   clearAllButton: {
@@ -227,9 +227,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   clearAllButtonText: {
+    ...globalTextStyles.bodySmall,
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   listContainer: {
     flexGrow: 1,
@@ -264,18 +264,18 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   providerName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    ...globalTextStyles.bodyMedium,
+    fontFamily: globalTextStyles.h5.fontFamily,
     color: '#333',
     marginBottom: 4,
   },
   slotInfo: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#666',
     marginBottom: 2,
   },
   dateInfo: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#666',
   },
   removeButtonContainer: {
@@ -298,9 +298,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   removeButtonText: {
+    ...globalTextStyles.caption,
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   emptyContainer: {
     flex: 1,
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     paddingVertical: 50,
   },
   emptyText: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#666',
     textAlign: 'center',
   },
@@ -317,12 +317,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   ServiceText: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#666',
   },
   quantityText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    ...globalTextStyles.bodyMedium,
+    fontFamily: globalTextStyles.h5.fontFamily,
     color: '#23a2a4',
     textAlign: 'left',
   },
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   totalText: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
   },
   checkoutButton: {
     backgroundColor: '#23a2a4',
@@ -347,9 +347,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   checkoutButtonText: {
+    ...globalTextStyles.buttonMedium,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
     textAlign: 'center',
   },
 });

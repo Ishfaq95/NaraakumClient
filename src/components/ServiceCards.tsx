@@ -2,6 +2,7 @@ import OnlineDoctorIcon from '../assets/icons/OnlineDoctorIcon';
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { globalTextStyles } from '../styles/globalStyles';
 
 interface ServiceCardProps {
   item: any;
@@ -19,7 +20,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ item, style, onPress }) => {
         style={[styles.card, style]}
       >
         <View style={[{ height: '45%' },Platform.OS === 'ios' ? {paddingLeft:30} : {}]}>
-          <Text style={{ fontSize: 16,alignSelf:'flex-start', fontWeight: 'bold', color: '#209092' }}>خدمات</Text>
+          <Text style={{ ...globalTextStyles.bodyMedium, alignSelf:'flex-start', fontFamily: globalTextStyles.h5.fontFamily, color: '#209092' }}>خدمات</Text>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.subtitle}>{item.description}</Text>
           <Text style={styles.price}>{`تبدأ من ${item.Price} ريال`}</Text>
@@ -61,22 +62,20 @@ const styles = StyleSheet.create({
   },
   title: {
     alignSelf:'flex-start',
-    fontSize: 22,
-    fontWeight: 'bold',
+    ...globalTextStyles.h2,
     color: '#209092',
     marginBottom: 6,
   },
   subtitle: {
     alignSelf:'flex-start',
-    fontSize: 15,
+    ...globalTextStyles.bodySmall,
     color: '#444',
     marginBottom: 10,
   },
   price: {
     alignSelf:'flex-start',
-    fontSize: 18,
+    ...globalTextStyles.h4,
     color: '#179c8e',
-    fontWeight: 'bold',
   },
 });
 

@@ -21,6 +21,7 @@ import RightArrow from '../../assets/icons/RightArrow';
 import { BaseURL, MediaBaseURL } from '../../shared/utils/constants';
 import { formatDate, formatTime, getDuration, getStatusStyle } from '../../shared/services/service';
 import SettingIconSelected from '../../assets/icons/SettingIconSelected';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 interface AppointmentCardProps {
   appointment: any;
@@ -216,8 +217,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   doctorName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    ...globalTextStyles.bodyMedium,
+    fontFamily: globalTextStyles.h5.fontFamily,
     color: '#222',
     marginBottom: 4,
     textAlign: 'left',
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   specialtyText: {
-    fontSize: 12,
+    ...globalTextStyles.caption,
     color: '#222',
   },
   divider: {
@@ -270,15 +271,15 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   detailLabel: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#666',
     textAlign: 'right',
     marginLeft: 8,
   },
   detailValue: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#222',
-    fontWeight: '500',
+    fontFamily: globalTextStyles.h5.fontFamily,
     textAlign: 'left',
   },
   statusContainer: {
@@ -288,8 +289,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
   },
   statusText: {
-    fontWeight: 'bold',
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   infoBar: {
     backgroundColor: '#222',
@@ -302,9 +303,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   infoBarText: {
+    ...globalTextStyles.bodySmall,
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginLeft: 8,
   },
   callBtn: {
@@ -324,9 +325,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   callBtnText: {
+    ...globalTextStyles.buttonMedium,
     color: '#bdbdbd',
-    fontSize: 14,
-    fontWeight: 'bold',
     marginLeft: 8,
   },
   callBtnTextEnabled: {

@@ -1,7 +1,7 @@
 import React from "react";
 import { TouchableOpacity, Text } from "react-native";
 import colors from "../../styles/colors";
-import { ROBOTO_FONTS } from "../../styles/fonts";
+import { globalTextStyles } from "../../styles/globalStyles";
 
 const Button = ({
   text,
@@ -25,9 +25,8 @@ const Button = ({
     >
       <Text
         style={{
+          ...globalTextStyles.buttonMedium,
           color: colors.primary["100"],
-          fontSize: 16,
-          fontFamily: ROBOTO_FONTS.RobotoBold,
           ...textStyle,
         }}
       >

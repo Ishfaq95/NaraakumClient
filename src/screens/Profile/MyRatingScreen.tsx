@@ -11,6 +11,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../shared/redux/store';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import moment from 'moment';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 interface PatientItem {
   label: string;
@@ -119,15 +120,15 @@ const MyRatingScreen = () => {
             borderColor: '#e0e0e0',
           }}>
           <View style={{flexDirection:"row",width:"100%", alignItems:"center",justifyContent:"space-between"}}>
-            <Text style={{fontSize:16,fontWeight:"bold",color:"#000"}}>{item.FullnameSlang}</Text>
+            <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#000" }]}>{item.FullnameSlang}</Text>
             <View style={{flexDirection:"row",height:30,width:80,backgroundColor:"#fff", alignItems:"center",justifyContent:"center",borderRadius:15}}>
-              <Text style={{fontSize:16,fontWeight:"bold",color:"#000",marginRight:5}}>{`${item.RateValue}/5`}</Text>
+              <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#000", marginRight: 5 }]}>{`${item.RateValue}/5`}</Text>
               <AntDesign name="star" size={20} color="#23a2a4" />
             </View>
           </View>
-          <Text style={{fontSize:16,fontWeight:"400",color:"#36454f",textAlign:"left"}}>{item.OrganizationTitleSlang}</Text>
-          <Text style={{fontSize:16,fontWeight:"400",color:"#36454f",textAlign:"left",paddingVertical:10}}>{item.Comment}</Text>
-          <Text style={{fontSize:16,fontWeight:"400",color:"#36454f",textAlign:"left"}}>{moment(item.DateAdded).format('DD/MM/YYYY')}</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{item.OrganizationTitleSlang}</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left", paddingVertical: 10 }]}>{item.Comment}</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{moment(item.DateAdded).format('DD/MM/YYYY')}</Text>
         </View>
         )
     }
@@ -136,18 +137,18 @@ const MyRatingScreen = () => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{ paddingHorizontal: 16, paddingVertical: 10,marginTop: 10, alignItems: 'center', }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 10 }}>تقييمات سلوك المريض في أثناء الزيارة</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', marginBottom: 10 }]}>تقييمات سلوك المريض في أثناء الزيارة</Text>
       </View>
       <View style={{flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16, paddingVertical: 10,marginTop: 10, alignItems: 'center', }}>
         <Dropdown data={patientList} value={selectedPatient} onChange={(value: string | number) => setSelectedPatient(value.toString())} placeholder={t('select_patient')} />
         <View style={{height:150,width:"100%",marginTop:10,backgroundColor:"#fff",borderRadius:10,alignItems:"center",justifyContent:"center"}}>
-          <Text style={{fontSize:24,fontWeight:"bold",color:"#000",paddingVertical:10}}>{patientDetails[0]?.FullnameSlang || ''}</Text>
+          <Text style={[globalTextStyles.h2, { fontWeight: "bold", color: "#000", paddingVertical: 10 }]}>{patientDetails[0]?.FullnameSlang || ''}</Text>
           <View style={{flexDirection:"row",alignItems:"center",justifyContent:"center"}}>
             
-            <Text style={{fontSize:16,fontWeight:"bold",color:"#23a2a4",marginRight:5}}>{patientDetails[0]?.AccumulativeRatingAvg || 0}</Text>
+            <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#23a2a4", marginRight: 5 }]}>{patientDetails[0]?.AccumulativeRatingAvg || 0}</Text>
             <AntDesign name="star" size={24} color="#23a2a4" />
           </View>
-          <Text style={{fontSize:16,fontWeight:"bold",color:"#000",paddingVertical:10}}>{`عدد التقييمات ${patientDetails[0]?.AccumulativeRatingNum || 0}`}</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#000", paddingVertical: 10 }]}>{`عدد التقييمات ${patientDetails[0]?.AccumulativeRatingNum || 0}`}</Text>
         </View>
 
         <View style={styles.contentContainer}>
@@ -157,7 +158,7 @@ const MyRatingScreen = () => {
           keyExtractor={(item) => item?.Id?.toString()}
           style={{ width: '100%', }}
           ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={{ fontSize: 16, fontWeight: '500', color: '#000' }}>{t('no_addresses')}</Text>
+            <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{t('no_addresses')}</Text>
           </View>}
         />
       </View>
@@ -183,8 +184,7 @@ const styles=StyleSheet.create({
     paddingTop: 10,
 },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#000'
   },
   headerContainer: {

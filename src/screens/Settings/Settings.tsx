@@ -6,6 +6,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import CustomBottomSheet from "../../components/common/CustomBottomSheet";
 import { useEffect, useState } from "react";
 import Dropdown from "../../components/common/Dropdown";
+import { globalTextStyles } from "../../styles/globalStyles";
 
 
 const menuItems = [
@@ -105,7 +106,7 @@ const SettingsScreen = () => {
       >
         <View style={{ flex: 1, backgroundColor: '#fff', padding: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000' }}>إعدادات التذكيرات</Text>
+            <Text style={{ ...globalTextStyles.bodyMedium, fontFamily: globalTextStyles.h5.fontFamily, color: '#000' }}>إعدادات التذكيرات</Text>
             <TouchableOpacity onPress={() => setReminderSettingBottomSheetVisible(false)}>
               <Icon name="close" size={20} color="#239EA0" />
             </TouchableOpacity>
@@ -126,7 +127,7 @@ const SettingsScreen = () => {
           </View>
 
           <TouchableOpacity onPress={onPressSaveReminderSetting} style={{ backgroundColor: '#239EA0', padding: 10, borderRadius: 10, marginTop: 10 }}>
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>حفظ</Text>
+            <Text style={{ ...globalTextStyles.buttonMedium, color: '#fff', textAlign: 'center' }}>حفظ</Text>
           </TouchableOpacity>
         </View>
       </CustomBottomSheet>
@@ -140,8 +141,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#239EA0',
   },
   row: {
@@ -162,10 +162,10 @@ const styles = StyleSheet.create({
   },
   label: {
     flex: 1,
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#222',
     textAlign: 'left',
-    fontWeight: '500',
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginLeft: 12,
   },
   iconBox: {

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, TextInput } from "react-native";
 import colors from "../../styles/colors";
-import { ROBOTO_FONTS } from "../../styles/fonts";
+import { globalTextStyles } from "../../styles/globalStyles";
 const TextInputContainer = ({ placeholder, value, setValue }) => {
   return (
     <View
@@ -20,9 +20,8 @@ const TextInputContainer = ({ placeholder, value, setValue }) => {
           padding: 8,
           width: "90%",
           textAlign: "center",
-          fontSize: 16,
+          ...globalTextStyles.bodyMedium,
           color: colors.primary[100],
-          fontFamily: ROBOTO_FONTS.RobotoBold,
         }}
         multiline={true}
         numberOfLines={1}

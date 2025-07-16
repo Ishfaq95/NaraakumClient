@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
 import React, { useMemo } from 'react'
 import UserPlaceholder from '../../assets/icons/UserPlaceholder';
 import { MediaBaseURL } from '../../shared/utils/constants';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const HomeDialysis: React.FC<any> = React.memo(({
     hospital,
@@ -39,7 +40,7 @@ const HomeDialysis: React.FC<any> = React.memo(({
                         <Text style={styles.providerName}>{hospital?.TitleSlang}</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
                             <Text style={styles.ratingText}>{hospital?.AccumulativeRatingAvg.toFixed(1)}</Text>
-                            <Text style={{ color: '#888', fontSize: 12 }}> ({hospital?.AccumulativeRatingNum} تقييم)</Text>
+                            <Text style={{ ...globalTextStyles.caption, color: '#888' }}> ({hospital?.AccumulativeRatingNum} تقييم)</Text>
                             <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
                         </View>
                     </View>
@@ -48,17 +49,17 @@ const HomeDialysis: React.FC<any> = React.memo(({
                 </View>
                 <View style={{ marginTop: 10, width: '100%' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>
-                        <Text style={{ fontSize: 14, color: '#222' }}>{`رسوم الاستشارة عن بعد للتقييم المبدئي :`}</Text>
-                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#239ea0', marginLeft: 8, }}>{`${hospital?.RemoteSessionStartPrice} ريال`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{`رسوم الاستشارة عن بعد للتقييم المبدئي :`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, fontFamily: globalTextStyles.h5.fontFamily, color: '#239ea0', marginLeft: 8, }}>{`${hospital?.RemoteSessionStartPrice} ريال`}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>
-                        <Text style={{ fontSize: 14, color: '#222' }}>{`رسوم زيارة الطبيب المنزلية للتقييم النهائي :`}</Text>
-                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#239ea0', marginLeft: 8, }}>{`${hospital?.HomeVisitStartPrice} ريال`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{`رسوم زيارة الطبيب المنزلية للتقييم النهائي :`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, fontFamily: globalTextStyles.h5.fontFamily, color: '#239ea0', marginLeft: 8, }}>{`${hospital?.HomeVisitStartPrice} ريال`}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>
-                        <Text style={{ fontSize: 14, color: '#222' }}>{`سعر الجلسة يبدأ من :`}</Text>
-                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#239ea0', marginLeft: 8 }}>{`${getMinimumPriceForPackage(hospital?.PackageDetail)} ريال`}</Text>
-                        <Text style={{ fontSize: 14, color: '#222', marginLeft: 8 }}>{`حسب الباقة`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{`سعر الجلسة يبدأ من :`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, fontFamily: globalTextStyles.h5.fontFamily, color: '#239ea0', marginLeft: 8 }}>{`${getMinimumPriceForPackage(hospital?.PackageDetail)} ريال`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, color: '#222', marginLeft: 8 }}>{`حسب الباقة`}</Text>
                     </View>
                 </View>
             </View>
@@ -70,10 +71,10 @@ const HomeDialysis: React.FC<any> = React.memo(({
             {providerInfo}
             <View style={{ flexDirection: 'row', marginTop: 10, width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
                 <TouchableOpacity onPress={() => onPressPackageList(hospital)} style={{ width: '48%', backgroundColor: '#dceff0', padding: 10, borderRadius: 10 }}>
-                    <Text style={{ color: '#239ea0', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>اسعار الباقات</Text>
+                    <Text style={{ ...globalTextStyles.buttonMedium, color: '#239ea0', textAlign: 'center' }}>اسعار الباقات</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => onPressContinue(hospital)} style={{ width: '48%', backgroundColor: '#239ea0', padding: 10, borderRadius: 10 }}>
-                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>حجز موعد</Text>
+                    <Text style={{ ...globalTextStyles.buttonMedium, color: '#fff', textAlign: 'center' }}>حجز موعد</Text>
                 </TouchableOpacity>
             </View>
 
@@ -103,8 +104,8 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     providerName: {
-        fontWeight: 'bold',
-        fontSize: 16,
+        ...globalTextStyles.bodyMedium,
+        fontFamily: globalTextStyles.h5.fontFamily,
         marginTop: 4,
         marginBottom: 2,
         color: '#222',
@@ -112,9 +113,9 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     ratingText: {
+        ...globalTextStyles.bodySmall,
         color: '#222',
-        fontWeight: 'bold',
-        fontSize: 14,
+        fontFamily: globalTextStyles.h5.fontFamily,
     },
 })
 

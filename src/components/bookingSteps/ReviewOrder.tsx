@@ -20,6 +20,7 @@ import { store } from '../../shared/redux/store';
 import RNFS from 'react-native-fs';
 import { TrackPlayerService } from '../../services/TrackPlayerService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
@@ -846,7 +847,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         }
 
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>المرضى المراد حجز الجلسة لهم</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>المرضى المراد حجز الجلسة لهم</Text>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <CommonRadioButton
@@ -863,14 +864,14 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           />
         </View>
         <View style={{ width: "100%", alignItems: "flex-start" }}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }}>اسمك</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }]}>اسمك</Text>
           <TextInput
             style={{ width: "100%", color: "#000", height: 50, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, paddingHorizontal: 10, textAlign: "right" }}
             placeholder="اسمك"
             value={user?.FullnameSlang}
             editable={false}
           />
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }}>رقم الجوال</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }]}>رقم الجوال</Text>
           <PhoneNumberInput
             value={defaultPhoneNumber}
             onChangePhoneNumber={handlePhoneNumberChange}
@@ -881,7 +882,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           />
         </View>
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333' }}>وصف الشكوى المرضية (إختياري)</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>وصف الشكوى المرضية (إختياري)</Text>
         </View>
         <View style={{ width: "100%", alignItems: "flex-start", marginBottom: 24 }}>
           <TextInput
@@ -903,7 +904,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           />
         </View>
 
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#333', textAlign: 'left', paddingVertical: 16 }}>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333', textAlign: 'left', paddingVertical: 16 }]}>
           صف شكواك بالتسجيل الصوتي (إختياري)
         </Text>
 

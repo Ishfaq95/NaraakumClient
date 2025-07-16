@@ -10,6 +10,7 @@ import { profileService } from '../../services/api/ProfileService';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../shared/redux/store';
 import LocationMarkerIcon from '../../assets/icons/LocationMarkerIcon';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const MyAddressesScreen = () => {
     const { t } = useTranslation();
@@ -74,8 +75,8 @@ const MyAddressesScreen = () => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 10 }}>عناوين الزيارات</Text>
-        <Text style={{ fontSize: 14, fontWeight: '500', color: '#000', marginBottom: 10 }}>يمكنك إضافة وتسجيل أكثر من عنوان لاستخدامها فى عملية الحجز</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', marginBottom: 10 }]}>عناوين الزيارات</Text>
+        <Text style={[globalTextStyles.bodySmall, { fontWeight: '500', color: '#000', marginBottom: 10 }]}>يمكنك إضافة وتسجيل أكثر من عنوان لاستخدامها فى عملية الحجز</Text>
       </View>
 
       <View style={styles.contentContainer}>
@@ -85,12 +86,12 @@ const MyAddressesScreen = () => {
           keyExtractor={(item) => item.Id.toString()}
           style={{ width: '100%', }}
           ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={{ fontSize: 16, fontWeight: '500', color: '#000' }}>{t('no_addresses')}</Text>
+            <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{t('no_addresses')}</Text>
           </View>}
         />
       </View>
       <TouchableOpacity style={{ height: 50,marginTop: 10, backgroundColor: '#23a2a4', marginHorizontal: 10, marginBottom: 10, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>{t('add_address')}</Text>
+        <Text style={[globalTextStyles.buttonMedium, { color: '#fff' }]}>{t('add_address')}</Text>
       </TouchableOpacity>
       <FullScreenLoader visible={isLoading} />
     </SafeAreaView>
@@ -110,8 +111,7 @@ const styles=StyleSheet.create({
     justifyContent: 'center',
 },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#000'
   },
   headerContainer: {

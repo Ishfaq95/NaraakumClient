@@ -24,6 +24,7 @@ import Sound from 'react-native-sound';
 import VoiceNoteIcon from '../../assets/icons/VoiceNoteIcon';
 import VoiceNoteIconBlack from '../../assets/icons/VoiceNoteIconBlack';
 import {MediaBaseURL} from '../../shared/utils/constants';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 interface Message {
   SenderId: string;
@@ -478,6 +479,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
   },
   loadingText: {
+    ...globalTextStyles.bodyMedium,
     color: 'white',
     marginTop: 10,
   },
@@ -489,6 +491,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
+    ...globalTextStyles.bodyMedium,
     color: 'red',
     marginBottom: 15,
     textAlign: 'center',
@@ -499,8 +502,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   retryButtonText: {
+    ...globalTextStyles.buttonMedium,
     color: 'white',
-    fontWeight: 'bold',
   },
   chatHeader: {
     flexDirection: 'row',
@@ -514,13 +517,12 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   backButtonText: {
+    ...globalTextStyles.bodyMedium,
     color: '#23a2a4',
-    fontSize: 16,
   },
   chatTitle: {
+    ...globalTextStyles.h4,
     color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   headerPlaceholder: {
     width: 50,
@@ -547,7 +549,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   messageText: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
   },
   ownMessageText: {
     color: 'white',
@@ -565,7 +567,7 @@ const styles = StyleSheet.create({
     paddingLeft: 30,
   },
   timestamp: {
-    fontSize: 10,
+    ...globalTextStyles.caption,
     marginRight: 4,
   },
   ownTimestamp: {
@@ -575,7 +577,7 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   statusText: {
-    fontSize: 12,
+    ...globalTextStyles.caption,
     color: '#8a8a8a',
   },
   inputContainer: {
@@ -606,35 +608,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#313131',
   },
   sendButtonText: {
+    ...globalTextStyles.buttonMedium,
     color: 'white',
-    fontWeight: 'bold',
   },
   statusFailed: {
+    ...globalTextStyles.caption,
     color: '#FF4C4C', // red
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginTop: 4,
   },
   statusPending: {
+    ...globalTextStyles.caption,
     color: '#FFA500', // orange
-    fontSize: 12,
     fontStyle: 'italic',
     marginTop: 4,
   },
   statusSeen: {
+    ...globalTextStyles.caption,
     color: '#4CAF50', // green
-    fontSize: 12,
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginTop: 4,
   },
   statusDelivered: {
+    ...globalTextStyles.caption,
     color: '#2196F3', // blue
-    fontSize: 12,
     marginTop: 4,
   },
   statusSent: {
+    ...globalTextStyles.caption,
     color: '#9E9E9E', // grey
-    fontSize: 12,
     marginTop: 4,
   },
   fileBox: {
@@ -642,10 +644,10 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   fileName: {
+    ...globalTextStyles.bodySmall,
     color: 'black',
     marginTop: 8,
     marginBottom: 12,
-    fontSize: 14,
   },
   downloadIconContainer: {
     width: 24,
@@ -732,9 +734,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   voiceNoteDuration: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: 'black',
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginRight: 12,
   },
   ownVoiceNoteDuration: {

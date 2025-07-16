@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 interface CommonRadioButtonProps {
   selected: boolean;
@@ -52,9 +53,9 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   label: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#222',
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginLeft: 10,
     marginRight: 0,
   },

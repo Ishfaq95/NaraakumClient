@@ -4,6 +4,7 @@ import MapView, { Marker, MapPressEvent, Region } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { setSelectedLocation } from '../../shared/redux/reducers/bookingReducer';
 import { useDispatch } from 'react-redux';
+import { globalTextStyles } from '../../styles/globalStyles';
 // import Icon from 'react-native-vector-icons/MaterialIcons'; // For cross and location icons
 
 const { width, height } = Dimensions.get('window');
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     paddingTop: 10,
     fontWeight: 'bold',
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     marginBottom: 8,
     color: '#333',
   },
@@ -287,12 +288,12 @@ const styles = StyleSheet.create({
   },
   city: {
     fontWeight: 'bold',
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#2d3a4b',
     textAlign: 'left',
   },
   address: {
-    fontSize: 15,
+    ...globalTextStyles.bodySmall,
     color: '#2d3a4b',
     textAlign: 'left',
     marginTop: 4,
@@ -305,9 +306,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   confirmButtonText: {
-    color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
+    color: '#fff',
   },
 });
 

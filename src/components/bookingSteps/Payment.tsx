@@ -21,6 +21,7 @@ import { clearCardItems } from '../../shared/redux/reducers/bookingReducer';
 import { encryptText } from '../../shared/services/service';
 import { WEBSITE_URL } from '../../shared/utils/constants';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const Payment = ({ onPressNext, onPressBack }: any) => {
   const [loading, setLoading] = useState(true);
@@ -116,7 +117,7 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   if(currentUrl == null){
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <Text style={{ ...globalTextStyles.bodyMedium }}>Loading...</Text>
       </View>
     )
   }

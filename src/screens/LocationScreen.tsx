@@ -7,6 +7,7 @@ import ArrowRightIcon from '../assets/icons/RightArrow';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../shared/utils/routes';
 import { useSelector } from 'react-redux';
+import { globalTextStyles } from '../styles/globalStyles';
 
 const TABS = [
     { key: 'map', label: 'الخريطة' },
@@ -80,11 +81,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#36a6ad',
     },
     tabLabel: {
+        ...globalTextStyles.bodyMedium,
         color: '#333',
-        fontWeight: 'bold',
+        fontFamily: globalTextStyles.h3.fontFamily,
     },
     activeTabLabel: {
+        ...globalTextStyles.bodyMedium,
         color: '#fff',
+        fontFamily: globalTextStyles.h3.fontFamily,
     },
     content: { flex: 1 },
     buttonRow: {
@@ -93,8 +97,7 @@ const styles = StyleSheet.create({
         padding: 16
     },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        ...globalTextStyles.h3,
         color: '#000'
     },
     headerContainer: {

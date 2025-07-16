@@ -34,6 +34,7 @@ import FullScreenLoader from '../components/FullScreenLoader';
 import { signInWithGoogle } from '../services/auth/googleAuthService';
 import AuthHeader from '../components/AuthHeader';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
+import { globalTextStyles } from '../styles/globalStyles';
 
 const MIN_HEIGHT = 550; // Absolute minimum height
 const OPTIMAL_HEIGHT = 750; // Height for medium screens
@@ -321,12 +322,12 @@ const LoginScreen = () => {
               styles.contentContainer
             ]}>
               <View style={{ height: 100, width: '100%', borderRadius: 12, padding: 16, alignItems: 'flex-start', justifyContent: 'flex-end' }}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#222' }}>
+                <Text style={globalTextStyles.h3}>
                   {t('login')}
                 </Text>
               </View>
               <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 16, paddingTop: 20 }}>
-                <Text style={{ fontSize: 14, color: '#666',textAlign:I18nManager.isRTL ? 'left' : 'right' }}>{t('login_with')}</Text>
+                <Text style={[globalTextStyles.bodySmall, { color: '#666', textAlign: I18nManager.isRTL ? 'left' : 'right' }]}>{t('login_with')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
                   <TouchableOpacity onPress={() => setActiveTab('mobile')} style={[styles.tab, activeTab === 'mobile' && styles.activeTab]}>
                     <Text style={[styles.tabText, activeTab === 'mobile' && styles.activeTabText]}>{t('mobile_number')}</Text>
@@ -478,13 +479,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerText: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#333',
   },
   createAccountText: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#008080',
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   formCard: {
     backgroundColor: '#FFFFFF',
@@ -506,23 +507,24 @@ const styles = StyleSheet.create({
   },
   tab: { flexDirection: 'row', width: '48%', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#e0e0e0' },
   tabText: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#666',
   },
   activeTab: {
     backgroundColor: '#eaf6f6'
   },
   activeTabText: {
+    ...globalTextStyles.bodySmall,
     color: '#008080',
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   input: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 12,
     height: 50,
+    ...globalTextStyles.bodySmall,
     color: '#000',
-    fontSize: 14,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
@@ -540,8 +542,8 @@ const styles = StyleSheet.create({
     borderColor: '#FF3B30',
   },
   errorText: {
+    ...globalTextStyles.caption,
     color: '#FF3B30',
-    fontSize: 12,
     marginTop: 4,
     position: 'absolute',
     bottom: -20,
@@ -569,24 +571,24 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   flagText: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     marginRight: 8,
   },
   countryCodeText: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#333',
     marginRight: 8,
-    fontWeight: '500',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   countryNameText: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#666',
     flex: 1,
   },
   mobileInput: {
     flex: 1,
     padding: 12,
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#000',
     height: '100%',
   },
@@ -600,7 +602,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 12,
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     borderWidth: 1,
     borderColor: '#E0E0E0',
     height: '100%',
@@ -636,13 +638,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#008080',
   },
   rememberText: {
-    fontSize: 12,
+    ...globalTextStyles.caption,
     color: '#666',
   },
   forgotPassword: {
-    fontSize: 12,
+    ...globalTextStyles.caption,
     color: '#008080',
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   loginButton: {
     backgroundColor: '#008080',
@@ -654,9 +656,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   loginButtonText: {
+    ...globalTextStyles.buttonMedium,
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
   },
   bottomContainer: {
     marginTop: 30,
@@ -673,8 +674,8 @@ const styles = StyleSheet.create({
   },
   orText: {
     marginHorizontal: 8,
+    ...globalTextStyles.caption,
     color: '#666',
-    fontSize: 12,
   },
   signUpContainer: {
     flexDirection: 'row',
@@ -682,13 +683,13 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   signUpText: {
-    fontSize: 12,
+    ...globalTextStyles.caption,
     color: '#666',
   },
   signUpLink: {
-    fontSize: 12,
+    ...globalTextStyles.caption,
     color: '#008080',
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   helpContainer: {
     flexDirection: 'row',
@@ -701,7 +702,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   helpText: {
-    fontSize: 12,
+    ...globalTextStyles.caption,
     color: '#666',
   },
   ltrInput: {
@@ -717,7 +718,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputLabel: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#666',
     marginTop: 10
   },
@@ -757,15 +758,15 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   socialButtonText: {
-    fontSize: Platform.OS === 'ios' ? 13 : 14,
+    ...globalTextStyles.bodySmall,
     color: '#333333',
-    fontWeight: '500',
+    fontFamily: globalTextStyles.h5.fontFamily,
     flexShrink: 1,
     textAlign: 'center',
   },
   requiredStar: {
+    ...globalTextStyles.bodySmall,
     color: '#FF3B30',
-    fontSize: 14,
   },
 });
 

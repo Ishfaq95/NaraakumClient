@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { I18nManager } from 'react-native';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 interface DropdownItem {
   label: string;
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   dropdownButtonText: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#333',
   },
   arrow: {
@@ -174,12 +175,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
   },
   itemText: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#333',
   },
   selectedItemText: {
+    ...globalTextStyles.bodySmall,
     color: '#179c8e',
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
 });
 

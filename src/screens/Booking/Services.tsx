@@ -15,6 +15,7 @@ import HomeVisitCard from '../../components/HomeVisitCard';
 import { ROUTES } from '../../shared/utils/routes';
 import { setCategory } from '../../shared/redux/reducers/bookingReducer';
 import { useDispatch } from 'react-redux';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 
 const Services = ({ navigation }: any) => {
@@ -135,8 +136,7 @@ export const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        ...globalTextStyles.h3,
         color: '#000',
     },
     bookButton: {
@@ -144,6 +144,7 @@ export const styles = StyleSheet.create({
         paddingLeft: 0,
     },
     bookButtonText: {
+        ...globalTextStyles.bodyMedium,
         color: '#fff',
     },
     headerContainer: {

@@ -7,6 +7,7 @@ import { store } from '../../shared/redux/store';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { setHomeDialysisFilePaths } from '../../shared/redux/reducers/bookingReducer';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const UploadFileStep = ( ) => {
   const user = useSelector((state: any) => state.root.user.user);
@@ -151,22 +152,22 @@ const UploadFileStep = ( ) => {
 
   return (
     <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000', textAlign: 'left' }}>التقارير الطبية</Text>
-      {/* <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000', textAlign: 'left' }}>رجاء ارفاق التقارير الطبية الخاصة بالمريض</Text> */}
+      <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>التقارير الطبية</Text>
+      {/* <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>رجاء ارفاق التقارير الطبية الخاصة بالمريض</Text> */}
       <View style={{ height:200,width:'100%', marginTop: 10,backgroundColor:'#fff',borderRadius:10,padding:10,alignItems:'center',justifyContent:'center' }}>
         <View style={{ height:'90%',width:'90%', justifyContent: 'center', alignItems: 'center', borderWidth:1,borderColor:'#000',borderStyle:'dashed',borderRadius:10 }}>
           <TouchableOpacity onPress={handleFileSelection} style={{justifyContent:'center',alignItems:'center'}}>
           <Feather name='upload' size={40} color='#239ea0' style={{ marginBottom: 10 }} />
           </TouchableOpacity>
-          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000' }}>اضغط هنا لارفاق التقارير الطبية</Text>
-          <Text style={{ fontSize: 12, color: '#000' }}>يمكنك اضافة ملف او اكثر</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>اضغط هنا لارفاق التقارير الطبية</Text>
+          <Text style={[globalTextStyles.caption, { color: '#000' }]}>يمكنك اضافة ملف او اكثر</Text>
         </View>
       </View>
       <View style={{ flex:1, marginTop: 10 }}>
         {filePaths.map((filePath, index) => (
 
           <View style={{ flexDirection: 'row',width:'100%',marginBottom:8,paddingHorizontal:16, height:30,borderWidth:1,borderColor:'#fff', alignItems: 'center', justifyContent: 'space-between' }} key={index}>
-            <Text style={{ fontSize: 12, color: '#000' }}>HemoDiyalsis Report</Text>
+            <Text style={[globalTextStyles.caption, { color: '#000' }]}>HemoDiyalsis Report</Text>
            
             <TouchableOpacity  onPress={() => {
               const previousFilePaths = filePaths.filter((_, i) => i !== index)

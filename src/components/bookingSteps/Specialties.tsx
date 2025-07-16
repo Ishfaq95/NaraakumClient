@@ -10,6 +10,7 @@ import { setServices } from '../../shared/redux/reducers/bookingReducer';
 import { t } from 'i18next';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialty: (specialty: any) => void, onContinueWithService: (service: any) => void}) => {
   const category = useSelector((state: any) => state.root.booking.category);
@@ -134,7 +135,7 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
             }}>
               <Ionicons name="information-circle" size={16} color={isSelected ? "#fff" : "#23a2a4"} />
             </TouchableOpacity>
-            <Text style={{fontSize: 12, color: isSelected ? "#fff" : "#2B3034", fontWeight: '500'}}>
+            <Text style={[globalTextStyles.caption, { color: isSelected ? "#fff" : "#2B3034", fontWeight: '500' }]}>
               {t('service_details')}
             </Text>
           </View>

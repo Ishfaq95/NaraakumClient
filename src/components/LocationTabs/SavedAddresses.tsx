@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import LocationMarkerIcon from '../../assets/icons/LocationMarkerIcon';
 import { setSelectedLocation } from '../../shared/redux/reducers/bookingReducer';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const SavedAddresses = ({ onPressLocation }: { onPressLocation: () => void }) => {
   const { t } = useTranslation();
@@ -74,7 +75,7 @@ const SavedAddresses = ({ onPressLocation }: { onPressLocation: () => void }) =>
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <View style={styles.savedAddressesContainer}>
         <View style={styles.savedAddressesTitleContainer}>
-        <Text>{t('savedAddresses')}</Text>
+        <Text style={{ ...globalTextStyles.h4 }}>{t('savedAddresses')}</Text>
         </View>
         <View style={styles.savedAddressesListContainer}>
           <FlatList
@@ -139,19 +140,19 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   title: {
-    fontWeight: 'bold',
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
+    fontFamily: globalTextStyles.h5.fontFamily,
     color: '#222',
     textAlign: 'left',
   },
   square: {
-    fontSize: 15,
+    ...globalTextStyles.bodySmall,
     color: '#222',
     textAlign: 'left',
     marginTop: 2,
   },
   description: {
-    fontSize: 13,
+    ...globalTextStyles.caption,
     color: '#888',
     textAlign: 'left',
     marginTop: 2,
@@ -183,9 +184,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   buttonText: {
+    ...globalTextStyles.buttonMedium,
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
     textAlign: 'center',
   },
 });

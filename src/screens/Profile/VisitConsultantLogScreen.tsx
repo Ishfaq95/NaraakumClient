@@ -12,6 +12,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import Dropdown from '../../components/common/Dropdown';
 import VisitConsultantLogItemRender from './profileComponents/VisitConsultantLogItemRender';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const VisitConsultantLogScreen = () => {
   const { t } = useTranslation();
@@ -103,7 +104,7 @@ const VisitConsultantLogScreen = () => {
         <Dropdown data={patientList} value={selectedPatient} onChange={(value: string | number) => setSelectedPatient(value.toString())} placeholder={t('select_patient')} />
 
         <View style={{ paddingHorizontal: 16, marginTop: 10, alignSelf:"flex-start" }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000' }}>{`النتائج : (${filteredVisitConsultantLog.length})`}</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{`النتائج : (${filteredVisitConsultantLog.length})`}</Text>
       </View>
         <View style={styles.contentContainer}>
           
@@ -113,7 +114,7 @@ const VisitConsultantLogScreen = () => {
             keyExtractor={(item) => getUniqueId()}
             style={{ width: '100%', }}
             ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-              <Text style={{ fontSize: 16, fontWeight: '500', color: '#000' }}>{t('no_addresses')}</Text>
+              <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{t('no_addresses')}</Text>
             </View>}
           />
         </View>
@@ -137,8 +138,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#000'
   },
   headerContainer: {

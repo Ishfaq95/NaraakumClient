@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, I18nManager } from 'react-native';
+import { globalTextStyles } from '../styles/globalStyles';
 
 const colors = [ '#E5F3EF', '#BDF3F9', '#CEEAEB', '#D2DBEF', '#C6FAE4','#EFE4CF'];
 
@@ -11,7 +12,7 @@ const HomeVisitCard = ({ item,index,onPress }: { item: any,index:number,onPress:
     <View style={styles.contentContainer}>
       <Text style={styles.title}>{item.TitleSlang}</Text>
       <Text style={styles.price}>
-        تبدأ من <Text style={{ color: '#179c8e', fontWeight: 'bold' }}>{item.Price} ريال</Text>
+        تبدأ من <Text style={{ ...globalTextStyles.bodySmall, color: '#179c8e', fontFamily: globalTextStyles.h5.fontFamily }}>{item.Price} ريال</Text>
       </Text>
     </View>
   </TouchableOpacity>
@@ -44,15 +45,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   title: {
-    fontWeight: 'bold',
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginBottom: 8,
     color: '#222',
     textAlign: I18nManager.isRTL ? 'left' : 'right',
     writingDirection: I18nManager.isRTL ? 'ltr' : 'rtl',
   },
   price: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#222',
     textAlign: I18nManager.isRTL ? 'left' : 'right',
     writingDirection: I18nManager.isRTL ? 'ltr' : 'rtl',

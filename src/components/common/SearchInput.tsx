@@ -1,6 +1,7 @@
 import React from "react";
 import { View, TextInput, StyleSheet, I18nManager, ViewStyle } from "react-native";
 import SearchIcon from "../../assets/icons/SearchIcon";
+import { globalTextStyles } from "../../styles/globalStyles";
 
 interface SearchInputProps {
   placeholder?: string;
@@ -50,8 +51,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    ...globalTextStyles.bodyMedium,
     color: "#fff",
-    fontSize: 16,
     paddingVertical: 0,
     paddingHorizontal: 8,
   },

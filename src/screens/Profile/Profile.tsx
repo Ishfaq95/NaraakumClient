@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useState } from 'react';
 import { bookingService } from '../../services/api/BookingService';
 import { RootState } from '../../shared/redux/store';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const menuItems = [
   { label: 'حسابي', icon: <Icon name="person" size={20} color="#239EA0" />, key: 'account', route: ROUTES.updateProfile },
@@ -106,9 +107,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   headerTitle: {
+    ...globalTextStyles.h4,
     color: '#000',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   row: {
     flexDirection: 'row-reverse',
@@ -128,10 +128,10 @@ const styles = StyleSheet.create({
   },
   label: {
     flex: 1,
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#222',
     textAlign: 'left',
-    fontWeight: '500',
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginLeft: 12,
   },
   iconBox: {
@@ -152,9 +152,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   walletText: {
+    ...globalTextStyles.bodySmall,
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
 });
 

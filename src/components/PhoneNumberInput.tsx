@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, ViewStyle, TextStyle, I18nManager, Platform } from 'react-native';
 import PhoneInput, { ICountry } from 'react-native-international-phone-number';
 import { isValidPhoneNumber, CountryCode } from 'libphonenumber-js';
+import { globalTextStyles } from '../styles/globalStyles';
 
 // Define allowed countries as string literals
 type AllowedCountryCode = 'AE' | 'BH' | 'IQ' | 'IR' | 'JO' | 'KW' | 'LB' | 'OM' | 'PS' | 'QA' | 'SA' | 'SY' | 'TR' | 'YE';
@@ -174,7 +175,7 @@ const PhoneNumberInput: React.FC<Props> = ({
               borderWidth: 0,
             },
             callingCode: {
-              fontSize: 14,
+              ...globalTextStyles.bodySmall,
               color: '#000000',
               marginHorizontal: 8,
               textAlignVertical: 'center',
@@ -224,14 +225,14 @@ const styles = StyleSheet.create({
     borderColor: '#FF3B30',
   },
   input: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#000000',
     flex: 1,
     textAlign: 'left',
   },
   errorText: {
+    ...globalTextStyles.caption,
     color: '#FF3B30',
-    fontSize: 12,
     marginTop: 4,
   },
 });

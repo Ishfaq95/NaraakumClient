@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import {ROUTES} from '../shared/utils/routes';
 import {formatDateTimeToLocal} from '../utils/dateUtils';
+import { globalTextStyles } from '../styles/globalStyles';
 const AlarmScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -187,14 +188,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...globalTextStyles.h4,
     color: '#2B2B2B',
     marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#6B6B6B',
     marginBottom: 15,
   },
@@ -207,16 +207,15 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   time: {
-    fontSize: 24,
-    fontWeight: '700',
+    ...globalTextStyles.h2,
     color: '#2B2B2B',
   },
   date: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#6B6B6B',
   },
   note: {
-    fontSize: 14,
+    ...globalTextStyles.bodySmall,
     color: '#6B6B6B',
     marginBottom: 20,
     textAlign: 'center',
@@ -228,9 +227,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   okButtonText: {
+    ...globalTextStyles.buttonMedium,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

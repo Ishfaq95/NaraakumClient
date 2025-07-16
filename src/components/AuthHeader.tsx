@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, I18nManager } from 'react-nat
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { changeLanguage } from '../utils/language/i18nextConfig';
+import { globalTextStyles } from '../styles/globalStyles';
 
 // Simple inline SVG for back arrow
 const BackArrow = ({ color = '#222', size = 24 }) => (
@@ -71,9 +72,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   langText: {
+    ...globalTextStyles.buttonMedium,
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
 });
 

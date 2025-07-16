@@ -10,6 +10,7 @@ import { profileService } from '../../services/api/ProfileService';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../shared/redux/store';
 import ReservationReceivedItemRender from './profileComponents/ReservationReceivedItemRender';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const ReservationReceivedScreen = () => {
   const { t } = useTranslation();
@@ -64,11 +65,11 @@ const ReservationReceivedScreen = () => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{ paddingHorizontal: 16, paddingVertical: 10, marginTop: 10, alignItems: 'center', }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', textAlign: "center", color: '#000' }}>الحجوزات المستلمة من مقدمي الخدمات</Text>
-        <Text style={{ fontSize: 12, textAlign: 'center', color: '#000' }}>يمكن لمقدم الخدمة أن يرسل إليك مجموعة من الخدمات في أثناء الزيارة. عليك فقط إتمام الحجز!</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', textAlign: "center", color: '#000' }]}>الحجوزات المستلمة من مقدمي الخدمات</Text>
+        <Text style={[globalTextStyles.caption, { textAlign: 'center', color: '#000' }]}>يمكن لمقدم الخدمة أن يرسل إليك مجموعة من الخدمات في أثناء الزيارة. عليك فقط إتمام الحجز!</Text>
       </View>
       <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16, paddingVertical: 10, alignItems: 'flex-start', }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 10 }}>{`النتائج : (${cpAddedOrders.length})`}</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', marginBottom: 10 }]}>{`النتائج : (${cpAddedOrders.length})`}</Text>
         <View style={styles.contentContainer}>
 
           <FlatList
@@ -77,7 +78,7 @@ const ReservationReceivedScreen = () => {
             keyExtractor={(item) => getUniqueId()}
             style={{ width: '100%', }}
             ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-              <Text style={{ fontSize: 16, fontWeight: '500', color: '#000' }}>{t('no_addresses')}</Text>
+              <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{t('no_addresses')}</Text>
             </View>}
           />
         </View>
@@ -96,8 +97,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#000'
   },
   headerContainer: {

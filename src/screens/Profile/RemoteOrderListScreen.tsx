@@ -12,6 +12,7 @@ import { TabBar, SceneMap, TabView } from 'react-native-tab-view';
 import UpcomingAppointments from '../../components/appointments/UpcomingAppointments';
 import CurrentAppointments from '../../components/appointments/CurrentAppointments';
 import PreviousAppointments from '../../components/appointments/PreviousAppointments';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const RemoteOrderListScreen = () => {
   const [index, setIndex] = useState(0);
@@ -133,8 +134,7 @@ const styles=StyleSheet.create({
     backgroundColor: '#fff',
 },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    ...globalTextStyles.h3,
     color: '#000'
   },
   headerContainer: {
@@ -165,8 +165,8 @@ const styles=StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   tabLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...globalTextStyles.bodySmall,
+    fontFamily: globalTextStyles.h5.fontFamily,
     textTransform: 'none',
   },
   indicator: {
