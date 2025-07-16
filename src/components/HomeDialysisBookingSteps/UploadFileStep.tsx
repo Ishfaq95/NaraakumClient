@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, Platform, Alert } from 'react-native'
 import React, { useState } from 'react'
 import Feather from 'react-native-vector-icons/Feather'
-import DocumentPicker from 'react-native-document-picker';
+import DocumentPicker from '@react-native-documents/picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { store } from '../../shared/redux/store';
 import { MediaBaseURL } from '../../shared/utils/constants';

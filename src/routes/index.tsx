@@ -32,7 +32,6 @@ import UpdateProfileScreen from '../screens/Profile/UpdateProfileScreen';
 const Stack = createNativeStackNavigator();
 
 const RootNavigator = () => {
-  const state = useSelector((state: any) => state);
   const user = useSelector((state: any) => state.root.user.user);
 
   if (!user) {

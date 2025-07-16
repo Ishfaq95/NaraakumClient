@@ -24,7 +24,7 @@ import {
   SendIcon,
   ClipIcon,
 } from '../../assets/icons';
-import DocumentPicker from 'react-native-document-picker';
+import DocumentPicker from '@react-native-documents/picker';
 import Sound from 'react-native-sound';
 import RNFS from 'react-native-fs';
 import {store} from '../../shared/redux/store';
