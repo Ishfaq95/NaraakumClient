@@ -18,7 +18,7 @@ import RNFetchBlob from 'rn-fetch-blob';
 import axiosInstance from '../../Network/axiosInstance';
 import { store } from '../../shared/redux/store';
 import RNFS from 'react-native-fs';
-import { TrackPlayerService } from '../../services/TrackPlayerService';
+// import { TrackPlayerService } from '../../services/TrackPlayerService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { globalTextStyles } from '../../styles/globalStyles';
 
@@ -119,9 +119,9 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
       }
 
       // Cleanup track player (silently handle any errors)
-      TrackPlayerService.stop().catch(() => {
-        // Silently ignore cleanup errors
-      });
+        // TrackPlayerService.stop().catch(() => {
+        //   // Silently ignore cleanup errors
+        // });
     };
   }, []);
 
@@ -470,12 +470,12 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     if (isPlayingAudio) {
       try {
         // Stop track player
-        await TrackPlayerService.stop();
+        // await TrackPlayerService.stop();
 
         // Clear progress interval
         if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-          progressIntervalRef.current = null;
+          // clearInterval(progressIntervalRef.current);
+          // progressIntervalRef.current = null;
         }
 
         setIsPlayingAudio(false);
@@ -491,51 +491,51 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     try {
 
       // Setup track player if not already done
-      await TrackPlayerService.setupPlayer();
+      // await TrackPlayerService.setupPlayer();
 
       // Wait a moment for setup to complete
       await new Promise(resolve => setTimeout(() => resolve(undefined), 200));
 
       // Reset any existing tracks
-      await TrackPlayerService.stop();
+      // await TrackPlayerService.stop();
 
       // Wait a moment for reset to complete
       await new Promise(resolve => setTimeout(() => resolve(undefined), 200));
 
       // Add track to player
-      await TrackPlayerService.addTrack(audioUrl, 'Audio Recording');
+      // await TrackPlayerService.addTrack(audioUrl, 'Audio Recording');
 
       // Wait a moment for track to be loaded
       await new Promise(resolve => setTimeout(() => resolve(undefined), 500));
 
       // Get duration
-      const duration = await TrackPlayerService.getDuration();
+      // const duration = await TrackPlayerService.getDuration();
       setAudioDuration(duration);
 
       // Start playing  
-      await TrackPlayerService.play();
+      // await TrackPlayerService.play();
       setIsPlayingAudio(true);
 
       // Start progress tracking
       progressIntervalRef.current = setInterval(async () => {
         try {
-          const position = await TrackPlayerService.getPosition();
-          const currentDuration = await TrackPlayerService.getDuration();
+          // const position = await TrackPlayerService.getPosition();
+          // const currentDuration = await TrackPlayerService.getDuration();
 
-          setAudioCurrentTime(position);
-          const progress = currentDuration > 0 ? (position / currentDuration) * 100 : 0;
-          setAudioProgress(progress);
+          // setAudioCurrentTime(position);
+          // const progress = currentDuration > 0 ? (position / currentDuration) * 100 : 0;
+          // setAudioProgress(progress);
 
           // Check if playback finished
-          if (position >= currentDuration) {
+          // if (position >= currentDuration) {
             if (progressIntervalRef.current) {
-              clearInterval(progressIntervalRef.current);
-              progressIntervalRef.current = null;
+              // clearInterval(progressIntervalRef.current);
+              // progressIntervalRef.current = null;
             }
             setIsPlayingAudio(false);
             setAudioProgress(0);
             setAudioCurrentTime(0);
-          }
+          // }
         } catch (error) {
         }
       }, 100);

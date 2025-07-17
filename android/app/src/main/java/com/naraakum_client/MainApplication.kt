@@ -42,6 +42,9 @@ class MainApplication : Application(), ReactApplication {
     
     loadReactNative(this)
     
-
+// Force RTL layout direction
+     val i18nUtil = I18nUtil.getInstance()
+     i18nUtil.allowRTL(applicationContext, true)
+     i18nUtil.forceRTL(applicationContext, true)
   }
 }

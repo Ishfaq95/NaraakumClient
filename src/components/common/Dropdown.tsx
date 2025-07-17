@@ -51,6 +51,17 @@ const Dropdown: React.FC<DropdownProps> = ({
     setSelectedValue(value);
   }, [value]);
 
+  // Reset selectedValue if current value doesn't exist in new data
+  useEffect(() => {
+    const valueExists = data.some(item => item.value === selectedValue);
+    if (!valueExists && data.length > 0) {
+      // If current value doesn't exist in new data, set to first item
+      const newValue = data[0].value;
+      setSelectedValue(newValue);
+      onChange(newValue);
+    }
+  }, [data, selectedValue, onChange]);
+
   const handleSelect = (item: DropdownItem) => {
     setSelectedValue(item.value);
     onChange(item.value);
@@ -59,13 +70,13 @@ const Dropdown: React.FC<DropdownProps> = ({
 
   const selectedItem = data.find(item => item.value === selectedValue);
 
-  console.log("Data", data);
-
   return (
     <View style={[styles.container, containerStyle]}>
       <TouchableOpacity
         style={[styles.dropdownButton, dropdownStyle]}
-        onPress={() => setIsOpen(!isOpen)}
+        onPress={() => {
+          setIsOpen(!isOpen);
+        }}
       >
         <Text style={[styles.dropdownButtonText, labelStyle]}>
           {selectedItem ? selectedItem.label : placeholder}

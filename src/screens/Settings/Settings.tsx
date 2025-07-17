@@ -7,16 +7,18 @@ import CustomBottomSheet from "../../components/common/CustomBottomSheet";
 import { useEffect, useState } from "react";
 import Dropdown from "../../components/common/Dropdown";
 import { globalTextStyles } from "../../styles/globalStyles";
-
+import { settingService } from "../../services/api/settingService";
+import { useIsFocused } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 
 const menuItems = [
   { label: 'إعداد التذكير', icon: <Feather name="settings" size={20} color="#239EA0" />, key: 'reminderSetting' },
 ];
 
 const ReminderTimeUnit = [
-  { label: 'الدقائق', value: 'minute' },
-  { label: 'الساعات', value: 'hour' },
-  { label: 'الأيام', value: 'day' },
+  { label: 'الدقائق', value: '6' },
+  { label: 'الساعات', value: '5' },
+  { label: 'الأيام', value: '1' },
 ];
 
 const ReminderMinutes = [
@@ -37,22 +39,136 @@ const ReminderHours = [
   { label: '7', value: '7' },
 ];
 
-
+const ReminderDays = [
+  { label: '1', value: '1' },
+  { label: '2', value: '2' },
+  { label: '3', value: '3' },
+  { label: '4', value: '4' },
+  { label: '5', value: '5' },
+  { label: '6', value: '6' },
+  { label: '7', value: '7' },
+];
 
 const SettingsScreen = () => {
   const { t } = useTranslation();
   const [reminderSettingBottomSheetVisible, setReminderSettingBottomSheetVisible] = useState(false);
-  const [reminderTimeUnit, setReminderTimeUnit] = useState<any>('');
-  const [reminderMinutesAndHours, setReminderMinutesAndHours] = useState<any>('5');
+  const [reminderTimeUnit, setReminderTimeUnit] = useState<string>('6'); // Default to minutes
+  const [reminderMinutesAndHours, setReminderMinutesAndHours] = useState<string>('5'); // Default value
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false); // Track if API data is loaded
+  const user = useSelector((state: any) => state.root.user.user); 
+  const isFocused = useIsFocused();
+
+  const updateReminderSettingApi = async () => {
+    try {
+      const payload = {
+        "UserloginInfoId": user.Id,
+        "CatTimeUnitId": reminderTimeUnit,
+        "TimeUnitDuration": reminderMinutesAndHours
+      }
+
+      console.log("payload", payload);
+      const response = await settingService.updateReminderSetting(payload);
+      if(response.ResponseStatus.STATUSCODE == 200){
+        console.log("response", response);
+      }
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsDataLoaded(true);
+    }
+  }
+
+const getReminderTimeUnitLabel = () => {
+  switch (reminderTimeUnit) {
+    case '6':
+      return 'الدقائق';
+    case '5':
+      return 'الساعات';
+    case '1':
+      return 'الأيام';
+    default:
+      return 'الدقائق';
+  }
+}
 
   useEffect(() => {
-    setReminderMinutesAndHours(reminderTimeUnit == 'minute' ? '5' : '1');
-  }, [reminderTimeUnit]);
+    if (isFocused) {
+      getReminderSettingApi()
+    }
+  }, [isFocused]);
 
+  const getReminderSettingApi = async () => {
+    try {
+      const payload = {
+        "UserloginInfoId": user.Id,
+      }
+      const response = await settingService.getReminderSetting(payload);
+      
+      if(response.ResponseStatus.STATUSCODE == 200 && response.ReminderSetting && response.ReminderSetting.length > 0){
+        const reminderValues = response.ReminderSetting[0];
+        
+        // Set values from API
+        setReminderTimeUnit(reminderValues.CatTimeUnitId.toString());
+        setReminderMinutesAndHours(reminderValues.TimeUnitDuration.toString());
+        setIsDataLoaded(true);
+      } else {
+        // No API data, use defaults
+        setDefaultValues();
+        setIsDataLoaded(true);
+      }
+    } catch (error) {
+      // API failed, use defaults
+      setDefaultValues();
+      setIsDataLoaded(true);
+    }
+  }
+
+  const setDefaultValues = () => {
+    setReminderTimeUnit('6'); // Default to minutes
+    setReminderMinutesAndHours('5'); // Default to 5 minutes
+  }
+
+  // Get the appropriate data array based on selected time unit
+  const getTimeData = (timeUnit: string) => {
+    switch (timeUnit) {
+      case '6': // Minutes
+        return ReminderMinutes;
+      case '5': // Hours
+        return ReminderHours;
+      case '1': // Days
+        return ReminderDays;
+      default:
+        return ReminderMinutes;
+    }
+  };
+
+  // Get default value based on selected time unit
+  const getDefaultValue = (timeUnit: string) => {
+    switch (timeUnit) {
+      case '6': // Minutes
+        return '5';
+      case '5': // Hours
+        return '1';
+      case '1': // Days
+        return '1';
+      default:
+        return '5';
+    }
+  };
+
+  // Update the second dropdown when time unit changes (only if data is loaded and user manually changes)
   useEffect(() => {
-    setReminderTimeUnit('minute');
-    setReminderMinutesAndHours('5');
-  }, []);
+    if (isDataLoaded) {
+      // Only update if the current value doesn't exist in the new data array
+      const currentData = getTimeData(reminderTimeUnit);
+      const valueExists = currentData.some(item => item.value === reminderMinutesAndHours);
+      
+      if (!valueExists) {
+        const defaultValue = getDefaultValue(reminderTimeUnit);
+        setReminderMinutesAndHours(defaultValue);
+      }
+    }
+  }, [reminderTimeUnit, isDataLoaded]);
 
   const renderHeader = () => (
     <Header
@@ -78,14 +194,26 @@ const SettingsScreen = () => {
       settingItemsClick(item);
     }}>
       <Icon name="chevron-left" size={22} color="#239EA0" style={styles.leftArrow} />
-      <Text style={styles.label}>{item.label}</Text>
+      <Text style={styles.label}>{item.key == 'reminderSetting' ? `ذكرني قبل الموعد بـ ${reminderMinutesAndHours} ${getReminderTimeUnitLabel()}` : item.label}</Text>
       <View style={styles.iconBox}>{item.icon}</View>
     </TouchableOpacity>
   );
 
   const onPressSaveReminderSetting = () => {
+    updateReminderSettingApi();
     setReminderSettingBottomSheetVisible(false);
   }
+
+  const onPressChangeReminderTimeUnit = (value: string | number) => {
+    setReminderTimeUnit(value as string);
+  }
+
+  const onPressChangeReminderValue = (value: string | number) => {
+    setReminderMinutesAndHours(value as string);
+  }
+
+  // Get current time data
+  const currentTimeData = getTimeData(reminderTimeUnit);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -113,15 +241,22 @@ const SettingsScreen = () => {
           </View>
           <View style={{ flexDirection: 'row', width: '100%', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
             <View style={{ width: '48%' }}>
-              <Dropdown data={ReminderTimeUnit} containerStyle={{ height: 50 }} dropdownStyle={{ height: 50 }} value={reminderTimeUnit} onChange={(item: any) => {setReminderTimeUnit(item.value)}} />
+              <Dropdown 
+                data={ReminderTimeUnit} 
+                containerStyle={{ height: 50 }} 
+                dropdownStyle={{ height: 50 }} 
+                value={reminderTimeUnit} 
+                onChange={(value: string | number) => onPressChangeReminderTimeUnit(value)} 
+              />
             </View>
             <View style={{ width: '48%' }}>
               <Dropdown
-                data={reminderTimeUnit === 'minute' ? ReminderMinutes : ReminderHours}
-                placeholder={reminderTimeUnit === 'minute' ? '5' : '1'}
+                data={currentTimeData}
+                placeholder={getDefaultValue(reminderTimeUnit)}
                 value={reminderMinutesAndHours}
-                onChange={(item: any) => setReminderMinutesAndHours(item.value)}
-                containerStyle={{ height: 50 }} dropdownStyle={{ height: 50 }}
+                onChange={(value: string | number) => onPressChangeReminderValue(value)}
+                containerStyle={{ height: 50 }} 
+                dropdownStyle={{ height: 50 }}
               />
             </View>
           </View>
@@ -149,8 +284,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
     shadowColor: '#000',
     shadowOpacity: 0.03,
     shadowRadius: 2,
@@ -166,7 +300,7 @@ const styles = StyleSheet.create({
     color: '#222',
     textAlign: 'left',
     fontFamily: globalTextStyles.h5.fontFamily,
-    marginLeft: 12,
+    marginLeft: 8,
   },
   iconBox: {
     backgroundColor: '#E6F3F3',

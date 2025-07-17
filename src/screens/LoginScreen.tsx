@@ -28,8 +28,8 @@ import CheckIcon from '../assets/icons/CheckIcon';
 import { countries } from '../utils/countryData';
 import PhoneNumberInput from '../components/PhoneNumberInput';
 import { authService } from '../services/api/authService';
-import { setUser, setToken } from '../shared/redux/reducers/userReducer';
-import { useDispatch } from 'react-redux';
+import { setUser, setToken, setRememberMeRedux } from '../shared/redux/reducers/userReducer';
+import { useDispatch, useSelector } from 'react-redux';
 import FullScreenLoader from '../components/FullScreenLoader';
 import { signInWithGoogle } from '../services/auth/googleAuthService';
 import AuthHeader from '../components/AuthHeader';
@@ -67,6 +67,18 @@ const LoginScreen = () => {
   const isLargeScreen = windowHeight > OPTIMAL_HEIGHT;
   const isSmallScreen = windowHeight < MIN_HEIGHT;
   const [isLoading, setIsLoading] = useState(false);
+  const { rememberMeRedux } = useSelector((state: any) => state.root.user);
+
+  console.log("rememberMeRedux", rememberMeRedux);
+
+  useEffect(() => {
+    if (rememberMeRedux) {
+      setEmailOrUsername(rememberMeRedux.Username);
+      setPassword(rememberMeRedux.Password);
+      setActiveTab(rememberMeRedux.Filter === "mob" ? "mobile" : "email");
+      setRememberMe(true);
+    }
+  }, [rememberMeRedux]);
 
   const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
     setMobileNumber(data.phoneNumber);
@@ -115,8 +127,16 @@ const LoginScreen = () => {
       if (response?.ResponseStatus?.STATUSCODE == 200) {
         setIsLoading(false);
         dispatch(setUser(response.Userinfo));
-
-        
+        if(rememberMe){
+          const data = {
+            "Username": activeTab === 'mobile' ? fullNumber : emailOrUsername,
+            "Password": password,
+            "Filter": activeTab === 'mobile' ? "mob" : "email"
+          }
+          dispatch(setRememberMeRedux(data));
+        }else{
+          dispatch(setRememberMeRedux(null));
+        }
       } else {
         Alert.alert(
           "Error",

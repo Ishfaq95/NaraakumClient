@@ -21,7 +21,7 @@ const resources = {
 // Initialize i18n and set the default language (Arabic by default)
 export const initializeI18Next = async () => {
   const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
-  const defaultLanguage = savedLanguage || LangCode.en; // Use saved language or default to Arabic
+  const defaultLanguage = savedLanguage || LangCode.ar; // Use saved language or default to Arabic
   const isRtl = defaultLanguage === LangCode.ar;
 
   // Set RTL or LTR based on the language
@@ -32,7 +32,7 @@ export const initializeI18Next = async () => {
     debug: false,
     resources,
     lng: defaultLanguage,
-    fallbackLng: LangCode.en, // Fallback to English if translation is missing
+    fallbackLng: LangCode.ar, // Fallback to English if translation is missing
     compatibilityJSON: 'v3',
     interpolation: {
       escapeValue: false,
