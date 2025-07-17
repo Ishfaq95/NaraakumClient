@@ -5,6 +5,7 @@ import NoAppointmentsIcon from '../../../assets/icons/NoAppointmentsIcon';
 import { useTranslation } from "react-i18next";
 import FullScreenLoader from "../../../components/FullScreenLoader";
 import VisitItemRender from "./VisitItemRender";
+import { CAIRO_FONT_FAMILY } from '../../../styles/globalStyles';
 
 const windowHeight = Dimensions.get('window').height;
 
@@ -92,6 +93,7 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 16,
         color: '#000',
+        fontFamily: CAIRO_FONT_FAMILY.regular,
     },
 })
 

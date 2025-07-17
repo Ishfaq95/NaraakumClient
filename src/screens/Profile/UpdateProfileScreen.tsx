@@ -13,6 +13,7 @@ import PhoneNumberInput from '../../components/PhoneNumberInput';
 import EyeIcon from '../../assets/icons/EyeIcon';
 import EyeOffIcon from '../../assets/icons/EyeOffIcon';
 import { MediaBaseURL } from '../../shared/utils/constants';
+import { CAIRO_FONT_FAMILY } from '../../styles/globalStyles';
 
 const genders = [
   { label: 'ذكر', value: 'male' },
@@ -342,7 +343,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 15,
     color: '#222',
-    fontWeight: '500',
+    fontFamily: CAIRO_FONT_FAMILY.medium,
     marginBottom: 4,
     textAlign: 'left',
   },
@@ -355,6 +356,7 @@ const styles = StyleSheet.create({
     height: 50,
     fontSize: 15,
     color: '#222',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
     textAlign: 'right',
   },
   row: {
@@ -376,6 +378,7 @@ const styles = StyleSheet.create({
   countryCodeText: {
     fontSize: 16,
     color: '#222',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
   },
   updateBtn: {
     position: 'absolute',
@@ -390,7 +393,7 @@ const styles = StyleSheet.create({
   },
   updateBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
     fontSize: 15,
   },
   radioContainer: {
@@ -423,7 +426,7 @@ const styles = StyleSheet.create({
   radioLabel: {
     fontSize: 14,
     color: '#222',
-    fontWeight: '500',
+    fontFamily: CAIRO_FONT_FAMILY.medium,
   },
   passwordInputContainer: {
     flexDirection: 'row',
@@ -456,10 +459,12 @@ const styles = StyleSheet.create({
   chooseFileText: {
     color: '#000',
     fontSize: 14,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
   },
   noFileText: {
     color: '#888',
     fontSize: 14,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
     marginRight: 8,
   },
   saveBtn: {
@@ -472,12 +477,12 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
     fontSize: 18,
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
     color: '#000'
   },
   headerContainer: {
@@ -507,7 +512,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     height: '100%',
-    color: '#000'
+    color: '#000',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
   },
   eyeIcon: {
     position: 'absolute',

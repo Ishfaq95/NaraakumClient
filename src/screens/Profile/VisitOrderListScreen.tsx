@@ -11,7 +11,7 @@ import WebSocketService from '../../components/WebSocketService';
 import CurrentVisitAppointments from './profileComponents/currentVisitAppointments';
 import PreviousVisitAppointments from './profileComponents/previousVisitAppointments';
 import CancelledVisitAppointments from './profileComponents/cancelledVisitAppointments';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { globalTextStyles, CAIRO_FONT_FAMILY } from '../../styles/globalStyles';
 
 const VisitOrderListScreen = () => {
   const { t } = useTranslation();
@@ -55,9 +55,33 @@ const VisitOrderListScreen = () => {
       {...props}
       indicatorStyle={styles.indicator}
       style={styles.tabBar}
-      labelStyle={styles.tabLabel}
+      labelStyle={{
+        fontFamily: CAIRO_FONT_FAMILY.medium,
+        fontSize: 14,
+        textTransform: 'none',
+        includeFontPadding: false,
+      }}
       activeColor="#008080"
       inactiveColor="#666666"
+      pressColor="transparent"
+      pressOpacity={1}
+      renderLabel={({ route, focused }: { route: any; focused: boolean }) => (
+        <Text 
+          style={{
+            color: focused ? '#008080' : '#666666',
+            fontFamily: CAIRO_FONT_FAMILY.medium,
+            fontSize: 14,
+            textTransform: 'none',
+            textAlign: 'center',
+            paddingVertical: 8,
+            includeFontPadding: false,
+            textAlignVertical: 'center',
+            fontWeight: '500',
+          }}
+        >
+          {route.title}
+        </Text>
+      )}
     />
   );
 
@@ -127,9 +151,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   tabLabel: {
-    ...globalTextStyles.bodySmall,
-    fontFamily: globalTextStyles.h5.fontFamily,
-    textTransform: 'none',
+    // Base style - font properties are applied directly in renderLabel
   },
   indicator: {
     backgroundColor: '#008080',
