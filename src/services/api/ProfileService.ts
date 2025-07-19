@@ -81,6 +81,72 @@ export const getCpAddedOrders = async (payload: any): Promise<any> => {
     }
 };
 
+export const updateUserProfile = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/UpdateRegisteredPatientProfile', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting cp added orders:', error);
+        throw error;    
+    }
+};
+
+export const getUserUpdatedData = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('user/GetUserInfobyUserId', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting cp added orders:', error);
+        throw error;    
+    }
+};
+
+export const verifyUserUpdatedData = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/VerifyRegisteredUser', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting cp added orders:', error);
+        throw error;    
+    }
+};
+
+export const userUpdatedEmail = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/EmailVerification', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting cp added orders:', error);
+        throw error;    
+    }
+};
+
+export const userUpdatedPhone = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/PhoneVerification', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting cp added orders:', error);
+        throw error;    
+    }
+};
+
+export const resendOtp = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/ResendRegistrationCode', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting cp added orders:', error);
+        throw error;    
+    }
+};
+
 export const profileService = {
     getUserFavorites,
     removeFromFavorites,
@@ -89,5 +155,11 @@ export const profileService = {
     getPatientRating,
     getVisitOrderList,
     getVisitConsultantLog,
-    getCpAddedOrders
+    getCpAddedOrders,
+    updateUserProfile,
+    getUserUpdatedData,
+    verifyUserUpdatedData,
+    userUpdatedEmail,
+    userUpdatedPhone,
+    resendOtp
 };  

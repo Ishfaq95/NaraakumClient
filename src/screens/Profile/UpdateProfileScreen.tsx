@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, TextInput, Image, I18nManager, Platform, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, TextInput, Image, I18nManager, Platform, ScrollView, Alert, Modal, InteractionManager, KeyboardAvoidingView } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -7,13 +7,22 @@ import { useTranslation } from 'react-i18next';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Dropdown from '../../components/common/Dropdown';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../shared/redux/store';
 import PhoneNumberInput from '../../components/PhoneNumberInput';
 import EyeIcon from '../../assets/icons/EyeIcon';
 import EyeOffIcon from '../../assets/icons/EyeOffIcon';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import { CAIRO_FONT_FAMILY } from '../../styles/globalStyles';
+import { onUpdateUserProfileSuccess, profileService } from '../../services/api/ProfileService';
+import FullScreenLoader from '../../components/FullScreenLoader';
+import { pick } from '@react-native-documents/picker';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { setHomeDialysisFilePaths } from 'shared/redux/reducers/bookingReducer';
+import CustomBottomSheet from '../../components/common/CustomBottomSheet';
+import EmailUpdateComponent, { PhoneUpdateComponent, VerificationCodeCompoent } from '../../components/emailUpdateComponent';
+import { setUser } from '../../shared/redux/reducers/userReducer';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const genders = [
   { label: 'ذكر', value: 'male' },
@@ -46,7 +55,24 @@ const UpdateProfileScreen = () => {
   const [isValidNumber, setIsValidNumber] = useState(false);
   const [fullNumber, setFullNumber] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+  const [selectedUserImage, setSelectedUserImage] = useState('')
+  const [defaultUserImage, setDefaultUserImage] = useState('')
+  const [isUploading, setIsUploading] = useState(false);
+  const [showIcon, setShowIcon] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [openEmailBottomSheet, setOpenEmailBottomSheet] = useState(false)
+  const [openPhoneBottomSheet, setOpenPhoneBottomSheet] = useState(false)
+  const [openVerifyBottomSheet, setOpenVerifyBottomSheet] = useState(false)
+  const [otpValue, setOtpValue] = useState('')
+  const [updatedEmail, setUpdatedEmail] = useState('')
+  const [statusCodeEmail, setStatusCodeEmail] = useState(0)
+  const [updatedPhoneNumber, setUpdatedPhoneNumber] = useState('')
+  const [updatedFullPhoneNumber, setUpdatedFullPhoneNumber] = useState('');
+  const [bottomSheetType, setBottomSheetType] = useState<'phone' | 'email' | null>(null);
+  const mediaToken = useSelector((state: any) => state.root.user.mediaToken);
   const isRTL = I18nManager.isRTL;
+const insets = useSafeAreaInsets();
+  const dispatch = useDispatch()
   // Function to extract country code and phone number from full number
   const extractPhoneInfo = (fullNumber: string) => {
     if (!fullNumber) return { countryCode: 'SA', phoneNumber: '' };
@@ -93,19 +119,22 @@ const UpdateProfileScreen = () => {
   const defaultCountryCode = phoneInfo.countryCode;
   const defaultPhoneNumber = phoneInfo.phoneNumber;
 
+
   useEffect(() => {
     setName(user?.FullnameSlang);
     setEmail(user?.Email);
     setAge(user?.Age);
     setGender(user?.Gender);
-    if(user?.Gender==1){
+    setPhoneNumber(defaultPhoneNumber)
+    // setDefaultUserImage(`${MediaBaseURL}${user?.ImagePath}`)
+    if (user?.Gender == 1) {
       setGender('male');
-    }else {
+    } else {
       setGender('female');
     }
-    if(user?.CatNationalityId==213){
+    if (user?.CatNationalityId == 213) {
       setNationality('citizen');
-    }else {
+    } else {
       setNationality('resident');
     }
     setIdNumber(user?.IDNumber);
@@ -119,10 +148,6 @@ const UpdateProfileScreen = () => {
     setMobileNumber(data.phoneNumber);
     setIsValidNumber(data.isValid);
     setFullNumber(data.fullNumber);
-  };
-
-  const handleChooseFile = () => {
-    // Placeholder for file picker
   };
 
   const renderHeader = () => (
@@ -139,10 +164,299 @@ const UpdateProfileScreen = () => {
     />
   );
 
+  const updateUserProfileHandler = async () => {
+    console.log(
+      'check before call API',
+      name,
+      phoneNumber,
+      age,
+      gender,
+      user?.Id,
+      selectedUserImage,
+      email
+    )
+    try {
+      setIsUploading(true);
+      const payload = {
+        "FullNamePlang": name,
+        "FullNameSlang": name,
+        "CellNumber": phoneNumber,
+        "Email": email,
+        "CatNationalityId": user?.CatNationalityId,
+        "IDNumber": idNumber,
+        "Gender": gender === 'male' ? "1" : "2",
+        "Age": age,
+        "ImagePath": selectedUserImage || '',
+        "Password": "",
+        "UserLoginInfoId": user?.Id,
+      }
+      const response = await profileService.updateUserProfile(payload)
+
+      if (response?.ResponseStatus?.STATUSCODE == 200) {
+        setTimeout(async () => {
+        const payloadSuccessUpdateProfile = {
+          "UserlogiInfoId": user?.Id
+        }
+        const responseUpdateprofile = await profileService.getUserUpdatedData(payloadSuccessUpdateProfile)
+        console.log('responseUpdateprofile', JSON.stringify(responseUpdateprofile, null, 2));
+        // dispatch(setUser(response.Userinfo[0]));
+      }, 5000);
+      }
+    } catch (error: any) {
+      console.log('error', error);
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+
+
   const handlePasswordChange = (text: string) => {
     setPassword(text);
     if (passwordError) setPasswordError(false);
   };
+
+  const handleFileSelection = () => {
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        selectionLimit: 1,
+      },
+      async (response) => {
+        if (response.didCancel) {
+          console.log('User cancelled image picker');
+          return;
+        }
+
+        if (response.errorCode) {
+          Alert.alert('Error', response.errorMessage || 'Image picker error');
+          return;
+        }
+
+        const asset = response.assets?.[0];
+        if (!asset) return;
+
+        const file = {
+          uri: asset.uri!,
+          type: asset.type || 'image/jpeg',
+          name: asset.fileName || 'image.jpg',
+          size: asset.fileSize || 0,
+        };
+
+        await uploadFile(file, asset);
+      },
+    );
+  };
+
+  const uploadFile = async (file: any, pickerResult: any) => {
+    try {
+      setIsUploading(true);
+      let url = `${MediaBaseURL}/common/upload`;
+      let ResourceCategoryId = '2';
+
+      let fileType = file?.name?.split('.')?.pop();
+      if (fileType == 'pdf' || fileType == 'PDF') ResourceCategoryId = '4';
+      else if (
+        fileType == 'jpg' ||
+        fileType == 'jpeg' ||
+        fileType == 'gif' ||
+        fileType == 'png' ||
+        fileType == 'JPG' ||
+        fileType == 'JPEG' ||
+        fileType == 'GIF' ||
+        fileType == 'PNG'
+      )
+        ResourceCategoryId = '1';
+
+      const formData = new FormData();
+      // Create file object that matches backend expectations
+      const fileData = {
+        uri: file.uri,
+        type: file.type || 'application/octet-stream',
+        name: file.name,
+      };
+
+      // Append file with the exact field name expected by backend
+      formData.append('file', fileData);
+      formData.append('UserType', user.CatUserTypeId);
+      formData.append('Id', user.Id);
+      formData.append('ResourceCategory', ResourceCategoryId);
+      formData.append('ResourceType', '6');
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Accept: 'application/json',
+          Authorization: `Bearer${mediaToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed with status:', response.status);
+        console.error('Error response:', errorText);
+
+        if (response.status === 504) {
+          throw new Error('Server took too long to respond. Please try again.');
+        }
+
+        throw new Error(
+          `Upload failed with status ${response.status}: ${errorText}`,
+        );
+      }
+
+      const responseData = await response.json();
+
+      if (responseData.ResponseStatus?.STATUSCODE === '200') {
+        const imageUrl = responseData?.Data?.AbsolutePath;
+        setSelectedUserImage(imageUrl);
+        setShowIcon(imageUrl)
+      } else {
+        throw new Error(
+          responseData.ResponseStatus?.MESSAGE || 'Upload failed',
+        );
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      Alert.alert(
+        'Upload Failed',
+        error instanceof Error
+          ? error.message
+          : 'Failed to upload file. Please try again.',
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const HandleDeleteImage = async () => {
+    setSelectedUserImage('')
+  }
+
+  const HandleOpenEmailBottomSheet = () => {
+    setOpenEmailBottomSheet(true)
+  }
+
+  const HandleOpenPhoneBottomSheet = () => {
+    setOpenPhoneBottomSheet(true)
+  }
+
+  const HandleEmailUpdate = async () => {
+    if (!updatedEmail) {
+    Alert.alert("Missing Email", "Please enter a valid email.");
+    return; 
+  }
+    try {
+      setIsUploading(true)
+      const payload = {
+        "Email": updatedEmail,
+        "UserId": user.Id
+      }
+
+      const response = await profileService.userUpdatedEmail(payload)
+
+      if (response?.ResponseStatus?.STATUSCODE === 200) {
+        setOpenEmailBottomSheet(false)
+        setTimeout(() => {
+          setOpenVerifyBottomSheet(true)
+        }, 500)
+      }
+
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  const HandlePhoneUpdate = async () => {
+    if (!updatedFullPhoneNumber || updatedFullPhoneNumber.trim() === '') {
+    Alert.alert("Missing Phone Number", "Please enter a valid phone number.");
+    return;
+  }
+    try {
+      setIsUploading(true)
+      const payload = {
+        "Phonenumber": updatedPhoneNumber,
+        "UserId": user.Id
+      }
+
+      const response = await profileService.userUpdatedPhone(payload)
+
+      if (response?.ResponseStatus?.STATUSCODE === 200) {
+        setOpenPhoneBottomSheet(false)
+        setTimeout(() => {
+          setOpenVerifyBottomSheet(true)
+        }, 500)
+      }
+
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const HandleOtpResendButton = async () => {
+    try {
+      setIsUploading(true)
+      const payload = {
+        "UserId": user?.Id,
+      }
+
+      const response = await profileService.resendOtp(payload)
+      console.log("response", response);
+
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const HandleOtpSubmit = async () => {
+    try {
+      setIsUploading(true)
+      const payload = {
+        "UserId": user?.Id,
+        "VerificationCode": otpValue,
+        "VerificationPlatformId": "1"
+      }
+
+      const response = await profileService.verifyUserUpdatedData(payload)
+      setOpenVerifyBottomSheet(false)
+      setOtpValue('')
+
+      console.log("response Verify User Data", response);
+    } catch (error) {
+      console.log("error in user verify data", error);
+    } finally {
+      setIsUploading(false)
+    }
+
+  }
+
+  const HandleCloseEmailModal = () => {
+    setOpenEmailBottomSheet(false)
+    setUpdatedEmail('')
+  }
+
+  const HandleClosePhoneModal = () => {
+    setOpenPhoneBottomSheet(false)
+    setUpdatedPhoneNumber('')
+  }
+
+  const HandleCloseVerifyModal = () => {
+    setOtpValue('')
+    setOpenVerifyBottomSheet(false)
+  }
+
+  const HandleChangePhoneNumber = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
+    setUpdatedPhoneNumber(data.phoneNumber);
+    setUpdatedFullPhoneNumber(data.fullNumber);
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -151,10 +465,15 @@ const UpdateProfileScreen = () => {
         <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
           {/* Avatar */}
           <View style={styles.avatarContainer}>
-            {user?.ImagePath ? <Image source={{ uri: `${MediaBaseURL}${user?.ImagePath}` }} style={{height:'100%',width:'100%',borderRadius:45}} /> :
+            {selectedUserImage ? <Image source={{ uri: selectedUserImage }} style={{ height: '100%', width: '100%', borderRadius: 45, resizeMode: 'cover' }} /> :
               <View style={styles.avatarCircle}>
                 <AntDesign name="user" size={64} color="#23a2a4" />
               </View>}
+            {showIcon ?
+              <TouchableOpacity onPress={HandleDeleteImage} style={styles.dleteIconContainer}>
+                <AntDesign name="delete" size={30} color="#d84d48ff" />
+              </TouchableOpacity>
+              : null}
           </View>
           {/* Name */}
           <View style={styles.fieldGroup}>
@@ -166,14 +485,14 @@ const UpdateProfileScreen = () => {
             <Text style={styles.label}>رقم الجوال</Text>
             <View style={styles.row}>
               <PhoneNumberInput
-                value={defaultPhoneNumber}
+                value={phoneNumber}
                 onChangePhoneNumber={handlePhoneNumberChange}
                 placeholder={t('mobile_number')}
                 errorText={t('mobile_number_not_valid')}
                 defaultCountry={defaultCountryCode}
                 editable={false}
               />
-              <TouchableOpacity style={styles.updateBtn}>
+              <TouchableOpacity onPress={HandleOpenPhoneBottomSheet} style={styles.updateBtn}>
                 <Text style={styles.updateBtnText}>تحديث</Text>
                 <Icon name="edit" size={18} color="#fff" style={{ marginLeft: 4 }} />
               </TouchableOpacity>
@@ -191,7 +510,7 @@ const UpdateProfileScreen = () => {
                 keyboardType="email-address"
                 editable={false}
               />
-              <TouchableOpacity style={styles.updateBtn}>
+              <TouchableOpacity onPress={HandleOpenEmailBottomSheet} style={styles.updateBtn}>
                 <Text style={styles.updateBtnText}>تحديث</Text>
                 <Icon name="edit" size={18} color="#fff" style={{ marginLeft: 4 }} />
               </TouchableOpacity>
@@ -289,18 +608,79 @@ const UpdateProfileScreen = () => {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>اضافة صورة شخصية (اختياري)</Text>
             <View style={styles.fileInputRow}>
-              <TouchableOpacity style={styles.chooseFileBtn} onPress={handleChooseFile}>
+              <TouchableOpacity style={styles.chooseFileBtn} onPress={handleFileSelection}>
                 <Text style={styles.chooseFileText}>Choose file</Text>
               </TouchableOpacity>
               <Text style={styles.noFileText}>No file chosen</Text>
             </View>
           </View>
           {/* Save Button */}
-          <TouchableOpacity style={styles.saveBtn}>
+          <TouchableOpacity onPress={updateUserProfileHandler} style={styles.saveBtn}>
             <Text style={styles.saveBtnText}>حفظ</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={openPhoneBottomSheet}
+        transparent={true}
+        animationType="slide"
+        statusBarTranslucent={true}
+        onRequestClose={() => setOpenPhoneBottomSheet(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <PhoneUpdateComponent
+              HandleEmailUpdate={HandlePhoneUpdate}
+              handlePhoneNumberChange={HandleChangePhoneNumber}
+              mobileNumber={updatedPhoneNumber}
+              onClosePress={HandleClosePhoneModal} />
+
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={openEmailBottomSheet}
+        transparent={true}
+         statusBarTranslucent={true}
+        animationType="slide"
+        onRequestClose={() => setOpenEmailBottomSheet(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <EmailUpdateComponent
+              HandleEmailUpdate={HandleEmailUpdate}
+              onChangeText={(text) => setUpdatedEmail(text)}
+              value={updatedEmail}
+              onClosePress={HandleCloseEmailModal} />
+
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={openVerifyBottomSheet}
+        transparent={true}
+        animationType="slide"
+         statusBarTranslucent={true}
+        onRequestClose={() => setOpenVerifyBottomSheet(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <VerificationCodeCompoent
+              onClosePress={HandleCloseVerifyModal}
+              otpNumEmail={updatedEmail ? updatedEmail : updatedFullPhoneNumber}
+              userName={name || ''}
+              onChangeText={(text) => setOtpValue(text)}
+              value={otpValue}
+              OtpSubmitButton={HandleOtpSubmit}
+              HandleResendPress={HandleOtpResendButton} />
+
+          </View>
+        </View>
+      </Modal>
+      <FullScreenLoader visible={isUploading} />
     </SafeAreaView>
   )
 }
@@ -323,7 +703,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
-    overflow: 'hidden',
+    // overflow: 'hidden',
   },
   avatarCircle: {
     width: 90,
@@ -333,7 +713,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
-    borderWidth: 2,
     borderColor: '#fff',
     alignSelf: 'center',
   },
@@ -439,7 +818,6 @@ const styles = StyleSheet.create({
   },
   fileInputRow: {
     flexDirection: 'row-reverse',
-    height: 50,
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 8,
@@ -454,12 +832,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'lightgray',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    padding:6
   },
   chooseFileText: {
     color: '#000',
     fontSize: 14,
-    fontFamily: CAIRO_FONT_FAMILY.regular,
   },
   noFileText: {
     color: '#888',
@@ -529,6 +906,28 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: '#FF3B30',
   },
+  dleteIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    zIndex: 999
+
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom:0
+  },
+  modalContainer: {
+    width: '100%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+
 });
 
 export default UpdateProfileScreen;
