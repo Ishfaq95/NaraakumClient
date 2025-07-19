@@ -195,6 +195,50 @@ export const UploadMedicalhistoryReports = async (payload: any): Promise<any> =>
     }
 };
 
+export const addBeneficiary = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/AddRefferalPatient', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error uploading medical history reports:', error);
+        throw error;
+    }
+};
+
+export const updateBeneficiaryData = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/UpdateReferralPatient', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error uploading medical history reports:', error);
+        throw error;
+    }
+};
+
+export const deleteBeneficiaryData = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('patients/DeletePatientProfile', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error uploading medical history reports:', error);
+        throw error;
+    }
+};
+
+export const AddUserLocation = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('user/AddUserLocation', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error uploading medical history reports:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
@@ -211,5 +255,9 @@ export const bookingService = {
     getOrganizationSchedulingAvailability,
     getHospitalListByServices,
     getOrganizationByPackage,
-    UploadMedicalhistoryReports
+    UploadMedicalhistoryReports,
+    addBeneficiary,
+    updateBeneficiaryData,
+    deleteBeneficiaryData,
+    AddUserLocation
 }; 

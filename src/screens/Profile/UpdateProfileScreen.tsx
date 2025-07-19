@@ -14,7 +14,7 @@ import EyeIcon from '../../assets/icons/EyeIcon';
 import EyeOffIcon from '../../assets/icons/EyeOffIcon';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import { CAIRO_FONT_FAMILY } from '../../styles/globalStyles';
-import { onUpdateUserProfileSuccess, profileService } from '../../services/api/ProfileService';
+import { profileService } from '../../services/api/ProfileService';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { pick } from '@react-native-documents/picker';
 import { launchImageLibrary } from 'react-native-image-picker';

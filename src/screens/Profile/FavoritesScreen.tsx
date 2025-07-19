@@ -108,7 +108,7 @@ const FavoritesScreen = () => {
       {renderHeader()}
       <View style={{paddingHorizontal: 16, paddingVertical: 10,alignItems:'center',}}>
       <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', marginBottom: 10 }]}>قائمة المفضلة</Text>
-      <Text style={[globalTextStyles.bodySmall, { fontWeight: '500', color: '#000', marginBottom: 10 }]}>سيظهر مقدمو الخدمات المفضلون لديك في أوائل النتائج عند طلب أي خدمة</Text>
+      <Text style={[globalTextStyles.bodySmall, { fontWeight: '500', color: '#000', marginBottom: 10,textAlign:'center' }]}>سيظهر مقدمو الخدمات المفضلون لديك في أوائل النتائج عند طلب أي خدمة</Text>
       </View>
       
       <View style={styles.contentContainer}>
