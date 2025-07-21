@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, TextInput, Image, I18nManager, Platform, ScrollView, Alert, Modal, InteractionManager, KeyboardAvoidingView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, TextInput, Image, I18nManager, Platform, ScrollView, Alert, Modal, InteractionManager, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback, ActivityIndicator } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -23,6 +23,7 @@ import CustomBottomSheet from '../../components/common/CustomBottomSheet';
 import EmailUpdateComponent, { PhoneUpdateComponent, VerificationCodeCompoent } from '../../components/emailUpdateComponent';
 import { setUser } from '../../shared/redux/reducers/userReducer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MaterialDesignIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const genders = [
   { label: 'ذكر', value: 'male' },
@@ -69,10 +70,58 @@ const UpdateProfileScreen = () => {
   const [updatedPhoneNumber, setUpdatedPhoneNumber] = useState('')
   const [updatedFullPhoneNumber, setUpdatedFullPhoneNumber] = useState('');
   const [bottomSheetType, setBottomSheetType] = useState<'phone' | 'email' | null>(null);
+  const [emailBottomSheetHeight, setEmailBottomSheetHeight] = useState("35%")
+  const [phoneBottomSheetHeight, setPhoneBottomSheetHeight] = useState("35%")
+  const [emailInputError, setEmailInputError] = useState(false)
+  const [phoneInputError, setPhoneInputError] = useState(false)
   const mediaToken = useSelector((state: any) => state.root.user.mediaToken);
+  const [loadingImage, setLoadingImage] = useState(false)
   const isRTL = I18nManager.isRTL;
-const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
   const dispatch = useDispatch()
+
+  const handleKeyboardOpen = () => {
+    if (openEmailBottomSheet) {
+      setEmailBottomSheetHeight("65%");
+    }
+    if (openPhoneBottomSheet) {
+      setPhoneBottomSheetHeight("65%");
+    }
+  }
+
+  const handleKeyboardClose = () => {
+    if (openEmailBottomSheet) {
+      setEmailBottomSheetHeight("35%");
+    }
+    if (openPhoneBottomSheet) {
+      setPhoneBottomSheetHeight("35%");
+    }
+  } 
+
+  // Keyboard listeners for bottom sheet height adjustment
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        handleKeyboardOpen()
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        handleKeyboardClose()
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, [openEmailBottomSheet, openPhoneBottomSheet]);
+
+  
+
   // Function to extract country code and phone number from full number
   const extractPhoneInfo = (fullNumber: string) => {
     if (!fullNumber) return { countryCode: 'SA', phoneNumber: '' };
@@ -119,14 +168,18 @@ const insets = useSafeAreaInsets();
   const defaultCountryCode = phoneInfo.countryCode;
   const defaultPhoneNumber = phoneInfo.phoneNumber;
 
-
   useEffect(() => {
+    console.log("user",user)
     setName(user?.FullnameSlang);
     setEmail(user?.Email);
     setAge(user?.Age);
     setGender(user?.Gender);
     setPhoneNumber(defaultPhoneNumber)
-    // setDefaultUserImage(`${MediaBaseURL}${user?.ImagePath}`)
+    if(user?.ImagePath){
+      setDefaultUserImage(user?.ImagePath)
+    }else{
+      setDefaultUserImage('')
+    }
     if (user?.Gender == 1) {
       setGender('male');
     } else {
@@ -180,27 +233,28 @@ const insets = useSafeAreaInsets();
       const payload = {
         "FullNamePlang": name,
         "FullNameSlang": name,
-        "CellNumber": phoneNumber,
+        "CellNumber": user?.CellNumber,
         "Email": email,
         "CatNationalityId": user?.CatNationalityId,
         "IDNumber": idNumber,
         "Gender": gender === 'male' ? "1" : "2",
         "Age": age,
-        "ImagePath": selectedUserImage || '',
+        "ImagePath": defaultUserImage || '',
         "Password": "",
         "UserLoginInfoId": user?.Id,
       }
+
+      console.log("payload",payload)
       const response = await profileService.updateUserProfile(payload)
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
-        setTimeout(async () => {
+       
         const payloadSuccessUpdateProfile = {
           "UserlogiInfoId": user?.Id
         }
         const responseUpdateprofile = await profileService.getUserUpdatedData(payloadSuccessUpdateProfile)
-        console.log('responseUpdateprofile', JSON.stringify(responseUpdateprofile, null, 2));
-        // dispatch(setUser(response.Userinfo[0]));
-      }, 5000);
+        dispatch(setUser(responseUpdateprofile.UserDetail[0]));
+     
       }
     } catch (error: any) {
       console.log('error', error);
@@ -310,9 +364,9 @@ const insets = useSafeAreaInsets();
       const responseData = await response.json();
 
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
-        const imageUrl = responseData?.Data?.AbsolutePath;
-        setSelectedUserImage(imageUrl);
-        setShowIcon(imageUrl)
+        const imageUrl = responseData?.Data?.Path;
+        setDefaultUserImage(imageUrl)
+        setSelectedUserImage(imageUrl)
       } else {
         throw new Error(
           responseData.ResponseStatus?.MESSAGE || 'Upload failed',
@@ -332,7 +386,7 @@ const insets = useSafeAreaInsets();
   };
 
   const HandleDeleteImage = async () => {
-    setSelectedUserImage('')
+    setDefaultUserImage('')
   }
 
   const HandleOpenEmailBottomSheet = () => {
@@ -345,7 +399,7 @@ const insets = useSafeAreaInsets();
 
   const HandleEmailUpdate = async () => {
     if (!updatedEmail) {
-    Alert.alert("Missing Email", "Please enter a valid email.");
+    setEmailInputError(true)
     return; 
   }
     try {
@@ -373,7 +427,7 @@ const insets = useSafeAreaInsets();
 
   const HandlePhoneUpdate = async () => {
     if (!updatedFullPhoneNumber || updatedFullPhoneNumber.trim() === '') {
-    Alert.alert("Missing Phone Number", "Please enter a valid phone number.");
+    setPhoneInputError(true)
     return;
   }
     try {
@@ -441,9 +495,11 @@ const insets = useSafeAreaInsets();
   const HandleCloseEmailModal = () => {
     setOpenEmailBottomSheet(false)
     setUpdatedEmail('')
+    handleKeyboardClose()
   }
 
   const HandleClosePhoneModal = () => {
+    handleKeyboardClose()
     setOpenPhoneBottomSheet(false)
     setUpdatedPhoneNumber('')
   }
@@ -456,7 +512,15 @@ const insets = useSafeAreaInsets();
   const HandleChangePhoneNumber = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
     setUpdatedPhoneNumber(data.phoneNumber);
     setUpdatedFullPhoneNumber(data.fullNumber);
+    setPhoneInputError(false)
   }
+
+  const getFileName = (url: string) => {
+    const fileName = url.split('/').pop();
+    return fileName;
+  }
+
+  console.log("defaultUserImage",defaultUserImage)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -465,13 +529,24 @@ const insets = useSafeAreaInsets();
         <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
           {/* Avatar */}
           <View style={styles.avatarContainer}>
-            {selectedUserImage ? <Image source={{ uri: selectedUserImage }} style={{ height: '100%', width: '100%', borderRadius: 45, resizeMode: 'cover' }} /> :
+            {
+              loadingImage && <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#23a2a4" />
+              </View>
+            }
+            {defaultUserImage ? <Image 
+              key={defaultUserImage}
+              onLoadStart={() => setLoadingImage(true)}
+              onLoadEnd={() => setLoadingImage(false)}
+              source={{ uri: `${MediaBaseURL}${defaultUserImage}` }} 
+              style={{ height: '100%', width: '100%', borderRadius: 45, resizeMode: 'cover' }} 
+            /> :
               <View style={styles.avatarCircle}>
                 <AntDesign name="user" size={64} color="#23a2a4" />
               </View>}
-            {showIcon ?
+            {defaultUserImage ?
               <TouchableOpacity onPress={HandleDeleteImage} style={styles.dleteIconContainer}>
-                <AntDesign name="delete" size={30} color="#d84d48ff" />
+                <MaterialDesignIcons name="delete" size={22} color="#d84d48ff" />
               </TouchableOpacity>
               : null}
           </View>
@@ -611,7 +686,7 @@ const insets = useSafeAreaInsets();
               <TouchableOpacity style={styles.chooseFileBtn} onPress={handleFileSelection}>
                 <Text style={styles.chooseFileText}>Choose file</Text>
               </TouchableOpacity>
-              <Text style={styles.noFileText}>No file chosen</Text>
+              {selectedUserImage ? <Text style={styles.noFileText}>{getFileName(selectedUserImage)}</Text> :<Text style={styles.noFileText}>No file chosen</Text> }
             </View>
           </View>
           {/* Save Button */}
@@ -621,43 +696,54 @@ const insets = useSafeAreaInsets();
         </View>
       </ScrollView>
 
-      <Modal
+      <CustomBottomSheet
         visible={openPhoneBottomSheet}
-        transparent={true}
-        animationType="slide"
-        statusBarTranslucent={true}
-        onRequestClose={() => setOpenPhoneBottomSheet(false)}
+        onClose={() => setOpenPhoneBottomSheet(false)}
+        showHandle={false}
+        height={phoneBottomSheetHeight}
       >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <PhoneUpdateComponent
-              HandleEmailUpdate={HandlePhoneUpdate}
-              handlePhoneNumberChange={HandleChangePhoneNumber}
-              mobileNumber={updatedPhoneNumber}
-              onClosePress={HandleClosePhoneModal} />
-
-          </View>
+         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <View style={styles.modalContainer}>
+          <PhoneUpdateComponent
+            HandleEmailUpdate={HandlePhoneUpdate}
+            handlePhoneNumberChange={HandleChangePhoneNumber}
+            mobileNumber={updatedPhoneNumber}
+              onClosePress={HandleClosePhoneModal}
+            inputError={phoneInputError}
+          />
         </View>
-      </Modal>
+        </TouchableWithoutFeedback>
+      </CustomBottomSheet>
 
-      <Modal
+      {/* <Modal
         visible={openEmailBottomSheet}
         transparent={true}
          statusBarTranslucent={true}
         animationType="slide"
         onRequestClose={() => setOpenEmailBottomSheet(false)}
+      > */}
+      <CustomBottomSheet
+        visible={openEmailBottomSheet}
+        onClose={() => setOpenEmailBottomSheet(false)}
+        height={emailBottomSheetHeight}
       >
-        <View style={styles.modalBackground}>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
           <View style={styles.modalContainer}>
             <EmailUpdateComponent
               HandleEmailUpdate={HandleEmailUpdate}
-              onChangeText={(text) => setUpdatedEmail(text)}
+              onChangeText={(text) => {
+                setUpdatedEmail(text)
+                setEmailInputError(false)
+              }}
               value={updatedEmail}
-              onClosePress={HandleCloseEmailModal} />
+              onClosePress={HandleCloseEmailModal}
+              inputError={emailInputError}
+            />
 
           </View>
-        </View>
-      </Modal>
+        </TouchableWithoutFeedback>
+      </CustomBottomSheet>
+      {/* </Modal> */}
 
       <Modal
         visible={openVerifyBottomSheet}
@@ -910,8 +996,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
-    zIndex: 999
-
+    zIndex: 999,
+    height: 30,
+    width: 30,
+    borderRadius: 15,
+    backgroundColor: 'lightgray',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalBackground: {
     flex: 1,
@@ -923,7 +1014,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     backgroundColor: 'white',
-    padding: 20,
+    // padding: 20,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
   },

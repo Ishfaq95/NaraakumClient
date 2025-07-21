@@ -10,10 +10,11 @@ interface EmailUpdateProps {
   value: string;
   onChangeText: (text: string) => void;
   HandleEmailUpdate: () => void;
-  onClosePress: () => void
+  onClosePress: () => void,
+  inputError: boolean
 }
 
-const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, onChangeText, value, onClosePress }) => {
+const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, onChangeText, value, onClosePress,inputError=false }) => {
   return (
     <View style={styles.mainContainer}>
       <View style={styles.sheetHeaderContainer}>
@@ -22,13 +23,15 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
         </TouchableOpacity>
         <Text style={styles.bottomSheetHeaderText}>تغيير البريد الإلكتروني</Text>
       </View>
-      <Text style={styles.emailTitle}>أدخل بريدك الإلكتروني الجديد</Text>
-      <View style={styles.inputView}>
-        <TextInput value={value} onChangeText={onChangeText} placeholder="abcd@xyz.com" style={styles.inputText} />
+      <View style={{ width: '100%', paddingHorizontal: 16 }}>
+        <Text style={styles.emailTitle}>أدخل بريدك الإلكتروني الجديد</Text>
+        <View style={[styles.inputView,inputError && {borderWidth: 1,borderColor: 'red',borderRadius: 8}]}>
+          <TextInput value={value} onChangeText={onChangeText} placeholder="abcd@xyz.com" style={styles.inputText} />
+        </View>
+        <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
+          <Text style={styles.saveBtnText}>حفظ</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
-        <Text style={styles.saveBtnText}>حفظ</Text>
-      </TouchableOpacity>
     </View>
   )
 }
@@ -46,11 +49,12 @@ interface PhoneUpdateProps {
     fullNumber: string;
   }) => void;
   HandleEmailUpdate: () => void;
-  onClosePress: () => void
+  onClosePress: () => void,
+  inputError: boolean
 }
 
 
-export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUpdate, handlePhoneNumberChange, mobileNumber, onClosePress }) => {
+export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUpdate, handlePhoneNumberChange, mobileNumber, onClosePress,inputError=false }) => {
   return (
     <View style={styles.mainContainer}>
       <View style={styles.sheetHeaderContainer}>
@@ -59,17 +63,19 @@ export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUp
         </TouchableOpacity>
         <Text style={styles.bottomSheetHeaderText}>تغيير رقم الهااتف</Text>
       </View>
+      <View style={{ width: '100%', paddingHorizontal: 16 }}>
       <Text style={styles.emailTitle}>أدخل رقم هاتفك الجديد</Text>
       <PhoneNumberInput
         value={mobileNumber}
         onChangePhoneNumber={handlePhoneNumberChange}
         placeholder={t('mobile_number')}
         errorText={t('mobile_number_not_valid')}
-        containerStyle={{ marginVertical: 7 }}
+        containerStyle={[{ marginVertical: 7 },inputError && {borderWidth: 1,borderColor: 'red',borderRadius: 8}]}
       />
       <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
         <Text style={styles.saveBtnText}>حفظ</Text>
       </TouchableOpacity>
+      </View>
     </View>
   )
 }
@@ -123,7 +129,7 @@ interface AddressProps {
   setDescriptionValue: (text: string) => void;
   descriptionValue: string;
   saveAddressButton: () => void;
-  GoogleMapButton:()=>void
+  GoogleMapButton: () => void
 }
 
 export const VisitLocationComponent: React.FC<AddressProps> = ({
@@ -140,7 +146,7 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
   GoogleMapButton
 }) => {
   const Neighbearhood = [
-        { label: '', value: '' },
+    { label: '', value: '' },
   ];
 
   const Rigin = [
@@ -148,10 +154,10 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
     { label: 'الرياض', value: 'bupa' },
   ];
 
- const City = [
-  { label: 'اختر من فضلك', value: '1' },
-  { label: 'الرياض', value: '2' },
-];
+  const City = [
+    { label: 'اختر من فضلك', value: '1' },
+    { label: 'الرياض', value: '2' },
+  ];
 
 
   return (
@@ -162,11 +168,11 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
         </TouchableOpacity>
         <Text style={styles.bottomSheetHeaderText}>اختر موقع الزيارة</Text>
       </View>
-         <Text style={{textAlign:'center',fontSize:24,color:'#000'}}>نقدم خدماتنا فى المناطق والمدن التالية</Text>
+      <Text style={{ textAlign: 'center', fontSize: 24, color: '#000' }}>نقدم خدماتنا فى المناطق والمدن التالية</Text>
       <View style={styles.whiteContainer}>
 
         <Text style={styles.titleText}>أختر المنطقة <Text style={{ color: 'red' }}>*</Text></Text>
-         <Dropdown
+        <Dropdown
           data={Rigin}
           containerStyle={{ height: 50 }}
           dropdownStyle={{ height: 50 }}
@@ -194,9 +200,9 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
           onChange={(value: string | number) => setNeighbearhoodValue(value.toString())}
           placeholder="اختر الجنس"
         />
-    
-       <Text style={styles.titleText}>وصف العنوان <Text style={{ color: 'red' }}>*</Text></Text>
-         <View style={styles.inputView}>
+
+        <Text style={styles.titleText}>وصف العنوان <Text style={{ color: 'red' }}>*</Text></Text>
+        <View style={styles.inputView}>
           <TextInput
             style={[styles.fullWidthInput]}
             placeholder="اسم المستفيد"
@@ -209,8 +215,8 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
         <TouchableOpacity onPress={saveAddressButton} style={styles.optButton}>
           <Text style={styles.saveBtnText}>حفظ</Text>
         </TouchableOpacity>
-         <TouchableOpacity onPress={GoogleMapButton} style={styles.googleButton}>
-          <Text style={[styles.saveBtnText,{color:'#000',fontWeight:'300'}]}>استخدم خرائط Google</Text>
+        <TouchableOpacity onPress={GoogleMapButton} style={styles.googleButton}>
+          <Text style={[styles.saveBtnText, { color: '#000', fontWeight: '300' }]}>استخدم خرائط Google</Text>
         </TouchableOpacity>
       </View>
     </>
@@ -230,7 +236,7 @@ interface beneficiaryProps {
   genderValue: string;
   onChangeTextInsurance: (text: string) => void;
   insuranceValue: string;
-  PressNationality: (item:string) => void;
+  PressNationality: (item: string) => void;
   nationality: string;
   SubmitButton: () => void;
 }
@@ -266,14 +272,14 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
     { label: 'شركة بوبا', value: 'bupa' },
   ];
 
- const Relation = [
-  { label: 'أب', value: '1' },
-  { label: 'الأم', value: '2' },
-  { label: 'ابن', value: '3' },
-  { label: 'زوجة', value: '4' },
-  { label: 'بنت', value: '5' },
-  { label: 'صديق', value: '6' },
-];
+  const Relation = [
+    { label: 'أب', value: '1' },
+    { label: 'الأم', value: '2' },
+    { label: 'ابن', value: '3' },
+    { label: 'زوجة', value: '4' },
+    { label: 'بنت', value: '5' },
+    { label: 'صديق', value: '6' },
+  ];
 
 
   return (
@@ -377,11 +383,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#E4F1EF',
-    padding: 15
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
   },
   emailTitle: {
     fontSize: 18,
-    fontWeight: '200',
+    fontFamily: CAIRO_FONT_FAMILY.light,
     color: '#000',
     textAlign: 'left',
     marginTop: 20,
@@ -399,10 +408,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   inputText: {
-    marginLeft: 10
+    marginLeft: 10,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    fontSize: 16,
+    color: '#000'
   },
   sheetButton: {
-    width: 100,
+    width: '100%',
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
@@ -413,7 +425,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetHeaderText: {
     fontSize: 24,
-    fontWeight: '400',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
     color: '#000',
 
   },
@@ -425,11 +437,15 @@ const styles = StyleSheet.create({
   optHeaderText: {
     textAlign: 'center',
     fontSize: 20,
-    marginVertical: 8
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+    marginVertical: 8,
+    color: '#000'
   },
   inputHeaderText: {
     fontSize: 20,
-    textAlign: 'left'
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+    textAlign: 'left',
+    color: '#000'
   },
   otpView: {
     width: '100%',
@@ -452,15 +468,15 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginTop: 7
   },
-   googleButton: {
+  googleButton: {
     width: '100%',
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
     borderColor: '#23a2a4',
     borderRadius: 8,
-    borderWidth:1,
-    marginVertical:20
+    borderWidth: 1,
+    marginVertical: 20
   },
   resendOptTextContainer: {
     flexDirection: 'row',
@@ -470,14 +486,17 @@ const styles = StyleSheet.create({
   },
   optNotGet: {
     fontSize: 14,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
     color: '#000',
     marginRight: 5
   },
   resendPress: {
     color: '#23a2a4',
-    fontSize: 14
+    fontSize: 14,
+    fontFamily: CAIRO_FONT_FAMILY.medium
   },
   mainContainer: {
+    width: '100%',
     paddingBottom: 10
   },
   whiteContainer: {
@@ -487,7 +506,8 @@ const styles = StyleSheet.create({
   titleText: {
     color: '#36454F',
     fontSize: 14,
-    marginVertical:10
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+    marginVertical: 10
   },
   inputViewWithDropdown: {
     width: '100%',
@@ -544,9 +564,10 @@ const styles = StyleSheet.create({
     fontFamily: CAIRO_FONT_FAMILY.medium,
   },
   fullWidthInput: {
-  flex: 1,
-  paddingHorizontal: 20,
-  fontSize: 16,
-  color: '#000'
-}
+    flex: 1,
+    paddingHorizontal: 20,
+    fontSize: 16,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    color: '#000'
+  }
 })

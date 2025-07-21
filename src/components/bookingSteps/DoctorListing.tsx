@@ -838,6 +838,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       <CustomBottomSheet
         visible={isBottomSheetVisible}
         onClose={() => setIsBottomSheetVisible(false)}
+        style={{paddingHorizontal: 16}}
         height="80%"
       >
         {
