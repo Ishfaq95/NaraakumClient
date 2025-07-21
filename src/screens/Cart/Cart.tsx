@@ -2,14 +2,16 @@ import Header from "../../components/common/Header";
 import { View, Text, SafeAreaView, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
-import { removeCardItem, clearCardItems, addCardItem } from "../../shared/redux/reducers/bookingReducer";
+import { removeCardItem, clearCardItems, addCardItem, setSelectedUniqueId } from "../../shared/redux/reducers/bookingReducer";
 import moment from "moment";
 import MinusIcon from "../../assets/icons/MinuesIcon";
 import { bookingService } from "../../services/api/BookingService";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { ROUTES } from "../../shared/utils/routes";
 import { globalTextStyles } from "../../styles/globalStyles";
+import { generatePayloadforOrderMainBeforePayment, generateUniqueId } from "../../shared/services/service";
+import FullScreenLoader from "../../components/FullScreenLoader";
 
 const CartScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
@@ -19,6 +21,7 @@ const CartScreen = ({ navigation }: any) => {
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const isFocused = useIsFocused();
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
       try {
@@ -42,14 +45,13 @@ const CartScreen = ({ navigation }: any) => {
             if (existingIndex !== -1) {
               // Replace existing item with new one
               const newItemObject = {
-                SrNo: Math.floor(Math.random() * 10000),
+                ItemUniqueId: generateUniqueId(),
                 ...newItem,
               }
               updatedCardItems[existingIndex] = newItemObject;
             } else {
               // Add new item if it doesn't exist
               const newItemObject = {
-                SrNo: Math.floor(Math.random() * 10000),
                 ...newItem,
               }
               updatedCardItems.push(newItemObject);
@@ -64,7 +66,7 @@ const CartScreen = ({ navigation }: any) => {
       }
     }
     getUnPaidUserOrders();
-  }, [user,isFocused]);
+  }, [user, isFocused]);
 
   const renderHeader = () => (
     <Header
@@ -83,9 +85,9 @@ const CartScreen = ({ navigation }: any) => {
         "OrderDetailId": item.OrderDetailId,
       }
       const response = await bookingService.deleteOrderMainBeforePayment(payload);
-      dispatch(removeCardItem(item.SrNo));
+      dispatch(removeCardItem(item.ItemUniqueId));
     } else {
-      dispatch(removeCardItem(item.SrNo));
+      dispatch(removeCardItem(item.ItemUniqueId));
     }
   };
 
@@ -137,6 +139,65 @@ const CartScreen = ({ navigation }: any) => {
     );
   };
 
+  const createOrderMainBeforePayment = async () => {
+    setIsLoading(true);
+    const payload = {
+      "UserLoginInfoId": user.Id,
+      "CatPlatformId": 1,
+      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray)
+    }
+
+    const response = await bookingService.createOrderMainBeforePayment(payload);
+    setIsLoading(false);
+    if (response.ResponseStatus.STATUSCODE == 200) {
+      dispatch(addCardItem([]));
+      navigation.navigate(ROUTES.AppNavigator, {
+          screen: ROUTES.HomeStack,
+          params: {
+            screen: ROUTES.BookingScreen,
+            params: {
+              currentStep: 3,
+            }
+          }
+        });
+    } else {
+      setIsLoading(false);
+    }
+  }
+
+  const handleCheckout = () => {
+    console.log("handleCheckout", CardArray);
+    let selectedItem: any = CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId);
+    let isAPICallNeeded = CardArray.find((item: any) => !item.OrderID && !item.OrderDetailId);
+    const selectedUniqueId = selectedItem?.ItemUniqueId;
+
+    if (!isAPICallNeeded && !selectedUniqueId) {
+      navigation.navigate(ROUTES.AppNavigator, {
+        screen: ROUTES.HomeStack,
+        params: {
+          screen: ROUTES.BookingScreen,
+          params: {
+            currentStep: 3,
+          }
+        }
+      });
+    } else if (selectedUniqueId) {
+      dispatch(setSelectedUniqueId(selectedUniqueId));
+      console.log("Need to add doctor", selectedUniqueId);
+      navigation.navigate(ROUTES.AppNavigator, {
+        screen: ROUTES.HomeStack,
+        params: {
+          screen: ROUTES.BookingScreen,
+          params: {
+            currentStep: 2,
+          }
+        }
+      });
+    } else if (isAPICallNeeded) {
+      createOrderMainBeforePayment()
+    }
+  };
+
   const renderEmptyCart = () => (
     <View style={styles.emptyContainer}>
       <Text style={[globalTextStyles.bodyMedium, { color: '#666' }]}>لا توجد مواعيد محجوزة</Text>
@@ -177,20 +238,14 @@ const CartScreen = ({ navigation }: any) => {
           </View>
 
         </View>
-        <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton, CardArray.length == 0 && {backgroundColor: '#ccc'}]} onPress={() => {
-           navigation.navigate(ROUTES.AppNavigator, {
-            screen: ROUTES.HomeStack,
-            params: {
-              screen: ROUTES.BookingScreen,
-              params: {
-                currentStep: 3,
-              }
-            }
-          });
+        <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton, CardArray.length == 0 && { backgroundColor: '#ccc' }]} onPress={() => {
+          handleCheckout();
         }}>
           <Text style={styles.checkoutButtonText}>{"تأكيد الخدمات"}</Text>
         </TouchableOpacity>
       </View>
+
+      <FullScreenLoader visible={isLoading} />
     </SafeAreaView>
   );
 };

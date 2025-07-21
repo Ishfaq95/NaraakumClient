@@ -10,7 +10,9 @@ import { ROUTES } from '../../shared/utils/routes';
 import moment from 'moment';
 import { globalTextStyles } from '../../styles/globalStyles';
 
-const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
+const OrderSuccess = ({ navigation, route }: any) => {
+  const OrderDetail = route?.params?.SuccessResponse;
+  
   const { t } = useTranslation();
 
   const handleDownloadInvoice = async () => {
@@ -97,8 +99,7 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{flex:1,paddingHorizontal:16,alignItems:"center", }}>
-        <Text style={globalTextStyles.h4}>Order Success</Text>
-        {/* <View style={styles.gifContainer}>
+        <View style={styles.gifContainer}>
           <LottieAnimation
             source={LOTTIE_ANIMATIONS.ORDER_SUCCESS}
             style={styles.successLottie}
@@ -116,19 +117,19 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_number')}</Text>
           <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
-            {SuccessResponse?.Data?.OrderId ? `NAR-${SuccessResponse.Data.OrderId}` : 'N/A'}
+            {OrderDetail[0].OrderID ? `NAR-${OrderDetail[0].OrderID}` : 'N/A'}
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_date')}</Text>
           <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
-            {SuccessResponse?.Data?.CreatedDate ? moment(SuccessResponse.Data.CreatedDate).format('DD/MM/YYYY') : moment().format('DD/MM/YYYY')}
+            {OrderDetail[0].OrderDate ? moment(OrderDetail[0].OrderDate).format('DD/MM/YYYY') : moment().format('DD/MM/YYYY')}
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_amount')}</Text>
           <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
-            {SuccessResponse?.Data?.TotalAmount ? `${SuccessResponse.Data.TotalAmount} SAR` : 'N/A'}
+            {`${OrderDetail.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)} SAR` }
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8,paddingTop:30 }}>
@@ -144,7 +145,7 @@ const OrderSuccess = ({ navigation, SuccessResponse }: any) => {
           >
             <Text style={[globalTextStyles.buttonMedium, { color: '#fff', textAlign: 'center' }]}>{t('track_order')}</Text>
           </TouchableOpacity>
-        </View> */}
+        </View>
       </View>
     </SafeAreaView>
   )
