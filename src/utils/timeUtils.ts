@@ -9,6 +9,7 @@ interface TimeSlot {
   is_holiday: boolean;
   available: boolean;
   selected: boolean;
+  is_booked: boolean;
 }
 
 interface TimeConfig {
@@ -81,7 +82,13 @@ export const generateSlotsForDate = (
     StartDate,
     EndDate,
     CatAvailabilityTypeId,
+    BookedSlots
   } = config;
+
+  console.log("config",BookedSlots); 
+  if(BookedSlots.length > 0 && BookedSlots[0].ServiceProviderUserloginInfoId=="1124"){
+    console.log("BookedSlots",BookedSlots);
+  }
 
   // Check if target date is within the valid range
   const targetDateObj = new Date(targetDate);
@@ -141,6 +148,13 @@ export const generateSlotsForDate = (
       slotMinutes >= rangeStartTotalMinutes && slotMinutes < rangeEndTotalMinutes
     );
 
+    
+    const isBooked = BookedSlots.some((slot: any) => {
+      // Convert slot.SchedulingTime to local time before comparison
+      const convertedSlotTime = convertUTCToLocalTimezone(targetDate, slot.SchedulingTime, targetTimeZone);
+      return convertedSlotTime.time == startTimeStr;
+    });
+
     slots.push({
       date: targetDate,
       fullTime: startTimeStr,
@@ -149,7 +163,8 @@ export const generateSlotsForDate = (
       availability_type_id: CatAvailabilityTypeId,
       is_holiday: isHoliday,
       available: isAvailable,
-      selected: false
+      selected: false,
+      is_booked: isBooked
     });
 
     currentTotalMinutes = nextTotalMinutes;
