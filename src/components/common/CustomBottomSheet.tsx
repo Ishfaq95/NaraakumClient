@@ -98,6 +98,7 @@ const CustomBottomSheet: React.FC<CustomBottomSheetProps> = ({
       visible={visible}
       transparent
       animationType="none"
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
       <View style={styles.container}>
