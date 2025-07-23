@@ -558,6 +558,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);
 
   const renderTimeSlots = useMemo(() => {
+    console.log("provider.slots",provider);
     return (
       <View style={styles.specialtyContainer}>
         <TouchableOpacity
@@ -597,11 +598,12 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                   style={[
                     styles.timeButton,
                     isSelected && styles.selectedTimeButton,
-                    isDisabled && styles.disabledTimeButton
+                    isDisabled && styles.disabledTimeButton,
+                    slot.is_booked && styles.bookedTimeButton
                   ]}
                   onPress={() => !isDisabled && handleSlotSelect(slot)}
                   activeOpacity={0.5}
-                  disabled={isDisabled}
+                  disabled={isDisabled || slot.is_booked}
                 >
                   <Text style={[
                     styles.timeButtonText,
@@ -851,6 +853,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#179c8e',
   },
   selectedTimeButtonText: {
+    color: '#fff',
+  },
+  bookedTimeButton: {
+    backgroundColor: '#D3E8E8',
+    borderColor: 'lightgray',
+  },
+  bookedTimeButtonText: {
     color: '#fff',
   },
 });

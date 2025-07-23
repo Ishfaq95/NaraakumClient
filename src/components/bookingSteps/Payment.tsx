@@ -83,6 +83,12 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
     getPaymentUrl();
   }, [])
 
+  // Reset payment processed flag when URL changes
+  useEffect(() => {
+    setIsPaymentProcessed(false);
+    cardDataRef.current = null;
+  }, [currentUrl]);
+
   const handleMessage = async (event: any) => {
     const {
       url,
@@ -103,14 +109,28 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   };
 
 
-  const onNavigationStateChange = (url: any) => {
-    if(url.url.includes("PaymentSuccess")){
-      const tempCard = CardArray;
+  const [isPaymentProcessed, setIsPaymentProcessed] = useState(false);
+  const cardDataRef = useRef<any>(null);
+
+const onNavigationStateChange = (url: any) => {
+    if(url.url.includes("PaymentSuccess") && !isPaymentProcessed){
+      setIsPaymentProcessed(true);
+      
+      // Store card data in ref if not already stored
+      if (!cardDataRef.current) {
+        cardDataRef.current = [...CardArray];
+      }
+      
+      const tempCard = cardDataRef.current;
       dispatch(clearCardItems());
-      navigation.navigate("OrderSuccess", { SuccessResponse:tempCard });
+      
+      // Use any type to bypass TypeScript navigation issues
+      (navigation as any).navigate("OrderSuccess", { SuccessResponse: tempCard });
     }
-    else if(url.url.includes("PaymentError")){
-      navigation.navigate("OrderSuccess", { SuccessResponse:"Error in payment" });
+    else if(url.url.includes("PaymentError") && !isPaymentProcessed){
+      setIsPaymentProcessed(true);
+      // Use any type to bypass TypeScript navigation issues
+      (navigation as any).navigate("OrderSuccess", { SuccessResponse: "Error in payment" });
     }
   };
 
