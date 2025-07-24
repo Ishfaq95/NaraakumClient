@@ -16,7 +16,7 @@ export const getServices = async (): Promise<any> => {
         const response = await axiosInstance.get('offeredServices/GetOfferedServicesCategories');
         return response.data;
     } catch (error: any) {
-        console.error('Error fetching video SDK token:', error);
+        console.error('Error fetching Categories:', error);
     }
 };
 

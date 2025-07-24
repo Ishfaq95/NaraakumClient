@@ -558,7 +558,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);
 
   const renderTimeSlots = useMemo(() => {
-    console.log("provider.slots",provider);
     return (
       <View style={styles.specialtyContainer}>
         <TouchableOpacity
