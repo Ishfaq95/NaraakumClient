@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { CAIRO_FONT_FAMILY } from "../styles/globalStyles";
@@ -14,7 +14,7 @@ interface EmailUpdateProps {
   inputError: boolean
 }
 
-const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, onChangeText, value, onClosePress,inputError=false }) => {
+const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, onChangeText, value, onClosePress, inputError = false }) => {
   return (
     <View style={styles.mainContainer}>
       <View style={styles.sheetHeaderContainer}>
@@ -25,7 +25,7 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
       </View>
       <View style={{ width: '100%', paddingHorizontal: 16 }}>
         <Text style={styles.emailTitle}>أدخل بريدك الإلكتروني الجديد</Text>
-        <View style={[styles.inputView,inputError && {borderWidth: 1,borderColor: 'red',borderRadius: 8}]}>
+        <View style={[styles.inputView, inputError && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }]}>
           <TextInput value={value} onChangeText={onChangeText} placeholder="abcd@xyz.com" style={styles.inputText} />
         </View>
         <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
@@ -54,7 +54,7 @@ interface PhoneUpdateProps {
 }
 
 
-export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUpdate, handlePhoneNumberChange, mobileNumber, onClosePress,inputError=false }) => {
+export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUpdate, handlePhoneNumberChange, mobileNumber, onClosePress, inputError = false }) => {
   return (
     <View style={styles.mainContainer}>
       <View style={styles.sheetHeaderContainer}>
@@ -64,17 +64,17 @@ export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUp
         <Text style={styles.bottomSheetHeaderText}>تغيير رقم الهااتف</Text>
       </View>
       <View style={{ width: '100%', paddingHorizontal: 16 }}>
-      <Text style={styles.emailTitle}>أدخل رقم هاتفك الجديد</Text>
-      <PhoneNumberInput
-        value={mobileNumber}
-        onChangePhoneNumber={handlePhoneNumberChange}
-        placeholder={t('mobile_number')}
-        errorText={t('mobile_number_not_valid')}
-        containerStyle={[{ marginVertical: 7 },inputError && {borderWidth: 1,borderColor: 'red',borderRadius: 8}]}
-      />
-      <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
-        <Text style={styles.saveBtnText}>حفظ</Text>
-      </TouchableOpacity>
+        <Text style={styles.emailTitle}>أدخل رقم هاتفك الجديد</Text>
+        <PhoneNumberInput
+          value={mobileNumber}
+          onChangePhoneNumber={handlePhoneNumberChange}
+          placeholder={t('mobile_number')}
+          errorText={t('mobile_number_not_valid')}
+          containerStyle={[{ marginVertical: 7 }, inputError && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }]}
+        />
+        <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
+          <Text style={styles.saveBtnText}>حفظ</Text>
+        </TouchableOpacity>
       </View>
     </View>
   )
@@ -130,6 +130,7 @@ interface AddressProps {
   descriptionValue: string;
   saveAddressButton: () => void;
   GoogleMapButton: () => void
+  setFocusedField: (value: string) => void;
 }
 
 export const VisitLocationComponent: React.FC<AddressProps> = ({
@@ -143,22 +144,201 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
   setNeighbearhoodValue,
   neighbearhoodValue,
   saveAddressButton,
-  GoogleMapButton
+  GoogleMapButton,
+  setFocusedField
 }) => {
-  const Neighbearhood = [
-    { label: '', value: '' },
-  ];
+  const descriptionInputRef = useRef<TextInput>(null);
+  const [fieldErrors, setFieldErrors] = useState({
+    rigin: false,
+    city: false,
+    neighborhood: false,
+    description: false,
+  });
 
   const Rigin = [
-    { label: 'اختر من فضلك', value: 'rajhi' },
-    { label: 'الرياض', value: 'bupa' },
+    { label: 'اختر من فضلك', value: '' },
+    { label: 'الرياض', value: '1' },
   ];
 
   const City = [
-    { label: 'اختر من فضلك', value: '1' },
-    { label: 'الرياض', value: '2' },
+    { label: 'اختر من فضلك', value: '' },
+    { label: 'الرياض', value: '1' },
   ];
 
+  const Neighbearhood = [
+    { label: 'اختر من فضلك', value: '' },
+    { label: 'حي الربيع', value: '1' },
+    { label: ' حي الندى', value: '2' },
+    { label: ' حي الصحافة', value: '3' },
+    { label: ' حي النرجس', value: '4' },
+    { label: ' حي العارض', value: '5' },
+    { label: ' حي النفل', value: '6' },
+    { label: ' حي العقيق', value: '7' },
+    { label: ' حي الوادي', value: '8' },
+    { label: ' حي الغدير', value: '9' },
+    { label: ' حي الياسمين', value: '10' },
+    { label: ' حي الفلاح', value: '11' },
+    { label: ' حي بنبان', value: '12' },
+    { label: ' حي القيروان', value: '13' },
+    { label: ' حي حطين', value: '14' },
+    { label: ' حي الملقا', value: '15' },
+    { label: ' حي الروضة', value: '16' },
+    { label: ' حي الرمال', value: '17' },
+    { label: ' حي المونسية', value: '18' },
+    { label: ' حي قرطبة', value: '19' },
+    { label: ' حي الجنادرية', value: '20' },
+    { label: ' حي القادسية', value: '21' },
+      { label: ' حي اليرموك', value: '22' },
+    { label: ' حي غرناطة', value: '23' },
+    { label: ' حي أشبيلية', value: '24' },
+    { label: ' حي الحمراء', value: '25' },
+    { label: ' حي المعيزلية', value: '26' },
+    { label: ' حي الخليج', value: '27' },
+    { label: ' حي الملك فيصل', value: '28' },
+    { label: ' حي القدس', value: '29' },
+    { label: ' حي النهضة', value: '30' },
+    { label: ' حي الأندلس', value: '31' },
+    { label: ' حي العليا', value: '32' },
+    { label: ' حي السليمانية', value: '33' },
+    { label: ' حي الملك عبد العزيز', value: '34' },
+    { label: ' حي الملك عبد الله', value: '35' },
+    { label: ' حي الورود', value: '36' },
+    { label: ' حي صلاح الدين', value: '37' },
+    { label: ' حي الملك فهد', value: '38' },
+    { label: ' حي المرسلات', value: '39' },
+    { label: ' حي النزهة', value: '40' },
+    { label: ' حي المغرزات', value: '41' },
+    { label: ' حي المروج', value: '42' },
+    { label: ' حي المصيف', value: '43' },
+    { label: ' حي التعاون', value: '44' },
+    { label: ' حي الإزدهار', value: '45' },
+      { label: ' حي المعذر', value: '46' },
+    { label: ' حي المحمدية', value: '47' },
+    { label: ' حي الرحمانية', value: '48' },
+    { label: ' حي الرائد', value: '49' },
+    { label: ' حي النخيل', value: '50' },
+    { label: ' حي أم الحمام الشرقي', value: '51' },
+    { label: ' حي أم الحمام الغربي', value: '52' },
+    { label: ' حي السفارات', value: '53' },
+    { label: ' حي المهدية', value: '54' },
+    { label: ' حي عرقة', value: '55' },
+    { label: ' حي ظهرة لبن', value: '56' },
+    { label: ' حي الخزامى', value: '57' },
+    { label: ' حي النسيم الشرقي', value: '58' },
+    { label: ' حي النسيم الغربي', value: '59' },
+    { label: ' حي السلام', value: '60' },
+    { label: ' حي الريان', value: '61' },
+    { label: ' حي الروابي', value: '62' },
+    { label: ' حي النظيم', value: '63' },
+    { label: ' حي المنار', value: '64' },
+    { label: ' حي الندوة', value: '65' },
+    { label: ' حي جرير', value: '66' },
+    { label: ' حي الربوة', value: '67' },
+    { label: ' حي الزهراء', value: '68' },
+    { label: ' حي الصفا', value: '69' },
+      { label: ' حي الضباط', value: '70' },
+    { label: ' حي الملز', value: '71' },
+    { label: ' حي الوزارات', value: '72' },
+    { label: ' حي الفاروق', value: '73' },
+    { label: ' حي العمل', value: '74' },
+    { label: ' حي ثليم', value: '75' },
+    { label: ' حي المربع', value: '76' },
+    { label: ' حي الفوطة', value: '77' },
+    { label: ' حي الرفيعة', value: '78' },
+    { label: ' حي الهدا', value: '79' },
+    { label: ' حي الشرقية', value: '80' },
+    { label: ' حي الناصرية', value: '81' },
+    { label: ' حي صياح', value: '82' },
+    { label: ' حي الوشام', value: '83' },
+    { label: ' حي النموذجية', value: '84' },
+    { label: ' حي المعذر', value: '85' },
+    { label: ' حي المؤتمرات', value: '86' },
+    { label: ' حي البديعة', value: '87' },
+    { label: ' حي أم سليم', value: '88' },
+    { label: ' حي الشميسي', value: '89' },
+    { label: ' حي الجرادية', value: '90' },
+    { label: ' حي الفاخرية', value: '91' },
+    { label: ' حي عليشة', value: '92' },
+    { label: ' هجرة وادي لبن', value: '93' },
+    { label: ' حي العريجاء', value: '94' },
+    { label: ' حي العريجاء الوسطى', value: '95' },
+    { label: ' حي العريجاء الغربية', value: '96' },
+    { label: ' حي الدريهمية', value: '97' },
+    { label: ' حي شبرا', value: '98' },
+    { label: ' حي السويدي', value: '99' },
+    { label: ' حي السويدي الغربي', value: '100' },
+    { label: ' حي ظهرة البديعة', value: '101' },
+    { label: ' حي سلطانة', value: '102' },
+    { label: ' حي الزهرة', value: '103' },
+    { label: ' هجرة وادي لبن', value: '104' },
+    { label: ' حي ظهرة نمار', value: '105' },
+    { label: ' حي ديراب', value: '106' },
+    { label: ' حي نمار', value: '107' },
+    { label: ' حي الحزم', value: '108' },
+    { label: ' حي أحد', value: '109' },
+    { label: ' حي عكاظ', value: '110' },
+    { label: ' حي الشفاء', value: '111' },
+    { label: ' حي المروة', value: '112' },
+    { label: ' حي بدر', value: '113' },
+    { label: ' حي المصانع', value: '114' },
+    { label: ' حي المنصورية', value: '115' },
+    { label: ' حي عريض', value: '116' },
+    { label: ' حي العماجية', value: '117' },
+    { label: ' حي خشم العان', value: '118' },
+    { label: ' حي الدفاع', value: '119' },
+    { label: ' حي المناخ', value: '120' },
+    { label: ' حي السلي', value: '121' },
+    { label: ' حي النور (الرياض)', value: '122' },
+    { label: ' حي الإسكان', value: '123' },
+    { label: ' حي الصناعية الجديدة', value: '124' },
+    { label: ' حي الفيحاء', value: '125' },
+    { label: ' حي الجزيرة', value: '126' },
+    { label: ' حي السعادة', value: '127' },
+    { label: ' حي هيت', value: '128' },
+    { label: ' حي البرية', value: '129' },
+    { label: ' حي المشاعل', value: '130' },
+    { label: ' حي الدوبية', value: '131' },
+    { label: ' حي القرى', value: '132' },
+    { label: ' حي الصناعية', value: '133' },
+    { label: ' حي الوسيطاء', value: '134' },
+    { label: ' حي معكال', value: '135' },
+    { label: ' حي الفيصلية', value: '136' },
+    { label: ' حي منفوحة', value: '137' },
+    { label: ' حي المنصورة', value: '138' },
+    { label: ' حي اليمامة', value: '139' },
+    { label: ' حي سلام', value: '140' },
+    { label: ' حي جبرة', value: '141' },
+    { label: ' حي عتيقة', value: '142' },
+    { label: ' حي غبيراء', value: '143' },
+    { label: ' حي البطيحا', value: '144' },
+    { label: ' حي الخالدية', value: '145' },
+    { label: ' حي الديرة', value: '146' },
+    { label: ' حي العود', value: '147' },
+    { label: ' حي المرقب', value: '148' },
+    { label: ' حي منفوحة الجديدة', value: '149' },
+    { label: ' حي العزيزية', value: '150' },
+    { label: ' حي طيبة', value: '151' },
+    { label: ' حي المصفاة', value: '152' },
+    { label: ' حي الدار البيضاء', value: '153' },
+    { label: ' حي المصانع', value: '154' },
+    { label: ' حي المنصورة', value: '155' },
+    { label: ' حي الحاير', value: '156' },
+    { label: ' حي الغنامية', value: '157' },
+    { label: 'As Sulimaniyah', value: '158' },
+    { label: 'Al Hada', value: '159' },
+  ];
+
+  const handleSave = () => {
+    const errors = {
+      rigin: !riginValue,
+      city: !cityValue,
+      neighborhood: !neighbearhoodValue,
+      description: !descriptionValue,
+    };
+    setFieldErrors(errors);
+    if (Object.values(errors).some(Boolean)) return;
+    saveAddressButton();
+  };
 
   return (
     <>
@@ -168,16 +348,19 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
         </TouchableOpacity>
         <Text style={styles.bottomSheetHeaderText}>اختر موقع الزيارة</Text>
       </View>
-      <Text style={{ textAlign: 'center', fontSize: 24, color: '#000' }}>نقدم خدماتنا فى المناطق والمدن التالية</Text>
+      <Text style={styles.addressTitle}>نقدم خدماتنا فى المناطق والمدن التالية</Text>
       <View style={styles.whiteContainer}>
 
         <Text style={styles.titleText}>أختر المنطقة <Text style={{ color: 'red' }}>*</Text></Text>
         <Dropdown
           data={Rigin}
           containerStyle={{ height: 50 }}
-          dropdownStyle={{ height: 50 }}
+          dropdownStyle={[{ height: 50 }, fieldErrors.rigin && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
           value={riginValue}
-          onChange={(value: string | number) => setRiginValue(value.toString())}
+          onChange={(value: string | number) => {
+            setFieldErrors(prev => ({ ...prev, rigin: false }));
+            setRiginValue(value.toString());
+          }}
           placeholder=""
         />
 
@@ -185,9 +368,13 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
         <Dropdown
           data={City}
           containerStyle={{ height: 50 }}
-          dropdownStyle={{ height: 50 }}
+          dropdownStyle={[{ height: 50 }, fieldErrors.city && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
           value={cityValue}
-          onChange={(value: string | number) => setCityValue(value.toString())}
+          disabled={riginValue === ''}
+          onChange={(value: string | number) => {
+            setFieldErrors(prev => ({ ...prev, city: false }));
+            setCityValue(value.toString());
+          }}
           placeholder=""
         />
 
@@ -195,28 +382,43 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
         <Dropdown
           data={Neighbearhood}
           containerStyle={{ height: 50 }}
-          dropdownStyle={{ height: 50 }}
+          dropdownStyle={[{ height: 50 }, fieldErrors.neighborhood && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
           value={neighbearhoodValue}
-          onChange={(value: string | number) => setNeighbearhoodValue(value.toString())}
+          disabled={cityValue === ''}
+          onChange={(value: string | number) => {
+            setFieldErrors(prev => ({ ...prev, neighborhood: false }));
+            setNeighbearhoodValue(value.toString());
+          }}
           placeholder="اختر الجنس"
         />
 
         <Text style={styles.titleText}>وصف العنوان <Text style={{ color: 'red' }}>*</Text></Text>
-        <View style={styles.inputView}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => descriptionInputRef.current && descriptionInputRef.current.focus()}
+          style={[styles.inputView, fieldErrors.description && { borderColor: 'red' }]}
+        >
           <TextInput
+            ref={descriptionInputRef}
             style={[styles.fullWidthInput]}
             placeholder="اسم المستفيد"
             value={descriptionValue}
-            onChangeText={setDescriptionValue}
+            onChangeText={text => {
+              setFieldErrors(prev => ({ ...prev, description: false }));
+              setDescriptionValue(text);
+            }}
+            placeholderTextColor={'#d9d9d9'}
+            onFocus={() => setFocusedField('description')}
+            onBlur={() => setFocusedField('')}
           />
-        </View>
+        </TouchableOpacity>
 
         {/* Submit */}
-        <TouchableOpacity onPress={saveAddressButton} style={styles.optButton}>
+        <TouchableOpacity onPress={handleSave} style={styles.optButton}>
           <Text style={styles.saveBtnText}>حفظ</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={GoogleMapButton} style={styles.googleButton}>
-          <Text style={[styles.saveBtnText, { color: '#000', fontWeight: '300' }]}>استخدم خرائط Google</Text>
+          <Text style={[styles.saveBtnText, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.regular }]}>استخدم خرائط Google</Text>
         </TouchableOpacity>
       </View>
     </>
@@ -239,6 +441,9 @@ interface beneficiaryProps {
   PressNationality: (item: string) => void;
   nationality: string;
   SubmitButton: () => void;
+  idNumberValue: string;
+  onChangeTextIdNumber: (text: string) => void;
+  setFocusedField: (field: string) => void;
 }
 
 export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
@@ -255,24 +460,38 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
   insuranceValue,
   PressNationality,
   nationality,
-  SubmitButton
+  SubmitButton,
+  idNumberValue,
+  onChangeTextIdNumber,
+  setFocusedField
 }) => {
+  const idNumberInputRef = useRef<TextInput>(null);
+  const nameInputRef = useRef<TextInput>(null);
+  const ageInputRef = useRef<TextInput>(null);
+  const [nameError, setNameError] = React.useState(false);
+  const [relationError, setRelationError] = React.useState(false);
+  const [genderError, setGenderError] = React.useState(false);
   const nationalities = [
     { label: 'مواطن (معفى من الضريبة)', value: 'citizen' },
     { label: 'مقيم', value: 'resident' },
   ];
 
   const genders = [
+    { label: 'اختر الجنس', value: '' },
     { label: 'ذكر', value: 'male' },
     { label: 'أنثى', value: 'female' },
   ];
 
   const insurances = [
-    { label: 'تكافل الراجحي', value: 'rajhi' },
-    { label: 'شركة بوبا', value: 'bupa' },
+    { label: 'اختر شركة التأمين', value: '' },
+    { label: 'Arabia Insurance', value: '1' },
+    { label: 'Bupa Arabia', value: '2' },
+    { label: 'Al Rajhi Takaful', value: '3' },
+    { label: 'Tawuniya', value: '4' },
   ];
 
   const Relation = [
+    { label: 'اختر من فضلك', value: '' },
     { label: 'أب', value: '1' },
     { label: 'الأم', value: '2' },
     { label: 'ابن', value: '3' },
@@ -281,60 +500,100 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
     { label: 'صديق', value: '6' },
   ];
 
+  // Custom submit handler to validate fields before calling SubmitButton
+  const handleSubmit = () => {
+    let hasError = false;
+    if (!nameValue) {
+      setNameError(true);
+      hasError = true;
+    }
+    if (!relationValue) {
+      setRelationError(true);
+      hasError = true;
+    }
+    if (!genderValue) {
+      setGenderError(true);
+      hasError = true;
+    }
+    if (hasError) return;
+    SubmitButton();
+  };
 
   return (
     <>
       <View style={styles.sheetHeaderContainer}>
         <TouchableOpacity onPress={onClosePress}>
-          <AntDesign name="close" size={30} color="#979e9eff" />
+          <AntDesign name="close" size={32} color="#979e9eff" />
         </TouchableOpacity>
-        <Text style={styles.bottomSheetHeaderText}>تغيير رقم الهاتف</Text>
+        <Text style={styles.bottomSheetHeaderText}>بيانات المستفيد</Text>
       </View>
 
       <View style={styles.whiteContainer}>
         {/* Name */}
         <Text style={styles.titleText}>اسم المستفيد <Text style={{ color: 'red' }}>*</Text></Text>
-        <View style={styles.inputView}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => nameInputRef.current && nameInputRef.current.focus()}
+          style={[styles.inputView, nameError && { borderColor: 'red' }]}
+        >
           <TextInput
+            ref={nameInputRef}
             style={[styles.fullWidthInput]}
             placeholder="اسم المستفيد"
             value={nameValue}
-            onChangeText={onChangeTextName}
+            onChangeText={text => {
+              setNameError(false);
+              onChangeTextName(text);
+            }}
+            placeholderTextColor="#d9d9d9"
+            onFocus={() => setFocusedField('name')}
+            onBlur={() => setFocusedField('')}
           />
-        </View>
+        </TouchableOpacity>
 
         {/* Relation */}
         <Text style={styles.titleText}>صلة القرابة <Text style={{ color: 'red' }}>*</Text></Text>
         <Dropdown
           data={Relation}
           containerStyle={{ height: 50 }}
-          dropdownStyle={{ height: 50 }}
+          dropdownStyle={[{ height: 50 }, relationError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
           value={relationValue}
-          onChange={(value: string | number) => onChangeTextRelation(value.toString())}
+          onChange={value => {
+            setRelationError(false);
+            onChangeTextRelation(value.toString());
+          }}
           placeholder="اختر الجنس"
         />
 
         {/* Age */}
         <Text style={styles.titleText}>العمر / سنة</Text>
-        <View style={[styles.inputView, { alignItems: 'flex-end' }]}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => ageInputRef.current && ageInputRef.current.focus()}
+          style={[styles.inputView, { alignItems: 'flex-end' }]}
+        >
           <TextInput
-            style={[styles.fullWidthInput, { textAlign: 'right' }]}
+            ref={ageInputRef}
+            style={styles.fullWidthInput}
             placeholder="0"
             placeholderTextColor="#1e2525ff"
             keyboardType="numeric"
             value={ageValue}
             onChangeText={onChangeTextAge}
           />
-        </View>
+        </TouchableOpacity>
 
         {/* Gender Dropdown */}
         <Text style={styles.titleText}>الجنس</Text>
         <Dropdown
           data={genders}
           containerStyle={{ height: 50 }}
-          dropdownStyle={{ height: 50 }}
+          dropdownStyle={[{ height: 50 }, genderError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
           value={genderValue}
-          onChange={(value: string | number) => onChangeTextGender(value.toString())}
+          onChange={value => {
+            setGenderError(false);
+            onChangeTextGender(value.toString());
+          }}
           placeholder="اختر الجنس"
         />
 
@@ -367,8 +626,28 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
           </View>
         </View>
 
+        {nationality === 'citizen' && (
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => idNumberInputRef.current && idNumberInputRef.current.focus()}
+            style={styles.inputView}
+          >
+            <TextInput
+              ref={idNumberInputRef}
+              style={[styles.fullWidthInput]}
+              placeholder="ضع رقم الهوية (إجبارى)"
+              value={idNumberValue}
+              onChangeText={onChangeTextIdNumber}
+              onFocus={() => setFocusedField('idNumber')}
+              onBlur={() => setFocusedField('')}
+              placeholderTextColor="#d9d9d9"
+              underlineColorAndroid="transparent"
+            />
+          </TouchableOpacity>
+        )}
+
         {/* Submit */}
-        <TouchableOpacity onPress={SubmitButton} style={styles.optButton}>
+        <TouchableOpacity onPress={handleSubmit} style={styles.optButton}>
           <Text style={styles.saveBtnText}>حفظ</Text>
         </TouchableOpacity>
       </View>
@@ -424,15 +703,15 @@ const styles = StyleSheet.create({
     marginTop: 7
   },
   bottomSheetHeaderText: {
-    fontSize: 24,
+    fontSize: 16,
     fontFamily: CAIRO_FONT_FAMILY.regular,
-    color: '#000',
+    color: '#36454F',
 
   },
   saveBtnText: {
     color: '#fff',
     fontFamily: CAIRO_FONT_FAMILY.bold,
-    fontSize: 18,
+    fontSize: 14,
   },
   optHeaderText: {
     textAlign: 'center',
@@ -476,7 +755,8 @@ const styles = StyleSheet.create({
     borderColor: '#23a2a4',
     borderRadius: 8,
     borderWidth: 1,
-    marginVertical: 20
+    marginVertical: 20,
+    backgroundColor: '#FAFAFA'
   },
   resendOptTextContainer: {
     flexDirection: 'row',
@@ -500,14 +780,15 @@ const styles = StyleSheet.create({
     paddingBottom: 10
   },
   whiteContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
     alignItems: 'flex-start',
   },
   titleText: {
     color: '#36454F',
     fontSize: 14,
     fontFamily: CAIRO_FONT_FAMILY.medium,
-    marginVertical: 10
+    marginVertical: 10,
+    marginBottom: 2
   },
   inputViewWithDropdown: {
     width: '100%',
@@ -568,6 +849,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     fontSize: 16,
     fontFamily: CAIRO_FONT_FAMILY.regular,
-    color: '#000'
+    color: '#000',
+    textAlign: 'right'
+  },
+  addressTitle: {
+    fontSize: 16,
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+    color: '#36454F',
+    marginVertical: 12,
+    textAlign: 'center'
   }
 })

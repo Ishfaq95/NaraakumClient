@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Modal } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Modal, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -13,16 +13,27 @@ import LocationMarkerIcon from '../../assets/icons/LocationMarkerIcon';
 import { globalTextStyles } from '../../styles/globalStyles';
 import { VisitLocationComponent } from '../../components/emailUpdateComponent';
 import { bookingService } from '../../services/api/BookingService';
+import CustomBottomSheet from '../../components/common/CustomBottomSheet';
+import GoogleMapComponent from '../../components/GoogleMapComponent';
 
 const MyAddressesScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const user = useSelector((state: RootState) => state.root.user.user);
-  console.log('user--',user);
-  
+  console.log('user--', user);
+
   const [addresses, setAddresses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [openBottomSheet, setOpenBottomSheet] = useState(false)
+  const [bottomSheetHeight, setBottomSheetHeight] = useState("65%")
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [address, setAddress] = useState({
+    latitude: 0,
+    longitude: 0,
+    address: 'الموقع غير محدد',
+    city: '',
+  });
+  const [isGoogleMap, setIsGoogleMap] = useState(false)
   const [addressForm, setAddressForm] = useState({
     rigin: '',
     city: '',
@@ -33,6 +44,16 @@ const MyAddressesScreen = () => {
   useEffect(() => {
     getAddresses();
   }, []);
+
+  useEffect(() => {
+    if (openBottomSheet) {
+      if (focusedField === 'description') {
+        setBottomSheetHeight('87%');
+      } else {
+        setBottomSheetHeight('65%');
+      }
+    }
+  }, [openBottomSheet, focusedField]);
 
   const getAddresses = async () => {
     setIsLoading(true);
@@ -74,7 +95,7 @@ const MyAddressesScreen = () => {
           <LocationMarkerIcon size={22} />
           <View style={styles.textContainer}>
             <Text style={[styles.title]}>{item.TitleSlang}</Text>
-            <Text style={[styles.square]}>{item.SquareTitle}</Text>
+            <Text style={[styles.square]}>{item.Address}</Text>
             <Text style={[styles.description]}>{item.Description}</Text>
           </View>
         </View>
@@ -86,24 +107,71 @@ const MyAddressesScreen = () => {
     setAddressForm(prev => ({ ...prev, [field]: value }));
   }
 
-  const HandleSaveAddress = async() => {
+  const HandleSaveAddress = async () => {
+   try {
+    setIsLoading(true);
     const payload = {
       "Address": "",
       "CatCityId": addressForm.city,
       "CatAreaId": addressForm.rigin,
-      "CatSquareId":"",
+      "CatSquareId": addressForm.neighborhood,
       "Area": "",
       "Description": addressForm.description,
       "GoogleLocation": "",
-      "UserLogininfoId":user.Id
+      "UserLogininfoId": user.Id
     }
-    // const response = await bookingService.AddUserLocation(payload)
-    // console.log('response',response);
-    
+    const response = await bookingService.AddUserLocation(payload)
+    setOpenBottomSheet(false);
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
 
-  const HandleGoogleMap = () => { }
+  const HandleGoogleMap = () => {
+    setIsGoogleMap(true)
+  }
+
+  const AddManuallyButton = () => {
+    setIsGoogleMap(false)
+  }
+
+  const saveMapAddressButton = async() => {
+    try {
+      setIsLoading(true);
+      const payload = {
+        "Address": address.address || '',
+        "CatCityId": addressForm.city || '',
+        "CatAreaId": addressForm.rigin || '1',
+        "CatSquareId": addressForm.neighborhood || '1',
+        "Area": address.address || '',
+        "Description": addressForm.description || '',
+        "GoogleLocation": `${address.latitude},${address.longitude}` || '',
+        "UserLogininfoId": user.Id
+      }
+      const response = await bookingService.AddUserLocation(payload)
+      setOpenBottomSheet(false);
+      getAddresses();
+      setAddressForm({
+        rigin: '',
+        city: '',
+        neighborhood: '',
+        description: '',
+      })
+      setAddress({
+        latitude: 0,
+        longitude: 0,
+        address: '',
+        city: '',
+      })
+      } catch (error) {
+        console.log('error', error);
+      } finally {
+        setIsLoading(false);
+      }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -129,34 +197,53 @@ const MyAddressesScreen = () => {
       </TouchableOpacity>
       <FullScreenLoader visible={isLoading} />
 
-      <Modal
+      <CustomBottomSheet
         visible={openBottomSheet}
-        transparent={true}
-        animationType="slide"
-        statusBarTranslucent={true}
-        onRequestClose={() => setOpenBottomSheet(false)}
+        onClose={() => setOpenBottomSheet(false)}
+        height={bottomSheetHeight}
       >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <VisitLocationComponent
-              onClosePress={() => setOpenBottomSheet(false)}
-              setRiginValue={(text) => updateBeneficiaryField('rigin', text)}
-              riginValue={addressForm.rigin}
-              setCityValue={(text) => updateBeneficiaryField('city', text)}
-              cityValue={addressForm.city}
-              setDescriptionValue={(text) => updateBeneficiaryField('description', text)}
-              descriptionValue={addressForm.description}
-              setNeighbearhoodValue={(text) => updateBeneficiaryField('neighborhood', text)}
-              neighbearhoodValue={addressForm.neighborhood}
-              saveAddressButton={HandleSaveAddress}
-              GoogleMapButton={HandleGoogleMap}
-            />
-
-
-
-          </View>
-        </View>
-      </Modal>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "padding"}
+          style={{ flex: 1 }}
+        >
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <View style={styles.modalBackground}>
+              <View style={[styles.modalContainer,{paddingBottom:isGoogleMap ? 50 : 20}]}>
+                {
+                  isGoogleMap ? (
+                    <GoogleMapComponent
+                      onClosePress={() => setOpenBottomSheet(false)}
+                      setDescriptionValue={(text) => updateBeneficiaryField('description', text)}
+                      descriptionValue={addressForm.description}
+                      saveMapAddressButton={saveMapAddressButton}
+                      AddManuallyButton={AddManuallyButton}
+                      selectedAddress={address}
+                      setSelectedAddress={setAddress}
+                      marker={{latitude: address.latitude, longitude: address.longitude}}
+                      setFocusedField={setFocusedField}
+                      />
+                  ) : (
+         
+                <VisitLocationComponent
+                  onClosePress={() => setOpenBottomSheet(false)}
+                  setRiginValue={(text) => updateBeneficiaryField('rigin', text)}
+                  riginValue={addressForm.rigin}
+                  setCityValue={(text) => updateBeneficiaryField('city', text)}
+                  cityValue={addressForm.city}
+                  setDescriptionValue={(text) => updateBeneficiaryField('description', text)}
+                  descriptionValue={addressForm.description}
+                  setNeighbearhoodValue={(text) => updateBeneficiaryField('neighborhood', text)}
+                  neighbearhoodValue={addressForm.neighborhood}
+                  saveAddressButton={HandleSaveAddress}
+                  GoogleMapButton={HandleGoogleMap}
+                  setFocusedField={setFocusedField}
+                />
+                  )}
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </CustomBottomSheet>
     </SafeAreaView>
   )
 }
@@ -239,7 +326,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    paddingBottom: 20,
   },
 })
 

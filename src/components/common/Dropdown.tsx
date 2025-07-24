@@ -28,6 +28,7 @@ interface DropdownProps {
   itemTextStyle?: any;
   selectedItemStyle?: any;
   selectedItemTextStyle?: any;
+  disabled?: boolean;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -42,6 +43,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   itemTextStyle,
   selectedItemStyle,
   selectedItemTextStyle,
+  disabled,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value);
@@ -77,6 +79,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         onPress={() => {
           setIsOpen(!isOpen);
         }}
+        disabled={disabled}
       >
         <Text style={[styles.dropdownButtonText, labelStyle]}>
           {selectedItem ? selectedItem.label : placeholder}
@@ -181,6 +184,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+    alignItems:'flex-start'
   },
   selectedItem: {
     backgroundColor: '#f8f8f8',
