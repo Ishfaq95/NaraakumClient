@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, SafeAreaView } from "react-native";
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { CAIRO_FONT_FAMILY } from "../styles/globalStyles";
 import PhoneNumberInput from "./PhoneNumberInput";
@@ -15,9 +15,10 @@ interface EmailUpdateProps {
 }
 
 const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, onChangeText, value, onClosePress, inputError = false }) => {
+  const inputRef = React.useRef<TextInput>(null);
   return (
     <View style={styles.mainContainer}>
-      <View style={styles.sheetHeaderContainer}>
+      <View style={[styles.sheetHeaderContainer,{backgroundColor:'#fff'}]}>
         <TouchableOpacity onPress={onClosePress}>
           <AntDesign name="close" size={30} color="#979e9eff" />
         </TouchableOpacity>
@@ -25,9 +26,19 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
       </View>
       <View style={{ width: '100%', paddingHorizontal: 16 }}>
         <Text style={styles.emailTitle}>أدخل بريدك الإلكتروني الجديد</Text>
-        <View style={[styles.inputView, inputError && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }]}>
-          <TextInput value={value} onChangeText={onChangeText} placeholder="abcd@xyz.com" style={styles.inputText} />
-        </View>
+        <TouchableOpacity
+          style={[styles.inputView, inputError && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }].filter(Boolean)}
+          activeOpacity={1}
+          onPress={() => inputRef.current && inputRef.current.focus()}
+        >
+          <TextInput
+            ref={inputRef}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder="البريد الالكترونى"
+            style={styles.inputText}
+          />
+        </TouchableOpacity>
         <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
           <Text style={styles.saveBtnText}>حفظ</Text>
         </TouchableOpacity>
@@ -57,7 +68,7 @@ interface PhoneUpdateProps {
 export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUpdate, handlePhoneNumberChange, mobileNumber, onClosePress, inputError = false }) => {
   return (
     <View style={styles.mainContainer}>
-      <View style={styles.sheetHeaderContainer}>
+      <View style={[styles.sheetHeaderContainer,{backgroundColor:'#fff'}]}>
         <TouchableOpacity onPress={onClosePress}>
           <AntDesign name="close" size={30} color="#979e9eff" />
         </TouchableOpacity>
@@ -92,29 +103,29 @@ interface smsProps {
 
 export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, otpNumEmail, userName, onChangeText, value, OtpSubmitButton, HandleResendPress }) => {
   return (
-    <View style={styles.mainContainer}>
-      <TouchableOpacity onPress={onClosePress}>
-        <AntDesign name="close" size={30} color="#979e9eff" />
-      </TouchableOpacity>
+        <View style={[styles.mainContainer,{padding:20}]}>
+          <TouchableOpacity onPress={onClosePress}>
+            <AntDesign name="close" size={30} color="#979e9eff" />
+          </TouchableOpacity>
 
-      <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
-      <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
-      <Text style={styles.optHeaderText}>{otpNumEmail}</Text>
-      <Text style={styles.optHeaderText}>{userName}</Text>
-      <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
-      <View style={styles.otpView}>
-        <TextInput value={value} onChangeText={onChangeText} placeholder="0000" style={styles.inputText} />
-      </View>
-      <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton}>
-        <Text style={styles.saveBtnText}>حفظ</Text>
-      </TouchableOpacity>
-      <View style={styles.resendOptTextContainer}>
-        <Text style={styles.optNotGet}>لم يصلني الكود</Text>
-        <TouchableOpacity onPress={HandleResendPress}>
-          <Text style={styles.resendPress}>إعادة الارسال</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
+          <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
+          <Text style={styles.optHeaderText}>{otpNumEmail}</Text>
+          <Text style={styles.optHeaderText}>{userName}</Text>
+          <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
+          <View style={styles.otpView}>
+            <TextInput value={value} onChangeText={onChangeText} placeholder="0000" style={styles.inputText} />
+          </View>
+          <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton}>
+            <Text style={styles.saveBtnText}>حفظ</Text>
+          </TouchableOpacity>
+          <View style={styles.resendOptTextContainer}>
+            <Text style={styles.optNotGet}>لم يصلني الكود</Text>
+            <TouchableOpacity onPress={HandleResendPress}>
+              <Text style={styles.resendPress}>إعادة الارسال</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
   )
 }
 
@@ -687,6 +698,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   inputText: {
+    textAlign: 'right',
     marginLeft: 10,
     fontFamily: CAIRO_FONT_FAMILY.regular,
     fontSize: 16,

@@ -56,6 +56,7 @@ const UpdateProfileScreen = () => {
   const [isValidNumber, setIsValidNumber] = useState(false);
   const [fullNumber, setFullNumber] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+  const [confirmPasswordError, setConfirmPasswordError] = useState(false);
   const [selectedUserImage, setSelectedUserImage] = useState('')
   const [defaultUserImage, setDefaultUserImage] = useState('')
   const [isUploading, setIsUploading] = useState(false);
@@ -79,6 +80,15 @@ const UpdateProfileScreen = () => {
   const isRTL = I18nManager.isRTL;
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch()
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [passwordModalMessage, setPasswordModalMessage] = useState('');
+
+  // Password validation function
+  const validatePassword = (pwd: string) => {
+    // At least 8 characters, at least one uppercase, one lowercase, one number, one special character
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    return regex.test(pwd);
+  };
 
   const handleKeyboardOpen = () => {
     if (openEmailBottomSheet) {
@@ -96,7 +106,7 @@ const UpdateProfileScreen = () => {
     if (openPhoneBottomSheet) {
       setPhoneBottomSheetHeight("35%");
     }
-  } 
+  }
 
   // Keyboard listeners for bottom sheet height adjustment
   useEffect(() => {
@@ -120,7 +130,7 @@ const UpdateProfileScreen = () => {
     };
   }, [openEmailBottomSheet, openPhoneBottomSheet]);
 
-  
+
 
   // Function to extract country code and phone number from full number
   const extractPhoneInfo = (fullNumber: string) => {
@@ -169,15 +179,15 @@ const UpdateProfileScreen = () => {
   const defaultPhoneNumber = phoneInfo.phoneNumber;
 
   useEffect(() => {
-    console.log("user",user)
+    console.log("user", user)
     setName(user?.FullnameSlang);
     setEmail(user?.Email);
     setAge(user?.Age);
     setGender(user?.Gender);
     setPhoneNumber(defaultPhoneNumber)
-    if(user?.ImagePath){
+    if (user?.ImagePath) {
       setDefaultUserImage(user?.ImagePath)
-    }else{
+    } else {
       setDefaultUserImage('')
     }
     if (user?.Gender == 1) {
@@ -190,7 +200,7 @@ const UpdateProfileScreen = () => {
     } else {
       setNationality('resident');
     }
-    setIdNumber(user?.IDNumber);
+    setIdNumber(user?.CatNationalityId == 213 && user?.IDNumber ? user?.IDNumber : '');
   }, [user]);
 
   const handleBack = () => {
@@ -218,16 +228,28 @@ const UpdateProfileScreen = () => {
   );
 
   const updateUserProfileHandler = async () => {
-    console.log(
-      'check before call API',
-      name,
-      phoneNumber,
-      age,
-      gender,
-      user?.Id,
-      selectedUserImage,
-      email
-    )
+    if (password) {
+      if (!validatePassword(password)) {
+        setPasswordModalMessage('يجب أن تتكون كلمة المرور من 8 أحرف على الأقل، وتتضمن حروفًا أبجدية وأرقامًا ورموزًا خاصة وحرفًا كبيرًا وصغيرًا');
+        setPasswordModalVisible(true);
+        setPasswordError(true); // always red for password field
+        if (confirmPassword) {
+          setConfirmPasswordError(true);
+        } else {
+          setConfirmPasswordError(false);
+        }
+        return;
+      }
+      if (password !== confirmPassword) {
+        setPasswordModalMessage('تأكيد كلمة المرور وكلمة المرور غير متطابقة');
+        setPasswordModalVisible(true);
+        setPasswordError(true); // highlight both fields
+        setConfirmPasswordError(true);
+        return;
+      }
+    }
+    setPasswordError(false); // reset on valid
+    setConfirmPasswordError(false);
     try {
       setIsUploading(true);
       const payload = {
@@ -235,26 +257,26 @@ const UpdateProfileScreen = () => {
         "FullNameSlang": name,
         "CellNumber": user?.CellNumber,
         "Email": email,
-        "CatNationalityId": user?.CatNationalityId,
-        "IDNumber": idNumber,
-        "Gender": gender === 'male' ? "1" : "2",
+        "CatNationalityId": nationality == 'citizen' ? 213 : 187,
+        "IDNumber": nationality == 'citizen' ? idNumber : '',
+        "Gender": gender === 'male' ? "1" : "0",
         "Age": age,
         "ImagePath": defaultUserImage || '',
-        "Password": "",
+        "Password": password,
         "UserLoginInfoId": user?.Id,
       }
 
-      console.log("payload",payload)
+      console.log("payload", payload)
       const response = await profileService.updateUserProfile(payload)
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
-       
+
         const payloadSuccessUpdateProfile = {
           "UserlogiInfoId": user?.Id
         }
         const responseUpdateprofile = await profileService.getUserUpdatedData(payloadSuccessUpdateProfile)
         dispatch(setUser(responseUpdateprofile.UserDetail[0]));
-     
+
       }
     } catch (error: any) {
       console.log('error', error);
@@ -267,7 +289,12 @@ const UpdateProfileScreen = () => {
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
-    if (passwordError) setPasswordError(false);
+    if (passwordError) setPasswordError(false); // remove red border on edit
+  };
+
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    if (confirmPasswordError) setConfirmPasswordError(false); // remove red border on edit
   };
 
   const handleFileSelection = () => {
@@ -278,7 +305,6 @@ const UpdateProfileScreen = () => {
       },
       async (response) => {
         if (response.didCancel) {
-          console.log('User cancelled image picker');
           return;
         }
 
@@ -349,8 +375,6 @@ const UpdateProfileScreen = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Upload failed with status:', response.status);
-        console.error('Error response:', errorText);
 
         if (response.status === 504) {
           throw new Error('Server took too long to respond. Please try again.');
@@ -373,7 +397,6 @@ const UpdateProfileScreen = () => {
         );
       }
     } catch (error) {
-      console.error('Upload error:', error);
       Alert.alert(
         'Upload Failed',
         error instanceof Error
@@ -391,17 +414,19 @@ const UpdateProfileScreen = () => {
 
   const HandleOpenEmailBottomSheet = () => {
     setOpenEmailBottomSheet(true)
+    setUpdatedEmail('')
   }
 
   const HandleOpenPhoneBottomSheet = () => {
     setOpenPhoneBottomSheet(true)
+    setUpdatedPhoneNumber('')
   }
 
   const HandleEmailUpdate = async () => {
     if (!updatedEmail) {
-    setEmailInputError(true)
-    return; 
-  }
+      setEmailInputError(true)
+      return;
+    }
     try {
       setIsUploading(true)
       const payload = {
@@ -410,7 +435,6 @@ const UpdateProfileScreen = () => {
       }
 
       const response = await profileService.userUpdatedEmail(payload)
-
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setOpenEmailBottomSheet(false)
         setTimeout(() => {
@@ -419,7 +443,7 @@ const UpdateProfileScreen = () => {
       }
 
     } catch (error) {
-      console.log("error", error);
+      console.log("error in user updated email", error);
     } finally {
       setIsUploading(false);
     }
@@ -427,9 +451,9 @@ const UpdateProfileScreen = () => {
 
   const HandlePhoneUpdate = async () => {
     if (!updatedFullPhoneNumber || updatedFullPhoneNumber.trim() === '') {
-    setPhoneInputError(true)
-    return;
-  }
+      setPhoneInputError(true)
+      return;
+    }
     try {
       setIsUploading(true)
       const payload = {
@@ -438,7 +462,7 @@ const UpdateProfileScreen = () => {
       }
 
       const response = await profileService.userUpdatedPhone(payload)
-
+      setUpdatedPhoneNumber('')
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setOpenPhoneBottomSheet(false)
         setTimeout(() => {
@@ -447,7 +471,7 @@ const UpdateProfileScreen = () => {
       }
 
     } catch (error) {
-      console.log("error", error);
+      console.log("error in user updated phone", error);
     } finally {
       setIsUploading(false)
     }
@@ -461,10 +485,10 @@ const UpdateProfileScreen = () => {
       }
 
       const response = await profileService.resendOtp(payload)
-      console.log("response", response);
+      console.log("response resend otp", response);
 
     } catch (error) {
-      console.log("error", error);
+      console.log("error in resend otp", error);
     } finally {
       setIsUploading(false)
     }
@@ -520,181 +544,191 @@ const UpdateProfileScreen = () => {
     return fileName;
   }
 
-  console.log("defaultUserImage",defaultUserImage)
-
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <ScrollView style={styles.scrollContent}>
-        <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
-          {/* Avatar */}
-          <View style={styles.avatarContainer}>
-            {
-              loadingImage && <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#23a2a4" />
-              </View>
-            }
-            {defaultUserImage ? <Image 
-              key={defaultUserImage}
-              onLoadStart={() => setLoadingImage(true)}
-              onLoadEnd={() => setLoadingImage(false)}
-              source={{ uri: `${MediaBaseURL}${defaultUserImage}` }} 
-              style={{ height: '100%', width: '100%', borderRadius: 45, resizeMode: 'cover' }} 
-            /> :
-              <View style={styles.avatarCircle}>
-                <AntDesign name="user" size={64} color="#23a2a4" />
-              </View>}
-            {defaultUserImage ?
-              <TouchableOpacity onPress={HandleDeleteImage} style={styles.dleteIconContainer}>
-                <MaterialDesignIcons name="delete" size={22} color="#d84d48ff" />
-              </TouchableOpacity>
-              : null}
-          </View>
-          {/* Name */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>الاسم</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="الاسم" />
-          </View>
-          {/* Mobile */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>رقم الجوال</Text>
-            <View style={styles.row}>
-              <PhoneNumberInput
-                value={phoneNumber}
-                onChangePhoneNumber={handlePhoneNumberChange}
-                placeholder={t('mobile_number')}
-                errorText={t('mobile_number_not_valid')}
-                defaultCountry={defaultCountryCode}
-                editable={false}
-              />
-              <TouchableOpacity onPress={HandleOpenPhoneBottomSheet} style={styles.updateBtn}>
-                <Text style={styles.updateBtnText}>تحديث</Text>
-                <Icon name="edit" size={18} color="#fff" style={{ marginLeft: 4 }} />
-              </TouchableOpacity>
-            </View>
-          </View>
-          {/* Email */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>البريد الإلكتروني</Text>
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, { flex: 1, textAlign: 'left' }]}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="abcd@xyz.com"
-                keyboardType="email-address"
-                editable={false}
-              />
-              <TouchableOpacity onPress={HandleOpenEmailBottomSheet} style={styles.updateBtn}>
-                <Text style={styles.updateBtnText}>تحديث</Text>
-                <Icon name="edit" size={18} color="#fff" style={{ marginLeft: 4 }} />
-              </TouchableOpacity>
-            </View>
-          </View>
-          {/* Nationality */}
-          <View style={styles.fieldGroup}>
-            <View style={[styles.row, { justifyContent: 'flex-start' }]}>
-              {nationalities.map((item) => (
-                <TouchableOpacity
-                  key={item.value}
-                  style={styles.radioContainer}
-                  onPress={() => setNationality(item.value)}
-                >
-                  <View style={[styles.radioOuter, nationality === item.value && styles.radioOuterSelected]}>
-                    {nationality === item.value && <View style={styles.radioInner} />}
-                  </View>
-                  <Text style={styles.radioLabel}>{item.label}</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <ScrollView style={styles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled">
+          <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
+            {/* Avatar */}
+            <View style={styles.avatarContainer}>
+              {
+                loadingImage && <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#23a2a4" />
+                </View>
+              }
+              {defaultUserImage ? <Image
+                key={defaultUserImage}
+                onLoadStart={() => setLoadingImage(true)}
+                onLoadEnd={() => setLoadingImage(false)}
+                source={{ uri: `${MediaBaseURL}${defaultUserImage}` }}
+                style={{ height: '100%', width: '100%', borderRadius: 45, resizeMode: 'cover' }}
+              /> :
+                <View style={styles.avatarCircle}>
+                  <AntDesign name="user" size={64} color="#23a2a4" />
+                </View>}
+              {defaultUserImage ?
+                <TouchableOpacity onPress={HandleDeleteImage} style={styles.dleteIconContainer}>
+                  <MaterialDesignIcons name="delete" size={22} color="#d84d48ff" />
                 </TouchableOpacity>
-              ))}
+                : null}
             </View>
-          </View>
-          {/* ID Number */}
-          {nationality === 'citizen' && <View style={styles.fieldGroup}>
-            <Text style={styles.label}>رقم الهوية</Text>
-            <TextInput style={styles.input} value={idNumber} onChangeText={setIdNumber} placeholder="رقم الهوية" keyboardType="numeric" />
-          </View>}
-          {/* Gender & Age */}
-          <View style={[styles.fieldGroup, styles.row]}>
-            <View style={{ width: '48%', }}>
-              <Text style={styles.label}>الجنس</Text>
-              <Dropdown data={genders} containerStyle={{ height: 50 }} dropdownStyle={{ height: 50 }} value={gender} onChange={(value: string | number) => setGender(value.toString())} placeholder="الجنس" />
+            {/* Name */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>الاسم</Text>
+              <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="الاسم" />
             </View>
-            <View style={{ width: '48%', }}>
-              <Text style={styles.label}>العمر</Text>
-              <TextInput style={styles.input} value={age} onChangeText={setAge} placeholder="العمر" keyboardType="numeric" />
+            {/* Mobile */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>رقم الجوال</Text>
+              <View style={styles.row}>
+                <PhoneNumberInput
+                  value={phoneNumber}
+                  onChangePhoneNumber={handlePhoneNumberChange}
+                  placeholder={t('mobile_number')}
+                  errorText={t('mobile_number_not_valid')}
+                  defaultCountry={defaultCountryCode}
+                  editable={false}
+                />
+                <TouchableOpacity onPress={HandleOpenPhoneBottomSheet} style={styles.updateBtn}>
+                  <Text style={styles.updateBtnText}>تحديث</Text>
+                  <Icon name="edit" size={18} color="#fff" style={{ marginLeft: 4 }} />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-          {/* Password Input */}
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={[
-                styles.passwordInput,
-                isRTL && styles.rtlInput,
-                passwordError && styles.inputError
-              ]}
-              placeholder={t('password')}
-              value={password}
-              onChangeText={handlePasswordChange}
-              secureTextEntry={!showPassword}
-              placeholderTextColor="#999"
-              textAlign={isRTL ? 'right' : 'left'}
-            />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              {showPassword ? (
-                <EyeIcon width={22} height={22} color="#666666" />
-              ) : (
-                <EyeOffIcon width={22} height={22} color="#666666" />
-              )}
-            </TouchableOpacity>
-          </View>
-          {/* Confirm Password */}
-          {/* Password Input */}
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={[
-                styles.passwordInput,
-                isRTL && styles.rtlInput,
-                passwordError && styles.inputError
-              ]}
-              placeholder={t('password')}
-              value={password}
-              onChangeText={handlePasswordChange}
-              secureTextEntry={!showPassword}
-              placeholderTextColor="#999"
-              textAlign={isRTL ? 'right' : 'left'}
-            />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              {showPassword ? (
-                <EyeIcon width={22} height={22} color="#666666" />
-              ) : (
-                <EyeOffIcon width={22} height={22} color="#666666" />
-              )}
-            </TouchableOpacity>
-          </View>
-          {/* Profile Image Upload */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>اضافة صورة شخصية (اختياري)</Text>
-            <View style={styles.fileInputRow}>
-              <TouchableOpacity style={styles.chooseFileBtn} onPress={handleFileSelection}>
-                <Text style={styles.chooseFileText}>Choose file</Text>
+            {/* Email */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>البريد الإلكتروني</Text>
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, { flex: 1, textAlign: 'left' }]}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="abcd@xyz.com"
+                  keyboardType="email-address"
+                  editable={false}
+                />
+                <TouchableOpacity onPress={HandleOpenEmailBottomSheet} style={styles.updateBtn}>
+                  <Text style={styles.updateBtnText}>تحديث</Text>
+                  <Icon name="edit" size={18} color="#fff" style={{ marginLeft: 4 }} />
+                </TouchableOpacity>
+              </View>
+            </View>
+            {/* Nationality */}
+            <View style={styles.fieldGroup}>
+              <View style={[styles.row, { justifyContent: 'flex-start' }]}>
+                {nationalities.map((item) => (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={styles.radioContainer}
+                    onPress={() => setNationality(item.value)}
+                  >
+                    <View style={[styles.radioOuter, nationality === item.value && styles.radioOuterSelected]}>
+                      {nationality === item.value && <View style={styles.radioInner} />}
+                    </View>
+                    <Text style={styles.radioLabel}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            {/* ID Number */}
+            {nationality === 'citizen' && <View style={styles.fieldGroup}>
+              <Text style={styles.label}>رقم الهوية</Text>
+              <TextInput style={styles.input} value={idNumber} onChangeText={setIdNumber} placeholder="رقم الهوية" keyboardType="numeric" />
+            </View>}
+            {/* Gender & Age */}
+            <View style={[styles.fieldGroup, styles.row]}>
+              <View style={{ width: '48%', }}>
+                <Text style={styles.label}>الجنس</Text>
+                <Dropdown data={genders} containerStyle={{ height: 50 }} dropdownStyle={{ height: 50 }} value={gender} onChange={(value: string | number) => setGender(value.toString())} placeholder="الجنس" />
+              </View>
+              <View style={{ width: '48%', }}>
+                <Text style={styles.label}>العمر</Text>
+                <TextInput style={styles.input} value={age} onChangeText={setAge} placeholder="العمر" keyboardType="numeric" />
+              </View>
+            </View>
+            {/* Password Input */}
+            <Text style={styles.label}>كلمة المرور</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[
+                  styles.passwordInput,
+                  isRTL && styles.rtlInput,
+                  passwordError && styles.inputError
+                ]}
+                placeholder={t('password')}
+                value={password}
+                onChangeText={handlePasswordChange}
+                secureTextEntry={!showPassword}
+                textContentType='oneTimeCode'
+                placeholderTextColor="#999"
+                textAlign={isRTL ? 'right' : 'left'}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                {showPassword ? (
+                  <EyeIcon width={22} height={22} color="#666666" />
+                ) : (
+                  <EyeOffIcon width={22} height={22} color="#666666" />
+                )}
               </TouchableOpacity>
-              {selectedUserImage ? <Text style={styles.noFileText}>{getFileName(selectedUserImage)}</Text> :<Text style={styles.noFileText}>No file chosen</Text> }
             </View>
+            {/* Confirm Password */}
+            {/* Password Input */}
+            <Text style={styles.label}>تأكيد كلمة المرور</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[
+                  styles.passwordInput,
+                  isRTL && styles.rtlInput,
+                  confirmPasswordError && styles.inputError
+                ]}
+                placeholder={t('password')}
+                value={confirmPassword}
+                textContentType='oneTimeCode'
+                onChangeText={handleConfirmPasswordChange}
+                secureTextEntry={!showConfirmPassword}
+                placeholderTextColor="#999"
+                textAlign={isRTL ? 'right' : 'left'}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                {showConfirmPassword ? (
+                  <EyeIcon width={22} height={22} color="#666666" />
+                ) : (
+                  <EyeOffIcon width={22} height={22} color="#666666" />
+                )}
+              </TouchableOpacity>
+            </View>
+            {/* Profile Image Upload */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>اضافة صورة شخصية (اختياري)</Text>
+              <View style={styles.fileInputRow}>
+                <TouchableOpacity style={styles.chooseFileBtn} onPress={handleFileSelection}>
+                  <Text style={styles.chooseFileText}>Choose file</Text>
+                </TouchableOpacity>
+                {selectedUserImage ? <Text style={styles.noFileText}>{getFileName(selectedUserImage)}</Text> : <Text style={styles.noFileText}>No file chosen</Text>}
+              </View>
+            </View>
+            {/* Save Button */}
+            <TouchableOpacity onPress={updateUserProfileHandler} style={styles.saveBtn}>
+              <Text style={styles.saveBtnText}>حفظ</Text>
+            </TouchableOpacity>
           </View>
-          {/* Save Button */}
-          <TouchableOpacity onPress={updateUserProfileHandler} style={styles.saveBtn}>
-            <Text style={styles.saveBtnText}>حفظ</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <CustomBottomSheet
         visible={openPhoneBottomSheet}
@@ -702,33 +736,27 @@ const UpdateProfileScreen = () => {
         showHandle={false}
         height={phoneBottomSheetHeight}
       >
-         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <View style={styles.modalContainer}>
-          <PhoneUpdateComponent
-            HandleEmailUpdate={HandlePhoneUpdate}
-            handlePhoneNumberChange={HandleChangePhoneNumber}
-            mobileNumber={updatedPhoneNumber}
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View style={[styles.modalContainer, { marginTop: 20 }]}>
+            <PhoneUpdateComponent
+              HandleEmailUpdate={HandlePhoneUpdate}
+              handlePhoneNumberChange={HandleChangePhoneNumber}
+              mobileNumber={updatedPhoneNumber}
               onClosePress={HandleClosePhoneModal}
-            inputError={phoneInputError}
-          />
-        </View>
+              inputError={phoneInputError}
+            />
+          </View>
         </TouchableWithoutFeedback>
       </CustomBottomSheet>
 
-      {/* <Modal
-        visible={openEmailBottomSheet}
-        transparent={true}
-         statusBarTranslucent={true}
-        animationType="slide"
-        onRequestClose={() => setOpenEmailBottomSheet(false)}
-      > */}
       <CustomBottomSheet
         visible={openEmailBottomSheet}
         onClose={() => setOpenEmailBottomSheet(false)}
+        showHandle={false}
         height={emailBottomSheetHeight}
       >
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-          <View style={styles.modalContainer}>
+          <View style={[styles.modalContainer, { marginTop: 20 }]}>
             <EmailUpdateComponent
               HandleEmailUpdate={HandleEmailUpdate}
               onChangeText={(text) => {
@@ -743,26 +771,60 @@ const UpdateProfileScreen = () => {
           </View>
         </TouchableWithoutFeedback>
       </CustomBottomSheet>
-      {/* </Modal> */}
 
       <Modal
         visible={openVerifyBottomSheet}
         transparent={true}
         animationType="slide"
-         statusBarTranslucent={true}
+        statusBarTranslucent={true}
         onRequestClose={() => setOpenVerifyBottomSheet(false)}
       >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <VerificationCodeCompoent
-              onClosePress={HandleCloseVerifyModal}
-              otpNumEmail={updatedEmail ? updatedEmail : updatedFullPhoneNumber}
-              userName={name || ''}
-              onChangeText={(text) => setOtpValue(text)}
-              value={otpValue}
-              OtpSubmitButton={HandleOtpSubmit}
-              HandleResendPress={HandleOtpResendButton} />
 
+        <SafeAreaView style={{ flex: 1, paddingBottom: 20 }}>
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+
+            <KeyboardAvoidingView
+              style={{ flex: 1 }}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
+              <View style={styles.modalBackground}>
+                <View style={styles.modalContainer}>
+                  <VerificationCodeCompoent
+                    onClosePress={HandleCloseVerifyModal}
+                    otpNumEmail={updatedEmail ? updatedEmail : updatedFullPhoneNumber}
+                    userName={name || ''}
+                    onChangeText={(text) => setOtpValue(text)}
+                    value={otpValue}
+                    OtpSubmitButton={HandleOtpSubmit}
+                    HandleResendPress={HandleOtpResendButton} />
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </SafeAreaView>
+
+      </Modal>
+      <Modal
+        visible={passwordModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => { setPasswordModalVisible(false); }}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+            <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableOpacity
+                onPress={() => { setPasswordModalVisible(false); }}
+              >
+                <AntDesign name="close" size={28} color="#888" />
+              </TouchableOpacity>
+              <Text style={{ color: '#3a434a', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>خطأ</Text>
+            </View>
+            <AntDesign name="exclamationcircle" size={64} color="#d84d48" style={{ marginVertical: 18 }} />
+            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontWeight: 'bold', lineHeight: 28 }}>
+              {passwordModalMessage}
+            </Text>
           </View>
         </View>
       </Modal>
@@ -918,7 +980,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'lightgray',
     paddingHorizontal: 12,
-    padding:6
+    padding: 6
   },
   chooseFileText: {
     color: '#000',
@@ -964,7 +1026,6 @@ const styles = StyleSheet.create({
   passwordContainer: {
     position: 'relative',
     marginBottom: 12,
-    marginTop: 10,
     height: 50,
   },
   passwordInput: {
@@ -991,6 +1052,7 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#FF3B30',
+    borderWidth: 1,
   },
   dleteIconContainer: {
     position: 'absolute',
@@ -1009,7 +1071,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingBottom:0
+    paddingBottom: 0
   },
   modalContainer: {
     width: '100%',
