@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +17,9 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import CustomBottomSheet from '../../components/common/CustomBottomSheet';
 import RNFetchBlob from 'rn-fetch-blob';
 import { MediaBaseURL } from '../../shared/utils/constants';
+// @ts-ignore
+import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import RNFS from 'react-native-fs';
 
 const BeneficiariesScreen = () => {
   const { t } = useTranslation();
@@ -97,6 +100,7 @@ const BeneficiariesScreen = () => {
     }
     setIsLoading(false);
   }
+  
   const handleBack = () => {
     navigation.goBack();
   };
@@ -156,7 +160,8 @@ const BeneficiariesScreen = () => {
     if (reportType == 'report') {
       downloadFileFromReport(item.FilePath)
     } else {
-      console.log('item ', item)
+      // Generate medical history PDF
+      generateMedicalHistoryPDF(item)
     }
   }
 
@@ -295,6 +300,268 @@ const BeneficiariesScreen = () => {
       });
   };
 
+  const generateMedicalHistoryPDF = async (medicalData: any) => {
+    try {
+      setIsDownloading(true);
+      
+      console.log('Generating PDF for medical data:', medicalData);
+
+      // Create HTML content for the medical history PDF using the provided data
+      const htmlContent = createMedicalHistoryHTML(medicalData);
+      
+      // Generate PDF
+      const fileName = `MedicalHistory_${medicalData.OrderId || 'Patient'}_${moment().format('YYYYMMDD_HHmmss')}.pdf`;
+      
+      const options = {
+        html: htmlContent,
+        fileName: fileName,
+        directory: 'Documents',
+      };
+
+      console.log('PDF options:', options);
+
+      const file = await RNHTMLtoPDF.convert(options);
+      
+      console.log('PDF generated:', file);
+      
+      if (file.filePath) {
+        
+          const filePath = file.filePath
+          const fileName = `MedicalHistory_${medicalData.OrderId}_${moment().format('YYYYMMDD_HHmmss')}`;
+  
+          const downloadPath = await downloadFileForHistory(filePath, fileName);
+        
+      } else {
+        Alert.alert('Error', 'Failed to generate PDF');
+      }
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      Alert.alert('Error', 'Failed to generate medical history PDF');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const requestStoragePermission = async (): Promise<boolean> => {
+    if (Platform.OS !== 'android') return true;
+  
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: 'Storage Permission',
+          message: 'App needs access to storage to save PDF files.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  };
+
+  // Download file for Android
+const downloadFileForHistory = async (filePath: string, fileName: string): Promise<string> => {
+  const { fs } = RNFetchBlob;
+
+  try {
+    let destinationPath = '';
+
+    if (Platform.OS === 'android') {
+      // Request permission first
+      const hasPermission = await requestStoragePermission();
+
+      if (hasPermission) {
+        // Try to save to external Downloads folder
+        try {
+          destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
+          await RNFS.copyFile(filePath, destinationPath);
+        } catch (externalError) {
+          // Fallback to internal Downloads
+          destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
+          await RNFS.copyFile(filePath, destinationPath);
+        }
+        Alert.alert(
+          'File downloaded successfully',
+          `Saved to: ${Platform.OS === 'android' ? 'Downloads folder' : 'Documents folder'}`
+        );
+      } else {
+        // Use internal storage if permission denied
+        destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
+        await RNFS.copyFile(filePath, destinationPath);
+      }
+    } else {
+      // iOS - use Documents directory
+      destinationPath = `${RNFS.DocumentDirectoryPath}/${fileName}.pdf`;
+      await RNFS.copyFile(filePath, destinationPath);
+      shareFile(filePath, destinationPath);
+    }
+
+    
+    return destinationPath;
+  } catch (error) {
+    console.error('Error copying file:', error);
+    Alert.alert('File downloading error.', error instanceof Error ? error.message : 'Unknown error');
+    throw error;
+  }
+};
+
+  const createMedicalHistoryHTML = (medicalData: any) => {
+    const orderId = medicalData.OrderId || '';
+    const orderDate = medicalData.OrderDate ? moment(medicalData.OrderDate).format('DD/MM/YYYY') : '';
+    
+    console.log('Creating HTML with medical data:', { orderId, orderDate, medicalData });
+    
+    return `
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>التاريخ المرضي</title>
+        <style>
+          @font-face {
+            font-family: 'Cairo';
+            src: url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+          }
+          body {
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 13px;
+            color: #1D1D1D;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 20px;
+          }
+          .logo {
+            text-align: left;
+          }
+          .contact-info {
+            text-align: center;
+          }
+          .title-section {
+            text-align: right;
+            width: 180px;
+          }
+          .title-section h2 {
+            font-size: 24px;
+            margin: 0 0 5px 0;
+          }
+          .divider {
+            background: #ccc;
+            height: 3px;
+            margin: 20px 0;
+          }
+          .patient-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          }
+          .patient-name {
+            font-size: 20px;
+            font-weight: bold;
+          }
+          .medical-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #ccc;
+          }
+          .medical-table th {
+            background: #32A3A4;
+            color: #FFF;
+            padding: 10px;
+            text-align: right;
+            border: 1px solid #FFF;
+          }
+          .medical-table td {
+            padding: 10px;
+            border: 1px solid #FFF;
+            text-align: right;
+          }
+          .medical-table tr:nth-child(even) td {
+            background: #F4FDFE;
+          }
+          .label {
+            font-weight: bold;
+            white-space: nowrap;
+          }
+          .value {
+            word-break: break-all;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" alt="Logo" style="width: 100px; height: 50px;" />
+          </div>
+          <div class="contact-info">
+            <p style="margin: 0; text-decoration: underline;">info@naraakum.com</p>
+          </div>
+          <div class="title-section">
+            <h2>التاريخ المرضي</h2>
+            <p style="margin: 0; text-decoration: underline;">www.naraakum.com</p>
+          </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="patient-info">
+          <div>
+            <span class="label">رقم الطلب :</span> <span>${orderId}</span>
+          </div>
+          <div class="patient-name">مريض</div>
+        </div>
+        
+        <div class="patient-info">
+          <div>
+            <span class="label">تاريخ الطلب :</span> <span>${orderDate}</span>
+          </div>
+        </div>
+        
+        <table class="medical-table">
+          <tr>
+            <th colspan="2">التاريخ المرضي</th>
+          </tr>
+          <tr>
+            <td class="value">${medicalData.MedicalComplaint || ''}</td>
+            <td class="label">ماهي شكواك الطبيه</td>
+          </tr>
+          <tr>
+            <td class="value">${medicalData.MedicalComplaintSufferingLast || ''}</td>
+            <td class="label">كم مدة المعاناه</td>
+          </tr>
+          <tr>
+            <td class="value">${medicalData.isRepetitive ? 'نعم' : 'لا'}</td>
+            <td class="label">هل هي متكرره</td>
+          </tr>
+          <tr>
+            <td class="value">${medicalData.Allergies || ''}</td>
+            <td class="label">هل لديك حساسيه ؟</td>
+          </tr>
+          <tr>
+            <td class="value">${medicalData.isSmoke == 1 ? 'نعم' : 'لا'}</td>
+            <td class="label">هل تدخن ؟</td>
+          </tr>
+          <tr>
+            <td class="value">${medicalData.FamilyMedicalHistory || ''}</td>
+            <td class="label">هل هناك مشاكل طبيه في الأسره ؟</td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+  };
+
   const renderMedicalItem = ({ item }: any) => {
     if (item.OrderId == null) {
       return null
@@ -361,7 +628,6 @@ const BeneficiariesScreen = () => {
     setBeneficiaryForm(prev => ({ ...prev, [field]: value }));
   }
 
-
   const HandleSubmitFormData = async () => {
     try {
       setIsLoading(true)
@@ -425,7 +691,6 @@ const BeneficiariesScreen = () => {
       setIsLoading(false)
     }
   }
-
 
   const HandleOpenDeleteModal = (item: any) => {
     setOpenBottomSheetMenu(false)
