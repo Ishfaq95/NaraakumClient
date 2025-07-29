@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +15,8 @@ import { AddBeneficiaryComponent } from '../../components/emailUpdateComponent';
 import { bookingService } from '../../services/api/BookingService';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import CustomBottomSheet from '../../components/common/CustomBottomSheet';
+import RNFetchBlob from 'rn-fetch-blob';
+import { MediaBaseURL } from '../../shared/utils/constants';
 
 const BeneficiariesScreen = () => {
   const { t } = useTranslation();
@@ -29,7 +31,11 @@ const BeneficiariesScreen = () => {
   const [selectedItemToDelete, setSelectedItemToDelete] = useState<any>(null);
   const [openBottomSheetHeight, setOpenBottomSheetHeight] = useState('65%')
   const [focusedField, setFocusedField] = useState('');
+  const [openBottomSheetReport, setOpenBottomSheetReport] = useState(false)
   const [editData, setEditData] = useState<any>({})
+  const [reportType, setReportType] = useState<any>('')
+  const [medicalData, setMedicalData] = useState<any>({})
+  const [isDownloading, setIsDownloading] = useState(false);
   const [beneficiaryForm, setBeneficiaryForm] = useState({
     name: '',
     relation: '',
@@ -114,6 +120,204 @@ const BeneficiariesScreen = () => {
     setTitleType(item)
   }
 
+  const HandleReportPress = (item: any, type: string) => {
+    setOpenBottomSheetReport(true)
+    setReportType(type)
+    if (type == 'report') {
+      getMedicalReport(item)
+    } else {
+      getMedicalHistory(item)
+    }
+  }
+
+  const getMedicalReport = async (item: any) => {
+    setMedicalData([])
+    const payload = {
+      "PatientId": item.UserProfileinfoId,
+    }
+    const response = await profileService.getMedicalReport(payload)
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
+      setMedicalData(response.PatientFiles)
+    }
+  }
+
+  const getMedicalHistory = async (item: any) => {
+    setMedicalData([])
+    const payload = {
+      "PatientId": item.UserProfileinfoId,
+    }
+    const response = await profileService.getMedicalHistory(payload)
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
+      setMedicalData(response.Patient)
+    }
+  }
+
+  const HandleDownloadPress = (item: any) => {
+    if (reportType == 'report') {
+      downloadFileFromReport(item.FilePath)
+    } else {
+      console.log('item ', item)
+    }
+  }
+
+  const downloadFileFromReport = (url: string) => {
+    if (isDownloading) return;
+
+    setIsDownloading(true);
+    
+    // Ensure URL doesn't start with a slash to avoid double slashes
+    const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    const fileURL = `${MediaBaseURL}/${cleanUrl}`;
+    let fileName:any = getFileNameFromUrl(fileURL);
+    
+    if (Platform.OS === 'ios') {
+      downloadFIleForIOS(fileURL, fileName);
+    } else {
+      downloadFile(fileURL, fileName);
+    }
+  };
+
+  const getFileNameFromUrl = (url: string) => {
+    // Split the URL by '/'
+    const parts = url.split('/');
+    // Get the last part, which is the filename
+    let fileName = parts.pop();
+    
+    // If no filename found, generate a default one
+    if (!fileName || fileName === '') {
+      fileName = `document_${Date.now()}.pdf`;
+    }
+    
+    // Remove any query parameters
+    fileName = fileName.split('?')[0];
+    
+    return fileName;
+  };
+
+  const downloadFIleForIOS = (url: string, fileName: string) => {
+    const {config, fs} = RNFetchBlob;
+    
+    // For iOS, we'll use the Documents directory and then share the file
+    const DocumentDir = fs.dirs.DocumentDir;
+    const filePath = `${DocumentDir}/${fileName}`;
+
+    config({
+      fileCache: true,
+      path: filePath,
+    })
+      .fetch('GET', url)
+      .then(res => {
+        shareFile(res.path(), fileName);
+      })
+      .catch(error => {
+        console.error('Download error:', error);
+        Alert.alert('File downloading error.', error.message || 'Unknown error');
+      })
+      .then(() => {
+        setIsDownloading(false);
+      });
+  };
+
+  const shareFile = async (filePath: string, fileName: string) => {
+    try {
+      // For iOS, we need to use the file:// protocol
+      const fileUrl = `file://${filePath}`;
+      
+      await Share.share({
+        url: fileUrl,
+        title: fileName,
+        message: `Sharing ${fileName}`
+      });
+    } catch (error) {
+      console.error('Share error:', error);
+      // Fallback: try to copy file to a more accessible location
+      try {
+        const {fs} = RNFetchBlob;
+        const DocumentDir = fs.dirs.DocumentDir;
+        const newPath = `${DocumentDir}/Shared/${fileName}`;
+        
+        // Create directory if it doesn't exist
+        await fs.mkdir(`${DocumentDir}/Shared`);
+        
+        // Copy file to shared location
+        await fs.cp(filePath, newPath);
+        
+        Alert.alert(
+          'File Copied',
+          'File has been copied to a shared location. You can find it in the Files app under "On My iPhone/iPad" > "Documents" > "Shared".',
+          [
+            {
+              text: 'Open Files App',
+              onPress: () => {
+                // This will open the Files app
+                const filesUrl = 'shortcuts://run-shortcut?name=Files';
+                // Note: This is a fallback, the actual implementation might vary
+                Alert.alert('Files App', 'Please open the Files app manually and navigate to "On My iPhone/iPad" > "Documents" > "Shared" to find your file.');
+              }
+            },
+            {
+              text: 'OK',
+              style: 'cancel'
+            }
+          ]
+        );
+      } catch (copyError) {
+        console.error('Copy error:', copyError);
+        Alert.alert('Error', 'Could not copy file to shared location. Please try downloading again.');
+      }
+    }
+  };
+
+  const downloadFile = (url: string, fileName: string) => {
+    const {config, fs} = RNFetchBlob;
+    const DownloadDir = fs.dirs.DownloadDir;
+    const filePath = `${DownloadDir}/${fileName}`;
+
+    config({
+      fileCache: true,
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        mediaScannable: true,
+        title: fileName,
+        path: filePath,
+      },
+    })
+      .fetch('GET', url)
+      .then(res => {
+        Alert.alert('File downloaded successfully');
+      })
+      .catch(error => {
+        Alert.alert('File downloading error.');
+      })
+      .then(() => {
+        setIsDownloading(false);
+      });
+  };
+
+  const renderMedicalItem = ({ item }: any) => {
+    if (item.OrderId == null) {
+      return null
+    }
+    return (
+      <View style={{ padding: 10, borderWidth: 1, backgroundColor: '#fff', borderColor: '#fff', borderRadius: 10, marginBottom: 10 }}>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>{item.CPFullnameSlang || item.FileName || ''}</Text>
+        <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
+          <Text style={[globalTextStyles.bodyMedium]}> رقم الطلب</Text>
+          <Text style={[globalTextStyles.bodyMedium]}>{item.OrderId}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
+          <Text style={[globalTextStyles.bodyMedium]}> تاريخ الطلب</Text>
+          <Text style={[globalTextStyles.bodyMedium]}>{moment(item.OrderDate).format('DD/MM/YYYY')}</Text>
+        </View>
+
+        <TouchableOpacity onPress={() => HandleDownloadPress(item)} style={{ height: 40, width: '100%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 10 }}>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#fff' }]}>تحميل الملف</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
   const renderItem = ({ item }: any) => {
     return (
       <View style={[{ width: '100%', height: 150, backgroundColor: '#f9f1f1', marginBottom: 10, borderRadius: 10, padding: 10 }, item.RelationshipTitlePlang == 'Self' && { borderWidth: 1, borderColor: '#dc3545' }]}>
@@ -128,10 +332,10 @@ const BeneficiariesScreen = () => {
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{`تاريخ الإضافة : ${moment(item.CreatedDate).format('DD/MM/YYYY')}`}</Text>
         </View>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 20 }}>
-          <TouchableOpacity style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => HandleReportPress(item, 'report')} style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={[globalTextStyles.caption, { color: '#fff', fontWeight: 'bold' }]}>التقارير الطبية</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => HandleReportPress(item, 'history')} style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={[globalTextStyles.caption, { color: '#fff', fontWeight: 'bold' }]}>التاريخ المرضي</Text>
           </TouchableOpacity>
         </View>
@@ -230,7 +434,6 @@ const BeneficiariesScreen = () => {
   }
 
   const HandleEditPress = (item: any) => {
-    console.log('item ', item);
     setOpenBottomSheetMenu(false);
     setEditData(item);
     setBeneficiaryForm({
@@ -270,6 +473,35 @@ const BeneficiariesScreen = () => {
         <Text style={[globalTextStyles.buttonMedium, { color: '#fff' }]}>{t('add_beneficiary')}</Text>
       </TouchableOpacity>
       <FullScreenLoader visible={isLoading} />
+
+      <CustomBottomSheet
+        visible={openBottomSheetReport}
+        onClose={() => setOpenBottomSheetReport(false)}
+        height={'80%'}
+        backdropClickable={false}
+        showHandle={false}
+      >
+        <View style={{ flex: 1, backgroundColor: '#eff5f5' }}>
+          <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+            <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{reportType == 'report' ? 'التقارير الطبية' : 'التاريخ المرضي'}</Text>
+            <TouchableOpacity onPress={() => setOpenBottomSheetReport(false)}>
+              <AntDesign name="close" size={20} color="#000" />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 1, paddingHorizontal: 16 }}>
+            <FlatList
+              data={medicalData}
+              renderItem={renderMedicalItem}
+              keyExtractor={(item) => item.Id?.toString()}
+              style={{ flex: 1, paddingTop: 10 }}
+              ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
+                <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>ليس هنالك معلومات</Text>
+              </View>}
+            />
+          </View>
+        </View>
+      </CustomBottomSheet>
+
       <CustomBottomSheet
         visible={openBottomSheet}
         onClose={() => setOpenBottomSheet(false)}

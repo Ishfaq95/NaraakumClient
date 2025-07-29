@@ -68,5 +68,6 @@
   "visit_order_list":"طلباتي",
   "remote_orders":"مواعيدي للاستشارات عن بعد",
   "visit_consultant_log":"سجل الزيارات",
-  "sar":"ريال"
+  "sar":"ريال",
+  "order_detail":"تفاصيل الطلب"
 }

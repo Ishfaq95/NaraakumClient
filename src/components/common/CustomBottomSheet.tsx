@@ -23,6 +23,7 @@ interface CustomBottomSheetProps {
   handleColor?: string;
   borderRadius?: number;
   backgroundColor?: string;
+  backdropClickable?: boolean;
 }
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -34,6 +35,7 @@ const CustomBottomSheet: React.FC<CustomBottomSheetProps> = ({
   height = '50%',
   style,
   showBackdrop = true,
+  backdropClickable=false,
   backdropOpacity = 0.5,
   animationDuration = 300,
   showHandle = true,
@@ -104,7 +106,7 @@ const CustomBottomSheet: React.FC<CustomBottomSheetProps> = ({
       <View style={styles.container}>
         {/* Backdrop */}
         {showBackdrop && (
-          <TouchableWithoutFeedback >
+          <TouchableWithoutFeedback onPress={backdropClickable ? handleBackdropPress : undefined}>
             <Animated.View
               style={[
                 styles.backdrop,

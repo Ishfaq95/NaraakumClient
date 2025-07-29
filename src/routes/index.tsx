@@ -27,7 +27,7 @@ import BeneficiariesScreen from '../screens/Profile/BeneficiariesScreen';
 import FavoritesScreen from '../screens/Profile/FavoritesScreen';
 import DeleteScreen from '../screens/Profile/DeleteScreen';
 import UpdateProfileScreen from '../screens/Profile/UpdateProfileScreen';
-
+import OrderDetailScreen from '../screens/Profile/OrderDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -70,6 +70,7 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.beneficiaries} component={BeneficiariesScreen} />
       <Stack.Screen name={ROUTES.favorites} component={FavoritesScreen} />
       <Stack.Screen name={ROUTES.delete} component={DeleteScreen} />
+      <Stack.Screen name={ROUTES.OrderDetailScreen} component={OrderDetailScreen} />
     </Stack.Navigator>
   );
 };

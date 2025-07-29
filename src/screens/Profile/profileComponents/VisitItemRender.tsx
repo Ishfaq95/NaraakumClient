@@ -1,15 +1,21 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { CAIRO_FONT_FAMILY } from '../../../styles/globalStyles';
+import { useNavigation } from "@react-navigation/native";
+import { ROUTES } from "../../../shared/utils/routes";
 
 const VisitItemRender = ({item}:any) => {
+    const navigation = useNavigation();
+    const handleDetails = (item: any) => {
+        navigation.navigate(ROUTES.OrderDetailScreen, { item });
+    }
     return (
         <View style={styles.container}>
             <Text style={styles.orderDateText}>{`تاريخ الطلب : ${item.OrderDate}`}</Text>
             <Text style={styles.orderIdText}>{`رقم الطلب : ${item.OrderID}`}</Text>
             <Text style={styles.totalPriceText}>{`اجمالى الفاتورة : ${item.TotalPrice} ريال`}</Text>
 
-            <TouchableOpacity style={styles.detailsButton}>
+            <TouchableOpacity onPress={() => handleDetails(item)} style={styles.detailsButton}>
                 <Text style={styles.buttonText}>تفاصيل الطلب</Text>
             </TouchableOpacity>
         </View>

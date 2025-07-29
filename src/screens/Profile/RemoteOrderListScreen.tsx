@@ -134,7 +134,7 @@ const styles=StyleSheet.create({
     backgroundColor: '#fff',
 },
   headerTitle: {
-    ...globalTextStyles.h3,
+    ...globalTextStyles.h5,
     color: '#000'
   },
   headerContainer: {

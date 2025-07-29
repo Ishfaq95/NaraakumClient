@@ -64,5 +64,6 @@
   "visit_order_list":"My requests",
   "remote_orders":"My remote orders",
   "visit_consultant_log":"Visit consultant log",
-  "sar":"SAR"
+  "sar":"SAR",
+  "order_detail":"Order detail"
 }

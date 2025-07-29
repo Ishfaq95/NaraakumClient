@@ -40,5 +40,6 @@ export const ROUTES = {
     favorites: "favorites",
     delete: "delete",
     logout: "logout",
+    OrderDetailScreen: "OrderDetailScreen",
   };
   
