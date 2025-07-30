@@ -28,6 +28,7 @@ import FavoritesScreen from '../screens/Profile/FavoritesScreen';
 import DeleteScreen from '../screens/Profile/DeleteScreen';
 import UpdateProfileScreen from '../screens/Profile/UpdateProfileScreen';
 import OrderDetailScreen from '../screens/Profile/OrderDetailScreen';
+import NotificationScreen from '../screens/NotificationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -71,6 +72,7 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.favorites} component={FavoritesScreen} />
       <Stack.Screen name={ROUTES.delete} component={DeleteScreen} />
       <Stack.Screen name={ROUTES.OrderDetailScreen} component={OrderDetailScreen} />
+      <Stack.Screen name={ROUTES.NotificationScreen} component={NotificationScreen} />
     </Stack.Navigator>
   );
 };

@@ -69,5 +69,8 @@
   "remote_orders":"مواعيدي للاستشارات عن بعد",
   "visit_consultant_log":"سجل الزيارات",
   "sar":"ريال",
-  "order_detail":"تفاصيل الطلب"
+  "order_detail":"تفاصيل الطلب",
+  "notifications":"الإشعارات",
+  "no_notifications":"لا يوجد إشعارات",
+  "loading_more_notifications":"جاري تحميل الإشعارات الأخرى..."
 }

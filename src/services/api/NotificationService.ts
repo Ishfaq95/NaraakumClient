@@ -31,7 +31,27 @@ const sendNotificationForMeeting = async (ReciverId: any, data: any): Promise<an
     }
 };
 
+const getNotificationList = async (params: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('user/GetSystemNotification', params);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error fetching notifications:', error);
+    }
+};
+
+const updateNotification = async (params: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('user/UpdateSystemNotification', params);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error updating notification:', error);
+    }
+};
+
 export const notificationService = {
     getSystemNotification,
-    sendNotificationForMeeting
+    sendNotificationForMeeting,
+    getNotificationList,
+    updateNotification
 }; 

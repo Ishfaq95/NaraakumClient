@@ -41,5 +41,6 @@ export const ROUTES = {
     delete: "delete",
     logout: "logout",
     OrderDetailScreen: "OrderDetailScreen",
+    NotificationScreen: "NotificationScreen",
   };
   

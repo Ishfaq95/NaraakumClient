@@ -5,10 +5,38 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { MediaBaseURL } from '../../../shared/utils/constants';
 import moment from 'moment';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
+import { ROUTES } from '../../../shared/utils/routes';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { profileService } from '../../../services/api/ProfileService';
+import { useSelector } from 'react-redux';
 
-const ReservationReceivedItemRender = ({ item }: any) => {
+const ReservationReceivedItemRender = ({ item, onClickOrderDetails }: any) => {
     const { t } = useTranslation();
-    console.log("Item===>", item);
+    const navigation = useNavigation();
+    const user = useSelector((state: any) => state.root.user.user);
+    const handleAddMoreServices = () => {
+        navigation.navigate(ROUTES.AppNavigator, {
+            screen: ROUTES.HomeStack,
+            params: {
+                screen: ROUTES.Services,
+            }
+        });
+    }
+
+    const handleDeleteOrder = async (item: any) => {
+        const payload = {
+            "UserLoginInfoId": user?.Id,
+            "OrderId": item?.OrderID,
+        }
+
+        const response = await profileService.deleteOrderAddedByServiceProvider(payload);
+        if (response?.ResponseStatus?.STATUSCODE == 200) {
+            
+        }
+        console.log("response===>", response);
+    }
+    
     return (
         <View style={styles.card}>
             {/* Top Row: Image and Info */}
@@ -17,6 +45,9 @@ const ReservationReceivedItemRender = ({ item }: any) => {
                     <Text style={styles.label}>اسم المستفيد</Text>
                     <Text style={styles.beneficiaryName}>{item?.PatientFullnameSlang}</Text>
                 </View>
+                {item?.CatOrderStatusId == '22' && <TouchableOpacity onPress={() => handleDeleteOrder(item)} style={{}}>
+                    <MaterialCommunityIcons name="delete" size={24} color="red" />
+                </TouchableOpacity>}
             </View>
 
             {/* Info Rows */}
@@ -59,7 +90,10 @@ const ReservationReceivedItemRender = ({ item }: any) => {
 
             {/* Buttons */}
             <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.filledBtn}>
+                {item?.CatOrderStatusId == '22' && <TouchableOpacity onPress={handleAddMoreServices} style={styles.filledBtn}>
+                    <Text style={styles.filledBtnText}>إضافة مزيد من الخدمات</Text>
+                </TouchableOpacity>}
+                <TouchableOpacity onPress={() => onClickOrderDetails(item)} style={[styles.filledBtn]}>
                     <Text style={styles.filledBtnText}>التفاصيل / اتمام الحجز</Text>
                 </TouchableOpacity>
             </View>
@@ -140,6 +174,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingVertical: 8,
         alignItems: 'center',
+        width: '100%',
     },
     filledBtnText: {
         color: '#fff',

@@ -30,7 +30,7 @@ const BeneficiariesScreen = () => {
   const [openBottomSheet, setOpenBottomSheet] = useState(false)
   const [deleteModal, setDeleteModal] = useState(false)
   const [openBottomSheetMenu, setOpenBottomSheetMenu] = useState(false)
-  const [titleType, setTitleType] = useState<any>({})
+  const [selectedItem, setSelectedItem] = useState<any>({})
   const [selectedItemToDelete, setSelectedItemToDelete] = useState<any>(null);
   const [openBottomSheetHeight, setOpenBottomSheetHeight] = useState('65%')
   const [focusedField, setFocusedField] = useState('');
@@ -50,13 +50,13 @@ const BeneficiariesScreen = () => {
   })
 
   const SelfMenu = [
-    { title: 'التقارير الطبية', onPress: () => { } },
-    { title: 'التاريخ المرضي', onPress: () => { } },
+    { title: 'التقارير الطبية', onPress: () => { setOpenBottomSheetMenu(false); HandleReportPress(selectedItem, 'report') } },
+    { title: 'التاريخ المرضي', onPress: () => { setOpenBottomSheetMenu(false); HandleReportPress(selectedItem, 'history') } },
   ];
 
   const OtherMenu = (item: any) => [
-    { title: 'التقارير الطبية', onPress: () => { } },
-    { title: 'التاريخ المرضي', onPress: () => { } },
+    { title: 'التقارير الطبية', onPress: () => { setOpenBottomSheetMenu(false); HandleReportPress(item, 'report') } },
+    { title: 'التاريخ المرضي', onPress: () => { setOpenBottomSheetMenu(false); HandleReportPress(item, 'history') } },
     { title: 'تعديل البيانات', onPress: () => HandleEditPress(item) },
     { title: 'حذف', onPress: () => HandleOpenDeleteModal(item) },
   ];
@@ -100,7 +100,7 @@ const BeneficiariesScreen = () => {
     }
     setIsLoading(false);
   }
-  
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -121,7 +121,7 @@ const BeneficiariesScreen = () => {
 
   const HandleThreeDotPress = (item: any) => {
     setOpenBottomSheetMenu(true)
-    setTitleType(item)
+    setSelectedItem(item)
   }
 
   const HandleReportPress = (item: any, type: string) => {
@@ -169,12 +169,12 @@ const BeneficiariesScreen = () => {
     if (isDownloading) return;
 
     setIsDownloading(true);
-    
+
     // Ensure URL doesn't start with a slash to avoid double slashes
     const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
     const fileURL = `${MediaBaseURL}/${cleanUrl}`;
-    let fileName:any = getFileNameFromUrl(fileURL);
-    
+    let fileName: any = getFileNameFromUrl(fileURL);
+
     if (Platform.OS === 'ios') {
       downloadFIleForIOS(fileURL, fileName);
     } else {
@@ -187,21 +187,21 @@ const BeneficiariesScreen = () => {
     const parts = url.split('/');
     // Get the last part, which is the filename
     let fileName = parts.pop();
-    
+
     // If no filename found, generate a default one
     if (!fileName || fileName === '') {
       fileName = `document_${Date.now()}.pdf`;
     }
-    
+
     // Remove any query parameters
     fileName = fileName.split('?')[0];
-    
+
     return fileName;
   };
 
   const downloadFIleForIOS = (url: string, fileName: string) => {
-    const {config, fs} = RNFetchBlob;
-    
+    const { config, fs } = RNFetchBlob;
+
     // For iOS, we'll use the Documents directory and then share the file
     const DocumentDir = fs.dirs.DocumentDir;
     const filePath = `${DocumentDir}/${fileName}`;
@@ -227,7 +227,7 @@ const BeneficiariesScreen = () => {
     try {
       // For iOS, we need to use the file:// protocol
       const fileUrl = `file://${filePath}`;
-      
+
       await Share.share({
         url: fileUrl,
         title: fileName,
@@ -237,16 +237,16 @@ const BeneficiariesScreen = () => {
       console.error('Share error:', error);
       // Fallback: try to copy file to a more accessible location
       try {
-        const {fs} = RNFetchBlob;
+        const { fs } = RNFetchBlob;
         const DocumentDir = fs.dirs.DocumentDir;
         const newPath = `${DocumentDir}/Shared/${fileName}`;
-        
+
         // Create directory if it doesn't exist
         await fs.mkdir(`${DocumentDir}/Shared`);
-        
+
         // Copy file to shared location
         await fs.cp(filePath, newPath);
-        
+
         Alert.alert(
           'File Copied',
           'File has been copied to a shared location. You can find it in the Files app under "On My iPhone/iPad" > "Documents" > "Shared".',
@@ -274,7 +274,7 @@ const BeneficiariesScreen = () => {
   };
 
   const downloadFile = (url: string, fileName: string) => {
-    const {config, fs} = RNFetchBlob;
+    const { config, fs } = RNFetchBlob;
     const DownloadDir = fs.dirs.DownloadDir;
     const filePath = `${DownloadDir}/${fileName}`;
 
@@ -303,15 +303,15 @@ const BeneficiariesScreen = () => {
   const generateMedicalHistoryPDF = async (medicalData: any) => {
     try {
       setIsDownloading(true);
-      
+
       console.log('Generating PDF for medical data:', medicalData);
 
       // Create HTML content for the medical history PDF using the provided data
       const htmlContent = createMedicalHistoryHTML(medicalData);
-      
+
       // Generate PDF
       const fileName = `MedicalHistory_${medicalData.OrderId || 'Patient'}_${moment().format('YYYYMMDD_HHmmss')}.pdf`;
-      
+
       const options = {
         html: htmlContent,
         fileName: fileName,
@@ -321,16 +321,16 @@ const BeneficiariesScreen = () => {
       console.log('PDF options:', options);
 
       const file = await RNHTMLtoPDF.convert(options);
-      
+
       console.log('PDF generated:', file);
-      
+
       if (file.filePath) {
-        
-          const filePath = file.filePath
-          const fileName = `MedicalHistory_${medicalData.OrderId}_${moment().format('YYYYMMDD_HHmmss')}`;
-  
-          const downloadPath = await downloadFileForHistory(filePath, fileName);
-        
+
+        const filePath = file.filePath
+        const fileName = `MedicalHistory_${medicalData.OrderId}_${moment().format('YYYYMMDD_HHmmss')}`;
+
+        const downloadPath = await downloadFileForHistory(filePath, fileName);
+
       } else {
         Alert.alert('Error', 'Failed to generate PDF');
       }
@@ -344,7 +344,7 @@ const BeneficiariesScreen = () => {
 
   const requestStoragePermission = async (): Promise<boolean> => {
     if (Platform.OS !== 'android') return true;
-  
+
     try {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -364,57 +364,57 @@ const BeneficiariesScreen = () => {
   };
 
   // Download file for Android
-const downloadFileForHistory = async (filePath: string, fileName: string): Promise<string> => {
-  const { fs } = RNFetchBlob;
+  const downloadFileForHistory = async (filePath: string, fileName: string): Promise<string> => {
+    const { fs } = RNFetchBlob;
 
-  try {
-    let destinationPath = '';
+    try {
+      let destinationPath = '';
 
-    if (Platform.OS === 'android') {
-      // Request permission first
-      const hasPermission = await requestStoragePermission();
+      if (Platform.OS === 'android') {
+        // Request permission first
+        const hasPermission = await requestStoragePermission();
 
-      if (hasPermission) {
-        // Try to save to external Downloads folder
-        try {
-          destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
-          await RNFS.copyFile(filePath, destinationPath);
-        } catch (externalError) {
-          // Fallback to internal Downloads
+        if (hasPermission) {
+          // Try to save to external Downloads folder
+          try {
+            destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
+            await RNFS.copyFile(filePath, destinationPath);
+          } catch (externalError) {
+            // Fallback to internal Downloads
+            destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
+            await RNFS.copyFile(filePath, destinationPath);
+          }
+          Alert.alert(
+            'File downloaded successfully',
+            `Saved to: ${Platform.OS === 'android' ? 'Downloads folder' : 'Documents folder'}`
+          );
+        } else {
+          // Use internal storage if permission denied
           destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
           await RNFS.copyFile(filePath, destinationPath);
         }
-        Alert.alert(
-          'File downloaded successfully',
-          `Saved to: ${Platform.OS === 'android' ? 'Downloads folder' : 'Documents folder'}`
-        );
       } else {
-        // Use internal storage if permission denied
-        destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
+        // iOS - use Documents directory
+        destinationPath = `${RNFS.DocumentDirectoryPath}/${fileName}.pdf`;
         await RNFS.copyFile(filePath, destinationPath);
+        shareFile(filePath, destinationPath);
       }
-    } else {
-      // iOS - use Documents directory
-      destinationPath = `${RNFS.DocumentDirectoryPath}/${fileName}.pdf`;
-      await RNFS.copyFile(filePath, destinationPath);
-      shareFile(filePath, destinationPath);
-    }
 
-    
-    return destinationPath;
-  } catch (error) {
-    console.error('Error copying file:', error);
-    Alert.alert('File downloading error.', error instanceof Error ? error.message : 'Unknown error');
-    throw error;
-  }
-};
+
+      return destinationPath;
+    } catch (error) {
+      console.error('Error copying file:', error);
+      Alert.alert('File downloading error.', error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    }
+  };
 
   const createMedicalHistoryHTML = (medicalData: any) => {
     const orderId = medicalData.OrderId || '';
     const orderDate = medicalData.OrderDate ? moment(medicalData.OrderDate).format('DD/MM/YYYY') : '';
-    
+
     console.log('Creating HTML with medical data:', { orderId, orderDate, medicalData });
-    
+
     return `
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
@@ -587,7 +587,7 @@ const downloadFileForHistory = async (filePath: string, fileName: string): Promi
 
   const renderItem = ({ item }: any) => {
     return (
-      <View style={[{ width: '100%', height: 150, backgroundColor: '#f9f1f1', marginBottom: 10, borderRadius: 10, padding: 10 }, item.RelationshipTitlePlang == 'Self' && { borderWidth: 1, borderColor: '#dc3545' }]}>
+      <View style={[{ width: '100%', height: 150, backgroundColor: '#f9f1f1', marginBottom: 10, borderRadius: 10, padding: 10 }, item.UserloginInfoId == user.Id && { borderWidth: 1, borderColor: '#dc3545' }]}>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{item.FullnameSlang}</Text>
           <TouchableOpacity onPress={() => HandleThreeDotPress(item)} style={{ height: 30, width: 30, backgroundColor: '#e4f1ef', borderRadius: 20, padding: 5, marginLeft: 10, justifyContent: 'center', alignItems: 'center' }}>
@@ -809,35 +809,38 @@ const downloadFileForHistory = async (filePath: string, fileName: string): Promi
         transparent={true}
         animationType="slide"
         statusBarTranslucent={true}
+
         onRequestClose={() => setOpenBottomSheetMenu(false)}
       >
-        <View style={styles.modalBackground}>
-          <SafeAreaView style={styles.modalContainer}>
-            <View style={styles.sheetHeaderContainer}>
-              <TouchableOpacity onPress={() => setOpenBottomSheetMenu(false)}>
-                <AntDesign name="close" size={30} color="#979e9eff" />
-              </TouchableOpacity>
-            </View>
+        <TouchableWithoutFeedback onPress={() => setOpenBottomSheetMenu(false)}>
+          <View style={styles.modalBackground}>
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.sheetHeaderContainer}>
+                <TouchableOpacity onPress={() => setOpenBottomSheetMenu(false)}>
+                  <AntDesign name="close" size={30} color="#979e9eff" />
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.menuContainer}>
-              {(titleType?.RelationshipTitlePlang === 'Self' ? SelfMenu : OtherMenu(titleType)).map((item, index, arr) => (
-                <View
-                  key={index}
-                  style={{
-                    width: '100%',
-                    borderBottomWidth: index === arr.length - 1 ? 0 : 1,
-                    borderBottomColor: '#d9d9d9',
-                  }}
-                >
-                  <TouchableOpacity onPress={item.onPress}>
-                    <Text style={styles.menuText}>{item.title}</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          </SafeAreaView>
+              <View style={styles.menuContainer}>
+                {((selectedItem?.UserloginInfoId && selectedItem?.UserloginInfoId == user.Id) ? SelfMenu : OtherMenu(selectedItem)).map((item, index, arr) => (
+                  <View
+                    key={index}
+                    style={{
+                      width: '100%',
+                      borderBottomWidth: index === arr.length - 1 ? 0 : 1,
+                      borderBottomColor: '#d9d9d9',
+                    }}
+                  >
+                    <TouchableOpacity onPress={item.onPress}>
+                      <Text style={styles.menuText}>{item.title}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </SafeAreaView>
 
-        </View>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       <Modal
@@ -847,19 +850,20 @@ const downloadFileForHistory = async (filePath: string, fileName: string): Promi
         statusBarTranslucent={true}
         onRequestClose={() => setDeleteModal(false)}
       >
-        <View style={[styles.modalBackground, { justifyContent: 'center' }]}>
+        <View style={[styles.modalBackground]}>
           <View style={styles.modalDeleteContainer}>
-            <View style={styles.deleteContainer}>
+            <View style={{ height: 50, backgroundColor: '#E4F1EF', borderRadius: 10,paddingHorizontal:16,justifyContent:'center' }}>
               <Text style={styles.deleteTitle}>تأكيد</Text>
-              <Text style={[styles.deleteTitle, { fontSize: 16 }]}>هل أنت متأكد؟</Text>
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity onPress={HandleDeleteBeneficiaryData} style={styles.buttonYes}>
-                  <Text style={styles.buttonText}>نعم</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setDeleteModal(false)} style={styles.buttonNo}>
-                  <Text style={styles.buttonText}>لا</Text>
-                </TouchableOpacity>
-              </View>
+            </View>
+
+            <Text style={[{paddingHorizontal:16, paddingVertical:10,  fontSize: 16 }]}>هل أنت متأكد؟</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity onPress={HandleDeleteBeneficiaryData} style={styles.buttonYes}>
+                <Text style={styles.buttonText}>نعم</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setDeleteModal(false)} style={styles.buttonNo}>
+                <Text style={styles.buttonText}>لا</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -936,15 +940,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginVertical: 20,
-    width: '80%'
+    paddingHorizontal: 16,
+    width: '100%'
   },
   buttonYes: {
+    width: '48%',
     borderRadius: 14,
-    backgroundColor: '#1f6767ff'
+    backgroundColor: '#1f6767ff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   buttonNo: {
+    width: '48%',
     borderRadius: 14,
-    backgroundColor: '#979e9eff'
+    backgroundColor: '#979e9eff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
@@ -957,13 +968,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start'
   },
   deleteTitle: {
-    marginVertical: 10,
-    fontSize: 20,
+    ...globalTextStyles.bodyMedium,
+    fontWeight: 'bold',
+    textAlign: 'left',
+    color: '#000',
   },
   modalDeleteContainer: {
-    width: '90%',
+    width: '100%',
     backgroundColor: 'white',
-    borderRadius: 10
+    borderRadius: 10,
   },
 })
 

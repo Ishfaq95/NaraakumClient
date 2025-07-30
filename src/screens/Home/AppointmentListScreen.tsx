@@ -10,7 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { useDispatch, useSelector } from 'react-redux';
-import { setTopic, setUser } from '../../shared/redux/reducers/userReducer';
+import { setNotificationList, setTopic, setUser } from '../../shared/redux/reducers/userReducer';
 import { styles } from '../../components/appointments/styles';
 import CurrentAppointments from '../../components/appointments/CurrentAppointments';
 import UpcomingAppointments from '../../components/appointments/UpcomingAppointments';
@@ -23,6 +23,7 @@ import WebSocketService from '../../components/WebSocketService';
 import { notificationService } from '../../services/api/NotificationService';
 import { requestAndroidPermissions, requestiOSPermissions, scheduleNotificationAndroid, scheduleNotificationIOS, subsribeTopic } from '../../shared/services/service';
 import Header from '../../components/common/Header';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const AppointmentListScreen = ({navigation}: any) => {
   const [index, setIndex] = useState(0);
@@ -31,29 +32,50 @@ const AppointmentListScreen = ({navigation}: any) => {
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.root.user.user);
   const {topic} = useSelector((state: any) => state.root.user);
+  const {notificationList} = useSelector((state: any) => state.root.user);
   const webSocketService = WebSocketService.getInstance();
   const isFocused = useIsFocused();
   const requestPermissions = async () => {
     return Platform.OS === 'ios' ? requestiOSPermissions() : requestAndroidPermissions();
   };
 
+  useEffect(() => {
+    if(user){
+      getNotificationList();
+    }
+  }, [isFocused, user]);
+
+  const getNotificationList = async () => {
+    const payload = {
+      "ReciverId":user.Id,
+      "Viewstatus":0,
+      "PageNumber":1,
+      "PageSize":10
+    }
+    const response = await notificationService.getNotificationList(payload);
+
+    if(response.ResponseStatus.STATUSCODE == 200){
+      dispatch(setNotificationList(response.TotalRecord));
+    }
+  }
+
   // Handle WebSocket connection
-  // useEffect(() => {
+  useEffect(() => {
     
-  //   if (user) {
-  //     const presence = 1;
-  //     const communicationKey = user.CommunicationKey;
-  //     const UserId = user.Id;
-  //     subsribeTopic(UserId, topic, dispatch);
+    if (user) {
+      const presence = 1;
+      const communicationKey = user.CommunicationKey;
+      const UserId = user.Id;
+      subsribeTopic(UserId, topic, dispatch);
       
-  //     // Only connect if not already connected
-  //     if (!webSocketService.isSocketConnected()) {
-  //       webSocketService.connect(presence, communicationKey, UserId);
-  //     }
-  //   } else {
-  //     webSocketService.disconnect();
-  //   }
-  // }, [user]);
+      // Only connect if not already connected
+      if (!webSocketService.isSocketConnected()) {
+        webSocketService.connect(presence, communicationKey, UserId);
+      }
+    } else {
+      webSocketService.disconnect();
+    }
+  }, [user]);
 
   const afterLogin = async () => {
     try {
@@ -128,6 +150,18 @@ const AppointmentListScreen = ({navigation}: any) => {
       rightComponent={
         <TouchableOpacity onPress={() => navigation.navigate(ROUTES.Services)} style={styles.bookButton}>
           <Text style={styles.bookButtonText}>{t('book_order')}</Text>
+        </TouchableOpacity>
+      }
+      leftComponent={
+          <TouchableOpacity onPress={() => navigation.navigate(ROUTES.NotificationScreen)} style={{}}>
+            <View style={{position:'relative'}}>
+              <Ionicons name="notifications" size={24} color="black" />
+              {notificationList && (
+                <View style={{position:'absolute', top:-20, right:-10, backgroundColor:'red',padding:5,width:30,height:30,borderRadius:50,alignItems:'center',justifyContent:'center'}}>
+                  <Text style={{color:'white', fontSize:10, }}>{notificationList>100?'99+':notificationList}</Text>
+                </View>
+              )}
+            </View>
         </TouchableOpacity>
       }
     />

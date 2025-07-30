@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { I18nManager } from 'react-native';
 import { globalTextStyles } from '../../styles/globalStyles';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 interface DropdownItem {
   label: string;
@@ -84,7 +85,8 @@ const Dropdown: React.FC<DropdownProps> = ({
         <Text style={[styles.dropdownButtonText, labelStyle]}>
           {selectedItem ? selectedItem.label : placeholder}
         </Text>
-        <View style={[styles.arrow, I18nManager.isRTL && styles.arrowRTL]} />
+        {/* <View style={[styles.arrow, I18nManager.isRTL && styles.arrowRTL]} /> */}
+        <Icon name="chevron-down" size={18} color="#666" />
       </TouchableOpacity>
 
       <Modal

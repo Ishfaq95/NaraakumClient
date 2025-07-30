@@ -189,6 +189,26 @@ export const getMedicalHistory = async (payload: any): Promise<any> => {
     }
 };
 
+export const getOrderDetailsAddedByServiceProvider = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('visitRecord/GetOrderDetailAddedByServiceProvider', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting order details:', error);
+        throw error;        
+    }
+};
+
+export const deleteOrderAddedByServiceProvider = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('payment/DeleteUnpaidOrder', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error deleting order:', error);
+        throw error;        
+    }
+};
+
 export const profileService = {
     getUserFavorites,
     removeFromFavorites,
@@ -207,5 +227,7 @@ export const profileService = {
     getUserOrderDetail,
     getVisitRecordList,
     getMedicalReport,
-    getMedicalHistory
+    getMedicalHistory,
+    getOrderDetailsAddedByServiceProvider,
+    deleteOrderAddedByServiceProvider
 };  

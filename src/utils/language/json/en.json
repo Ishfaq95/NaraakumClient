@@ -65,5 +65,8 @@
   "remote_orders":"My remote orders",
   "visit_consultant_log":"Visit consultant log",
   "sar":"SAR",
-  "order_detail":"Order detail"
+  "order_detail":"Order detail",
+  "notifications":"Notifications",
+  "no_notifications":"No notifications",
+  "loading_more_notifications":"Loading more notifications..."
 }

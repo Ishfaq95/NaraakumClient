@@ -10,9 +10,10 @@ import { globalTextStyles } from "../../styles/globalStyles";
 import { settingService } from "../../services/api/settingService";
 import { useIsFocused } from "@react-navigation/native";
 import { useSelector } from "react-redux";
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const menuItems = [
-  { label: 'إعداد التذكير', icon: <Feather name="settings" size={20} color="#239EA0" />, key: 'reminderSetting' },
+  { label: 'إعداد التذكير', icon: <Ionicons name="alarm" size={20} color="#239EA0" />, key: 'reminderSetting' },
 ];
 
 const ReminderTimeUnit = [
@@ -55,7 +56,7 @@ const SettingsScreen = () => {
   const [reminderTimeUnit, setReminderTimeUnit] = useState<string>('6'); // Default to minutes
   const [reminderMinutesAndHours, setReminderMinutesAndHours] = useState<string>('5'); // Default value
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false); // Track if API data is loaded
-  const user = useSelector((state: any) => state.root.user.user); 
+  const user = useSelector((state: any) => state.root.user.user);
   const isFocused = useIsFocused();
 
   const updateReminderSettingApi = async () => {
@@ -68,7 +69,7 @@ const SettingsScreen = () => {
 
       console.log("payload", payload);
       const response = await settingService.updateReminderSetting(payload);
-      if(response.ResponseStatus.STATUSCODE == 200){
+      if (response.ResponseStatus.STATUSCODE == 200) {
         console.log("response", response);
       }
     } catch (error) {
@@ -78,18 +79,18 @@ const SettingsScreen = () => {
     }
   }
 
-const getReminderTimeUnitLabel = () => {
-  switch (reminderTimeUnit) {
-    case '6':
-      return 'الدقائق';
-    case '5':
-      return 'الساعات';
-    case '1':
-      return 'الأيام';
-    default:
-      return 'الدقائق';
+  const getReminderTimeUnitLabel = () => {
+    switch (reminderTimeUnit) {
+      case '6':
+        return 'الدقائق';
+      case '5':
+        return 'الساعات';
+      case '1':
+        return 'الأيام';
+      default:
+        return 'الدقائق';
+    }
   }
-}
 
   useEffect(() => {
     if (isFocused) {
@@ -103,10 +104,10 @@ const getReminderTimeUnitLabel = () => {
         "UserloginInfoId": user.Id,
       }
       const response = await settingService.getReminderSetting(payload);
-      
-      if(response.ResponseStatus.STATUSCODE == 200 && response.ReminderSetting && response.ReminderSetting.length > 0){
+
+      if (response.ResponseStatus.STATUSCODE == 200 && response.ReminderSetting && response.ReminderSetting.length > 0) {
         const reminderValues = response.ReminderSetting[0];
-        
+
         // Set values from API
         setReminderTimeUnit(reminderValues.CatTimeUnitId.toString());
         setReminderMinutesAndHours(reminderValues.TimeUnitDuration.toString());
@@ -162,7 +163,7 @@ const getReminderTimeUnitLabel = () => {
       // Only update if the current value doesn't exist in the new data array
       const currentData = getTimeData(reminderTimeUnit);
       const valueExists = currentData.some(item => item.value === reminderMinutesAndHours);
-      
+
       if (!valueExists) {
         const defaultValue = getDefaultValue(reminderTimeUnit);
         setReminderMinutesAndHours(defaultValue);
@@ -194,7 +195,18 @@ const getReminderTimeUnitLabel = () => {
       settingItemsClick(item);
     }}>
       <Icon name="chevron-left" size={22} color="#239EA0" style={styles.leftArrow} />
-      <Text style={styles.label}>{item.key == 'reminderSetting' ? `ذكرني قبل الموعد بـ ${reminderMinutesAndHours} ${getReminderTimeUnitLabel()}` : item.label}</Text>
+      <Text style={styles.label}>
+        {item.key == 'reminderSetting' ? (
+          <>
+            ذكرني قبل الموعد بـ{' '}
+            <Text style={{ fontFamily: globalTextStyles.h5.fontFamily, color: '#000', fontWeight: 'bold' }}>
+              {reminderMinutesAndHours} {getReminderTimeUnitLabel()}
+            </Text>
+          </>
+        ) : (
+          item.label
+        )}
+      </Text>
       <View style={styles.iconBox}>{item.icon}</View>
     </TouchableOpacity>
   );
@@ -225,44 +237,49 @@ const getReminderTimeUnitLabel = () => {
         contentContainerStyle={{ padding: 16 }}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         showsVerticalScrollIndicator={false}
+      
       />
 
       <CustomBottomSheet
         visible={reminderSettingBottomSheetVisible}
         onClose={() => setReminderSettingBottomSheetVisible(false)}
-        height="30%"
+        height="32%"
+        showHandle={false}
+        style={{ borderTopLeftRadius: 10, borderTopRightRadius: 10, overflow: 'hidden' }}
       >
-        <View style={{ flex: 1, backgroundColor: '#fff', padding: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flex: 1, backgroundColor: '#fff'}}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',backgroundColor:'#E6F3F3',paddingVertical:10,paddingHorizontal:16,borderTopLeftRadius:10,borderTopRightRadius:10 }}>
             <Text style={{ ...globalTextStyles.bodyMedium, fontFamily: globalTextStyles.h5.fontFamily, color: '#000' }}>إعدادات التذكيرات</Text>
             <TouchableOpacity onPress={() => setReminderSettingBottomSheetVisible(false)}>
               <Icon name="close" size={20} color="#239EA0" />
             </TouchableOpacity>
           </View>
-          <View style={{ flexDirection: 'row', width: '100%', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-            <View style={{ width: '48%' }}>
-              <Dropdown 
-                data={ReminderTimeUnit} 
-                containerStyle={{ height: 50 }} 
-                dropdownStyle={{ height: 50 }} 
-                value={reminderTimeUnit} 
-                onChange={(value: string | number) => onPressChangeReminderTimeUnit(value)} 
-              />
-            </View>
+          <Text style={{ ...globalTextStyles.bodySmall, fontFamily: globalTextStyles.h5.fontFamily, color: '#666',paddingHorizontal:16,marginTop:10 }}>تذكيري قبل </Text>
+          <View style={{ flexDirection: 'row', width: '100%', alignItems: 'center', justifyContent: 'space-between', marginTop: 10,paddingHorizontal:16 }}>
             <View style={{ width: '48%' }}>
               <Dropdown
                 data={currentTimeData}
                 placeholder={getDefaultValue(reminderTimeUnit)}
                 value={reminderMinutesAndHours}
                 onChange={(value: string | number) => onPressChangeReminderValue(value)}
-                containerStyle={{ height: 50 }} 
+                containerStyle={{ height: 50 }}
                 dropdownStyle={{ height: 50 }}
               />
             </View>
+            <View style={{ width: '48%' }}>
+              <Dropdown
+                data={ReminderTimeUnit}
+                containerStyle={{ height: 50 }}
+                dropdownStyle={{ height: 50 }}
+                value={reminderTimeUnit}
+                onChange={(value: string | number) => onPressChangeReminderTimeUnit(value)}
+              />
+            </View>
+
           </View>
 
-          <TouchableOpacity onPress={onPressSaveReminderSetting} style={{ backgroundColor: '#239EA0', padding: 10, borderRadius: 10, marginTop: 10 }}>
-            <Text style={{ ...globalTextStyles.buttonMedium, color: '#fff', textAlign: 'center' }}>حفظ</Text>
+          <TouchableOpacity onPress={onPressSaveReminderSetting} style={{ backgroundColor: '#239EA0', padding: 10, borderRadius: 10, marginTop: 10,marginHorizontal:16 }}>
+            <Text style={{ ...globalTextStyles.buttonMedium, color: '#fff', textAlign: 'center' }}>يحفظ</Text>
           </TouchableOpacity>
         </View>
       </CustomBottomSheet>
@@ -297,7 +314,7 @@ const styles = StyleSheet.create({
   label: {
     flex: 1,
     ...globalTextStyles.bodyMedium,
-    color: '#222',
+    color: '#666',
     textAlign: 'left',
     fontFamily: globalTextStyles.h5.fontFamily,
     marginLeft: 8,
