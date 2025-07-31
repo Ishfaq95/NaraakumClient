@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, ViewStyle, TextStyle, I18nManager, Platform } from 'react-native';
-import PhoneInput, { ICountry } from 'react-native-international-phone-number';
-import { isValidPhoneNumber, CountryCode } from 'libphonenumber-js';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Text, ViewStyle, TextStyle, Platform } from 'react-native';
+import PhoneInput from 'react-native-phone-number-input';
+import { isValidPhoneNumber, CountryCode, getCountryCallingCode } from 'libphonenumber-js';
 import { globalTextStyles } from '../styles/globalStyles';
 
 // Define allowed countries as string literals
@@ -24,26 +24,159 @@ const ALLOWED_COUNTRIES: AllowedCountryCode[] = [
   'YE'  // Yemen
 ];
 
-const isSaudiArabia = (code: string): code is AllowedCountryCode => code === 'SA';
-
-const formatSaudiNumber = (number: string): string => {
-  // Remove all non-digit characters
-  const digits = number.replace(/\D/g, '');
-  
-  // Format only if it's a Saudi number
-  if (digits.length > 0) {
-    let formatted = digits;
-    // Format as XX XXX XXXX
-    if (digits.length <= 2) {
-      formatted = digits;
-    } else if (digits.length <= 5) {
-      formatted = `${digits.slice(0, 2)} ${digits.slice(2)}`;
-    } else {
-      formatted = `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 9)}`;
+// Country-specific phone number patterns and lengths
+const COUNTRY_PATTERNS: Record<AllowedCountryCode, { pattern: string; maxLength: number; format: (input: string) => string }> = {
+  'SA': {
+    pattern: '## ### ####',
+    maxLength: 9,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 5) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+      return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 9)}`;
     }
-    return formatted;
+  },
+  'AE': {
+    pattern: '## ### ####',
+    maxLength: 9,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 5) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+      return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 9)}`;
+    }
+  },
+  'QA': {
+    pattern: '#### ####',
+    maxLength: 8,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 4) return digits;
+      return `${digits.slice(0, 4)} ${digits.slice(4, 8)}`;
+    }
+  },
+  'KW': {
+    pattern: '#### ####',
+    maxLength: 8,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 4) return digits;
+      return `${digits.slice(0, 4)} ${digits.slice(4, 8)}`;
+    }
+  },
+  'BH': {
+    pattern: '#### ####',
+    maxLength: 8,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 4) return digits;
+      return `${digits.slice(0, 4)} ${digits.slice(4, 8)}`;
+    }
+  },
+  'OM': {
+    pattern: '#### ####',
+    maxLength: 8,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 4) return digits;
+      return `${digits.slice(0, 4)} ${digits.slice(4, 8)}`;
+    }
+  },
+  'JO': {
+    pattern: '# #### ####',
+    maxLength: 9,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 1) return digits;
+      if (digits.length <= 5) return `${digits.slice(0, 1)} ${digits.slice(1)}`;
+      return `${digits.slice(0, 1)} ${digits.slice(1, 5)} ${digits.slice(5, 9)}`;
+    }
+  },
+  'LB': {
+    pattern: '## ### ###',
+    maxLength: 8,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 5) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+      return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)}`;
+    }
+  },
+  'SY': {
+    pattern: '### ### ###',
+    maxLength: 9,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 9)}`;
+    }
+  },
+  'IQ': {
+    pattern: '### ### ####',
+    maxLength: 10,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 10)}`;
+    }
+  },
+  'IR': {
+    pattern: '### ### ####',
+    maxLength: 10,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 10)}`;
+    }
+  },
+  'TR': {
+    pattern: '### ### ## ##',
+    maxLength: 10,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+      if (digits.length <= 8) return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
+    }
+  },
+  'YE': {
+    pattern: '### ### ###',
+    maxLength: 9,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 9)}`;
+    }
+  },
+  'PS': {
+    pattern: '### ### ###',
+    maxLength: 9,
+    format: (input: string) => {
+      const digits = input.replace(/\D/g, '');
+      if (digits.length === 0) return '';
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 9)}`;
+    }
   }
-  return number;
 };
 
 interface Props {
@@ -74,125 +207,178 @@ const PhoneNumberInput: React.FC<Props> = ({
   defaultCountry = 'SA',
   editable = true
 }) => {
-  const [selectedCountry, setSelectedCountry] = useState<ICountry | null>(null);
   const [isValid, setIsValid] = useState(false);
   const [showError, setShowError] = useState(false);
-  const [formattedValue, setFormattedValue] = useState(value);
-  const isRTL = I18nManager.isRTL;
+  const [formattedValue, setFormattedValue] = useState('');
+  const [selectedCountryCode, setSelectedCountryCode] = useState<AllowedCountryCode>(defaultCountry as AllowedCountryCode);
+  
+  const phoneInput = useRef<PhoneInput>(null);
 
-  const handlePhoneNumberChange = (phoneNumber: string) => {
-    let formattedNumber = phoneNumber;
+  const formatPhoneNumber = (text: string, countryCode: AllowedCountryCode): string => {
+    const pattern = COUNTRY_PATTERNS[countryCode];
+    if (!pattern) return text;
     
-    // Apply Saudi format if it's a Saudi number
-    if (selectedCountry?.cca2 && isSaudiArabia(selectedCountry.cca2)) {
-      formattedNumber = formatSaudiNumber(phoneNumber);
+    // Get only digits and limit to maxLength
+    const digits = text.replace(/\D/g, '').slice(0, pattern.maxLength);
+    return pattern.format(digits);
+  };
+
+  const handlePhoneNumberChange = (text: string) => {
+    // Get current cursor position to maintain it after formatting
+    const currentLength = formattedValue.length;
+    
+    // Extract digits only
+    const digits = text.replace(/\D/g, '');
+    const pattern = COUNTRY_PATTERNS[selectedCountryCode];
+    
+    if (!pattern) return;
+    
+    // Don't allow more digits than the pattern allows
+    if (digits.length > pattern.maxLength) {
+      return;
     }
     
-    setFormattedValue(formattedNumber);
+    // Format the number according to country pattern
+    const formatted = pattern.format(digits);
+    
+    // Update state immediately for real-time formatting
+    setFormattedValue(formatted);
+    
+    // Validate and call parent callback
+    validateAndCallback(digits, formatted);
+  };
 
+  const validateAndCallback = (digits: string, formatted: string) => {
     try {
-      const countryCode = selectedCountry?.cca2 || defaultCountry;
-      // Remove spaces for validation
-      const numberForValidation = formattedNumber.replace(/\s/g, '');
-      const isValidNumber = isValidPhoneNumber(numberForValidation, countryCode as CountryCode);
+      const pattern = COUNTRY_PATTERNS[selectedCountryCode];
+      
+      // Check if we have the minimum required digits and validate with libphonenumber
+      const callingCode = getCountryCallingCode(selectedCountryCode as CountryCode);
+      const fullNumberForValidation = `+${callingCode}${digits}`;
+      
+      // Consider valid if it matches the expected length and passes libphonenumber validation
+      const isCompleteLength = digits.length === pattern.maxLength;
+      const isValidNumber = digits.length > 0 && isCompleteLength && isValidPhoneNumber(fullNumberForValidation);
+      
       setIsValid(isValidNumber);
-      setShowError(formattedNumber.length > 0 && !isValidNumber);
+      setShowError(digits.length > 0 && !isValidNumber && digits.length >= pattern.maxLength);
+      
       onChangePhoneNumber({
-        phoneNumber: formattedNumber,
+        phoneNumber: formatted,
         isValid: isValidNumber,
-        countryCode: countryCode,
-        fullNumber: `${selectedCountry?.callingCode || ''}${formattedNumber}`.replace(/^\++/, '+').replace(/\s/g, '')
+        countryCode: selectedCountryCode,
+        fullNumber: fullNumberForValidation
       });
     } catch (error) {
+      console.log('Validation error:', error);
+      const hasDigits = digits.length > 0;
       setIsValid(false);
-      setShowError(formattedNumber.length > 0);
+      setShowError(hasDigits);
       onChangePhoneNumber({
-        phoneNumber: formattedNumber,
+        phoneNumber: formatted,
         isValid: false,
-        countryCode: selectedCountry?.cca2 || defaultCountry,
-        fullNumber: formattedNumber
+        countryCode: selectedCountryCode,
+        fullNumber: `+${getCountryCallingCode(selectedCountryCode as CountryCode)}${digits}`
       });
     }
   };
 
+  const handleCountryChange = (country: any) => {
+    const newCountryCode = country.cca2?.toUpperCase() as AllowedCountryCode;
+    
+    // Only allow countries in our allowed list
+    if (ALLOWED_COUNTRIES.includes(newCountryCode)) {
+      setSelectedCountryCode(newCountryCode);
+      
+      // Clear current value when country changes or reformat if there's existing text
+      if (formattedValue) {
+        const digits = formattedValue.replace(/\D/g, '');
+        const newFormatted = formatPhoneNumber(digits, newCountryCode);
+        setFormattedValue(newFormatted);
+        validateAndCallback(digits, newFormatted);
+      }
+    }
+  };
+
+  // Handle external value changes
+  useEffect(() => {
+    if (value !== formattedValue) {
+      const formatted = formatPhoneNumber(value, selectedCountryCode);
+      setFormattedValue(formatted);
+      if (value) {
+        const digits = value.replace(/\D/g, '');
+        validateAndCallback(digits, formatted);
+      }
+    }
+  }, [value]);
+
   // Update formatting when country changes
   useEffect(() => {
-    if (value && selectedCountry?.cca2 && isSaudiArabia(selectedCountry.cca2)) {
-      const formatted = formatSaudiNumber(value);
-      setFormattedValue(formatted);
-    } else {
-      setFormattedValue(value);
+    if (formattedValue) {
+      const digits = formattedValue.replace(/\D/g, '');
+      const newFormatted = formatPhoneNumber(digits, selectedCountryCode);
+      if (newFormatted !== formattedValue) {
+        setFormattedValue(newFormatted);
+        validateAndCallback(digits, newFormatted);
+      }
     }
-  }, [selectedCountry, value]);
+  }, [selectedCountryCode]);
+
+  const currentPattern = COUNTRY_PATTERNS[selectedCountryCode];
 
   return (
     <View style={[styles.container, containerStyle]}>
       <View style={[
         styles.inputContainer,
-        showError && styles.inputError,
-        isRTL ? styles.inputContainerRTL : styles.inputContainerLTR
+        showError && styles.inputError
       ]}>
         <PhoneInput
+          ref={phoneInput}
           value={formattedValue}
-          onChangePhoneNumber={handlePhoneNumberChange}
-          selectedCountry={selectedCountry}
-          onChangeSelectedCountry={setSelectedCountry}
-          placeholderTextColor="#999999"
-          placeholder={placeholder || "Enter phone number"}
-          style={[styles.input, inputStyle]}
-          defaultCountry={defaultCountry as any}
-          showOnly={ALLOWED_COUNTRIES}
+          defaultCode={selectedCountryCode}
+          layout="first"
+          onChangeText={handlePhoneNumberChange}
+          onChangeCountry={handleCountryChange}
+          placeholder={placeholder || currentPattern.pattern}
+          withDarkTheme={false}
+          withShadow={false}
+          autoFocus={false}
           disabled={!editable}
-          rtl={isRTL}
-          editable={editable}
-          phoneInputStyles={{
-            container: {
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              backgroundColor: '#FFFFFF',
-              borderWidth: 0,
-            },
-            flagContainer: {
-              [isRTL ? 'borderLeftWidth' : 'borderRightWidth']: 1,
-              borderColor: '#E0E0E0',
-              backgroundColor: '#FFFFFF',
-              height: '100%',
-              borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingLeft: 0,
-              paddingRight: 10,
-            },
-            input: {
-              textAlign: 'left',
-              paddingRight: Platform.OS === 'ios' ? 8 : 0,
-              writingDirection: 'ltr',
-              height: '100%',
-              padding: 0,
-              margin: 0,
-              backgroundColor: '#FFFFFF',
-              borderWidth: 0,
-            },
-            callingCode: {
-              ...globalTextStyles.bodySmall,
-              color: '#000000',
-              marginHorizontal: 8,
-              textAlignVertical: 'center',
-            }
+          // includeCountryCode={true}
+          // withFlag={true}
+          containerStyle={styles.phoneContainer}
+          textContainerStyle={styles.textContainer}
+          textInputStyle={[styles.textInput, inputStyle]}
+          codeTextStyle={styles.codeText}
+          flagButtonStyle={styles.flagButton}
+          countryPickerButtonStyle={styles.countryPicker}
+          filterProps={{
+            placeholder: 'Search country...'
           }}
-          modalStyles={{
-            modal: {
-              backgroundColor: '#FFFFFF',
-            },
-            searchInput: {
-              textAlign: 'left',
+          textInputProps={{
+            value: formattedValue,
+            onChangeText: handlePhoneNumberChange,
+            maxLength: currentPattern.maxLength + 5,
+            keyboardType: 'phone-pad',
+            returnKeyType: 'done',
+            textAlign: 'left',
+            style: {
               writingDirection: 'ltr',
-              height: 50,
+              textAlign: 'left',
+              fontSize: 14,
             }
           }}
         />
       </View>
+      
+      {/* Show pattern hint when empty and no error */}
+      {!showError && !formattedValue && (
+        <Text style={styles.patternHint}>
+          Format: {currentPattern.pattern}
+        </Text>
+      )}
+      
+      {/* Show error */}
       {showError && (
         <Text style={[styles.errorText, errorStyle]}>
           {errorText}
@@ -215,26 +401,61 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  inputContainerRTL: {
-    flexDirection: 'row-reverse',
-  },
-  inputContainerLTR: {
-    flexDirection: 'row',
-  },
   inputError: {
     borderColor: '#FF3B30',
   },
-  input: {
+  phoneContainer: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  textContainer: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderRadius: 0,
+    paddingVertical: 0,
+    height: '100%',
+  },
+  textInput: {
     ...globalTextStyles.bodySmall,
     color: '#000000',
-    flex: 1,
+    height: '100%',
     textAlign: 'left',
+    writingDirection: 'ltr',
+    fontSize: 14,
+    paddingLeft: 10,
+  },
+  codeText: {
+    ...globalTextStyles.bodySmall,
+    color: '#000000',
+    textAlign: 'left',
+    writingDirection: 'ltr',
+    fontSize: 14,
+  },
+  flagButton: {
+    backgroundColor: 'transparent',
+    borderRightWidth: 1,
+    borderRightColor: '#E0E0E0',
+    paddingRight: 10,
+    height: '100%',
+  },
+  countryPicker: {
+    backgroundColor: 'transparent',
+    height: '100%',
   },
   errorText: {
     ...globalTextStyles.caption,
     color: '#FF3B30',
     marginTop: 4,
+    fontSize: 12,
+  },
+  patternHint: {
+    ...globalTextStyles.caption,
+    color: '#999999',
+    marginTop: 4,
+    fontSize: 12,
   },
 });
 
-export default PhoneNumberInput; 
+export default PhoneNumberInput;
