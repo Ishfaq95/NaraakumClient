@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
@@ -11,33 +11,43 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { profileService } from '../../../services/api/ProfileService';
 import { useSelector } from 'react-redux';
 
-const ReservationReceivedItemRender = ({ item, onClickOrderDetails }: any) => {
+const ReservationReceivedItemRender = ({ item, onClickOrderDetails, getUpdatedOrders }: any) => {
     const { t } = useTranslation();
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const user = useSelector((state: any) => state.root.user.user);
-    const handleAddMoreServices = () => {
+    
+    const handleAddMoreServices = useCallback(() => {
         navigation.navigate(ROUTES.AppNavigator, {
             screen: ROUTES.HomeStack,
             params: {
                 screen: ROUTES.Services,
             }
         });
-    }
+    }, [navigation]);
 
-    const handleDeleteOrder = async (item: any) => {
+    const handleDeleteOrder = useCallback(async (orderItem: any) => {
         const payload = {
             "UserLoginInfoId": user?.Id,
-            "OrderId": item?.OrderID,
+            "OrderId": orderItem?.OrderID,
         }
 
         const response = await profileService.deleteOrderAddedByServiceProvider(payload);
         if (response?.ResponseStatus?.STATUSCODE == 200) {
-            
+            getUpdatedOrders();
         }
-        console.log("response===>", response);
-    }
-    
-    return (
+        
+    }, [user?.Id]);
+
+    const handleOrderDetails = useCallback(() => {
+        onClickOrderDetails(item);
+    }, [onClickOrderDetails, item]);
+
+    const formattedDate = useMemo(() => moment(item?.OrderDate).format('DD/MM/YYYY'), [item?.OrderDate]);
+    const totalPriceText = useMemo(() => `${item?.TotalPrice} ${t('sar')}`, [item?.TotalPrice, t]);
+    const showDeleteButton = useMemo(() => item?.CatOrderStatusId == '22', [item?.CatOrderStatusId]);
+    const showAddMoreButton = useMemo(() => item?.CatOrderStatusId == '22', [item?.CatOrderStatusId]);
+
+    return useMemo(() => (
         <View style={styles.card}>
             {/* Top Row: Image and Info */}
             <View style={styles.row}>
@@ -45,7 +55,7 @@ const ReservationReceivedItemRender = ({ item, onClickOrderDetails }: any) => {
                     <Text style={styles.label}>اسم المستفيد</Text>
                     <Text style={styles.beneficiaryName}>{item?.PatientFullnameSlang}</Text>
                 </View>
-                {item?.CatOrderStatusId == '22' && <TouchableOpacity onPress={() => handleDeleteOrder(item)} style={{}}>
+                {showDeleteButton && <TouchableOpacity onPress={() => handleDeleteOrder(item)} style={{}}>
                     <MaterialCommunityIcons name="delete" size={24} color="red" />
                 </TouchableOpacity>}
             </View>
@@ -63,8 +73,7 @@ const ReservationReceivedItemRender = ({ item, onClickOrderDetails }: any) => {
                     <FontAwesome5 name="user-md" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={styles.infoText}>تاريخ الاستلام</Text>
                 </View>
-                <Text style={styles.infoText}>{moment(item?.OrderDate).format('DD/MM/YYYY')}</Text>
-
+                <Text style={styles.infoText}>{formattedDate}</Text>
             </View>
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
@@ -85,20 +94,32 @@ const ReservationReceivedItemRender = ({ item, onClickOrderDetails }: any) => {
                     <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={styles.infoText}>اجمالى الفاتورة</Text>
                 </View>
-                <Text style={styles.infoText}>{`${item?.TotalPrice} ${t('sar')}`}</Text>
+                <Text style={styles.infoText}>{totalPriceText}</Text>
             </View>
 
             {/* Buttons */}
             <View style={styles.buttonRow}>
-                {item?.CatOrderStatusId == '22' && <TouchableOpacity onPress={handleAddMoreServices} style={styles.filledBtn}>
+                {showAddMoreButton && <TouchableOpacity onPress={handleAddMoreServices} style={styles.filledBtn}>
                     <Text style={styles.filledBtnText}>إضافة مزيد من الخدمات</Text>
                 </TouchableOpacity>}
-                <TouchableOpacity onPress={() => onClickOrderDetails(item)} style={[styles.filledBtn]}>
+                <TouchableOpacity onPress={handleOrderDetails} style={[styles.filledBtn]}>
                     <Text style={styles.filledBtnText}>التفاصيل / اتمام الحجز</Text>
                 </TouchableOpacity>
             </View>
         </View>
-    );
+    ), [
+        item?.PatientFullnameSlang,
+        item?.OrderID,
+        item?.CPFullnameSlang,
+        item?.TotalServices,
+        formattedDate,
+        totalPriceText,
+        showDeleteButton,
+        showAddMoreButton,
+        handleDeleteOrder,
+        handleAddMoreServices,
+        handleOrderDetails
+    ]);
 }
 
 const styles = StyleSheet.create({

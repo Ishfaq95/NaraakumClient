@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, ScrollView, ActivityIndicator } from 'react-native'
 import Header from '../../components/common/Header';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigation } from '@react-navigation/native';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
 import { ROUTES } from '../../shared/utils/routes';
@@ -16,19 +16,25 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const ReservationReceivedScreen = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [isLoading, setIsLoading] = useState(false);
   const [cpAddedOrders, setCpAddedOrders] = useState([]);
-  const [orderDetailsByServiceProvider, setOrderDetailsByServiceProvider] = useState<any>({});
+  const [orderDetailsByServiceProvider, setOrderDetailsByServiceProvider] = useState<any>();
   const user = useSelector((state: RootState) => state.root.user.user);
   const [openBottomSheetCompleteOrder, setOpenBottomSheetCompleteOrder] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>({});
+  const [isLoadingOrderDetails, setIsLoadingOrderDetails] = useState(false);
 
   useEffect(() => {
     getCpAddedOrders();
   }, []);
 
+  console.log("selectedOrder===>", selectedOrder);
+
   const getOrderDetailsAddedByServiceProvider = async (item: any) => {
     try {
+      setIsLoadingOrderDetails(true);
+      setOrderDetailsByServiceProvider({});
       const payload = {
         "OrderId": item?.OrderID,
         "UserLoginInfoId": item?.OrderBycareProviderID
@@ -39,6 +45,8 @@ const ReservationReceivedScreen = () => {
       }
     } catch (error) {
       console.log("error===>", error);
+    } finally {
+      setIsLoadingOrderDetails(false);
     }
   }
 
@@ -80,11 +88,19 @@ const ReservationReceivedScreen = () => {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   }
 
-  const handleClickOrderDetails = (item: any) => {
+  const handleClickOrderDetails = useCallback((item: any) => {
+    setSelectedOrder(item);
     getOrderDetailsAddedByServiceProvider(item);
     setOpenBottomSheetCompleteOrder(true);
+  }, []);
 
-  }
+  const renderItem = useCallback(({ item }: any) => (
+    <ReservationReceivedItemRender 
+      item={item} 
+      onClickOrderDetails={handleClickOrderDetails} 
+      getUpdatedOrders={getCpAddedOrders}
+    />
+  ), [handleClickOrderDetails]);
 
   const handleClickPayAndPay = () => {
     navigation.navigate(ROUTES.AppNavigator, {
@@ -111,12 +127,23 @@ const ReservationReceivedScreen = () => {
 
           <FlatList
             data={cpAddedOrders}
-            renderItem={({ item }: any) => <ReservationReceivedItemRender item={item} onClickOrderDetails={handleClickOrderDetails} />}
-            keyExtractor={(item) => getUniqueId()}
+            renderItem={renderItem}
+            keyExtractor={(item: any) => item?.OrderID?.toString() || Math.random().toString()}
             style={{ width: '100%', }}
-            ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-              <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{t('no_addresses')}</Text>
-            </View>}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            initialNumToRender={5}
+            getItemLayout={(data, index) => ({
+              length: 200, // Approximate height of each item
+              offset: 200 * index,
+              index,
+            })}
+            ListEmptyComponent={useMemo(() => () => (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
+                <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{t('no_addresses')}</Text>
+              </View>
+            ), [t])}
           />
         </View>
       </View>
@@ -128,28 +155,36 @@ const ReservationReceivedScreen = () => {
         height={'80%'}
         backdropClickable={false}
         showHandle={false} >
-        <View style={{ backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
-          <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>معلومات الحجز</Text>
-            <TouchableOpacity onPress={() => setOpenBottomSheetCompleteOrder(false)}>
-              <AntDesign name="close" size={20} color="#000" />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <ScrollView style={{ flex: 1 }}>
-          <View style={{ flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 10, }}>
-            {orderDetailsByServiceProvider?.OrderDetail?.map((item: any) => (
-              <>
+        {isLoadingOrderDetails ? <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
+          <ActivityIndicator size="large" color="#000" />
+        </View> :
+          <>
+            <View style={{ backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+              <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+                <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>معلومات الحجز</Text>
+                <TouchableOpacity onPress={() => setOpenBottomSheetCompleteOrder(false)}>
+                  <AntDesign name="close" size={20} color="#000" />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <ScrollView style={{ flex: 1 }}>
+              <View style={{ flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 10, }}>
                 <View style={styles.detailsHeader}>
                   <Text style={styles.detailsHeaderText}>الخدمات المختارة (1)</Text>
                 </View>
-                <View style={styles.selectedServiceRow}>
-                  {item?.CatCategoryId == "42"
-                    ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
-                    : <Text style={styles.selectedServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
-                  }
-                  <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>1</Text></View>
-                </View>
+                {orderDetailsByServiceProvider?.OrderDetail?.map((item: any) => (
+                  <>
+
+                    <View style={styles.selectedServiceRow}>
+                      {item?.CatCategoryId == "42"
+                        ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
+                        : <Text style={styles.selectedServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
+                      }
+                      <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>1</Text></View>
+                    </View>
+
+                  </>
+                ))}
                 {/* Patient Information */}
                 <View style={{ paddingBottom: 10, width: '100%', backgroundColor: '#fff', borderRadius: 10, marginBottom: 10 }}>
                   <View style={{ height: 45, width: '100%', backgroundColor: '#e4f1ef', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 10 }}>
@@ -158,27 +193,27 @@ const ReservationReceivedScreen = () => {
                   </View>
                   <View style={{ paddingTop: 5, width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>الأسم</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{item.FullNameSlang}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.FullNameSlang}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>صلة القرابة</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{item.RelationSLang}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.RelationSLang}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>الاقامة</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{item.CatNationalityId == 213 ? 'مواطن' : 'مقيم'}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.CatNationalityId == 213 ? 'مواطن' : 'مقيم'}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>رقم الهوية</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{item.IDNumber}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.IDNumber}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>العمر</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{item.Age}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.Age}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>الجنس</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{item.Gender == 1 ? 'ذكر' : 'أنثى'}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.Gender == 1 ? 'ذكر' : 'أنثى'}</Text>
                   </View>
                 </View>
                 {/* payment Information */}
@@ -188,29 +223,30 @@ const ReservationReceivedScreen = () => {
                   </View>
                   <View style={{ paddingTop: 5, width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>اجمالى الخدمات</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${item?.PriceBySP?.toFixed(2)}`}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.PriceBySP, 0)?.toFixed(2)}`}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>الضريبة (15%)</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${item?.TaxAmt?.toFixed(2)}`}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.TaxAmt, 0)?.toFixed(2)}`}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>المجموع</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${item?.PriceCharged?.toFixed(2)}`}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.PriceCharged, 0)?.toFixed(2)}`}</Text>
                   </View>
 
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', marginTop: 20, paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>اجمالى الفاتورة</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${item?.PriceCharged?.toFixed(2)}`}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.PriceCharged, 0)?.toFixed(2)}`}</Text>
                   </View>
                 </View>
-                <TouchableOpacity onPress={handleClickPayAndPay} style={{ width: '94%', marginHorizontal: 10, height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
+                <TouchableOpacity disabled={selectedOrder?.CatOrderStatusId != 22} onPress={handleClickPayAndPay} style={[{ width: '94%', marginHorizontal: 10, height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }, selectedOrder?.CatOrderStatusId != 22 && { backgroundColor: '#ccc' }]}>
                   <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>الدفع والسداد</Text>
                 </TouchableOpacity>
-              </>
-            ))}
-          </View>
-        </ScrollView>
+              </View>
+            </ScrollView>
+          </>
+        }
+
       </CustomBottomSheet>
     </SafeAreaView>
   )

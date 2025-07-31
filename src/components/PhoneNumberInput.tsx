@@ -325,6 +325,7 @@ const PhoneNumberInput: React.FC<Props> = ({
   }, [selectedCountryCode]);
 
   const currentPattern = COUNTRY_PATTERNS[selectedCountryCode];
+  
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -344,10 +345,10 @@ const PhoneNumberInput: React.FC<Props> = ({
           withShadow={false}
           autoFocus={false}
           disabled={!editable}
-          // includeCountryCode={true}
-          // withFlag={true}
-          containerStyle={styles.phoneContainer}
-          textContainerStyle={styles.textContainer}
+          
+          disableArrowIcon={false}
+          containerStyle={[styles.phoneContainer]}
+          textContainerStyle={[styles.textContainer]}
           textInputStyle={[styles.textInput, inputStyle]}
           codeTextStyle={styles.codeText}
           flagButtonStyle={styles.flagButton}
@@ -363,8 +364,8 @@ const PhoneNumberInput: React.FC<Props> = ({
             returnKeyType: 'done',
             textAlign: 'left',
             style: {
-              writingDirection: 'ltr',
-              textAlign: 'left',
+              writingDirection: 'rtl',
+              textAlign: 'right',
               fontSize: 14,
             }
           }}
@@ -400,6 +401,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    // paddingRight: 10,
   },
   inputError: {
     borderColor: '#FF3B30',
@@ -409,6 +411,8 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: 'transparent',
     borderWidth: 0,
+    flexDirection: 'row-reverse', // Force flag to left side
+    alignItems: 'center',
   },
   textContainer: {
     backgroundColor: 'transparent',
@@ -416,13 +420,17 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     paddingVertical: 0,
     height: '100%',
+    flexDirection: 'row-reverse',
+    flex: 1,
+    marginLeft: 0, // Ensure no margin pushes it right
+    alignItems: 'center',
   },
   textInput: {
     ...globalTextStyles.bodySmall,
     color: '#000000',
     height: '100%',
     textAlign: 'left',
-    writingDirection: 'ltr',
+    writingDirection: 'rtl',
     fontSize: 14,
     paddingLeft: 10,
   },
@@ -430,7 +438,7 @@ const styles = StyleSheet.create({
     ...globalTextStyles.bodySmall,
     color: '#000000',
     textAlign: 'left',
-    writingDirection: 'ltr',
+    writingDirection: 'rtl',
     fontSize: 14,
   },
   flagButton: {
@@ -439,10 +447,17 @@ const styles = StyleSheet.create({
     borderRightColor: '#E0E0E0',
     paddingRight: 10,
     height: '100%',
+    minWidth: 80, // Ensure enough space for flag and code
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   countryPicker: {
     backgroundColor: 'transparent',
     height: '100%',
+    minWidth: 80, // Ensure enough space
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorText: {
     ...globalTextStyles.caption,
