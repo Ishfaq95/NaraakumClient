@@ -108,7 +108,7 @@ const BeneficiariesScreen = () => {
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{t('beneficiaries')}</Text>
+        <Text style={styles.headerTitle}>{'المستفيدون'}</Text>
       }
       leftComponent={
         <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
@@ -304,8 +304,6 @@ const BeneficiariesScreen = () => {
     try {
       setIsDownloading(true);
 
-      console.log('Generating PDF for medical data:', medicalData);
-
       // Create HTML content for the medical history PDF using the provided data
       const htmlContent = createMedicalHistoryHTML(medicalData);
 
@@ -318,11 +316,7 @@ const BeneficiariesScreen = () => {
         directory: 'Documents',
       };
 
-      console.log('PDF options:', options);
-
       const file = await RNHTMLtoPDF.convert(options);
-
-      console.log('PDF generated:', file);
 
       if (file.filePath) {
 
@@ -411,9 +405,7 @@ const BeneficiariesScreen = () => {
 
   const createMedicalHistoryHTML = (medicalData: any) => {
     const orderId = medicalData.OrderId || '';
-    const orderDate = medicalData.OrderDate ? moment(medicalData.OrderDate).format('DD/MM/YYYY') : '';
-
-    console.log('Creating HTML with medical data:', { orderId, orderDate, medicalData });
+    const orderDate = medicalData.OrderDate ? moment(medicalData.OrderDate).locale('en').format('DD/MM/YYYY') : '';
 
     return `
       <!DOCTYPE html>
@@ -575,7 +567,7 @@ const BeneficiariesScreen = () => {
         </View>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
           <Text style={[globalTextStyles.bodyMedium]}> تاريخ الطلب</Text>
-          <Text style={[globalTextStyles.bodyMedium]}>{moment(item.OrderDate).format('DD/MM/YYYY')}</Text>
+          <Text style={[globalTextStyles.bodyMedium]}>{moment(item.OrderDate).locale('en').format('DD/MM/YYYY')}</Text>
         </View>
 
         <TouchableOpacity onPress={() => HandleDownloadPress(item)} style={{ height: 40, width: '100%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 10 }}>
@@ -595,8 +587,8 @@ const BeneficiariesScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', paddingTop: 10 }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{`صلة القرابة: ${item.RelationshipTitleSlang}`}</Text>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{`تاريخ الإضافة : ${moment(item.CreatedDate).format('DD/MM/YYYY')}`}</Text>
+          <Text style={[globalTextStyles.bodyMedium, {  color: '#000' }]}>{`صلة القرابة: ${item.RelationshipTitleSlang}`}</Text>
+          <Text style={[globalTextStyles.bodyMedium, {  color: '#000' }]}>{`تاريخ الإضافة : ${moment(item.CreatedDate).locale('en').format('DD/MM/YYYY')}`}</Text>
         </View>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 20 }}>
           <TouchableOpacity onPress={() => HandleReportPress(item, 'report')} style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
@@ -666,7 +658,6 @@ const BeneficiariesScreen = () => {
         setTimeout(() => { getBeneficiaries(); }, 500);
       }
     } catch (error) {
-      console.log('error ', error);
 
     } finally {
       setIsLoading(false)
@@ -685,7 +676,6 @@ const BeneficiariesScreen = () => {
       setDeleteModal(false)
       setTimeout(() => { getBeneficiaries(); }, 500);
     } catch (error) {
-      console.log('error ', error);
 
     } finally {
       setIsLoading(false)
@@ -746,7 +736,7 @@ const BeneficiariesScreen = () => {
         backdropClickable={false}
         showHandle={false}
       >
-        <View style={{ flex: 1, backgroundColor: '#eff5f5' }}>
+        <View style={{ flex: 1, backgroundColor: '#eff5f5',borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
           <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
             <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{reportType == 'report' ? 'التقارير الطبية' : 'التاريخ المرضي'}</Text>
             <TouchableOpacity onPress={() => setOpenBottomSheetReport(false)}>

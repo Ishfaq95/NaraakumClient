@@ -10,8 +10,9 @@ import { useEffect, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { ROUTES } from "../../shared/utils/routes";
 import { globalTextStyles } from "../../styles/globalStyles";
-import { generatePayloadforOrderMainBeforePayment, generateUniqueId } from "../../shared/services/service";
+import { convert24HourToArabicTime, generatePayloadforOrderMainBeforePayment, generateUniqueId } from "../../shared/services/service";
 import FullScreenLoader from "../../components/FullScreenLoader";
+import { convertUTCToLocalDateTime } from "../../utils/timeUtils";
 
 const CartScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
@@ -43,6 +44,10 @@ const CartScreen = ({ navigation }: any) => {
             );
 
             if (existingIndex !== -1) {
+              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+              newItem.SchedulingTime = startTime.localTime;
+              newItem.SchedulingEndTime = endTime.localTime;
               // Replace existing item with new one
               const newItemObject = {
                 ItemUniqueId: generateUniqueId(),
@@ -51,6 +56,10 @@ const CartScreen = ({ navigation }: any) => {
               updatedCardItems[existingIndex] = newItemObject;
             } else {
               // Add new item if it doesn't exist
+              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+              newItem.SchedulingTime = startTime.localTime;
+              newItem.SchedulingEndTime = endTime.localTime;
               const newItemObject = {
                 ...newItem,
               }
@@ -100,13 +109,8 @@ const CartScreen = ({ navigation }: any) => {
     let displayTime = '';
 
     if (item.SchedulingDate && item.SchedulingTime) {
-      const datePart = item.SchedulingDate.split('T')[0];
-      const utcDateTime = moment.utc(`${datePart}T${item.SchedulingTime}:00Z`);
-      if (utcDateTime.isValid()) {
-        const localDateTime = utcDateTime.local();
-        displayDate = localDateTime.format('DD/MM/YYYY');
-        displayTime = localDateTime.format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
-      }
+        displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
+        displayTime = convert24HourToArabicTime(item.SchedulingTime);
     }
 
     return (
@@ -166,7 +170,6 @@ const CartScreen = ({ navigation }: any) => {
   }
 
   const handleCheckout = () => {
-    console.log("handleCheckout", CardArray);
     let selectedItem: any = CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId);
     let isAPICallNeeded = CardArray.find((item: any) => !item.OrderID && !item.OrderDetailId);
     const selectedUniqueId = selectedItem?.ItemUniqueId;
@@ -183,7 +186,6 @@ const CartScreen = ({ navigation }: any) => {
       });
     } else if (selectedUniqueId) {
       dispatch(setSelectedUniqueId(selectedUniqueId));
-      console.log("Need to add doctor", selectedUniqueId);
       navigation.navigate(ROUTES.AppNavigator, {
         screen: ROUTES.HomeStack,
         params: {

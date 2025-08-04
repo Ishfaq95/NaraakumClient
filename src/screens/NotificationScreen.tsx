@@ -51,7 +51,6 @@ const NotificationScreen = () => {
         if (response.ResponseStatus.STATUSCODE == 200) {
             getNotificationList();
         } else {
-            console.log('Failed to update notification');
         }
     }
 
@@ -91,7 +90,6 @@ const NotificationScreen = () => {
                     notifications.length + newNotifications.length;
 
                 const hasMore = totalLoaded < response.TotalRecord && newNotifications.length > 0;
-                console.log('Has more data:', hasMore, 'Total loaded:', totalLoaded, 'Total records:', response.TotalRecord);
                 setHasMoreData(hasMore);
             }
         } catch (error) {

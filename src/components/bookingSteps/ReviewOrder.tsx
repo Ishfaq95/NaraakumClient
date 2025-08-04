@@ -7,9 +7,9 @@ import { useTranslation } from 'react-i18next';
 import CommonRadioButton from '../../components/common/CommonRadioButton';
 import PhoneNumberInput from '../../components/PhoneNumberInput';
 import { countries } from '../../utils/countryData';
-import { addCardItem, setApiResponse } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, setApiResponse, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
 import { bookingService } from '../../services/api/BookingService';
-import { generatePayloadforOrderMainBeforePayment, generatePayloadforUpdateOrderMainBeforePayment, generateUniqueId } from '../../shared/services/service';
+import { convert24HourToArabicTime, generatePayloadforOrderMainBeforePayment, generatePayloadforUpdateOrderMainBeforePayment, generateUniqueId } from '../../shared/services/service';
 import { useDispatch, useSelector } from 'react-redux';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import moment from 'moment';
@@ -21,6 +21,7 @@ import RNFS from 'react-native-fs';
 // import { TrackPlayerService } from '../../services/TrackPlayerService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { globalTextStyles } from '../../styles/globalStyles';
+import { convertUTCToLocalDateTime } from '../../utils/timeUtils';
 
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
@@ -567,10 +568,20 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             );
 
             if (existingIndex !== -1) {
+              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+              newItem.SchedulingDate = startTime.localDate;
+              newItem.SchedulingTime = startTime.localTime;
+              newItem.SchedulingEndTime = endTime.localTime;
               // Replace existing item with new one
               updatedCardItems[existingIndex] = newItem;
             } else {
               // Add new item if it doesn't exist
+              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+              newItem.SchedulingDate = startTime.localDate;
+              newItem.SchedulingTime = startTime.localTime;
+              newItem.SchedulingEndTime = endTime.localTime;
               const newItemObject = {
                 ...newItem,
                 "ItemUniqueId": generateUniqueId(),
@@ -673,6 +684,8 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleBack = () => {
+    const lastItemSelected = CardArray[CardArray.length - 1];
+    dispatch(setSelectedUniqueId(lastItemSelected.ItemUniqueId));
     onPressBack();
   };
 
@@ -793,13 +806,8 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             let displayTime = '';
 
             if (item.SchedulingDate && item.SchedulingTime) {
-              const datePart = item.SchedulingDate.split('T')[0];
-              const utcDateTime = moment.utc(`${datePart}T${item.SchedulingTime}:00Z`);
-              if (utcDateTime.isValid()) {
-                const localDateTime = utcDateTime.local();
-                displayDate = localDateTime.format('DD/MM/YYYY');
-                displayTime = localDateTime.format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
-              }
+              displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
+        displayTime = convert24HourToArabicTime(item.SchedulingTime);
             }
 
             return (
@@ -1027,9 +1035,9 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
       {/* Buttons */}
       <View style={styles.BottomContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        {/* <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>{t('back')}</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={[styles.nextButton]}
           onPress={handleNext}
@@ -1225,7 +1233,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   nextButton: {
-    width: "64%",
+    width: "100%",
     height: 50,
     alignItems: "center",
     justifyContent: "center",

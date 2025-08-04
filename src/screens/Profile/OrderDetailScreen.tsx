@@ -539,18 +539,15 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       }
 
       const response = await profileService.getUserOrderDetail(payload);
-      console.log('response', response);
 
       if (response.ResponseStatus.STATUSCODE == 200) {
         const OrderDetailArray = response.UserOrders;
-        console.log('OrderDetailArray', OrderDetailArray);
         const groupedArray: any = groupArrayByUniqueIdAsArray(OrderDetailArray[0].OrderDetail);
         setShowGroupedArray(groupedArray);
         setCompleteOrderDetail(OrderDetailArray[0]);
       }
 
     } catch (error) {
-      console.log('error', error);
     }
   }
 
@@ -567,8 +564,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
         setVisitRecordList(VisitRecordList);
       }
 
-    } catch (error) {
-      console.log('error', error);
+    } catch (error) { 
     }
   }
 
@@ -757,8 +753,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     />
   );
 
-  console.log('completeOrderDetail', completeOrderDetail);
-
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
@@ -779,7 +773,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
         {selectedDoctor?.uniqueId && <ScrollView style={{ flex: 1 }}>
           {
             selectedDoctor?.items?.map((item: any, index: number) => {
-              console.log('item', item);
               let displayDate = '';
               let displayTime = '';
 
@@ -787,9 +780,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               if (item?.TaskMainId) {
                 visitRecord = visitRecordList.filter((visit: any) => visit.TaskMainId == item.TaskMainId);
               }
-
-              console.log('visitRecord', visitRecord);
-
 
               if (item.SchedulingDate && item.SchedulingTime) {
                 const datePart = item.SchedulingDate.split('T')[0];
@@ -1054,7 +1044,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                                     <Text style={styles.sessionInfoLabel}>تاريخ الزيارة</Text>
                                   </View>
                                   <View style={{ width: '70%' }}>
-                                    <Text style={styles.sessionInfoValue}>{moment(item.VisitDate).format('DD/MM/YYYY')}</Text>
+                                    <Text style={styles.sessionInfoValue}>{moment(item.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
                                   </View>
                                 </View>
                               </View>

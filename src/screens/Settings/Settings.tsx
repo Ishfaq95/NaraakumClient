@@ -67,13 +67,10 @@ const SettingsScreen = () => {
         "TimeUnitDuration": reminderMinutesAndHours
       }
 
-      console.log("payload", payload);
       const response = await settingService.updateReminderSetting(payload);
       if (response.ResponseStatus.STATUSCODE == 200) {
-        console.log("response", response);
       }
     } catch (error) {
-      console.log("error", error);
     } finally {
       setIsDataLoaded(true);
     }

@@ -207,8 +207,6 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
     const handleSlotSelect = useCallback((time: any) => {
         onSelectSlot(provider, time);
 
-        console.log("provider", availability)
-
         const tempCardArray = [...CardArray];
 
         provider.ServiceServe.map((item: any) => {
@@ -236,8 +234,7 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
 
             tempCardArray.push(Obj);
         })
-
-        console.log("tempCardArray", tempCardArray)
+        
         dispatch(addHomeDialysisCardItem(tempCardArray));
 
     }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);

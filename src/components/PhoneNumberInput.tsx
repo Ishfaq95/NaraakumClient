@@ -270,7 +270,6 @@ const PhoneNumberInput: React.FC<Props> = ({
         fullNumber: fullNumberForValidation
       });
     } catch (error) {
-      console.log('Validation error:', error);
       const hasDigits = digits.length > 0;
       setIsValid(false);
       setShowError(hasDigits);

@@ -35,8 +35,6 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
   const dispatch = useDispatch();
   const [orderId, setOrderId] = useState<any>(null);
 
-  console.log("selectedOrganization",selectedOrganization)
-
   useEffect(() => {
     if (serviceProviders.length > 0 && availability.length > 0) {
       getSlotsWithProvider()
@@ -126,7 +124,6 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
       const offered = await bookingService.getOfferedServicesListByCategory({ abc: category?.Id, Search: '' });
       dispatch(setServices(offered?.OfferedServices));
     } catch (error) {
-      console.error('Error fetching booking data:', error);
     }
   };
 
@@ -168,7 +165,6 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
 
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
-      console.error('Error fetching service providers:', error);
     } finally {
       setLoading(false);
     }
@@ -193,7 +189,6 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
       // Set initial availability for selected date
       filterAvailabilityForDate(date ? moment(date) : moment(), response?.SchedulingAvailability || []);
     } catch (error) {
-      console.error('Error fetching initial availability:', error);
     } finally {
       setLoader2(false);
     }
@@ -206,7 +201,6 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
   };
 
   const createOrderMainBeforePayment = async () => {
-    console.log("CardArray", CardArray)
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
@@ -214,8 +208,6 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
     }
 
     const response = await bookingService.createOrderMainBeforePayment(payload);
-
-    console.log("response", response)
 
     if (response.ResponseStatus.STATUSCODE == 200) {
       dispatch(addHomeDialysisCardItem([]));
@@ -232,8 +224,6 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
       "Files": generatePayloadForUploadMedicalhistoryReports(homeDialysisFilePaths)
     }
 
-    console.log("payload", payload)
-
     const response = await bookingService.UploadMedicalhistoryReports(payload);
 
     if(response.ResponseStatus.STATUSCODE == 200){
@@ -248,7 +238,6 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
     if (currentStep == 2) {
       const response = await createOrderMainBeforePayment()
       if(response){
-        console.log("response", response)
         setOrderId(response[0].OrderId)
         setCurrentStep(currentStep + 1)
       }

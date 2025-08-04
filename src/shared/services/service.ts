@@ -9,6 +9,7 @@ import i18next from 'i18next';
 import { store } from "../redux/store";
 import CryptoJS from 'crypto-js';
 import { encode as btoa } from 'base-64';
+import { convertLocalToUTCDateTime } from "../../utils/timeUtils";
 
 export const isTokenExpired = (expiresAt: any) => {
   return new Date() > new Date(expiresAt);
@@ -235,10 +236,58 @@ export const getDuration = (appointment: any) => {
   return `${durationInMinutes} ${i18next.t('1 ساعة')}`;
 }
 
+export const convertArabicTimeTo24Hour = (timeString: string): string => {
+  if (!timeString) return timeString;
+  
+  
+  // Remove any extra spaces and split by space
+  const parts = timeString.trim().split(' ');
+  if (parts.length < 2) {
+    return timeString; // If no AM/PM indicator, return as is
+  }
+  
+  const timePart = parts[0]; // e.g., "2:30"
+  const periodPart = parts[1]; // e.g., "ص" (ص for AM) or "م" (م for PM)
+  
+  
+  // Split time into hours and minutes
+  const [hours, minutes] = timePart.split(':').map(Number);
+  
+  let hour24 = hours;
+  
+  // Convert based on Arabic period indicators
+  // ص = صباح (morning/AM)
+  // م = مساء (evening/PM)
+  if (periodPart === 'ص') {
+    // AM - keep as is, but handle 12 AM case
+    if (hours === 12) {
+      hour24 = 0;
+    }
+  } else if (periodPart === 'م') {
+    // PM - add 12 hours, but handle 12 PM case
+    if (hours !== 12) {
+      hour24 = hours + 12;
+    }
+  } else {
+  }
+  
+  const result = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;    
+  
+  return result;
+};
+
+export const convert24HourToArabicTime = (timeString: string): string => {
+  if (!timeString) return timeString;
+  const [hours, minutes] = timeString.split(':').map(Number);
+  const period = hours >= 12 ? 'م' : 'ص';
+  const hour12 = hours % 12 || 12;
+  return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
+
 export const formatDate = (dateString: string) => {
   if (!dateString) return '';
   try {
-    return moment.utc(dateString).local().format('DD/MM/YYYY');
+    return moment.utc(dateString).local().locale("en").format('DD/MM/YYYY');
   } catch (error) {
     console.error('Error formatting date:', error);
     return dateString;
@@ -250,13 +299,13 @@ export const formatTime = (timeString: string) => {
   try {
     // If timeString is in ISO format
     if (timeString.includes('T')) {
-      return moment.utc(timeString).local().format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
+      return moment.utc(timeString).local().locale("en").format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
     }
 
     // If timeString is just time (HH:mm)
     const [hours, minutes] = timeString.split(':');
     const date = moment.utc().set({ hours: parseInt(hours), minutes: parseInt(minutes) });
-    return date.local().format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
+    return date.local().locale("en").format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
   } catch (error) {
     console.error('Error formatting time:', error);
     return timeString;
@@ -267,65 +316,10 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
   
   const selectedLocation = store.getState().root.booking.selectedLocation;
   const payload = CardArray.map((item: any) => {
-    console.log("item", item)
-    // Convert time from 12-hour format with Arabic AM/PM to 24-hour format
-    let schedulingTime = item.SchedulingTime;
-    if (schedulingTime) {
-      // Check if the time contains Arabic AM/PM indicators
-      if (schedulingTime.includes('ص')) {
-        // AM time - remove 'ص' and keep as is (already in 12-hour format)
-        schedulingTime = schedulingTime.replace('ص', '').trim();
-        // Convert to 24-hour format
-        const [hours, minutes] = schedulingTime.split(':');
-        const hour24 = parseInt(hours) === 12 ? 0 : parseInt(hours);
-        schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
-      } else if (schedulingTime.includes('م')) {
-        // PM time - remove 'م' and convert to 24-hour format
-        schedulingTime = schedulingTime.replace('م', '').trim();
-        const [hours, minutes] = schedulingTime.split(':');
-        const hour24 = parseInt(hours) === 12 ? 12 : parseInt(hours) + 12;
-        schedulingTime = `${hour24.toString().padStart(2, '0')}:${minutes}`;
-      }
-    }
-
     // Convert SchedulingDate and SchedulingTime to UTC
-    let schedulingDateUTC = item.SchedulingDate;
-    let schedulingTimeUTC = schedulingTime;
-    if (item.SchedulingDate && schedulingTime) {
-      try {
-        // Validate date format and create a proper date string
-        const dateStr = item.SchedulingDate;
-        const timeStr = schedulingTime;
-        
-        // Ensure we have valid date and time strings
-        if (dateStr && timeStr && dateStr.includes('-') && timeStr.includes(':')) {
-          // Create ISO string with proper format
-          const dateTimeString = `${dateStr}T${timeStr}:00`;
-          const localDateTime = new Date(dateTimeString);
-          
-          // Check if the date is valid
-          if (!isNaN(localDateTime.getTime())) {
-            schedulingDateUTC = localDateTime.toISOString().slice(0, 10); // 'YYYY-MM-DD' in UTC
-            schedulingTimeUTC = localDateTime.toISOString().slice(11, 16); // 'HH:mm' in UTC
-          } else {
-            console.warn('Invalid date/time combination:', dateStr, timeStr);
-            // Keep original values if conversion fails
-            schedulingDateUTC = item.SchedulingDate;
-            schedulingTimeUTC = schedulingTime;
-          }
-        } else {
-          console.warn('Invalid date or time format:', dateStr, timeStr);
-          // Keep original values if format is invalid
-          schedulingDateUTC = item.SchedulingDate;
-          schedulingTimeUTC = schedulingTime;
-        }
-      } catch (error) {
-        console.error('Error converting date/time to UTC:', error);
-        // Keep original values if conversion fails
-        schedulingDateUTC = item.SchedulingDate;
-        schedulingTimeUTC = schedulingTime;
-      }
-    }
+    const { utcDate, utcTime } = convertLocalToUTCDateTime(item.SchedulingDate, item.SchedulingTime);
+    let schedulingDateUTC =  utcDate;
+    let schedulingTimeUTC = utcTime;
 
     return ({
       "OrderDetailId": item.OrderDetailId || 0,
@@ -351,12 +345,15 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
   })
 
   return payload
-
 }
 
 export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) => {
+  
 
   const payload = CardArray.map((item: any) => {
+    const { utcDate, utcTime } = convertLocalToUTCDateTime(item.SchedulingDate, item.SchedulingTime);
+    let schedulingDateUTC =  utcDate;
+    let schedulingTimeUTC = utcTime;
     return ({
       "OrderDetailId": item.OrderDetailId,
       "OrganizationId": item.OrganizationId,
@@ -370,8 +367,8 @@ export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) =
       "OrganizationSpecialtiesId": item.OrganizationSpecialtiesId || 0,
       "OrganizationPackageId": item.OrganizationPackageId || 0,
       "Quantity": item.Quantity,
-      "SchedulingDate": item.SchedulingDate,
-      "SchedulingTime": item.SchedulingTime,
+      "SchedulingDate": schedulingDateUTC,
+      "SchedulingTime": schedulingTimeUTC,
       "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId || 0,
       "AvailabilityId": item.AvailabilityId,
       "PatientUserProfileInfoId": item.PatientUserProfileInfoId,
@@ -436,7 +433,6 @@ export function encryptText(text:any, key:any) {
 
 export const generatePayloadForUploadMedicalhistoryReports = (homeDialysisFilePaths: any) => {
   const payload = homeDialysisFilePaths.map((item: any) => {
-    console.log("item", item)
     let ResourceCategoryId = '2';
     let fileType = item.split('.').pop();
       if (fileType == 'pdf' || fileType == 'PDF') ResourceCategoryId = '4';
@@ -453,7 +449,6 @@ export const generatePayloadForUploadMedicalhistoryReports = (homeDialysisFilePa
         ResourceCategoryId = '1';
 
 
-    console.log("ResourceCategoryId", ResourceCategoryId)
     return ({
       "CatFileTypeId": ResourceCategoryId,
       "CatPatientUploadedFileTypeId": 8,
@@ -462,6 +457,5 @@ export const generatePayloadForUploadMedicalhistoryReports = (homeDialysisFilePa
     })
   })
 
-  console.log("payload", payload)
   return payload
 }

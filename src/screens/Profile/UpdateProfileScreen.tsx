@@ -179,7 +179,6 @@ const UpdateProfileScreen = () => {
   const defaultPhoneNumber = phoneInfo.phoneNumber;
 
   useEffect(() => {
-    console.log("user", user)
     setName(user?.FullnameSlang);
     setEmail(user?.Email);
     setAge(user?.Age);
@@ -266,7 +265,6 @@ const UpdateProfileScreen = () => {
         "UserLoginInfoId": user?.Id,
       }
 
-      console.log("payload", payload)
       const response = await profileService.updateUserProfile(payload)
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
@@ -279,7 +277,6 @@ const UpdateProfileScreen = () => {
 
       }
     } catch (error: any) {
-      console.log('error', error);
     } finally {
       setIsUploading(false);
     }
@@ -443,7 +440,6 @@ const UpdateProfileScreen = () => {
       }
 
     } catch (error) {
-      console.log("error in user updated email", error);
     } finally {
       setIsUploading(false);
     }
@@ -471,7 +467,6 @@ const UpdateProfileScreen = () => {
       }
 
     } catch (error) {
-      console.log("error in user updated phone", error);
     } finally {
       setIsUploading(false)
     }
@@ -485,10 +480,8 @@ const UpdateProfileScreen = () => {
       }
 
       const response = await profileService.resendOtp(payload)
-      console.log("response resend otp", response);
 
     } catch (error) {
-      console.log("error in resend otp", error);
     } finally {
       setIsUploading(false)
     }
@@ -507,9 +500,7 @@ const UpdateProfileScreen = () => {
       setOpenVerifyBottomSheet(false)
       setOtpValue('')
 
-      console.log("response Verify User Data", response);
     } catch (error) {
-      console.log("error in user verify data", error);
     } finally {
       setIsUploading(false)
     }

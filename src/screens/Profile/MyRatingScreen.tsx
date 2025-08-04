@@ -54,7 +54,6 @@ const MyRatingScreen = () => {
       }
       const response = await profileService.getBeneficiaries(payload);
 
-      console.log("Response", response);
       if (response?.ResponseStatus?.STATUSCODE == 200) {
         const patients = response?.RefferalUserList?.map((item: any) => ({
           label: item.FullnameSlang,
@@ -92,9 +91,6 @@ const MyRatingScreen = () => {
         navigation.goBack();
       };
 
-      console.log("Patient Details", patientDetails);
-      console.log("Comment List", commentList);
-
     const renderHeader = () => (
         <Header
           centerComponent={
@@ -128,7 +124,7 @@ const MyRatingScreen = () => {
           </View>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{item.OrganizationTitleSlang}</Text>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left", paddingVertical: 10 }]}>{item.Comment}</Text>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{moment(item.DateAdded).format('DD/MM/YYYY')}</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{moment(item.DateAdded).locale('en').format('DD/MM/YYYY')}</Text>
         </View>
         )
     }

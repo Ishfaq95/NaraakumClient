@@ -96,8 +96,6 @@ const UploadFileStep = ( ) => {
       formData.append('ResourceCategory', ResourceCategoryId);
       formData.append('ResourceType', '6');
 
-      console.log('token', mediaToken)
-
       const response = await fetch(url, {
         method: 'POST',
         body: formData,
@@ -147,8 +145,6 @@ const UploadFileStep = ( ) => {
       setUploadProgress(0);
     }
   };
-
-  console.log('filePaths', filePaths)
 
   return (
     <View style={{ flex: 1 }}>

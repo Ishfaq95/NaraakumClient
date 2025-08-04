@@ -27,7 +27,6 @@ const CurrentVisitAppointments = ({ userId }: any) => {
                 "OrderStatusId": null
             }
             const response = await profileService.getVisitOrderList(payload);
-            console.log("current visit appointments", response);
             if (response.ResponseStatus.STATUSCODE == 200) {
                 setCurrentVisitAppointments(response.UserOrders);
             }

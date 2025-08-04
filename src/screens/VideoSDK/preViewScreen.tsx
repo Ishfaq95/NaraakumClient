@@ -172,7 +172,12 @@ const PreViewScreen = ({navigation, route}: any) => {
 
   const handleBackPress = async () => {
     await disposeVideoTrack();
-    navigation.navigate(ROUTES.HomeStack);
+    navigation.navigate(ROUTES.AppNavigator, {
+      screen: ROUTES.HomeStack,
+      params: {
+        screen: ROUTES.AppointmentListScreen,
+      }
+    });
   };
 
   const getAudioTrack = async () => {

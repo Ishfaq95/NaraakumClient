@@ -27,7 +27,6 @@ const CancelledVisitAppointments = ({ userId }: any) => {
                 "OrderStatusId": 9
             }
             const response = await profileService.getVisitOrderList(payload);
-            console.log("current visit appointments", response);
             if (response.ResponseStatus.STATUSCODE == 200) {
                 setCancelledVisitAppointments(response.UserOrders);
             }

@@ -20,7 +20,6 @@ const MyAddressesScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const user = useSelector((state: RootState) => state.root.user.user);
-  console.log('user--', user);
 
   const [addresses, setAddresses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -123,7 +122,6 @@ const MyAddressesScreen = () => {
     const response = await bookingService.AddUserLocation(payload)
     setOpenBottomSheet(false);
     } catch (error) {
-      console.log('error', error);
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +165,6 @@ const MyAddressesScreen = () => {
         city: '',
       })
       } catch (error) {
-        console.log('error', error);
       } finally {
         setIsLoading(false);
       }

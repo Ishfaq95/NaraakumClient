@@ -12,7 +12,7 @@ import { MediaBaseURL } from '../../shared/utils/constants';
 import LeftArrow from '../../assets/icons/LeftArrow';
 import RightArrow from '../../assets/icons/RightArrow';
 import ServiceProviderCard from './ServiceProviderCard';
-import { generateSlots, generateSlotsForDate, getUniqueAvailableSlots } from '../../utils/timeUtils';
+import { convertUTCToLocalDateTime, generateSlots, generateSlotsForDate, getUniqueAvailableSlots } from '../../utils/timeUtils';
 import FullScreenLoader from "../FullScreenLoader";
 import { useTranslation } from 'react-i18next';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -191,9 +191,17 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
             if (existingIndex !== -1) {
               // Replace existing item with new one
+              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+              newItem.SchedulingTime = startTime.localTime;
+              newItem.SchedulingEndTime = endTime.localTime;
               updatedCardItems[existingIndex] = newItem;
             } else {
               // Add new item if it doesn't exist
+              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+              newItem.SchedulingTime = startTime.localTime;
+              newItem.SchedulingEndTime = endTime.localTime;
               updatedCardItems.push(newItem);
             }
           });
@@ -223,7 +231,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       );
 
       const slotDuration = provider.SlotDuration || 30;
-      const formattedDate = selectedDate.format('YYYY-MM-DD');
+      const formattedDate = selectedDate.locale('en').format('YYYY-MM-DD');
 
       if (providerAvailability.length > 0) {
         const DoctorAvailable: any = generateSlotsForDate(
@@ -342,7 +350,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const fetchOrganizationSchedulingAvailability = async (date?: any) => {
     const payload = {
       CatCategoryId: category.Id,
-      StartDate: moment().format('YYYY-MM-DD'),
+      StartDate: moment().locale('en').format('YYYY-MM-DD'),
       PageNumber: 1,
       PageSize: 15
     }
@@ -432,7 +440,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       const requestBody = {
         CatServiceId: serviceIds,
         CatSpecialtyId: 0,
-        StartDate: date ? moment(date).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
+        StartDate: date ? moment(date).locale('en').format('YYYY-MM-DD') : moment().locale('en').format('YYYY-MM-DD'),
         PageNumber: 1,
         PageSize: 20
       }
@@ -450,18 +458,18 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const filterAvailabilityForDate = (date: Moment, data: any[]) => {
-    const formattedDate = date.format('YYYY-MM-DD');
+    const formattedDate = date.locale('en').format('YYYY-MM-DD');
     const filteredData = data.filter(item => item.Date === formattedDate);
     setAvailability(filteredData);
   };
 
   const generateDays = (startDate?: moment.Moment) => {
-    const baseDate = startDate ? moment(startDate) : moment();
+    const baseDate = startDate ? moment(startDate).locale('en') : moment().locale('en');
     const daysArray: DayItem[] = [];
 
     // Generate 7 days starting from the given base date
     for (let i = 0; i < 7; i++) {
-      const currentDate = moment(baseDate).add(i, 'days');
+      const currentDate = moment(baseDate).locale('en').add(i, 'days');
       const englishDay = currentDate.format('dddd');
       const hijriDate = currentDate.format('iD').replace('i', '');
 
@@ -489,11 +497,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
     const baseDate = changedSelectedDate
       ? moment(changedSelectedDate).local().startOf('day')  // Force local timezone
-      : moment().startOf('day');
+      : moment().locale('en').startOf('day');
 
     const isWithinSevenDays = moment(date).local().isBetween(
       baseDate,
-      moment(baseDate).add(6, 'days').endOf('day'),
+      moment(baseDate).locale('en').add(6, 'days').endOf('day'),
       'day',
       '[]'
     );
@@ -504,7 +512,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       filterAvailabilityForDate(date, allAvailabilityData);
     } else {
       setChangedSelectedDate(date)
-      const formattedDate = date.format('YYYY-MM-DD');
+      const formattedDate = date.locale('en').format('YYYY-MM-DD');
       generateDays(moment(formattedDate));
       fetchInitialAvailability(moment(formattedDate));
     }
@@ -587,7 +595,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       );
 
       if (providerAvailability.length > 0) {
-        const dayOfWeek = new Date(selectedDate.format('YYYY-MM-DD')).toLocaleString("en-US", {
+        const dayOfWeek = new Date(selectedDate.locale('en').format('YYYY-MM-DD')).toLocaleString("en-US", {
           weekday: "long",
         });
 
@@ -606,7 +614,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       );
 
       if (hospitalAvailability.length > 0) {
-        const dayOfWeek = new Date(selectedDate.format('YYYY-MM-DD')).toLocaleString("en-US", {
+        const dayOfWeek = new Date(selectedDate.locale('en').format('YYYY-MM-DD')).toLocaleString("en-US", {
           weekday: "long",
         });
 
@@ -783,9 +791,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       </View>
       {/* } */}
       <View style={styles.BottomContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        {/* <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>{t('back')}</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={[styles.nextButton, getNextButtonEnabled() ? styles.disabledNextButton : {}]}
           onPress={handleNext}
@@ -1052,7 +1060,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   nextButton: {
-    width: "64%",
+    width: "100%",
     height: 50,
     alignItems: "center",
     justifyContent: "center",

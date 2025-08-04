@@ -131,7 +131,6 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         address,
         city,
       });
-      console.log('Selected Location Details:', { latitude, longitude, city, address });
     } catch (error) {
       setSelectedAddress({
         latitude,

@@ -42,7 +42,7 @@ const ReservationReceivedItemRender = ({ item, onClickOrderDetails, getUpdatedOr
         onClickOrderDetails(item);
     }, [onClickOrderDetails, item]);
 
-    const formattedDate = useMemo(() => moment(item?.OrderDate).format('DD/MM/YYYY'), [item?.OrderDate]);
+    const formattedDate = useMemo(() => moment(item?.OrderDate).locale('en').format('DD/MM/YYYY'), [item?.OrderDate]);
     const totalPriceText = useMemo(() => `${item?.TotalPrice} ${t('sar')}`, [item?.TotalPrice, t]);
     const showDeleteButton = useMemo(() => item?.CatOrderStatusId == '22', [item?.CatOrderStatusId]);
     const showAddMoreButton = useMemo(() => item?.CatOrderStatusId == '22', [item?.CatOrderStatusId]);

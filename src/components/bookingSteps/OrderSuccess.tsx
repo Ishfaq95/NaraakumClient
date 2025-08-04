@@ -123,7 +123,7 @@ const OrderSuccess = ({ navigation, route }: any) => {
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_date')}</Text>
           <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
-            {OrderDetail[0].OrderDate ? moment(OrderDetail[0].OrderDate).format('DD/MM/YYYY') : moment().format('DD/MM/YYYY')}
+            {OrderDetail[0].OrderDate ? moment(OrderDetail[0].OrderDate).locale('en').format('DD/MM/YYYY') : moment().locale('en').format('DD/MM/YYYY')}
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>

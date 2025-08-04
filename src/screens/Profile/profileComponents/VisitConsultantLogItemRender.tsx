@@ -41,7 +41,7 @@ const VisitConsultantLogItemRender = ({ item }: any) => {
             <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={styles.infoText}>تاريخ الجلسة</Text>
                 </View>
-                <Text style={styles.infoText}>{moment(item?.VisitDate).format('DD/MM/YYYY')}</Text>
+                <Text style={styles.infoText}>{moment(item?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
             </View>
 
             {/* Buttons */}

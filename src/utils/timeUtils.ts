@@ -32,6 +32,89 @@ interface TimeConfig {
   BookedSlots: any[];
 }
 
+/**
+ * Converts UTC date and time to local date and time in 24-hour format
+ * @param utcDate - UTC date string (e.g., "2025-08-04T00:00:00.000Z")
+ * @param utcTime - UTC time string in 24-hour format (e.g., "09:30")
+ * @returns Object containing local date and time in 24-hour format
+ */
+export const convertUTCToLocalDateTime = (
+  utcDate: string,
+  utcTime: string
+): { localDate: string; localTime: string } => {
+  try {
+    // Extract date part from UTC date string (remove timezone info)
+    const datePart = utcDate.split('T')[0];
+    
+    // Create a UTC datetime string
+    const utcDateTimeString = `${datePart}T${utcTime}:00.000Z`;
+    
+    // Create Date object from UTC string
+    const utcDateTime = new Date(utcDateTimeString);
+    
+    // Convert to local timezone
+    const localDateTime = new Date(utcDateTime.getTime());
+    
+    // Format local date as YYYY-MM-DD
+    const localDate = localDateTime.toISOString().split('T')[0];
+    
+    // Format local time as HH:MM in 24-hour format
+    const localTime = localDateTime.toTimeString().slice(0, 5);
+    
+    return {
+      localDate,
+      localTime
+    };
+  } catch (error) {
+    console.error('Error converting UTC to local datetime:', error);
+    // Return original values if conversion fails
+    return {
+      localDate: utcDate.split('T')[0],
+      localTime: utcTime
+    };
+  }
+};
+
+/**
+ * Converts local date and time to UTC date and time
+ * @param localDate - Local date string in YYYY-MM-DD format (e.g., "2025-08-04")
+ * @param localTime - Local time string in 24-hour format (e.g., "10:00")
+ * @returns Object containing UTC date and time
+ */
+export const convertLocalToUTCDateTime = (
+  localDate: string,
+  localTime: string
+): { utcDate: string; utcTime: string } => {
+  try {
+    // Create a local datetime string
+    const localDateTimeString = `${localDate}T${localTime}:00`;
+    
+    // Create Date object from local string (browser will interpret as local time)
+    const localDateTime = new Date(localDateTimeString);
+    
+    // Convert to UTC
+    const utcDateTime = new Date(localDateTime.getTime());
+    
+    // Format UTC date as YYYY-MM-DD
+    const utcDate = utcDateTime.toISOString().split('T')[0];
+    
+    // Format UTC time as HH:MM in 24-hour format
+    const utcTime = utcDateTime.toISOString().split('T')[1].slice(0, 5);
+    
+    return {
+      utcDate,
+      utcTime
+    };
+  } catch (error) {
+    console.error('Error converting local to UTC datetime:', error);
+    // Return original values if conversion fails
+    return {
+      utcDate: localDate,
+      utcTime: localTime
+    };
+  }
+};
+
 // Convert 24-hour time to 12-hour format
 export const convertTo12Hour = (time24: string): string => {
   const [hours, minutes] = time24.split(':').map(Number);
@@ -85,11 +168,9 @@ export const generateSlotsForDate = (
     BookedSlots
   } = config;
 
-  console.log("config",BookedSlots); 
-  if(BookedSlots.length > 0 && BookedSlots[0].ServiceProviderUserloginInfoId=="1124"){
-    console.log("BookedSlots",BookedSlots);
+  if(BookedSlots.length > 0 ){
+    console.log("BookedSlots", BookedSlots)
   }
-
   // Check if target date is within the valid range
   const targetDateObj = new Date(targetDate);
   const startDateObj = new Date(StartDate);
@@ -284,7 +365,8 @@ export const generateSlots = (
           availability_type_id: CatAvailabilityTypeId,
           is_holiday: isHoliday,
           available: isAvailable,
-          selected: false
+          selected: false,
+          is_booked: false
         });
 
         currentTotalMinutes = nextTotalMinutes;

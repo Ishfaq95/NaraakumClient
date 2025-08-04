@@ -29,8 +29,6 @@ const ReservationReceivedScreen = () => {
     getCpAddedOrders();
   }, []);
 
-  console.log("selectedOrder===>", selectedOrder);
-
   const getOrderDetailsAddedByServiceProvider = async (item: any) => {
     try {
       setIsLoadingOrderDetails(true);
@@ -44,7 +42,6 @@ const ReservationReceivedScreen = () => {
         setOrderDetailsByServiceProvider(response?.UserOrders[0]);
       }
     } catch (error) {
-      console.log("error===>", error);
     } finally {
       setIsLoadingOrderDetails(false);
     }

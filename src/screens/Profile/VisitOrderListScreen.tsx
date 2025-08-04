@@ -24,8 +24,6 @@ const VisitOrderListScreen = () => {
   const webSocketService = WebSocketService.getInstance();
   const isFocused = useIsFocused();
 
-  console.log(user);
-
   const handleBack = () => {
     navigation.goBack();
   };

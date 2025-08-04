@@ -48,7 +48,6 @@ export const deleteAccount = async (credentials: any) => {
     );
     return response.data;
   } catch (error: any) {
-    console.log("error", error);
     throw {
       message: error?.response?.data?.message || 'Delete account failed',
       status: error?.response?.status,

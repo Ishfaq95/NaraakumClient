@@ -26,7 +26,12 @@ const AlarmScreen = () => {
     if (data.Subject == 'لقد بدأت الجلسة') {
       navigation.navigate(ROUTES.preViewCall, {Data: callData});
     } else {
-      navigation.navigate(ROUTES.HomeStack);
+      navigation.navigate(ROUTES.AppNavigator, {
+        screen: ROUTES.HomeStack,
+        params: {
+          screen: ROUTES.AppointmentListScreen,
+        }
+      });
     }
   };
 

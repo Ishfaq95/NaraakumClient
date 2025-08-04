@@ -69,8 +69,6 @@ const LoginScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { rememberMeRedux } = useSelector((state: any) => state.root.user);
 
-  console.log("rememberMeRedux", rememberMeRedux);
-
   useEffect(() => {
     if (rememberMeRedux) {
       setEmailOrUsername(rememberMeRedux.Username);
@@ -166,7 +164,6 @@ const LoginScreen = () => {
     try {
       setIsLoading(true);
       const googleUser = await signInWithGoogle();
-      console.log("googleUser", googleUser);
 
       const data = {
         "FullName": googleUser.name,

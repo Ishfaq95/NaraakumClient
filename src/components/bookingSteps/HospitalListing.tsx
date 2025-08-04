@@ -12,7 +12,7 @@ import { MediaBaseURL } from '../../shared/utils/constants';
 import LeftArrow from '../../assets/icons/LeftArrow';
 import RightArrow from '../../assets/icons/RightArrow';
 import ServiceProviderCard from './ServiceProviderCard';
-import { generateSlots, generateSlotsForDate, getUniqueAvailableSlots } from '../../utils/timeUtils';
+import { convertUTCToLocalDateTime, generateSlots, generateSlotsForDate, getUniqueAvailableSlots } from '../../utils/timeUtils';
 import FullScreenLoader from "../FullScreenLoader";
 import { useTranslation } from 'react-i18next';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -176,9 +176,17 @@ const HospitalListing = ({ onPressNext, onPressBack }: any) => {
 
             if (existingIndex !== -1) {
               // Replace existing item with new one
+              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+              newItem.SchedulingTime = startTime.localTime;
+              newItem.SchedulingEndTime = endTime.localTime;
               updatedCardItems[existingIndex] = newItem;
             } else {
               // Add new item if it doesn't exist
+              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+              newItem.SchedulingTime = startTime.localTime;
+              newItem.SchedulingEndTime = endTime.localTime;
               updatedCardItems.push(newItem);
             }
           });

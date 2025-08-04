@@ -18,6 +18,7 @@ import GoogleIcon from '../../assets/icons/GoogleIcon';
 import AppleIcon from '../../assets/icons/AppleIcon';
 import { signInWithGoogle } from '../../services/auth/googleAuthService';
 import appleAuth from '@invertase/react-native-apple-authentication';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 
 interface Country {
@@ -48,7 +49,6 @@ const DeleteScreen = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.root.user.user);
   const webSocketService = WebSocketService.getInstance();
-  console.log(user);
 
   const handleBack = () => {
     navigation.goBack();
@@ -57,7 +57,7 @@ const DeleteScreen = () => {
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{t('delete_account')}</Text>
+        <Text style={[globalTextStyles.h4, styles.headerTitle]}>{t('delete_account')}</Text>
       }
       leftComponent={
         <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
@@ -98,8 +98,6 @@ const DeleteScreen = () => {
       }
 
       const response = await authService.deleteAccount(data);
-
-      console.log(response);
 
       if (response?.StatusCode?.STATUSCODE == 3010) {
         setIsLoading(false);
@@ -157,8 +155,6 @@ const DeleteScreen = () => {
       }
       
       const response = await authService.deleteAccount(payload);
-
-      console.log("response", response);
 
       if (response?.StatusCode?.STATUSCODE == 3010) {
         Alert.alert(
@@ -224,7 +220,7 @@ const DeleteScreen = () => {
             onPress={handleGoogleLogin}
           >
             <GoogleIcon width={24} height={24} style={styles.socialIcon} />
-            <Text style={styles.socialButtonText}>{t('continue_with_google')}</Text>
+            <Text style={[globalTextStyles.bodySmall, styles.socialButtonText]}>{t('continue_with_google')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.socialButton, styles.appleButton]}
@@ -236,7 +232,7 @@ const DeleteScreen = () => {
               style={styles.socialIcon}
               color="#FFFFFF"
             />
-            <Text style={[styles.socialButtonText, { color: '#FFFFFF' }]}>
+            <Text style={[globalTextStyles.bodySmall, styles.socialButtonText, { color: '#FFFFFF' }]}>
               {t('continue_with_apple')}
             </Text>
           </TouchableOpacity>
@@ -250,7 +246,7 @@ const DeleteScreen = () => {
         onPress={handleGoogleLogin}
       >
         <GoogleIcon width={24} height={24} style={styles.socialIcon} />
-        <Text style={styles.socialButtonText}>{t('continue_with_google')}</Text>
+        <Text style={[globalTextStyles.bodySmall, styles.socialButtonText]}>{t('continue_with_google')}</Text>
       </TouchableOpacity>
     );
   };
@@ -261,8 +257,8 @@ const DeleteScreen = () => {
       <View style={styles.contentContainer}>
         <View style={{ alignItems: 'center',marginTop:20, justifyContent: 'center' }}>
           <Image source={require('../../assets/images/del-icon.png')} style={{ width: 100, height: 100 }} />
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000',marginTop:10, textAlign: I18nManager.isRTL ? 'left' : 'right' }}>{t('delete_account_title')}</Text>
-          <Text style={{ fontSize: 14, color: '#000',marginTop:10, textAlign: I18nManager.isRTL ? 'left' : 'right' }}>{t('delete_account_description')}</Text>
+          <Text style={[globalTextStyles.h5, { color: '#000', marginTop: 10, textAlign: I18nManager.isRTL ? 'left' : 'right' }]}>{t('delete_account_title')}</Text>
+          <Text style={[globalTextStyles.bodySmall, { color: '#000', marginTop: 10, textAlign: I18nManager.isRTL ? 'left' : 'right' }]}>{t('delete_account_description')}</Text>
         </View>
         {(user.UniqueSocialId != null && user.UniqueSocialId != "" && user.UniqueSocialId != undefined) ? (
           renderSocialButtons()
@@ -306,7 +302,7 @@ const DeleteScreen = () => {
           style={styles.loginButton}
           activeOpacity={0.7}
         >
-          <Text style={styles.loginButtonText}>{t('delete_account_button')}</Text>
+          <Text style={[globalTextStyles.buttonMedium, styles.loginButtonText]}>{t('delete_account_button')}</Text>
         </TouchableOpacity>
         </>}
         
@@ -323,13 +319,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff'
   },
   contentContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
+    paddingVertical: 10,
     paddingHorizontal: 16,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
     color: '#000'
   },
   headerContainer: {
@@ -347,7 +340,6 @@ const styles = StyleSheet.create({
   },
   tab: { flexDirection: 'row', width: '48%', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#e0e0e0' },
   tabText: {
-    fontSize: 14,
     color: '#666',
   },
   activeTab: {
@@ -355,7 +347,6 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: '#008080',
-    fontWeight: '600',
   },
   input: {
     backgroundColor: '#FFFFFF',
@@ -363,9 +354,9 @@ const styles = StyleSheet.create({
     padding: 12,
     height: 50,
     color: '#000',
-    fontSize: 14,
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    fontFamily: 'Cairo-Regular',
   },
   mobileInputContainer: {
     backgroundColor: '#F8F8F8',
@@ -422,11 +413,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     padding: 12,
-    fontSize: 14,
     borderWidth: 1,
     borderColor: '#E0E0E0',
     height: '100%',
-    color: '#000'
+    color: '#000',
+    fontFamily: 'Cairo-Regular'
   },
   eyeIcon: {
     position: 'absolute',
@@ -450,8 +441,6 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
   },
   socialButtonsRow: {
     flexDirection: 'row',
@@ -490,9 +479,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   socialButtonText: {
-    fontSize: Platform.OS === 'ios' ? 13 : 14,
     color: '#333333',
-    fontWeight: '500',
     flexShrink: 1,
     textAlign: 'center',
   },

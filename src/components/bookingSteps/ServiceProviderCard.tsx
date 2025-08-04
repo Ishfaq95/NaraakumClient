@@ -9,6 +9,7 @@ import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
 import { addCardItem, manageTempSlotDetail, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
 import { globalTextStyles } from '../../styles/globalStyles';
+import { convert24HourToArabicTime } from '../../shared/services/service';
 
 interface Specialty {
   CatSpecialtyId: string;
@@ -490,7 +491,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             "ServiceCharges": provider.Prices,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-            "SchedulingTime": time.start_time,
+            "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
             "AvailabilityId": availability.Id,
             "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
             "ServiceProviderFullnameSlang": provider.FullnameSlang,
@@ -503,7 +504,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             "ServiceCharges": selectedPrice,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-            "SchedulingTime": time.start_time,
+            "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
             "AvailabilityId": availability.Id,
             "CatServiceId": getServiceId?.Id,
             "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
@@ -542,7 +543,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             "ServiceCharges": servicePrice,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-            "SchedulingTime": time.start_time,
+            "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
             "AvailabilityId": availability.Id,
             "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
             "ServiceProviderFullnameSlang": provider?.FullnameSlang,
@@ -557,6 +558,60 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
   }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);
 
+  // Function to convert Arabic 12-hour time to 24-hour format
+  const convertArabicTimeTo24Hour = (timeString: string): string => {
+    if (!timeString) return timeString; 
+    
+    // Remove any extra spaces and split by space
+    const parts = timeString.trim().split(' ');
+    if (parts.length < 2) {
+      return timeString; // If no AM/PM indicator, return as is
+    }
+    
+    const timePart = parts[0]; // e.g., "2:30"
+    const periodPart = parts[1]; // e.g., "ص" (ص for AM) or "م" (م for PM)
+    
+    // Split time into hours and minutes
+    const [hours, minutes] = timePart.split(':').map(Number);
+    
+    let hour24 = hours;
+    
+    // Convert based on Arabic period indicators
+    // ص = صباح (morning/AM)
+    // م = مساء (evening/PM)
+    if (periodPart === 'ص') {
+      // AM - keep as is, but handle 12 AM case
+      if (hours === 12) {
+        hour24 = 0;
+      }
+    } else if (periodPart === 'م') {
+      // PM - add 12 hours, but handle 12 PM case
+      if (hours !== 12) {
+        hour24 = hours + 12;
+      }
+    } else {
+    }
+    
+    const result = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    
+    return result;
+  };
+
+  const getLocalReservedSlots = (ProviderId:string,Slot:any) =>{
+    // Convert slot time from Arabic 12-hour to 24-hour format
+    const slotStartTime24Hour = convertArabicTimeTo24Hour(Slot.start_time);
+    
+    const reservedSlots = CardArray.filter((item:any) => {
+      // Convert item's scheduling time to 24-hour format for comparison
+      const itemTime24Hour = convertArabicTimeTo24Hour(item.SchedulingTime);
+      
+      return item.ServiceProviderUserloginInfoId == ProviderId && 
+             itemTime24Hour === slotStartTime24Hour;
+    });
+    
+    return reservedSlots.length > 0 ? true : false;
+  }
+  
   const renderTimeSlots = useMemo(() => {
     return (
       <View style={styles.specialtyContainer}>
@@ -586,6 +641,8 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                 selectedSlotInfo?.slotTime === slot.start_time;
               const isPast = isPastTime(slot);
               const isDisabled = !slot.available || isPast;
+              const isReserved = getLocalReservedSlots(provider.UserId,slot);
+              const isBooked = slot.is_booked;
 
               if(isDisabled){
                 return null
@@ -598,11 +655,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                     styles.timeButton,
                     isSelected && styles.selectedTimeButton,
                     isDisabled && styles.disabledTimeButton,
-                    slot.is_booked && styles.bookedTimeButton
+                    (isBooked || isReserved) && styles.bookedTimeButton
                   ]}
                   onPress={() => !isDisabled && handleSlotSelect(slot)}
                   activeOpacity={0.5}
-                  disabled={isDisabled || slot.is_booked}
+                  disabled={isDisabled || isBooked || isReserved}
                 >
                   <Text style={[
                     styles.timeButtonText,
@@ -860,6 +917,15 @@ const styles = StyleSheet.create({
   },
   bookedTimeButtonText: {
     color: '#fff',
+  },
+  reservedTimeButton: {
+    backgroundColor: '#FFE4E1',
+    borderColor: '#FF6B6B',
+    borderWidth: 1,
+  },
+  reservedTimeButtonText: {
+    color: '#FF6B6B',
+    fontWeight: 'bold',
   },
 });
 
