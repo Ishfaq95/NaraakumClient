@@ -167,10 +167,6 @@ export const generateSlotsForDate = (
     CatAvailabilityTypeId,
     BookedSlots
   } = config;
-
-  if(BookedSlots.length > 0 ){
-    console.log("BookedSlots", BookedSlots)
-  }
   // Check if target date is within the valid range
   const targetDateObj = new Date(targetDate);
   const startDateObj = new Date(StartDate);
@@ -229,12 +225,13 @@ export const generateSlotsForDate = (
       slotMinutes >= rangeStartTotalMinutes && slotMinutes < rangeEndTotalMinutes
     );
 
+
     
-    const isBooked = BookedSlots.some((slot: any) => {
+    const isBooked = BookedSlots ? BookedSlots.some((slot: any) => {
       // Convert slot.SchedulingTime to local time before comparison
       const convertedSlotTime = convertUTCToLocalTimezone(targetDate, slot.SchedulingTime, targetTimeZone);
       return convertedSlotTime.time == startTimeStr;
-    });
+    }) : false;
 
     slots.push({
       date: targetDate,

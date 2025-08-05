@@ -269,7 +269,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       );
 
       const slotDuration = hospital.SlotDuration || 30;
-      const formattedDate = selectedDate.format('YYYY-MM-DD');
+      const formattedDate = selectedDate.locale('en').format('YYYY-MM-DD');
 
       if (hospitalAvailability.length > 0) {
         const HospitalAvailable: any = generateSlotsForDate(

@@ -9,6 +9,7 @@ import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
 import { addCardItem, manageTempSlotDetail, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
 import { globalTextStyles } from '../../styles/globalStyles';
+import { convertArabicTimeTo24Hour } from '../../shared/services/service';
 
 interface Specialty {
   CatSpecialtyId: string;
@@ -332,7 +333,7 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
           "ServiceCharges": servicePrice,
           "ServiceProviderUserloginInfoId": 0,
           "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
-          "SchedulingTime": time.start_time,
+          "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
           "AvailabilityId": availability.Id,
           "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
           "ServiceProviderFullnameSlang": hospital?.FullnameSlang,

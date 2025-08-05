@@ -23,7 +23,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { notificationService } from '../services/api/NotificationService';
 import { formatDate, formatTime } from '../shared/services/service';
 
-
 const NotificationScreen = () => {
     const { t } = useTranslation();
     const navigation = useNavigation();
@@ -143,8 +142,8 @@ const NotificationScreen = () => {
                 const localDateTime = utcDateTime.local();
 
                 // Format date and time
-                const formattedDate = localDateTime.format('DD/MM/YYYY');
-                const formattedTime = localDateTime.format('HH:mm');
+                const formattedDate = localDateTime.locale('en').format('DD/MM/YYYY');
+                const formattedTime = localDateTime.locale('en').format('HH:mm');
                 const isAM = localDateTime.format('A') === 'AM';
                 const amPmText = isAM ? 'ص' : 'م';
 
