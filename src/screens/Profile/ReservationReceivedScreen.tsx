@@ -70,7 +70,7 @@ const ReservationReceivedScreen = () => {
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{t('update_profile')}</Text>
+        <Text style={styles.headerTitle}>{'الحجوزات المستلمة'}</Text>
       }
       leftComponent={
         <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
@@ -100,6 +100,7 @@ const ReservationReceivedScreen = () => {
   ), [handleClickOrderDetails]);
 
   const handleClickPayAndPay = () => {
+    setOpenBottomSheetCompleteOrder(false);
     navigation.navigate(ROUTES.AppNavigator, {
       screen: ROUTES.HomeStack,
       params: {
@@ -115,11 +116,11 @@ const ReservationReceivedScreen = () => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{ paddingHorizontal: 16, paddingVertical: 10, marginTop: 10, alignItems: 'center', }}>
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', textAlign: "center", color: '#000' }]}>الحجوزات المستلمة من مقدمي الخدمات</Text>
+        <Text style={[globalTextStyles.bodyLarge, {  textAlign: "center", color: '#000' }]}>الحجوزات المستلمة من مقدمي الخدمات</Text>
         <Text style={[globalTextStyles.caption, { textAlign: 'center', color: '#000' }]}>يمكن لمقدم الخدمة أن يرسل إليك مجموعة من الخدمات في أثناء الزيارة. عليك فقط إتمام الحجز!</Text>
       </View>
       <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16, paddingVertical: 10, alignItems: 'flex-start', }}>
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', marginBottom: 10 }]}>{`النتائج : (${cpAddedOrders.length})`}</Text>
+        <Text style={[globalTextStyles.bodyMedium, { color: '#000', marginBottom: 10 }]}>{`الحجوزات المستلمة : (${cpAddedOrders.length})`}</Text>
         <View style={styles.contentContainer}>
 
           <FlatList
@@ -158,7 +159,7 @@ const ReservationReceivedScreen = () => {
           <>
             <View style={{ backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
               <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
-                <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>معلومات الحجز</Text>
+                <Text style={styles.detailsHeaderText}>معلومات الحجز</Text>
                 <TouchableOpacity onPress={() => setOpenBottomSheetCompleteOrder(false)}>
                   <AntDesign name="close" size={20} color="#000" />
                 </TouchableOpacity>
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headerTitle: {
-    ...globalTextStyles.h3,
+    ...globalTextStyles.h4,
     color: '#000'
   },
   headerContainer: {

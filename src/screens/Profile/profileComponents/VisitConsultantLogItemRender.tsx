@@ -1,22 +1,24 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { MediaBaseURL } from '../../../shared/utils/constants';
 import moment from 'moment';
+import { globalTextStyles, CAIRO_FONT_FAMILY } from '../../../styles/globalStyles';
 
-const VisitConsultantLogItemRender = ({ item }: any) => {
+const VisitConsultantLogItemRender = memo(({ item, getMedicine, getVisitMainRecordDetails,onVisitDetails }: any) => {
     return (
         <View style={styles.card}>
             {/* Top Row: Image and Info */}
             <View style={styles.row}>
                 <View style={{ alignItems: "flex-start" }}>
-                    <Text style={styles.label}>اسم المستفيد</Text>
-                    <Text style={styles.beneficiaryName}>{item?.PatientFullNameSLang}</Text>
+                    <Text style={[styles.label, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>اسم المستفيد</Text>
+                    <Text style={[styles.beneficiaryName, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.PatientFullNameSLang}</Text>
                 </View>
                 <Image
-                    source={{ uri: `${MediaBaseURL}${item?.LogoImagePath}` }} // Replace with real image
+                    source={{ uri: `${MediaBaseURL}${item?.LogoImagePath}` }}
                     style={styles.avatar}
+                    resizeMode="cover"
                 />
             </View>
 
@@ -24,41 +26,41 @@ const VisitConsultantLogItemRender = ({ item }: any) => {
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center",gap:5 }}>
                     <MaterialIcons name="local-hospital" size={16} color="#23a2a4" style={styles.icon} />
-                    <Text style={styles.infoText}>المركز الطبى</Text>
+                    <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>المركز الطبى</Text>
                 </View>
-                <Text style={styles.infoText}>{item?.TitleSlang}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{item?.TitleSlang}</Text>
             </View>
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center",gap:5 }}>
                     <FontAwesome5 name="user-md" size={16} color="#23a2a4" style={styles.icon} />
-                    <Text style={styles.infoText}>مقدم الرعاية</Text>
+                    <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>مقدم الرعاية</Text>
                 </View>
-                <Text style={styles.infoText}>{item?.FullnameSlang}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{item?.FullnameSlang}</Text>
 
             </View>
             <View style={styles.infoRow}>
             <View style={{ flexDirection: "row", alignItems: "center",gap:5 }}>
             <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
-                    <Text style={styles.infoText}>تاريخ الجلسة</Text>
+                    <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>تاريخ الجلسة</Text>
                 </View>
-                <Text style={styles.infoText}>{moment(item?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{moment(item?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
             </View>
 
             {/* Buttons */}
             <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.outlineBtn}>
-                    <Text style={styles.outlineBtnText}>سجل الجلسة</Text>
+                <TouchableOpacity onPress={() => getVisitMainRecordDetails(item)} style={styles.outlineBtn}>
+                    <Text style={[styles.outlineBtnText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>سجل الجلسة</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.filledBtn}>
-                    <Text style={styles.filledBtnText}>وصفة طبية</Text>
+                <TouchableOpacity onPress={() => getMedicine(item)} disabled={item?.MedicineCount == 0} style={[styles.filledBtn, {opacity: item?.MedicineCount == 0 ? 0.7 : 1, backgroundColor: item?.MedicineCount == 0 ? '#23a2a4' : '#23a2a4' }]}>
+                    <Text style={[styles.filledBtnText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>وصفة طبية</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.outlineBtn}>
-                    <Text style={styles.outlineBtnText}>تفاصيل الطلب</Text>
+                <TouchableOpacity onPress={() => onVisitDetails(item)} style={styles.outlineBtn}>
+                    <Text style={[styles.outlineBtnText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>تفاصيل الطلب</Text>
                 </TouchableOpacity>
             </View>
         </View>
     );
-};
+});
 
 const styles = StyleSheet.create({
     card: {
@@ -89,12 +91,14 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 12,
         color: '#888',
+        fontFamily: CAIRO_FONT_FAMILY.regular,
     },
     beneficiaryName: {
         fontSize: 16,
         fontWeight: 'bold',
         color: '#222',
         textAlign: 'left',
+        fontFamily: CAIRO_FONT_FAMILY.bold,
     },
     infoRow: {
         flexDirection: 'row',
@@ -109,6 +113,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#222',
         textAlign: 'left',
+        fontFamily: CAIRO_FONT_FAMILY.regular,
     },
     buttonRow: {
         flexDirection: 'column',
@@ -127,6 +132,7 @@ const styles = StyleSheet.create({
         color: '#23a2a4',
         fontWeight: 'bold',
         fontSize: 15,
+        fontFamily: CAIRO_FONT_FAMILY.bold,
     },
     filledBtn: {
         backgroundColor: '#23a2a4',
@@ -138,6 +144,7 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 15,
+        fontFamily: CAIRO_FONT_FAMILY.bold,
     },
 });
 

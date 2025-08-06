@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid, ScrollView } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -32,7 +32,7 @@ const BeneficiariesScreen = () => {
   const [openBottomSheetMenu, setOpenBottomSheetMenu] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>({})
   const [selectedItemToDelete, setSelectedItemToDelete] = useState<any>(null);
-  const [openBottomSheetHeight, setOpenBottomSheetHeight] = useState('65%')
+
   const [focusedField, setFocusedField] = useState('');
   const [openBottomSheetReport, setOpenBottomSheetReport] = useState(false)
   const [editData, setEditData] = useState<any>({})
@@ -61,28 +61,7 @@ const BeneficiariesScreen = () => {
     { title: 'حذف', onPress: () => HandleOpenDeleteModal(item) },
   ];
 
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        if (focusedField === 'idNumber') {
-          setOpenBottomSheetHeight("95%");
-        }
-      }
-    );
 
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setOpenBottomSheetHeight("65%");
-      }
-    );
-
-    return () => {
-      keyboardDidShowListener?.remove();
-      keyboardDidHideListener?.remove();
-    };
-  }, [openBottomSheet, focusedField]);
 
 
   useEffect(() => {
@@ -290,7 +269,7 @@ const BeneficiariesScreen = () => {
     })
       .fetch('GET', url)
       .then(res => {
-        Alert.alert('File downloaded successfully');
+        Alert.alert('تم تنزيل الملف بنجاح');
       })
       .catch(error => {
         Alert.alert('File downloading error.');
@@ -308,7 +287,7 @@ const BeneficiariesScreen = () => {
       const htmlContent = createMedicalHistoryHTML(medicalData);
 
       // Generate PDF
-      const fileName = `MedicalHistory_${medicalData.OrderId || 'Patient'}_${moment().format('YYYYMMDD_HHmmss')}.pdf`;
+      const fileName = `MedicalHistory_${medicalData.OrderId || 'Patient'}_${moment().locale('en').format('YYYYMMDD_HHmmss')}.pdf`;
 
       const options = {
         html: htmlContent,
@@ -321,7 +300,7 @@ const BeneficiariesScreen = () => {
       if (file.filePath) {
 
         const filePath = file.filePath
-        const fileName = `MedicalHistory_${medicalData.OrderId}_${moment().format('YYYYMMDD_HHmmss')}`;
+        const fileName = `MedicalHistory_${medicalData.OrderId}_${moment().locale('en').format('YYYYMMDD_HHmmss')}`;
 
         const downloadPath = await downloadFileForHistory(filePath, fileName);
 
@@ -340,17 +319,27 @@ const BeneficiariesScreen = () => {
     if (Platform.OS !== 'android') return true;
 
     try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        {
-          title: 'Storage Permission',
-          message: 'App needs access to storage to save PDF files.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+      // For Android 11+ (API 30+), WRITE_EXTERNAL_STORAGE is deprecated
+      // and not needed for accessing Downloads folder
+      const androidVersion = Number(Platform.Version);
+      
+      if (androidVersion >= 30) {
+        // Android 11+ - no permission needed for Downloads folder
+        return true;
+      } else {
+        // Android 10 and below - request WRITE_EXTERNAL_STORAGE
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission',
+            message: 'App needs access to storage to save PDF files.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      }
     } catch (err) {
       console.warn(err);
       return false;
@@ -365,27 +354,41 @@ const BeneficiariesScreen = () => {
       let destinationPath = '';
 
       if (Platform.OS === 'android') {
-        // Request permission first
-        const hasPermission = await requestStoragePermission();
-
-        if (hasPermission) {
-          // Try to save to external Downloads folder
-          try {
-            destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
-            await RNFS.copyFile(filePath, destinationPath);
-          } catch (externalError) {
-            // Fallback to internal Downloads
+        // Check if we need permission (Android 10 and below)
+        const androidVersion = Number(Platform.Version);
+        const needsPermission = androidVersion < 30;
+        
+        if (needsPermission) {
+          const hasPermission = await requestStoragePermission();
+          if (!hasPermission) {
+            // Use internal storage if permission denied
             destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
             await RNFS.copyFile(filePath, destinationPath);
+            Alert.alert(
+              'تم تنزيل الملف بنجاح',
+              'تم تنزيل الملف بنجاح'
+            );
+            return destinationPath;
           }
+        }
+
+        // Try to save to external Downloads folder
+        try {
+          destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
+          await RNFS.copyFile(filePath, destinationPath);
           Alert.alert(
-            'File downloaded successfully',
-            `Saved to: ${Platform.OS === 'android' ? 'Downloads folder' : 'Documents folder'}`
+            'تم تنزيل الملف بنجاح',
+            'تم تنزيل الملف بنجاح'
           );
-        } else {
-          // Use internal storage if permission denied
+        } catch (externalError) {
+          console.log('External download failed, using internal storage:', externalError);
+          // Fallback to internal Downloads
           destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
           await RNFS.copyFile(filePath, destinationPath);
+          Alert.alert(
+            'تم تنزيل الملف بنجاح',
+            'تم تنزيل الملف بنجاح'
+          );
         }
       } else {
         // iOS - use Documents directory
@@ -393,7 +396,6 @@ const BeneficiariesScreen = () => {
         await RNFS.copyFile(filePath, destinationPath);
         shareFile(filePath, destinationPath);
       }
-
 
       return destinationPath;
     } catch (error) {
@@ -571,7 +573,7 @@ const BeneficiariesScreen = () => {
         </View>
 
         <TouchableOpacity onPress={() => HandleDownloadPress(item)} style={{ height: 40, width: '100%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 10 }}>
-          <Text style={[globalTextStyles.bodyMedium, { color: '#fff' }]}>تحميل الملف</Text>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#fff' }]}>{reportType == 'report' ? 'تحميل الملف' : 'استعراض السجل'}</Text>
         </TouchableOpacity>
       </View>
     )
@@ -583,19 +585,19 @@ const BeneficiariesScreen = () => {
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{item.FullnameSlang}</Text>
           <TouchableOpacity onPress={() => HandleThreeDotPress(item)} style={{ height: 30, width: 30, backgroundColor: '#e4f1ef', borderRadius: 20, padding: 5, marginLeft: 10, justifyContent: 'center', alignItems: 'center' }}>
-            <Entypo name="dots-three-vertical" size={20} color="#000" />
+            <Entypo name="dots-three-vertical" size={18} color="#000" />
           </TouchableOpacity>
         </View>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', paddingTop: 10 }}>
-          <Text style={[globalTextStyles.bodyMedium, {  color: '#000' }]}>{`صلة القرابة: ${item.RelationshipTitleSlang}`}</Text>
-          <Text style={[globalTextStyles.bodyMedium, {  color: '#000' }]}>{`تاريخ الإضافة : ${moment(item.CreatedDate).locale('en').format('DD/MM/YYYY')}`}</Text>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#000' }]}>{`صلة القرابة: ${item.RelationshipTitleSlang}`}</Text>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#000' }]}>{`تاريخ الإضافة : ${moment(item.CreatedDate).locale('en').format('DD/MM/YYYY')}`}</Text>
         </View>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 20 }}>
           <TouchableOpacity onPress={() => HandleReportPress(item, 'report')} style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={[globalTextStyles.caption, { color: '#fff', fontWeight: 'bold' }]}>التقارير الطبية</Text>
+            <Text style={[globalTextStyles.buttonSmall, { color: '#fff',  }]}>التقارير الطبية</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => HandleReportPress(item, 'history')} style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={[globalTextStyles.caption, { color: '#fff', fontWeight: 'bold' }]}>التاريخ المرضي</Text>
+            <Text style={[globalTextStyles.buttonSmall, { color: '#fff', }]}>التاريخ المرضي</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -709,7 +711,7 @@ const BeneficiariesScreen = () => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', }}>
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', marginBottom: 10 }]}>المستفيدون (المرضى)</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: '600', color: '#000', marginBottom: 10 }]}>المستفيدون (المرضى)</Text>
         <Text style={[globalTextStyles.bodySmall, { fontWeight: '500', color: '#000', marginBottom: 10, textAlign: 'center' }]}>يمكنك إضافة أكثر من مستفيد، مع إضافة التاريخ المرضي والتقارير الطبية لكل مستفيد</Text>
       </View>
 
@@ -727,7 +729,7 @@ const BeneficiariesScreen = () => {
       <TouchableOpacity onPress={HandleAddBeneficiary} style={{ height: 50, marginTop: 10, backgroundColor: '#23a2a4', marginHorizontal: 10, marginBottom: 10, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={[globalTextStyles.buttonMedium, { color: '#fff' }]}>{t('add_beneficiary')}</Text>
       </TouchableOpacity>
-      <FullScreenLoader visible={isLoading} />
+      <FullScreenLoader visible={isLoading || isDownloading} />
 
       <CustomBottomSheet
         visible={openBottomSheetReport}
@@ -736,9 +738,9 @@ const BeneficiariesScreen = () => {
         backdropClickable={false}
         showHandle={false}
       >
-        <View style={{ flex: 1, backgroundColor: '#eff5f5',borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+        <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
           <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{reportType == 'report' ? 'التقارير الطبية' : 'التاريخ المرضي'}</Text>
+            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000' }]}>{reportType == 'report' ? 'التقارير الطبية' : 'التاريخ المرضي'}</Text>
             <TouchableOpacity onPress={() => setOpenBottomSheetReport(false)}>
               <AntDesign name="close" size={20} color="#000" />
             </TouchableOpacity>
@@ -760,38 +762,49 @@ const BeneficiariesScreen = () => {
       <CustomBottomSheet
         visible={openBottomSheet}
         onClose={() => setOpenBottomSheet(false)}
-        height={openBottomSheetHeight}
+        showHandle={false}
+        height="65%"
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "padding"}
-          style={{ flex: 1 }}
-        >
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <View style={styles.modalBackground}>
-              <View style={styles.modalContainer}>
-                <AddBeneficiaryComponent
-                  onClosePress={() => setOpenBottomSheet(false)}
-                  onChangeTextName={(text) => updateBeneficiaryField('name', text)}
-                  nameValue={beneficiaryForm.name}
-                  onChangeTextRelation={(text) => updateBeneficiaryField('relation', text)}
-                  relationValue={beneficiaryForm.relation}
-                  onChangeTextAge={(text) => updateBeneficiaryField('age', text)}
-                  ageValue={beneficiaryForm.age}
-                  onChangeTextGender={(text) => updateBeneficiaryField('gender', text)}
-                  genderValue={beneficiaryForm.gender}
-                  onChangeTextInsurance={(text) => updateBeneficiaryField('insurance', text)}
-                  insuranceValue={beneficiaryForm.insurance}
-                  PressNationality={(value) => updateBeneficiaryField('nationality', value)}
-                  nationality={beneficiaryForm.nationality}
-                  SubmitButton={HandleSubmitFormData}
-                  idNumberValue={beneficiaryForm.idNumber}
-                  onChangeTextIdNumber={(text) => updateBeneficiaryField('idNumber', text)}
-                  setFocusedField={setFocusedField}
-                />
+        <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+          <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+          <Text style={styles.bottomSheetHeaderText}>بيانات المستفيد</Text>
+            <TouchableOpacity onPress={() => setOpenBottomSheet(false)}>
+              <AntDesign name="close" size={24} color="#979e9eff" />
+            </TouchableOpacity>
+            
+          </View>
+          <ScrollView
+            style={{ flex: 1 }}
+            // contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+              <View style={styles.modalBackground}>
+                <View style={styles.modalContainer}>
+                  <AddBeneficiaryComponent
+                    onChangeTextName={(text) => updateBeneficiaryField('name', text)}
+                    nameValue={beneficiaryForm.name}
+                    onChangeTextRelation={(text) => updateBeneficiaryField('relation', text)}
+                    relationValue={beneficiaryForm.relation}
+                    onChangeTextAge={(text) => updateBeneficiaryField('age', text)}
+                    ageValue={beneficiaryForm.age}
+                    onChangeTextGender={(text) => updateBeneficiaryField('gender', text)}
+                    genderValue={beneficiaryForm.gender}
+                    onChangeTextInsurance={(text) => updateBeneficiaryField('insurance', text)}
+                    insuranceValue={beneficiaryForm.insurance}
+                    PressNationality={(value) => updateBeneficiaryField('nationality', value)}
+                    nationality={beneficiaryForm.nationality}
+                    SubmitButton={HandleSubmitFormData}
+                    idNumberValue={beneficiaryForm.idNumber}
+                    onChangeTextIdNumber={(text) => updateBeneficiaryField('idNumber', text)}
+                    setFocusedField={setFocusedField}
+                  />
+                </View>
               </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
+          </ScrollView>
+        </View>
       </CustomBottomSheet>
 
       <Modal
@@ -807,7 +820,7 @@ const BeneficiariesScreen = () => {
             <SafeAreaView style={styles.modalContainer}>
               <View style={styles.sheetHeaderContainer}>
                 <TouchableOpacity onPress={() => setOpenBottomSheetMenu(false)}>
-                  <AntDesign name="close" size={30} color="#979e9eff" />
+                  <AntDesign name="close" size={24} color="#979e9eff" />
                 </TouchableOpacity>
               </View>
 
@@ -842,11 +855,11 @@ const BeneficiariesScreen = () => {
       >
         <View style={[styles.modalBackground]}>
           <View style={styles.modalDeleteContainer}>
-            <View style={{ height: 50, backgroundColor: '#E4F1EF', borderRadius: 10,paddingHorizontal:16,justifyContent:'center' }}>
+            <View style={{ height: 50, backgroundColor: '#E4F1EF', borderRadius: 10, paddingHorizontal: 16, justifyContent: 'center' }}>
               <Text style={styles.deleteTitle}>تأكيد</Text>
             </View>
 
-            <Text style={[{paddingHorizontal:16, paddingVertical:10,  fontSize: 16 }]}>هل أنت متأكد؟</Text>
+            <Text style={[{ paddingHorizontal: 16, paddingVertical: 10, color: '#000', fontFamily: CAIRO_FONT_FAMILY.regular }]}>هل أنت متأكد؟</Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity onPress={HandleDeleteBeneficiaryData} style={styles.buttonYes}>
                 <Text style={styles.buttonText}>نعم</Text>
@@ -896,7 +909,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingBottom: 0
+    paddingBottom: 0,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
   modalContainer: {
     width: '100%',
@@ -916,14 +931,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'left',
     marginVertical: 4,
-    fontFamily: CAIRO_FONT_FAMILY.regular
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    color: '#000',
   },
   sheetHeaderContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#E4F1EF',
-    padding: 10
+    padding: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -939,6 +957,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1f6767ff',
     justifyContent: 'center',
     alignItems: 'center',
+    height: 40,
   },
   buttonNo: {
     width: '48%',
@@ -946,12 +965,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#979e9eff',
     justifyContent: 'center',
     alignItems: 'center',
+    height: 40,
   },
   buttonText: {
     color: '#fff',
     fontSize: 14,
-    padding: 20,
-
+    // padding: 20,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
   },
   deleteContainer: {
     paddingHorizontal: 20,
@@ -959,7 +979,6 @@ const styles = StyleSheet.create({
   },
   deleteTitle: {
     ...globalTextStyles.bodyMedium,
-    fontWeight: 'bold',
     textAlign: 'left',
     color: '#000',
   },
@@ -967,6 +986,12 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: 'white',
     borderRadius: 10,
+  },
+  bottomSheetHeaderText: {
+    fontSize: 16,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    color: '#36454F',
+
   },
 })
 

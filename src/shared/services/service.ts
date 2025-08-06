@@ -1,7 +1,7 @@
 import PushNotification from "react-native-push-notification";
 import notifee, { TimestampTrigger, TriggerType } from '@notifee/react-native';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
-import { PermissionsAndroid } from 'react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { setTopic } from "../redux/reducers/userReducer";
 import messaging from '@react-native-firebase/messaging';
 import moment from 'moment';
@@ -114,14 +114,25 @@ export const requestiOSPermissions = async () => {
 
 export const requestAndroidPermissions = async () => {
   try {
-    const granted = await PermissionsAndroid.requestMultiple([
+    // For Android 11+ (API 30+), WRITE_EXTERNAL_STORAGE is deprecated
+    const androidVersion = Number(Platform.Version);
+    
+    let permissions = [
       PermissionsAndroid.PERMISSIONS.CAMERA,
       PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
       PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
-      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-    ]);
+    ];
+
+    // Only add storage permissions for Android 10 and below
+    if (androidVersion < 30) {
+      permissions.push(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE
+      );
+    }
+
+    const granted = await PermissionsAndroid.requestMultiple(permissions);
 
     if (
       granted['android.permission.CAMERA'] === PermissionsAndroid.RESULTS.GRANTED &&

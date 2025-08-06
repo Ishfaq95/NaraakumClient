@@ -18,7 +18,7 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
   const inputRef = React.useRef<TextInput>(null);
   return (
     <View style={styles.mainContainer}>
-      <View style={[styles.sheetHeaderContainer,{backgroundColor:'#fff'}]}>
+      <View style={[styles.sheetHeaderContainer, { backgroundColor: '#fff' }]}>
         <TouchableOpacity onPress={onClosePress}>
           <AntDesign name="close" size={30} color="#979e9eff" />
         </TouchableOpacity>
@@ -68,7 +68,7 @@ interface PhoneUpdateProps {
 export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUpdate, handlePhoneNumberChange, mobileNumber, onClosePress, inputError = false }) => {
   return (
     <View style={styles.mainContainer}>
-      <View style={[styles.sheetHeaderContainer,{backgroundColor:'#fff'}]}>
+      <View style={[styles.sheetHeaderContainer, { backgroundColor: '#fff' }]}>
         <TouchableOpacity onPress={onClosePress}>
           <AntDesign name="close" size={30} color="#979e9eff" />
         </TouchableOpacity>
@@ -103,29 +103,29 @@ interface smsProps {
 
 export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, otpNumEmail, userName, onChangeText, value, OtpSubmitButton, HandleResendPress }) => {
   return (
-        <View style={[styles.mainContainer,{padding:20}]}>
-          <TouchableOpacity onPress={onClosePress}>
-            <AntDesign name="close" size={30} color="#979e9eff" />
-          </TouchableOpacity>
+    <View style={[styles.mainContainer, { padding: 20 }]}>
+      <TouchableOpacity onPress={onClosePress}>
+        <AntDesign name="close" size={30} color="#979e9eff" />
+      </TouchableOpacity>
 
-          <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
-          <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
-          <Text style={styles.optHeaderText}>{otpNumEmail}</Text>
-          <Text style={styles.optHeaderText}>{userName}</Text>
-          <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
-          <View style={styles.otpView}>
-            <TextInput value={value} onChangeText={onChangeText} placeholder="0000" style={styles.inputText} />
-          </View>
-          <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton}>
-            <Text style={styles.saveBtnText}>حفظ</Text>
-          </TouchableOpacity>
-          <View style={styles.resendOptTextContainer}>
-            <Text style={styles.optNotGet}>لم يصلني الكود</Text>
-            <TouchableOpacity onPress={HandleResendPress}>
-              <Text style={styles.resendPress}>إعادة الارسال</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
+      <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
+      <Text style={styles.optHeaderText}>{otpNumEmail}</Text>
+      <Text style={styles.optHeaderText}>{userName}</Text>
+      <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
+      <View style={styles.otpView}>
+        <TextInput value={value} onChangeText={onChangeText} placeholder="0000" style={styles.inputText} />
+      </View>
+      <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton}>
+        <Text style={styles.saveBtnText}>حفظ</Text>
+      </TouchableOpacity>
+      <View style={styles.resendOptTextContainer}>
+        <Text style={styles.optNotGet}>لم يصلني الكود</Text>
+        <TouchableOpacity onPress={HandleResendPress}>
+          <Text style={styles.resendPress}>إعادة الارسال</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   )
 }
 
@@ -199,7 +199,7 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
     { label: ' حي قرطبة', value: '19' },
     { label: ' حي الجنادرية', value: '20' },
     { label: ' حي القادسية', value: '21' },
-      { label: ' حي اليرموك', value: '22' },
+    { label: ' حي اليرموك', value: '22' },
     { label: ' حي غرناطة', value: '23' },
     { label: ' حي أشبيلية', value: '24' },
     { label: ' حي الحمراء', value: '25' },
@@ -223,7 +223,7 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
     { label: ' حي المصيف', value: '43' },
     { label: ' حي التعاون', value: '44' },
     { label: ' حي الإزدهار', value: '45' },
-      { label: ' حي المعذر', value: '46' },
+    { label: ' حي المعذر', value: '46' },
     { label: ' حي المحمدية', value: '47' },
     { label: ' حي الرحمانية', value: '48' },
     { label: ' حي الرائد', value: '49' },
@@ -247,7 +247,7 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
     { label: ' حي الربوة', value: '67' },
     { label: ' حي الزهراء', value: '68' },
     { label: ' حي الصفا', value: '69' },
-      { label: ' حي الضباط', value: '70' },
+    { label: ' حي الضباط', value: '70' },
     { label: ' حي الملز', value: '71' },
     { label: ' حي الوزارات', value: '72' },
     { label: ' حي الفاروق', value: '73' },
@@ -438,7 +438,6 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
 
 
 interface beneficiaryProps {
-  onClosePress: () => void;
   onChangeTextName: (text: string) => void;
   nameValue: string;
   onChangeTextRelation: (text: string) => void;
@@ -458,7 +457,6 @@ interface beneficiaryProps {
 }
 
 export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
-  onClosePress,
   onChangeTextName,
   nameValue,
   onChangeTextRelation,
@@ -531,14 +529,6 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
   };
 
   return (
-    <>
-      <View style={styles.sheetHeaderContainer}>
-        <TouchableOpacity onPress={onClosePress}>
-          <AntDesign name="close" size={32} color="#979e9eff" />
-        </TouchableOpacity>
-        <Text style={styles.bottomSheetHeaderText}>بيانات المستفيد</Text>
-      </View>
-
       <View style={styles.whiteContainer}>
         {/* Name */}
         <Text style={styles.titleText}>اسم المستفيد <Text style={{ color: 'red' }}>*</Text></Text>
@@ -576,37 +566,42 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
           placeholder="اختر الجنس"
         />
 
-        {/* Age */}
-        <Text style={styles.titleText}>العمر / سنة</Text>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => ageInputRef.current && ageInputRef.current.focus()}
-          style={[styles.inputView, { alignItems: 'flex-end' }]}
-        >
-          <TextInput
-            ref={ageInputRef}
-            style={styles.fullWidthInput}
-            placeholder="0"
-            placeholderTextColor="#1e2525ff"
-            keyboardType="numeric"
-            value={ageValue}
-            onChangeText={onChangeTextAge}
-          />
-        </TouchableOpacity>
-
-        {/* Gender Dropdown */}
-        <Text style={styles.titleText}>الجنس</Text>
-        <Dropdown
-          data={genders}
-          containerStyle={{ height: 50 }}
-          dropdownStyle={[{ height: 50 }, genderError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
-          value={genderValue}
-          onChange={value => {
-            setGenderError(false);
-            onChangeTextGender(value.toString());
-          }}
-          placeholder="اختر الجنس"
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          {/* Age */}
+          <View style={{ width: '48%' }}>
+            <Text style={styles.titleText}>العمر / سنة</Text>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => ageInputRef.current && ageInputRef.current.focus()}
+              style={[styles.inputView, { alignItems: 'flex-end' }]}
+            >
+              <TextInput
+                ref={ageInputRef}
+                style={styles.fullWidthInput}
+                placeholder="0"
+                placeholderTextColor="#1e2525ff"
+                keyboardType="numeric"
+                value={ageValue}
+                onChangeText={onChangeTextAge}
+              />
+            </TouchableOpacity>
+          </View>
+          {/* Gender Dropdown */}
+          <View style={{ width: '48%' }}>
+            <Text style={styles.titleText}>الجنس</Text>
+            <Dropdown
+              data={genders}
+              containerStyle={{ height: 50 }}
+              dropdownStyle={[{ height: 50 }, genderError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
+              value={genderValue}
+              onChange={value => {
+                setGenderError(false);
+                onChangeTextGender(value.toString());
+              }}
+              placeholder="اختر الجنس"
+            />
+          </View>
+        </View>
 
         {/* Insurance Dropdown */}
         <Text style={styles.titleText}>شركة التأمين</Text>
@@ -662,7 +657,6 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
           <Text style={styles.saveBtnText}>حفظ</Text>
         </TouchableOpacity>
       </View>
-    </>
   );
 };
 
@@ -857,7 +851,8 @@ const styles = StyleSheet.create({
     fontFamily: CAIRO_FONT_FAMILY.medium,
   },
   fullWidthInput: {
-    flex: 1,
+    height:'100%',
+    width:'100%',
     paddingHorizontal: 20,
     fontSize: 16,
     fontFamily: CAIRO_FONT_FAMILY.regular,

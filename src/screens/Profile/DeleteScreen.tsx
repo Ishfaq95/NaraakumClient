@@ -19,6 +19,7 @@ import AppleIcon from '../../assets/icons/AppleIcon';
 import { signInWithGoogle } from '../../services/auth/googleAuthService';
 import appleAuth from '@invertase/react-native-apple-authentication';
 import { globalTextStyles } from '../../styles/globalStyles';
+import FullScreenLoader from '../../components/FullScreenLoader';
 
 
 interface Country {
@@ -38,11 +39,7 @@ const DeleteScreen = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(countries.find(c => c.code === 'sa'));
-  const [isValidNumber, setIsValidNumber] = useState(false);
-  const [formattedNumber, setFormattedNumber] = useState('');
-  const [fullNumber, setFullNumber] = useState('');
-  const [emailError, setEmailError] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const isRTL = I18nManager.isRTL;
   const [isLoading, setIsLoading] = useState(false);
@@ -101,19 +98,11 @@ const DeleteScreen = () => {
 
       if (response?.StatusCode?.STATUSCODE == 3010) {
         setIsLoading(false);
-        Alert.alert(
-          "Error",
-          response?.StatusCode?.MESSAGE,
-          [{ text: "OK" }]
-        );
+        setDeleteAccountError(true);
         
 
       } else if (response?.StatusCode?.STATUSCODE == 3032) {
-        Alert.alert(
-          "Error",
-          response?.StatusCode?.MESSAGE,
-          [{ text: "OK" }]
-        );
+        setDeleteAccountError(true);
       }else{
         dispatch(setUser(null));
         dispatch(setTopic(null));
@@ -292,6 +281,7 @@ const DeleteScreen = () => {
               )}
             </TouchableOpacity>
           </View>
+          {deleteAccountError && <Text style={[globalTextStyles.bodySmall, { color: 'red',  textAlign: 'center' }]}>كلمة المرور غير صالحة</Text>}
         </View>
 
 
@@ -307,7 +297,9 @@ const DeleteScreen = () => {
         </>}
         
 
-        
+        <FullScreenLoader
+          visible={isLoading}
+        />
       </View>
     </SafeAreaView>
   )

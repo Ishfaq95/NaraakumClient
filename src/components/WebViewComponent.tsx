@@ -228,21 +228,32 @@ const WebViewComponent = ({uri}: any) => {
     if (Platform.OS === 'ios') {
       return requestiOSPermissions();
     } else {
-      const granted = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      ]);
+      // For Android 11+ (API 30+), WRITE_EXTERNAL_STORAGE is deprecated
+      // and not needed for accessing Downloads folder
+      const androidVersion = Number(Platform.Version);
+      
+      if (androidVersion >= 30) {
+        // Android 11+ - only request READ_MEDIA_AUDIO
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+        ]);
 
-      if (
-        granted['android.permission.READ_MEDIA_AUDIO'] ===
-          PermissionsAndroid.RESULTS.GRANTED ||
-        granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
-          PermissionsAndroid.RESULTS.GRANTED
-      ) {
-        return true;
+        return granted['android.permission.READ_MEDIA_AUDIO'] ===
+          PermissionsAndroid.RESULTS.GRANTED;
       } else {
-        return false;
+        // Android 10 and below - request all permissions
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        ]);
+
+        return (
+          granted['android.permission.READ_MEDIA_AUDIO'] ===
+            PermissionsAndroid.RESULTS.GRANTED ||
+          granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
+            PermissionsAndroid.RESULTS.GRANTED
+        );
       }
     }
   };

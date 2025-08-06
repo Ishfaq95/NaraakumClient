@@ -451,17 +451,27 @@ const requestStoragePermission = async (): Promise<boolean> => {
   if (Platform.OS !== 'android') return true;
 
   try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      {
-        title: 'Storage Permission',
-        message: 'App needs access to storage to save PDF files.',
-        buttonNeutral: 'Ask Me Later',
-        buttonNegative: 'Cancel',
-        buttonPositive: 'OK',
-      }
-    );
-    return granted === PermissionsAndroid.RESULTS.GRANTED;
+          // For Android 11+ (API 30+), WRITE_EXTERNAL_STORAGE is deprecated
+      // and not needed for accessing Downloads folder
+      const androidVersion = Number(Platform.Version);
+      
+      if (androidVersion >= 30) {
+      // Android 11+ - no permission needed for Downloads folder
+      return true;
+    } else {
+      // Android 10 and below - request WRITE_EXTERNAL_STORAGE
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: 'Storage Permission',
+          message: 'App needs access to storage to save PDF files.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
   } catch (err) {
     console.warn(err);
     return false;
@@ -476,23 +486,41 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
     let destinationPath = '';
 
     if (Platform.OS === 'android') {
-      // Request permission first
-      const hasPermission = await requestStoragePermission();
-
-      if (hasPermission) {
-        // Try to save to external Downloads folder
-        try {
-          destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
-          await RNFS.copyFile(filePath, destinationPath);
-        } catch (externalError) {
-          // Fallback to internal Downloads
+              // Check if we need permission (Android 10 and below)
+        const androidVersion = Number(Platform.Version);
+        const needsPermission = androidVersion < 30;
+      
+      if (needsPermission) {
+        const hasPermission = await requestStoragePermission();
+        if (!hasPermission) {
+          // Use internal storage if permission denied
           destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
           await RNFS.copyFile(filePath, destinationPath);
+          Alert.alert(
+            'File downloaded successfully',
+            'Saved to internal storage'
+          );
+          return destinationPath;
         }
-      } else {
-        // Use internal storage if permission denied
+      }
+
+      // Try to save to external Downloads folder
+      try {
+        destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
+        await RNFS.copyFile(filePath, destinationPath);
+        Alert.alert(
+          'File downloaded successfully',
+          'Saved to Downloads folder'
+        );
+      } catch (externalError) {
+        console.log('External download failed, using internal storage:', externalError);
+        // Fallback to internal Downloads
         destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
         await RNFS.copyFile(filePath, destinationPath);
+        Alert.alert(
+          'File downloaded successfully',
+          'Saved to internal storage'
+        );
       }
     } else {
       // iOS - use Documents directory
@@ -500,10 +528,6 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
       await RNFS.copyFile(filePath, destinationPath);
     }
 
-    Alert.alert(
-      'File downloaded successfully',
-      `Saved to: ${Platform.OS === 'android' ? 'Downloads folder' : 'Documents folder'}`
-    );
     return destinationPath;
   } catch (error) {
     console.error('Error copying file:', error);

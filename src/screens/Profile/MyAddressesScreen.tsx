@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Modal, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Modal, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -91,11 +91,13 @@ const MyAddressesScreen = () => {
         ]}
       >
         <View style={styles.row}>
-          <LocationMarkerIcon size={22} />
+          <View style={{ alignItems:'flex-start',justifyContent:'flex-start'}}>
+            <LocationMarkerIcon size={22} />
+          </View>
           <View style={styles.textContainer}>
-            <Text style={[styles.title]}>{item.TitleSlang}</Text>
-            <Text style={[styles.square]}>{item.Address}</Text>
-            <Text style={[styles.description]}>{item.Description}</Text>
+            <Text style={[globalTextStyles.h6, {color: '#000'}]}>{item.TitleSlang}</Text>
+            <Text style={[globalTextStyles.bodySmall, {color: '#000', marginBottom: 10, textAlign: 'left' }]}>{item.Address}</Text>
+            <Text style={[globalTextStyles.bodySmall, {color: '#000', marginBottom: 10, textAlign: 'left' }]}>{item.Description}</Text>
           </View>
         </View>
       </View>
@@ -120,6 +122,9 @@ const MyAddressesScreen = () => {
       "UserLogininfoId": user.Id
     }
     const response = await bookingService.AddUserLocation(payload)
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
+      getAddresses();
+    }
     setOpenBottomSheet(false);
     } catch (error) {
     } finally {
@@ -150,8 +155,10 @@ const MyAddressesScreen = () => {
         "UserLogininfoId": user.Id
       }
       const response = await bookingService.AddUserLocation(payload)
-      setOpenBottomSheet(false);
-      getAddresses();
+      if (response?.ResponseStatus?.STATUSCODE == 200) {
+        setOpenBottomSheet(false);
+        getAddresses();
+      }
       setAddressForm({
         rigin: '',
         city: '',
@@ -174,7 +181,7 @@ const MyAddressesScreen = () => {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       <View style={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', }}>
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', marginBottom: 10 }]}>عناوين الزيارات</Text>
+        <Text style={[globalTextStyles.bodyLarge, { color: '#000', marginBottom: 10 }]}>عناوين الزيارات</Text>
         <Text style={[globalTextStyles.bodySmall, { fontWeight: '500', color: '#000', marginBottom: 10, textAlign: 'center' }]}>يمكنك إضافة وتسجيل أكثر من عنوان لاستخدامها فى عملية الحجز</Text>
       </View>
 
@@ -184,6 +191,7 @@ const MyAddressesScreen = () => {
           renderItem={renderItem}
           keyExtractor={(item) => item.Id.toString()}
           style={{ width: '100%', }}
+          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={getAddresses} />}
           ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
             <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{t('no_addresses')}</Text>
           </View>}
@@ -277,7 +285,8 @@ const styles = StyleSheet.create({
   savedAddressItem: {
     borderRadius: 12,
     marginVertical: 8,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
@@ -292,6 +301,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     marginLeft: 12,
+    alignItems: 'flex-start',
   },
   title: {
     fontWeight: 'bold',

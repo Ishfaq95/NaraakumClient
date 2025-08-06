@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { bookingService } from '../../services/api/BookingService';
 import { RootState } from '../../shared/redux/store';
 import { globalTextStyles } from '../../styles/globalStyles';
+import { profileService } from '../../services/api/ProfileService';
 
 const menuItems = [
   { label: 'حسابي', icon: <Icon name="person" size={20} color="#239EA0" />, key: 'account', route: ROUTES.updateProfile },
@@ -39,6 +40,7 @@ const ProfileScreen = () => {
   const webSocketService = WebSocketService.getInstance();
   const [walletBalance, setWalletBalance] = useState(0);
   const user = useSelector((state: RootState) => state.root.user.user);
+  const [cpAddedOrdersCount, setCpAddedOrdersCount] = useState(0);
   const isFocused = useIsFocused();
 
   const onLogout = () => {
@@ -47,8 +49,23 @@ const ProfileScreen = () => {
     dispatch(setUser(null));
   };
 
+  const getCpAddedOrders = async () => {
+    try {
+      const payload = {
+        "UserloginInfoId": user?.Id,
+      }
+      const response = await profileService.getCpAddedOrders(payload);
+      if (response?.ResponseStatus?.STATUSCODE == 200) {
+        const CpAddedOrders = response?.UserOrders?.filter((item: any) => item?.CatOrderStatusId == '22');
+        setCpAddedOrdersCount(CpAddedOrders?.length);
+        }
+    } catch (error) {
+    }
+  }
+
   useEffect(() => {
     getWalletBalance();
+    getCpAddedOrders();
   }, [isFocused]);
 
   const getWalletBalance = async () => {
@@ -72,6 +89,9 @@ const ProfileScreen = () => {
       <Icon name="chevron-left" size={22} color="#239EA0" style={styles.leftArrow} />
       {item.isWallet && <View style={styles.walletPill}>
         <Text style={styles.walletText}>SAR {walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+      </View>}
+      {(item.key == 'received' && cpAddedOrdersCount > 0) && <View style={styles.reservationPill}>
+        <Text style={styles.reservationCount}>{cpAddedOrdersCount}</Text>
       </View>}
       <Text style={styles.label}>{item.label}</Text>
       <View style={styles.iconBox}>{item.icon}</View>
@@ -155,6 +175,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: globalTextStyles.h5.fontFamily,
   },
+  reservationPill: {
+    backgroundColor: '#23A2A4',
+    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 0,
+    marginLeft: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reservationCount: {
+    ...globalTextStyles.bodySmall,
+    color: '#fff',
+    fontFamily: globalTextStyles.h6.fontFamily,
+  }
 });
 
 export default ProfileScreen;

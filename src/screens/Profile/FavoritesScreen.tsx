@@ -21,7 +21,7 @@ const FavoritesScreen = () => {
   const [favorites, setFavorites] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   useEffect(() => {
     getUserFavorites();
   }, []);
@@ -41,7 +41,7 @@ const FavoritesScreen = () => {
 
     if (response?.ResponseStatus?.STATUSCODE == 200) {
       setFavorites(response?.Result);
-    }else if(response?.ResponseStatus?.STATUSCODE == 201){
+    } else if (response?.ResponseStatus?.STATUSCODE == 201) {
       setFavorites([]);
     }
 
@@ -80,38 +80,39 @@ const FavoritesScreen = () => {
   );
 
   const renderItem = ({ item }: any) => {
+    
     return (
       <View style={styles.itemContainer}>
-      <View style={[{ flexDirection: 'row', width: '100%',  borderRadius: 10, padding: 10 }]}>
-        <View style={{ width: '25%' }}>
-          <View style={{height: 80, width: 80, borderRadius: 40, backgroundColor: '#e0e0e0', marginBottom: 8,}}>
-          {item.ImagePath ? (
-            <Image
-              source={{ uri: `${MediaBaseURL}/${item.ImagePath}` }}
-              style={styles.providerImage}
-              resizeMode='contain'
-            />
-          ) : (
-            <UserPlaceholder width={80} height={80} />
-          )}
+        <View style={[{ flexDirection: 'row', width: '100%', borderRadius: 10, padding: 10 }]}>
+          <View style={{ width: 80,height:80 }}>
+            <View style={{ height: 70, width: 70, borderRadius: 40, backgroundColor: '#e0e0e0', marginBottom: 8, }}>
+              {item.ImagePath || item.LogoImagePath ? (
+                <Image
+                  source={{ uri: item.ImagePath? `${MediaBaseURL}/${item.ImagePath}` :`${MediaBaseURL}/${item.LogoImagePath}` }}
+                  style={styles.providerImage}
+                  resizeMode='contain'
+                />
+              ) : (
+                <UserPlaceholder width={70} height={70} />
+              )}
+            </View>
+          </View>
+          <View style={{ width: '65%' }}>
+            <Text style={[globalTextStyles.h6, styles.providerName]}>{item.FullnameSlang}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <AntDesign name="star" size={16} color="#FFD700" />
+              <Text style={[globalTextStyles.bodyMedium, styles.ratingText, { textAlign: 'center', marginHorizontal: 3,marginBottom:5 }]}>{item.AccumulativeRatingAvg.toFixed(1)}</Text>
+              <Text style={[globalTextStyles.caption, { color: '#000' }]}> ({item.AccumulativeRatingNum} تقييم)</Text>
+
+            </View>
+          </View>
+          <View style={{ width: '10%' }}>
+            <AntDesign name="heart" size={24} color="#23a2a4" />
           </View>
         </View>
-        <View style={{ width: '60%' }}>
-          <Text style={[globalTextStyles.h6, styles.providerName]}>{item.FullnameSlang}</Text>
-          <View style={{ flexDirection: 'row',alignItems:'center', marginVertical: 2 }}>
-          <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
-            <Text style={[globalTextStyles.bodySmall, styles.ratingText]}>{item.AccumulativeRatingAvg.toFixed(1)}</Text>
-            <Text style={[globalTextStyles.caption, { color: '#000' }]}> ({item.AccumulativeRatingNum} تقييم)</Text>
-            
-          </View>
-        </View>
-        <View style={{ width: '10%' }}>
-          <AntDesign name="heart" size={24} color="#23a2a4" />
-        </View>
-      </View>
-      <TouchableOpacity onPress={() => handleRemoveFromFavorites(item.Id)} style={{ height: 50, backgroundColor: '#23a2a4',marginHorizontal: 10, marginBottom: 10, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={[globalTextStyles.buttonMedium, { color: '#fff' }]}>{t('delete_account_button')}</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleRemoveFromFavorites(item.Id)} style={{ height: 50, backgroundColor: '#23a2a4', marginHorizontal: 10, marginBottom: 10, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={[globalTextStyles.buttonMedium, { color: '#fff' }]}>{t('delete_account_button')}</Text>
+        </TouchableOpacity>
       </View>
     )
   }
@@ -119,11 +120,11 @@ const FavoritesScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <View style={{paddingHorizontal: 16, paddingVertical: 10,alignItems:'center',}}>
-      <Text style={[globalTextStyles.h5, { color: '#000', marginBottom: 10 }]}>قائمة المفضلة</Text>
-      <Text style={[globalTextStyles.bodySmall, { color: '#000', marginBottom: 10, textAlign:'center' }]}>سيظهر مقدمو الخدمات المفضلون لديك في أوائل النتائج عند طلب أي خدمة</Text>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', }}>
+        <Text style={[globalTextStyles.h5, { color: '#000', marginBottom: 10 }]}>قائمة المفضلة</Text>
+        <Text style={[globalTextStyles.bodySmall, { color: '#000', marginBottom: 10, textAlign: 'center' }]}>سيظهر مقدمو الخدمات المفضلون لديك في أوائل النتائج عند طلب أي خدمة</Text>
       </View>
-      
+
       <View style={styles.contentContainer}>
         <FlatList
           data={favorites}
@@ -137,7 +138,7 @@ const FavoritesScreen = () => {
               tintColor="#23a2a4"
             />
           }
-          ListEmptyComponent={() => <View style={{ flex: 1,paddingTop: 100,paddingBottom: 100}}>
+          ListEmptyComponent={() => <View style={{ flex: 1, paddingTop: 100, paddingBottom: 100 }}>
             <Text style={globalTextStyles.bodyMedium}>{t('no_favorites')}</Text>
           </View>}
         />
@@ -151,11 +152,11 @@ const FavoritesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#eff5f5'
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: '#dee0db',
+    backgroundColor: '#eff5f5',
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     width: '100%',
-    backgroundColor: 'lightgray', marginBottom: 10,
+    backgroundColor: '#fff', marginBottom: 10,
     borderRadius: 10,
   },
   providerImage: {
@@ -194,6 +195,7 @@ const styles = StyleSheet.create({
     color: '#222',
     flexWrap: 'wrap',
     alignSelf: 'flex-start',
+    fontWeight: '600',
   },
   ratingText: {
     color: '#222',

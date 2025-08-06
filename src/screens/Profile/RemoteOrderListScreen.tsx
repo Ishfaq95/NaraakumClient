@@ -70,7 +70,7 @@ const RemoteOrderListScreen = () => {
       const renderHeader = () => (
         <Header
           centerComponent={
-            <Text style={styles.headerTitle}>{t('remote_orders')}</Text>
+            <Text numberOfLines={1} style={styles.headerTitle}>{t('remote_orders')}</Text>
           }
           leftComponent={
             <TouchableOpacity onPress={handleBack} style={styles.bookButton}>

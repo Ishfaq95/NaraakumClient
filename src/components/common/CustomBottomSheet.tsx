@@ -128,6 +128,7 @@ const CustomBottomSheet: React.FC<CustomBottomSheetProps> = ({
               borderTopLeftRadius: borderRadius,
               borderTopRightRadius: borderRadius,
               transform: [{ translateY: slideAnim }],
+              zIndex: 1000,
             },
             style,
           ]}
@@ -156,8 +157,13 @@ const CustomBottomSheet: React.FC<CustomBottomSheetProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'flex-end',
+    zIndex: 999,
   },
   backdrop: {
     position: 'absolute',
@@ -166,6 +172,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: '#000',
+    zIndex: 998,
   },
   bottomSheet: {
     width: '100%',
@@ -177,6 +184,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   handleContainer: {
     alignItems: 'center',

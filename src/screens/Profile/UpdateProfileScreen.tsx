@@ -215,7 +215,7 @@ const UpdateProfileScreen = () => {
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{t('update_profile')}</Text>
+        <Text style={styles.headerTitle}>{'حسابي'}</Text>
       }
       leftComponent={
         <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
@@ -901,13 +901,14 @@ const styles = StyleSheet.create({
   updateBtn: {
     position: 'absolute',
     left: 0,
+    top: 3,
     backgroundColor: '#23a2a4',
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 8,
+    marginLeft: 5,
   },
   updateBtnText: {
     color: '#fff',

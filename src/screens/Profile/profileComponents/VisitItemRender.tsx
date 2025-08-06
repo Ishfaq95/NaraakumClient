@@ -3,17 +3,27 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { CAIRO_FONT_FAMILY } from '../../../styles/globalStyles';
 import { useNavigation } from "@react-navigation/native";
 import { ROUTES } from "../../../shared/utils/routes";
+import moment from "moment";
 
 const VisitItemRender = ({item}:any) => {
     const navigation = useNavigation();
     const handleDetails = (item: any) => {
-        navigation.navigate(ROUTES.OrderDetailScreen, { item });
+        navigation.navigate(ROUTES.OrderDetailScreen, {OrderId:item.OrderID });
     }
     return (
         <View style={styles.container}>
-            <Text style={styles.orderDateText}>{`تاريخ الطلب : ${item.OrderDate}`}</Text>
-            <Text style={styles.orderIdText}>{`رقم الطلب : ${item.OrderID}`}</Text>
-            <Text style={styles.totalPriceText}>{`اجمالى الفاتورة : ${item.TotalPrice} ريال`}</Text>
+            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
+                <Text style={{fontSize:16,fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`تاريخ الطلب : `}</Text>
+                <Text style={styles.orderDateText}>{` ${moment(item.OrderDate).locale('en').format('DD/MM/YYYY')}`}</Text>
+            </View>
+            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
+                <Text style={{fontSize:16,fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`رقم الطلب :`}</Text>
+                <Text style={styles.orderDateText}>{`${item.OrderID}`}</Text>
+            </View>
+            <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
+                <Text style={{fontSize:16,fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`اجمالى الفاتورة : `}</Text>
+                <Text style={styles.orderDateText}>{`SAR ${item.TotalPrice}`}</Text>
+            </View>
 
             <TouchableOpacity onPress={() => handleDetails(item)} style={styles.detailsButton}>
                 <Text style={styles.buttonText}>تفاصيل الطلب</Text>

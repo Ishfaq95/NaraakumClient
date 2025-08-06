@@ -209,6 +209,16 @@ export const deleteOrderAddedByServiceProvider = async (payload: any): Promise<a
     }
 };
 
+export const getVisitMainRecordDetails = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('visitRecord/GetVisitMainRecordDetail', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting visit main record details:', error);
+        throw error;        
+    }
+};
+
 export const profileService = {
     getUserFavorites,
     removeFromFavorites,
@@ -229,5 +239,6 @@ export const profileService = {
     getMedicalReport,
     getMedicalHistory,
     getOrderDetailsAddedByServiceProvider,
-    deleteOrderAddedByServiceProvider
+    deleteOrderAddedByServiceProvider,
+    getVisitMainRecordDetails
 };  

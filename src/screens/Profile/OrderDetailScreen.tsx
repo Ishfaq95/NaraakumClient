@@ -27,7 +27,7 @@ import ArrowRightIcon from '../../assets/icons/RightArrow';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const OrderDetailScreen = ({ navigation, route }: any) => {
-  const Orderitem = route?.params?.item;
+  const OrderId = route?.params?.OrderId;
   const { t } = useTranslation();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selected, setSelected] = useState('myself');
@@ -526,16 +526,16 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   };
 
   useEffect(() => {
-    if (Orderitem) {
+    if (OrderId) {
       getOrderDetail();
       GetVisitRecordList();
     }
-  }, [Orderitem]);
+  }, [OrderId]);
 
   const getOrderDetail = async () => {
     try {
       const payload = {
-        "OrderId": Orderitem.OrderID,
+        "OrderId": OrderId,
       }
 
       const response = await profileService.getUserOrderDetail(payload);
@@ -554,7 +554,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const GetVisitRecordList = async () => {
     try {
       const payload = {
-        "OrderId": Orderitem.OrderID,
+        "OrderId": OrderId,
       }
 
       const response = await profileService.getVisitRecordList(payload);
