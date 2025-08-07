@@ -219,6 +219,16 @@ export const getVisitMainRecordDetails = async (payload: any): Promise<any> => {
     }
 };
 
+export const submitRating = async (payload: any): Promise<any> => { 
+    try {
+        const response = await axiosInstance.post('user/AddEditUserRating', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error submitting rating:', error);
+        throw error;        
+    }
+};
+
 export const profileService = {
     getUserFavorites,
     removeFromFavorites,
@@ -240,5 +250,6 @@ export const profileService = {
     getMedicalHistory,
     getOrderDetailsAddedByServiceProvider,
     deleteOrderAddedByServiceProvider,
-    getVisitMainRecordDetails
+    getVisitMainRecordDetails,
+    submitRating
 };  

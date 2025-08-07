@@ -80,7 +80,6 @@ const FavoritesScreen = () => {
   );
 
   const renderItem = ({ item }: any) => {
-    
     return (
       <View style={styles.itemContainer}>
         <View style={[{ flexDirection: 'row', width: '100%', borderRadius: 10, padding: 10 }]}>

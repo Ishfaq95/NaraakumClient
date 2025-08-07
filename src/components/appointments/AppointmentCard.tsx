@@ -34,6 +34,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
   onJoinMeeting,
   isCallEnabled 
 }) => {
+  console.log("appointment",appointment)
   const { t } = useTranslation();
   const isRTL = I18nManager.isRTL;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -65,7 +66,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.doctorName} numberOfLines={1}>
-            {appointment?.ServiceProviderSName }
+            {appointment?.FullnameSlang }
           </Text>
           <View style={styles.specialtiesContainer}>
             <TouchableOpacity 
@@ -86,7 +87,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
               scrollEventThrottle={16}
             >
               <View style={styles.specialtiesRow}>
-                {(appointment?.Specialties || []).map((spec: any, idx: number) => (
+                {(appointment?.ServiceProviderSpecialties || []).map((spec: any, idx: number) => (
                   <View key={idx} style={styles.specialtyPill}>
                     <Text style={styles.specialtyText}>
                       {isRTL ? spec.TitleSlang : spec.TitlePlang}
@@ -138,15 +139,15 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
           <View style={[
             styles.statusContainer,
             {
-              backgroundColor: getStatusStyle(appointment?.CatOrderStatusId).backgroundColor,
-              borderLeftColor: getStatusStyle(appointment?.CatOrderStatusId).borderColor
+              backgroundColor: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).backgroundColor,
+              borderLeftColor: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).borderColor
             }
           ]}>
             <Text style={[
               styles.statusText,
-              { color: getStatusStyle(appointment?.CatOrderStatusId).borderColor }
+              { color: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).borderColor }
             ]}>
-              {getStatusStyle(appointment?.CatOrderStatusId).text}
+              {getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).text}
             </Text>
           </View>
         </View>
@@ -157,7 +158,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
         <Participants width={20} height={20} />
         <Text style={styles.infoBarText}>
           {/* {t('استشارة عن بعد 30 دقيقة / طبيب عام')} */}
-          {`${appointment?.TitleSlangCategory} ${getDuration(appointment)} / ${appointment?.TitleSlangSpecialty || appointment?.TitleSlangService}`}
+          {`استشارة عن بعد ${getDuration(appointment)} / ${appointment?.TaskDetail[0]?.TitleSlangSpecialty || appointment?.TaskDetail[0]?.TitleSlangService}`}
         </Text>
       </View>
 

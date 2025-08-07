@@ -1,5 +1,5 @@
 import { Dimensions, StyleSheet } from 'react-native';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 const windowHeight = Dimensions.get('window').height;
 
 export const styles = StyleSheet.create({
@@ -83,5 +83,310 @@ export const styles = StyleSheet.create({
   text: {
     ...globalTextStyles.bodyMedium,
     color: '#000',
+  },
+   // Bottom Sheet Styles
+   sectionContainer: {
+    marginBottom: 15,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    backgroundColor: '#32A3A4',
+    alignItems: 'flex-start',
+    padding: 12,
+  },
+  sectionTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  sectionBody: {
+    padding: 1,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  infoLabel: {
+    fontSize: 14,
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+    textAlign: 'right',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  articleContainer: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    alignItems: 'flex-start',
+  },
+  articleTitle: {
+    fontSize: 14,
+    marginBottom: 5,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  articleContent: {
+    fontSize: 14,
+    color: '#333',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  subSection: {
+    marginBottom: 15,
+  },
+  subSectionTitle: {
+    fontSize: 14,
+    textAlign: 'left',
+    paddingLeft: 10,
+    marginBottom: 8,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  vitalSignsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  vitalSignItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  vitalSignLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 5,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  vitalSignValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#23a2a4',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  oeContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  oeItem: {
+    marginBottom: 8,
+  },
+  oeTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#23a2a4',
+    marginBottom: 3,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  oeContent: {
+    fontSize: 13,
+    color: '#333',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  diagnosisContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  diagnosisItem: {
+    marginBottom: 10,
+  },
+  diagnosisType: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#23a2a4',
+    marginBottom: 5,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  diagnosisSpecialty: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  diagnosisDetail: {
+    flexDirection: 'row',
+    marginBottom: 3,
+  },
+  diagnosisCode: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#23a2a4',
+    marginRight: 5,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  diagnosisText: {
+    fontSize: 12,
+    color: '#333',
+    flex: 1,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  labContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  labItem: {
+    marginBottom: 8,
+    padding: 8,
+    backgroundColor: '#fff',
+    borderRadius: 3,
+  },
+  labTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#23a2a4',
+    marginBottom: 3,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  labType: {
+    fontSize: 12,
+    color: '#666',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  procedureContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  procedureRow: {
+    flexDirection: 'row',
+  },
+  procedureColumn: {
+    flex: 1,
+    paddingHorizontal: 10,
+    alignItems: 'flex-start',
+  },
+  procedureLabel: {
+    fontSize: 14,
+    marginBottom: 5,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  procedureValue: {
+    fontSize: 13,
+    color: '#333',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  medicineContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  medicineItem: {
+    backgroundColor: '#fff',
+    padding: 10,
+    marginBottom: 8,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  medicineRow: {
+    flexDirection: 'row',
+    marginBottom: 5,
+  },
+  medicineLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#23a2a4',
+    marginRight: 5,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  medicineValue: {
+    fontSize: 12,
+    color: '#333',
+    flex: 1,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  instructionText: {
+    fontSize: 14,
+    color: '#333',
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  serviceContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  serviceItem: {
+    backgroundColor: '#fff',
+    padding: 8,
+    marginBottom: 5,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  serviceName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#23a2a4',
+    marginBottom: 3,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  serviceQuantity: {
+    fontSize: 12,
+    color: '#666',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  referralContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+  },
+  referralItem: {
+    marginBottom: 8,
+  },
+  referralLabel: {
+    fontSize: 14,
+    textAlign: 'left',
+    paddingLeft: 10,
+    marginBottom: 3,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  referralValue: {
+    fontSize: 13,
+    color: '#333',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  notesText: {
+    fontSize: 14,
+    color: '#333',
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  noDataText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+  },
+  downloadButton: {
+    backgroundColor: '#23a2a4',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  downloadButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
 }); 

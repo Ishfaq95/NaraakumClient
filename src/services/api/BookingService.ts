@@ -239,6 +239,17 @@ export const AddUserLocation = async (payload: any): Promise<any> => {
     }
 };
 
+export const getPatientReminderList = async (payload: any): Promise<any> => {
+
+    try {
+        const response = await axiosInstance.post('reminders/GetPatientReminderList', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error uploading medical history reports:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
@@ -259,5 +270,6 @@ export const bookingService = {
     addBeneficiary,
     updateBeneficiaryData,
     deleteBeneficiaryData,
-    AddUserLocation
+    AddUserLocation,
+    getPatientReminderList
 }; 

@@ -23,7 +23,7 @@ class MainApplication : Application(), ReactApplication {
             PackageList(this).packages.apply {
               // Manually add AlarmPackage to the list of packages
               add(WebRTCModulePackage())
-              add(VectorIconsPackage())
+              //add(VectorIconsPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"
