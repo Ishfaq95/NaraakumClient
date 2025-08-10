@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { View, Text, FlatList, RefreshControl, StyleSheet, Dimensions } from "react-native";
 import { profileService } from "../../../services/api/ProfileService";
 import NoAppointmentsIcon from '../../../assets/icons/NoAppointmentsIcon';
@@ -14,6 +14,7 @@ const CancelledVisitAppointments = ({ userId }: any) => {
     const [cancelledVisitAppointments, setCancelledVisitAppointments] = useState([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isLoading, setIsLoading] = useState(false)
+    
     useEffect(() => {
         getVisitOrderList();
     }, [userId]);
@@ -38,23 +39,37 @@ const CancelledVisitAppointments = ({ userId }: any) => {
         }
     }
 
-    const refreshList = () => {
+    const refreshList = useCallback(() => {
         if (!isRefreshing) {
             setIsRefreshing(true);
             getVisitOrderList();
         }
-    };
+    }, [isRefreshing]);
 
-    const getUniqueId = () => {
-        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    }
+    // Memoized renderItem function to prevent unnecessary re-renders
+    const renderItem = useCallback(({item}: any) => (
+        <VisitItemRender item={item} />
+    ), []);
+
+    // Memoized keyExtractor using stable OrderID instead of random generation
+    const keyExtractor = useCallback((item: any) => {
+        return item.OrderID?.toString() || Math.random().toString(36).substring(2, 15);
+    }, []);
+
+    // Memoized ListEmptyComponent to prevent re-creation
+    const ListEmptyComponent = useMemo(() => () => (
+        <View style={styles.emptyContentContainer}>
+            <NoAppointmentsIcon />
+            <Text style={styles.text}>{t('no_appointments')}</Text>
+        </View>
+    ), [t]);
 
     return (
         <View style={{ flex: 1, backgroundColor: "#fff" }}>
             <FlatList
                 data={cancelledVisitAppointments}
-                renderItem={({item}:any) => <VisitItemRender item={item} />}
-                keyExtractor={(item) => getUniqueId()}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
                 contentContainerStyle={styles.contentContainer}
                 refreshControl={
                     <RefreshControl
@@ -64,15 +79,18 @@ const CancelledVisitAppointments = ({ userId }: any) => {
                     />
                 }
                 removeClippedSubviews={true}
-                ListEmptyComponent={() => (
-                    <View style={styles.emptyContentContainer}>
-                        <NoAppointmentsIcon />
-                        <Text style={styles.text}>{t('no_appointments')}</Text>
-                    </View>
-                )}
-                maxToRenderPerBatch={10}
-                windowSize={10}
-                initialNumToRender={5}
+                ListEmptyComponent={ListEmptyComponent}
+                maxToRenderPerBatch={5}
+                windowSize={5}
+                initialNumToRender={3}
+                updateCellsBatchingPeriod={50}
+                disableVirtualization={false}
+                getItemLayout={undefined}
+                onEndReachedThreshold={0.5}
+                maintainVisibleContentPosition={{
+                    minIndexForVisible: 0,
+                    autoscrollToTopThreshold: 10,
+                }}
             />
 
             <FullScreenLoader visible={isLoading} />

@@ -427,7 +427,7 @@ const BeneficiariesScreen = () => {
             color: #1D1D1D;
             margin: 0;
             padding: 20px;
-            direction: rtl;
+            direction: ltr;
           }
           .header {
             display: flex;

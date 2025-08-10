@@ -5,11 +5,19 @@ import { useNavigation } from "@react-navigation/native";
 import { ROUTES } from "../../../shared/utils/routes";
 import moment from "moment";
 
-const VisitItemRender = ({item}:any) => {
-    const navigation = useNavigation();
-    const handleDetails = (item: any) => {
-        navigation.navigate(ROUTES.OrderDetailScreen, {OrderId:item.OrderID });
-    }
+interface VisitItem {
+    OrderID: string | number;
+    OrderDate: string;
+    TotalPrice: number;
+}
+
+const VisitItemRender = React.memo(({item}: {item: VisitItem}) => {
+    const navigation = useNavigation<any>();
+    
+    const handleDetails = React.useCallback((item: VisitItem) => {
+        navigation.navigate(ROUTES.OrderDetailScreen, {OrderId: item.OrderID });
+    }, [navigation]);
+
     return (
         <View style={styles.container}>
             <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
@@ -30,7 +38,9 @@ const VisitItemRender = ({item}:any) => {
             </TouchableOpacity>
         </View>
     )
-}
+});
+
+VisitItemRender.displayName = 'VisitItemRender';
 
 const styles = StyleSheet.create({
     container: {

@@ -186,7 +186,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
         <TouchableOpacity onPress={() => navigation.navigate(ROUTES.NotificationScreen)} style={{}}>
           <View style={{ position: 'relative' }}>
             <Ionicons name="notifications" size={24} color="black" />
-            {notificationList && (
+            {notificationList > 0 && (
               <View style={{ position: 'absolute', top: -20, right: -10, backgroundColor: 'red', padding: 5, width: 30, height: 30, borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: 'white', fontSize: 10, }}>{notificationList > 100 ? '99+' : notificationList}</Text>
               </View>
@@ -226,6 +226,11 @@ const AppointmentListScreen = ({ navigation }: any) => {
           data={patientReminderList}
           renderItem={({ item }) => item?.CatCategoryId == "42" ? renderItem({ item }) : rendervisitItem({ item })}
           keyExtractor={(item) => item?.TaskId?.toString()}
+          ListEmptyComponent={
+            <View style={{ height: "100%", paddingTop:"50%", justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ ...globalTextStyles.bodyLarge, color: '#000', fontWeight: '600',textAlign:"left" }}>لا توجد تذكيرات</Text>
+            </View>
+          }
         />
       </View>
 

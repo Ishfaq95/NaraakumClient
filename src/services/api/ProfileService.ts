@@ -229,6 +229,26 @@ export const submitRating = async (payload: any): Promise<any> => {
     }
 };
 
+export const updateMedicalHistory = async (payload: any): Promise<any> => { 
+    try {
+        const response = await axiosInstance.post('patients/UpdatePatientMedicalHistory', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error updating medical history:', error);
+        throw error;        
+    }
+};
+
+export const deleteMedicalReport = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('patients/DeletePatientUploadedFile', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error deleting medical report:', error);
+        throw error;        
+    }
+};
+
 export const profileService = {
     getUserFavorites,
     removeFromFavorites,
@@ -251,5 +271,7 @@ export const profileService = {
     getOrderDetailsAddedByServiceProvider,
     deleteOrderAddedByServiceProvider,
     getVisitMainRecordDetails,
-    submitRating
+    submitRating,
+    updateMedicalHistory,
+    deleteMedicalReport
 };  

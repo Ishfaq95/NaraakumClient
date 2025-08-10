@@ -37,17 +37,12 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
     try {
       setLoading(true);
       
-      console.log('Initializing map with appointment:', appointment);
-      console.log('Organization location:', appointment.OrganizationGoogleLocation);
-      console.log('Patient location:', appointment.TaskDetail?.[0]?.GoogleLocation);
-      
       // Parse origin coordinates (Organization location)
       const originCoords = parseCoordinates(appointment.OrganizationGoogleLocation);
       if (!originCoords) {
         throw new Error('Invalid origin coordinates');
       }
       setOrigin(originCoords);
-      console.log('Set origin coordinates:', originCoords);
 
       // Parse destination coordinates (Patient location)
       const destinationCoords = parseCoordinates(appointment.TaskDetail?.[0]?.GoogleLocation);
@@ -55,7 +50,6 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
         throw new Error('Invalid destination coordinates');
       }
       setDestination(destinationCoords);
-      console.log('Set destination coordinates:', destinationCoords);
 
       // Get route information
       await getRouteInfo(originCoords, destinationCoords);
@@ -75,13 +69,9 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
     }
     
     try {
-      console.log('Parsing coordinates:', coordinateString);
       const [lat, lng] = coordinateString.split(',').map(coord => parseFloat(coord.trim()));
       
-      console.log('Parsed coordinates:', { lat, lng });
-      
       if (isNaN(lat) || isNaN(lng)) {
-        console.log('Invalid coordinates - NaN values');
         return null;
       }
       
@@ -108,8 +98,6 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
         duration: `${estimatedTime} دقيقة`,
         polylinePoints: simplePolyline
       };
-      
-      console.log('Simple route info:', routeInfoData);
       
       setRouteInfo(routeInfoData);
       
