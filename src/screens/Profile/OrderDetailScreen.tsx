@@ -786,7 +786,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
     if (isValid) {
       // Form is valid, proceed with saving
-      console.log('Form is valid, saving data...');
       // Here you can add your API call to save the form data
       Alert.alert('نجح', 'تم حفظ البيانات بنجاح');
     }
@@ -839,7 +838,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   }
 
   const onPressBeneficiary = (item: any) => {
-    console.log("item", item)
     setBeneficiaryForm({
       name: item.FullNameSlang || '',
       age: item.Age || '',
@@ -880,7 +878,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       "Allergies": allergies,
       "FamilyMedicalHistory": familyMedicalProblems,
     }
-    console.log("Payload", Payload)
+    
     const response = await profileService.updateMedicalHistory(Payload)
     if (response?.ResponseStatus?.STATUSCODE == 200) {
       setMedicalHistoryBottomSheet(false);
@@ -1104,7 +1102,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
             'تم تنزيل الملف بنجاح'
           );
         } catch (externalError) {
-          console.log('External download failed, using internal storage:', externalError);
           // Fallback to internal Downloads
           destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
           await RNFS.copyFile(filePath, destinationPath);
@@ -1278,7 +1275,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
         setMedicalReportFile(responseData.Data.Path)
-        console.log("responseData", responseData.Data)
       } else {
         throw new Error(
           responseData.ResponseStatus?.MESSAGE || 'Upload failed',
@@ -1317,7 +1313,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
         await uploadFile(file, pickerResult);
       }
     } catch (err) {
-      console.log("err", err)
       // Check if user cancelled the picker
       if (err && typeof err === 'object' && 'code' in err && err.code === 'E_DOCUMENT_PICKER_CANCELED') {
         return;

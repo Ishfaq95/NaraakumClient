@@ -43,7 +43,6 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
     onRating,
     onMoreIcon
 }) => {
-    console.log(appointment);
     const { t } = useTranslation();
     const isRTL = I18nManager.isRTL;
     const scrollViewRef = useRef<ScrollView>(null);

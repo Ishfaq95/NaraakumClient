@@ -233,7 +233,6 @@ const downloadFileForPrescription = async (filePath: string, fileName: string): 
           'تم حفظ الملف في مجلد التنزيل'
         );
       } catch (externalError) {
-        console.log('External download failed, using internal storage:', externalError);
         destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
         await RNFS.copyFile(filePath, destinationPath);
         Alert.alert(
@@ -251,7 +250,6 @@ const downloadFileForPrescription = async (filePath: string, fileName: string): 
         await RNFS.copyFile(filePath, destinationPath);
         await shareFile(filePath, fileName);
       } catch (copyError) {
-        console.log('Copy failed, trying to share file directly:', copyError);
         // If copy fails, try to share the original file
         await shareFile(filePath, fileName);
         return filePath; // Return original path if sharing succeeds

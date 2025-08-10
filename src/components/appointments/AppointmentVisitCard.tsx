@@ -32,8 +32,6 @@ const AppointmentVisitCard: React.FC<AppointmentVisitCardProps> = React.memo(({
     appointment,
     onPressMapButton
 }) => {
-
-    console.log("appointment", appointment)
     const { t } = useTranslation();
     const isRTL = I18nManager.isRTL;
     const scrollViewRef = useRef<ScrollView>(null);

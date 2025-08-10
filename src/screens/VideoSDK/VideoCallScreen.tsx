@@ -58,6 +58,7 @@ import DocumentViewScreen from './DocumentViewScreen';
 import {useTranslation} from 'react-i18next';
 import {WEBSITE_URL} from '../../shared/utils/constants';
 import { notificationService } from '../../services/api/NotificationService';
+import moment from 'moment';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const SMALL_VIDEO_WIDTH = 140;
@@ -237,10 +238,44 @@ const VideoCallScreen = ({
   const openStatsBottomSheet = ({pId}) => {};
 
   const calculateRemainingTime = () => {
-    const time = new Date(sessionStartTime);
-    const endTime = new Date(sessionEndTime);
+    // Convert Arabic numerals to English numerals
+    const convertArabicNumeralsToEnglish = (timeString: string) => {
+      if (!timeString) return '';
+      
+      // Arabic numerals to English numerals mapping
+      const arabicToEnglish: { [key: string]: string } = {
+        '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+        '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9'
+      };
+      
+      return timeString.split('').map(char => arabicToEnglish[char] || char).join('');
+    };
+
+    // Parse the session times, converting Arabic numerals to English first
+    const sessionStartTimeEnglish = convertArabicNumeralsToEnglish(sessionStartTime);
+    const sessionEndTimeEnglish = convertArabicNumeralsToEnglish(sessionEndTime);
+    
+    // Parse UTC times and convert to local time
+    let time, endTime;
+    try {
+      // Parse the UTC time strings and convert to local time
+      const startTimeUTC = moment.utc(sessionStartTimeEnglish);
+      const endTimeUTC = moment.utc(sessionEndTimeEnglish);
+      
+      // Convert to local time
+      time = startTimeUTC.local().toDate();
+      endTime = endTimeUTC.local().toDate();
+      
+    } catch (error) {
+      console.warn('Error parsing time with moment, falling back to Date:', error);
+      // Fallback: parse as UTC and convert to local
+      time = new Date(sessionStartTimeEnglish);
+      endTime = new Date(sessionEndTimeEnglish);
+    }
+    
     const now = new Date();
     const timeLeft = endTime.getTime() - now.getTime(); // in milliseconds
+  
 
     if (timeLeft > 0) {
       setRemainingTime(timeLeft);
@@ -280,11 +315,19 @@ const VideoCallScreen = ({
       .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // Store timer reference to clear it when needed
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
-    const timer = setInterval(calculateRemainingTime, 1000);
+    timerRef.current = setInterval(calculateRemainingTime, 1000);
 
     // Cleanup interval on component unmount
-    return () => clearInterval(timer);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [sessionStartTime]);
 
   const dragPosition = useRef(new Animated.ValueXY()).current;
@@ -330,6 +373,12 @@ const VideoCallScreen = ({
   ).current;
 
   const onPressHangUp = () => {
+    // Clear the timer when hanging up
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
     leave();
     navigation.navigate(ROUTES.preViewCall, {Data: Data.Data});
   };

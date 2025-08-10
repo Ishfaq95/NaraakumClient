@@ -64,7 +64,6 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
 
   const parseCoordinates = (coordinateString: string): Location | null => {
     if (!coordinateString) {
-      console.log('Empty coordinate string');
       return null;
     }
     
@@ -84,7 +83,6 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
 
   const getRouteInfo = async (origin: Location, destination: Location) => {
     try {
-      console.log('Getting route info for:', { origin, destination });
       
       // For now, let's create a simple direct line and calculate basic distance
       const directDistance = calculateDistance(origin, destination);
@@ -141,7 +139,6 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
 
   const decodePolyline = (encoded: string): Location[] => {
     if (!encoded || encoded.length === 0) {
-      console.log('Empty polyline encoded string');
       return [];
     }
 
@@ -182,7 +179,6 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
         });
       }
 
-      console.log(`Decoded polyline with ${poly.length} points`);
       return poly;
     } catch (error) {
       console.error('Error decoding polyline:', error);
@@ -231,8 +227,6 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
       </View>
     );
   }
-
-  console.log('Rendering map with origin:', origin, 'destination:', destination);
   
   return (
     <View style={styles.container}>

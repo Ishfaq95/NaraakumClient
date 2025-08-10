@@ -381,7 +381,6 @@ const BeneficiariesScreen = () => {
             'تم تنزيل الملف بنجاح'
           );
         } catch (externalError) {
-          console.log('External download failed, using internal storage:', externalError);
           // Fallback to internal Downloads
           destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
           await RNFS.copyFile(filePath, destinationPath);

@@ -77,7 +77,6 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
     const getPaymentUrl = async () => {
       setLoading(true);
       const paymentUrl:any = await generatePaymentUrl()
-      console.log("paymentUrl", paymentUrl)
       setCurrentUrl(paymentUrl);
       setLoading(false);
     }
@@ -142,8 +141,6 @@ const onNavigationStateChange = (url: any) => {
       </View>
     )
   }
-
-  console.log("currentUrl", currentUrl)
 
   return (
     <View style={styles.container}>

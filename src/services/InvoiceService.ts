@@ -513,7 +513,6 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
           'Saved to Downloads folder'
         );
       } catch (externalError) {
-        console.log('External download failed, using internal storage:', externalError);
         // Fallback to internal Downloads
         destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
         await RNFS.copyFile(filePath, destinationPath);

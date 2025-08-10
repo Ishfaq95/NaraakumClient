@@ -255,7 +255,6 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
     setStaffRating(0);
     setComment(''); // Reset comment
     setIsRatingVisible(true);
-    console.log(appointment);
   };
 
   const handleCommentFocus = () => {
@@ -289,7 +288,6 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
   };
 
   const handleSubmitRating = async () => {
-    console.log('selectedAppointment', selectedAppointment);
     const payload = {
       "UserloginInfoId": userId,
       "Comment": comment,
@@ -324,7 +322,6 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
 
   };
   const onMoreIcon = (appointment: Appointment) => {
-    console.log(appointment);
   };
 
   const renderItem = useCallback(({ item }: { item: Appointment }) => (

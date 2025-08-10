@@ -34,8 +34,54 @@ import { globalTextStyles } from '../../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AppointmentTrackingMap from '../../components/AppointmentTrackingMap';
 
+export interface Appointment {
+  CardNumber: string | null;
+  CardType: string;
+  CatCategoryId: string;
+  CatLevelId: string;
+  CatOrderStatusId: string;
+  CatSpecialtyId: string;
+  Gender: number;
+  ImagePath: string;
+  OrderDate: string;
+  OrderDetailId: string;
+  OrderId: string;
+  OrganizationId: string;
+  OrganizationPlang: string;
+  OrganizationSlang: string;
+  PatientEmail: string;
+  PatientPName: string;
+  PatientPhone: string;
+  PatientSName: string;
+  PatientUserProfileInfoId: string;
+  RelationOrderAndOrganizationCategoryId: string;
+  SchedulingDate: string;
+  SchedulingEndTime: string;
+  SchedulingTime: string;
+  ServiceCharges: number;
+  ServicePrice: number;
+  ServiceProviderId: string;
+  ServiceProviderPName: string;
+  ServiceProviderSName: string;
+  Specialties: any[];
+  TaskId: string;
+  TaxAmt: number;
+  TitlePlangCategory: string;
+  TitlePlangService: string;
+  TitlePlangSpecialty: string | null;
+  TitleSlangCategory: string;
+  TitleSlangService: string;
+  TitleSlangSpecialty: string | null;
+  UserLoginInfoId: string;
+  UserWalletId: string;
+  VideoSDKMeetingId: string;
+  VisitMainId: string | null;
+}
+
 const AppointmentListScreen = ({ navigation }: any) => {
   const [index, setIndex] = useState(0);
+  const isScreenFocused = useIsFocused();
+  const timerRef = useRef<any>(null);
   const { t } = useTranslation();
   const layout = useWindowDimensions();
   const dispatch = useDispatch();
@@ -44,7 +90,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
   const { notificationList } = useSelector((state: any) => state.root.user);
   const webSocketService = WebSocketService.getInstance();
   const isFocused = useIsFocused();
-  const [patientReminderList, setPatientReminderList] = useState([]);
+  const [patientReminderList, setPatientReminderList] = useState<any[]>([]);
   const enabledAppointmentsRef = useRef<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [openGoogleMapBottomSheet, setOpenGoogleMapBottomSheet] = useState(false);
@@ -61,6 +107,28 @@ const AppointmentListScreen = ({ navigation }: any) => {
     }
   }, [isFocused, user]);
 
+  const checkTimeCondition = useCallback((appointment: Appointment) => {
+    const now = moment();
+    const appointmentDate = moment.utc(appointment?.SchedulingDate).local();
+    const startTime = moment.utc(appointment?.SchedulingTime, 'HH:mm').local();
+    const endTime = moment.utc(appointment?.SchedulingEndTime, 'HH:mm').local();
+
+    startTime.set({
+      year: appointmentDate.year(),
+      month: appointmentDate.month(),
+      date: appointmentDate.date()
+    });
+    endTime.set({
+      year: appointmentDate.year(),
+      month: appointmentDate.month(),
+      date: appointmentDate.date()
+    });
+
+    return now.isSameOrAfter(startTime) &&
+      now.isBefore(endTime) &&
+      now.isSame(appointmentDate, 'day');
+  }, []);
+
   const getNotificationList = async () => {
     const payload = {
       "ReciverId": user.Id,
@@ -74,6 +142,58 @@ const AppointmentListScreen = ({ navigation }: any) => {
       dispatch(setNotificationList(response.TotalRecord));
     }
   }
+
+  useEffect(() => {
+    if (isScreenFocused && patientReminderList?.length > 0) {
+      // Initial check
+      const enabled = new Set<string>();
+      patientReminderList.forEach(appointment => {
+        if (checkTimeCondition(appointment)) {
+          enabled.add(`${appointment.OrderId}-${appointment.OrderDetailId}`);
+        }
+      });
+      enabledAppointmentsRef.current = enabled;
+
+      // Set up interval
+      timerRef.current = setInterval(() => {
+        if (!patientReminderList?.length) {
+          return;
+        }
+        const enabled = new Set<string>();
+        let hasChanges = false;
+
+        patientReminderList.forEach(appointment => {
+          const isEnabled = checkTimeCondition(appointment);
+          const appointmentId = `${appointment.OrderId}-${appointment.OrderDetailId}`;
+
+          if (isEnabled) {
+            enabled.add(appointmentId);
+          }
+
+          // Check if the enabled state has changed
+          if (isEnabled !== enabledAppointmentsRef.current.has(appointmentId)) {
+            hasChanges = true;
+          }
+        });
+
+        // Only update if there are actual changes
+        if (hasChanges) {
+          enabledAppointmentsRef.current = enabled;
+          // Force a re-render of the FlatList
+          setPatientReminderList(prev => [...prev]);
+        }
+      }, 5000);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isScreenFocused, patientReminderList, checkTimeCondition]);
+
+  
 
   // Handle WebSocket connection
   useEffect(() => {

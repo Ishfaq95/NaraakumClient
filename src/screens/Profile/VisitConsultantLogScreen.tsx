@@ -144,8 +144,6 @@ const VisitConsultantLogScreen = () => {
     <VisitConsultantLogItemRender item={item} getMedicine={(item: any) => getVisitMainRecordDetails(item,'medicine')} getVisitMainRecordDetails={(item: any) => getVisitMainRecordDetails(item,'visit')} onVisitDetails={(item: any) => onVisitDetails(item)} />
   ), []);
 
-  console.log(filteredVisitConsultantLog);
-
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
