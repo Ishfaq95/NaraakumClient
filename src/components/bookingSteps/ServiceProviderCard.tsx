@@ -653,9 +653,9 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                   key={`time-${slot.start_time}-${index}`}
                   style={[
                     styles.timeButton,
-                    isSelected && styles.selectedTimeButton,
-                    isDisabled && styles.disabledTimeButton,
-                    (isBooked || isReserved) && styles.bookedTimeButton
+                    isSelected ? styles.selectedTimeButton : (isDisabled && styles.disabledTimeButton,
+                    (isBooked || isReserved) && styles.bookedTimeButton),
+                    
                   ]}
                   onPress={() => !isDisabled && handleSlotSelect(slot)}
                   activeOpacity={0.5}

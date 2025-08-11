@@ -22,9 +22,13 @@ import RNFS from 'react-native-fs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { globalTextStyles } from '../../styles/globalStyles';
 import { convertUTCToLocalDateTime } from '../../utils/timeUtils';
+import FullScreenLoader from '../../components/FullScreenLoader';
+import { ROUTES } from '../../shared/utils/routes';
+import { useNavigation } from '@react-navigation/native';
 
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
+  const navigation = useNavigation();
   const DoctorsNameArray = [
     {
       name: "د. سامي محمد",
@@ -72,6 +76,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const recordingTimerRef = useRef<any>(null);
   const audioRecorderPlayer = useRef<AudioRecorderPlayer>(new AudioRecorderPlayer());
   const progressIntervalRef = useRef<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
@@ -550,6 +555,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
       try {
+        setIsLoading(true);
         const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
 
         if (response.Cart && response.Cart.length > 0) {
@@ -597,8 +603,18 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           setShowGroupedArray(groupedArray);
 
           dispatch(addCardItem(updatedCardItems));
+        }else{
+          dispatch(addCardItem([]));
+          navigation.navigate(ROUTES.AppNavigator, {
+            screen: ROUTES.HomeStack,
+            params: {
+              screen: ROUTES.AppointmentListScreen,
+            }
+          });
         }
       } catch (error) {
+      } finally {
+        setIsLoading(false);
       }
     }
     getUnPaidUserOrders();
@@ -785,7 +801,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
   return (
     <View style={styles.container}>
-      <View style={{ height: 120 }}>
+      <View style={{ height: 120,alignItems:"flex-start" }}>
         {/* Doctor tags */}
         <FlatList
           data={showGroupedArray}
@@ -1045,6 +1061,8 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
       </View>
+
+      <FullScreenLoader visible={isLoading} />
     </View>
   )
 }

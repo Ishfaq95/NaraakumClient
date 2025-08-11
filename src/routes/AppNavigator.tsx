@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
+import { CommonActions } from '@react-navigation/native'; // Add this import
 import { ROUTES } from "../shared/utils/routes";
 import { useTranslation } from "react-i18next";
 import { globalTextStyles } from "../styles/globalStyles";
@@ -93,7 +94,6 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
             globalTextStyles.bodySmall,
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
-              // marginTop:  5,
             },
           ]}
         >{t('appointments')}</Text>
@@ -105,7 +105,6 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
             globalTextStyles.bodySmall,
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
-              // marginTop: 10,
             },
           ]}
         >{t('cart')}</Text>
@@ -117,7 +116,6 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
             globalTextStyles.bodySmall,
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
-              // marginTop: 10,
             },
           ]}
         >{t('profile')}</Text>
@@ -129,7 +127,6 @@ const RenderTabText = ({ routeName, isFocused }: RenderTabIconProps) => {
             globalTextStyles.bodySmall,
             {
               color: isFocused ? "#22A6A7" : "rgba(99, 110, 114, 1)",
-              // marginTop: 10,
             },
           ]}
         >{t('settings')}</Text>
@@ -145,8 +142,25 @@ type CustomTabbarProps = {
   navigation: any;
 };
 
+// Helper function to get the initial screen name for each stack
+const getInitialScreenName = (routeName: string) => {
+  switch (routeName) {
+    case ROUTES.HomeStack:
+      return ROUTES.AppointmentListScreen;
+    case ROUTES.CartStack:
+      return ROUTES.CartScreen;
+    case ROUTES.ProfileStack:
+      return ROUTES.ProfileScreen;
+    case ROUTES.SettingsStack:
+      return ROUTES.SettingsScreen;
+    default:
+      return null;
+  }
+};
+
 function CustomTabbar({ state, descriptors, navigation }: CustomTabbarProps) {
   const insets = useSafeAreaInsets();
+  
   return (
     <View style={{ backgroundColor: "#ffffff", paddingBottom: insets.bottom }}>
       <View style={[{
@@ -164,7 +178,6 @@ function CustomTabbar({ state, descriptors, navigation }: CustomTabbarProps) {
         },
         shadowOpacity: 0.29,
         shadowRadius: 4.65,
-
         elevation: 7,
       }]}>
         {state.routes.map(
@@ -175,14 +188,54 @@ function CustomTabbar({ state, descriptors, navigation }: CustomTabbarProps) {
             const isFocused = state.index === index;
 
             const onPress = () => {
-
               const event = navigation.emit({
                 type: "tabPress",
                 target: route.key,
               });
 
               if (!isFocused && !event.defaultPrevented) {
-                navigation.navigate(route.name);
+                // Get the initial screen name for this stack
+                const initialScreenName = getInitialScreenName(route.name);
+                
+                if (initialScreenName) {
+                  // Reset the stack to its initial screen
+                  navigation.dispatch(
+                    CommonActions.reset({
+                      index: 0,
+                      routes: [
+                        {
+                          name: route.name,
+                          state: {
+                            routes: [{ name: initialScreenName }],
+                            index: 0,
+                          },
+                        },
+                      ],
+                    })
+                  );
+                } else {
+                  // Fallback to normal navigation
+                  navigation.navigate(route.name);
+                }
+              } else if (isFocused) {
+                // If already focused, reset to initial screen
+                const initialScreenName = getInitialScreenName(route.name);
+                if (initialScreenName) {
+                  navigation.dispatch(
+                    CommonActions.reset({
+                      index: 0,
+                      routes: [
+                        {
+                          name: route.name,
+                          state: {
+                            routes: [{ name: initialScreenName }],
+                            index: 0,
+                          },
+                        },
+                      ],
+                    })
+                  );
+                }
               }
             }
 
@@ -207,8 +260,6 @@ function CustomTabbar({ state, descriptors, navigation }: CustomTabbarProps) {
                   {
                     flex: 1,
                     alignItems: 'center',
-                    // marginHorizontal:8,
-                    // borderTopColor:COLORS.naviBlue,
                     justifyContent: 'space-evenly',
                   },
                 ]}
@@ -270,14 +321,13 @@ function SettingsStackNavigator() {
 }
 
 export default function BottomTabs() {
-
-
   return (
     <Tab.Navigator
       tabBar={(props: any) => <CustomTabbar {...props} />}
       screenOptions={{
         headerShown: false,
-        unmountOnBlur: true,
+        // You can remove unmountOnBlur if you want to preserve state but reset navigation
+        // unmountOnBlur: true,
       }}
     >
       <Tab.Screen name={ROUTES.HomeStack} component={HomeStackNavigator} />

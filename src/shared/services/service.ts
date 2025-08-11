@@ -327,8 +327,16 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
   
   const selectedLocation = store.getState().root.booking.selectedLocation;
   const payload = CardArray.map((item: any) => {
+    let schedulingDate = item.SchedulingDate;
+    let schedulingTime = item.SchedulingTime;
+    if(schedulingDate.includes("T")){
+      schedulingDate = schedulingDate.split("T")[0];
+    }
+    if(schedulingTime.includes("T")){
+      schedulingTime = schedulingTime.split("T")[1];
+    }
     // Convert SchedulingDate and SchedulingTime to UTC
-    const { utcDate, utcTime } = convertLocalToUTCDateTime(item.SchedulingDate, item.SchedulingTime);
+    const { utcDate, utcTime } = convertLocalToUTCDateTime(schedulingDate, schedulingTime);
     let schedulingDateUTC =  utcDate;
     let schedulingTimeUTC = utcTime;
 
@@ -362,7 +370,15 @@ export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) =
   
 
   const payload = CardArray.map((item: any) => {
-    const { utcDate, utcTime } = convertLocalToUTCDateTime(item.SchedulingDate, item.SchedulingTime);
+    let schedulingDate = item.SchedulingDate;
+    let schedulingTime = item.SchedulingTime;
+    if(schedulingDate.includes("T")){
+      schedulingDate = schedulingDate.split("T")[0];
+    }
+    if(schedulingTime.includes("T")){
+      schedulingTime = schedulingTime.split("T")[1];
+    }
+    const { utcDate, utcTime } = convertLocalToUTCDateTime(schedulingDate, schedulingTime);
     let schedulingDateUTC =  utcDate;
     let schedulingTimeUTC = utcTime;
     return ({

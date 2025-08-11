@@ -1,5 +1,5 @@
-import React from 'react'
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native'
+import React, { useEffect } from 'react'
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Alert, Platform } from 'react-native'
 import LottieAnimation from '../common/LottieAnimation'
 import { LOTTIE_ANIMATIONS } from '../../assets/animation'
 import { generateAndDownloadInvoice } from '../../services/InvoiceService'
@@ -9,11 +9,33 @@ import ArrowRightIcon from '../../assets/icons/RightArrow';
 import { ROUTES } from '../../shared/utils/routes';
 import moment from 'moment';
 import { globalTextStyles } from '../../styles/globalStyles';
+import { scheduleNotificationAndroid, scheduleNotificationIOS } from '../../shared/services/service'
+import { notificationService } from '../../services/api/NotificationService'
+import { useSelector } from 'react-redux';
 
 const OrderSuccess = ({ navigation, route }: any) => {
   const OrderDetail = route?.params?.SuccessResponse;
-  
+  const user = useSelector((state: any) => state.root.user.user);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    setUpNotification();
+  }, []);
+
+  const setUpNotification = async () => {
+    try {
+      notificationService.getSystemNotification({
+        UserloginInfo: user.Id,
+      }).then((SystemNotificationList: any) => {
+        if (Platform.OS === 'ios') {
+          scheduleNotificationIOS(SystemNotificationList?.ReminderList);
+        } else {
+          scheduleNotificationAndroid(SystemNotificationList?.ReminderList);
+        }
+      });
+    } catch (error) {
+    }
+  }
 
   const handleDownloadInvoice = async () => {
     try {
