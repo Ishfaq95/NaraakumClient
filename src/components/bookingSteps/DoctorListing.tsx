@@ -23,11 +23,20 @@ import HospitalCard from './HospitalCard';
 import HomeDialysis from './HomeDialysis';
 import CustomBottomSheet from '../common/CustomBottomSheet';
 import HomeDialysisBookingScreen from '../../screens/Booking/HomeDialysisBookingScreen';
+import Dropdown from '../common/Dropdown';
+import RadioButton from './RadioButton';
+import { globalTextStyles } from '../../styles/globalStyles';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
 const MIN_CARD_WIDTH = 48;
 const MAX_CARD_WIDTH = 60;
+const SortBy = [
+  { label: 'ترتيب حسب السعر', value: 'All' },
+  { label: 'الأعلى إلى الإقل', value: 'Desc' },
+  { label: 'الأقل إلى الأعلى', value: 'Asc' },
+];
 const { width: deviceWidth } = Dimensions.get('window');
 const minItemWidth = 48;
 const numVisibleItems = 8; // 7 days + 1 calendar icon
@@ -150,6 +159,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [selectedOrganization, setSelectedOrganization] = useState<any>(null);
   const [showPackageList, setShowPackageList] = useState(false);
   const [isHomeDialysisBooking, setIsHomeDialysisBooking] = useState(false);
+  const [filterBottomSheetVisible, setFilterBottomSheetVisible] = useState(false);
+  const [selectServiceFilter, setSelectServiceFilter] = useState('All');
+  const [selectSpecialtyFilter, setSelectSpecialtyFilter] = useState('AllType');
+  const [sortByValue, setSortByValue] = useState('All');
   const dispatch = useDispatch();
 
   const createOrderMainBeforePayment = async () => {
@@ -555,7 +568,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleFilterPress = () => {
-    // bottomSheetRef.current?.expand();
+    setFilterBottomSheetVisible(true)
   };
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
@@ -658,6 +671,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }, 100);
   }
 
+  const handleApplyFilterPress = () => {
+    console.log('handleApplyFilterPress')
+  }
+
   const getNextButtonEnabled = useCallback(() => {
     if (displayCategory?.Display == "CP") {
       return SelectedCardItem[0]?.CatServiceId == 0 || SelectedCardItem[0]?.CatServiceId == null || SelectedCardItem[0]?.CatServiceId == "" || SelectedCardItem[0]?.CatServiceId == undefined || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == null || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == "" || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == undefined
@@ -755,10 +772,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               windowSize={10}
               initialNumToRender={3}
               renderItem={({ item, index }) => {
-                  return <HomeDialysis hospital={item} onPressContinue={() => handleSelectOrganization(item)} onPressPackageList={() => {
-                    setShowPackageList(true)
-                    handleSelectOrganization(item)
-                  }} />
+                return <HomeDialysis hospital={item} onPressContinue={() => handleSelectOrganization(item)} onPressPackageList={() => {
+                  setShowPackageList(true)
+                  handleSelectOrganization(item)
+                }} />
               }}
               contentContainerStyle={{ padding: 16 }}
               showsVerticalScrollIndicator={false}
@@ -846,89 +863,165 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       <CustomBottomSheet
         visible={isBottomSheetVisible}
         onClose={() => setIsBottomSheetVisible(false)}
-        style={{paddingHorizontal: 16}}
+        style={{ paddingHorizontal: 16 }}
         height="80%"
       >
         {
-          showPackageList ? 
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-          {/* Sticky Header */}
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: 16,
-            paddingTop: 8,
-            paddingBottom: 8,
-            borderBottomWidth: 1,
-            borderColor: '#f0f0f0',
-            backgroundColor: '#fff',
-            zIndex: 2,
-          }}>
-            <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
-              <Text style={{ fontSize: 24, color: '#222' }}>×</Text>
-            </TouchableOpacity>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#222', textAlign: 'center', flex: 1 }}>
-              باقات غسيل الكلى المنزلي
-            </Text>
-            <View style={{ width: 28 }} />
-          </View>
-
-          {/* Sub-header */}
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: '#f7fafd',
-            paddingHorizontal: 16,
-            paddingVertical: 10,
-            borderRadius: 16,
-            margin: 12,
-            marginBottom: 0,
-          }}>
-            <Text style={{ fontSize: 16, color: '#222', fontWeight: 'bold' }}>مركز عبر الطبي</Text>
-            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#e6f7f7', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
-              {/* Replace with your WhatsApp icon if available */}
-              <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 18, marginRight: 4 }}></Text>
-              <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 14 }}>للاستفسارات</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Scrollable List */}
-          <ScrollView style={{ flex: 1, backgroundColor: '#f7fafd', margin: 12, marginTop: 8, borderRadius: 16, padding: 8 }} contentContainerStyle={{paddingHorizontal: 8, paddingBottom: 16 }}>
-            {/* Example package data */}
-            {selectedOrganization?.PackageDetail?.map((pkg: any) => (
-              <View key={pkg.id} style={{
+          showPackageList ?
+            <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+              {/* Sticky Header */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 16,
+                paddingTop: 8,
+                paddingBottom: 8,
+                borderBottomWidth: 1,
+                borderColor: '#f0f0f0',
                 backgroundColor: '#fff',
-                borderRadius: 12,
-                width: '100%',
-                padding: 16,
-                marginBottom: 12,
-                shadowColor: '#000',
-                shadowOpacity: 0.04,
-                shadowRadius: 4,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: 1,
+                zIndex: 2,
               }}>
-                <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 16, marginBottom: 8, textAlign: 'left' }}>{pkg.TitleSlang}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
-                  <Text style={{ color: '#888', fontSize: 14, marginLeft: 4 }}>سعر الجلسة /</Text>
-                  <Text style={{ color: '#ff6b57', fontWeight: 'bold', fontSize: 16 }}>{pkg.SessionPrice} ريال</Text>
-                </View>
+                <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
+                  <Text style={{ fontSize: 24, color: '#222' }}>×</Text>
+                </TouchableOpacity>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#222', textAlign: 'center', flex: 1 }}>
+                  باقات غسيل الكلى المنزلي
+                </Text>
+                <View style={{ width: 28 }} />
               </View>
-            ))}
-          </ScrollView>
 
-          {/* Sticky Bottom Button */}
-          <View style={{ backgroundColor: '#fff', padding: 16, borderTopWidth: 1, borderColor: '#f0f0f0' }}>
-            <TouchableOpacity onPress={() => setShowPackageList(false)} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>حجز موعد</Text>
+              {/* Sub-header */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#f7fafd',
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                borderRadius: 16,
+                margin: 12,
+                marginBottom: 0,
+              }}>
+                <Text style={{ fontSize: 16, color: '#222', fontWeight: 'bold' }}>مركز عبر الطبي</Text>
+                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#e6f7f7', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
+                  {/* Replace with your WhatsApp icon if available */}
+                  <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 18, marginRight: 4 }}></Text>
+                  <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 14 }}>للاستفسارات</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Scrollable List */}
+              <ScrollView style={{ flex: 1, backgroundColor: '#f7fafd', margin: 12, marginTop: 8, borderRadius: 16, padding: 8 }} contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}>
+                {/* Example package data */}
+                {selectedOrganization?.PackageDetail?.map((pkg: any) => (
+                  <View key={pkg.id} style={{
+                    backgroundColor: '#fff',
+                    borderRadius: 12,
+                    width: '100%',
+                    padding: 16,
+                    marginBottom: 12,
+                    shadowColor: '#000',
+                    shadowOpacity: 0.04,
+                    shadowRadius: 4,
+                    shadowOffset: { width: 0, height: 2 },
+                    elevation: 1,
+                  }}>
+                    <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 16, marginBottom: 8, textAlign: 'left' }}>{pkg.TitleSlang}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
+                      <Text style={{ color: '#888', fontSize: 14, marginLeft: 4 }}>سعر الجلسة /</Text>
+                      <Text style={{ color: '#ff6b57', fontWeight: 'bold', fontSize: 16 }}>{pkg.SessionPrice} ريال</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+
+              {/* Sticky Bottom Button */}
+              <View style={{ backgroundColor: '#fff', padding: 16, borderTopWidth: 1, borderColor: '#f0f0f0' }}>
+                <TouchableOpacity onPress={() => setShowPackageList(false)} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>حجز موعد</Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView> :
+            isHomeDialysisBooking ? null : <HomeDialysisBookingScreen onPressContinue={continueFromHomeDialysisBooking} onPressBack={closeBottomSheetHomeDialysisBooking} selectedOrganization={selectedOrganization} SetInitialStep={handleStepsForHomeDialysisBooking} />
+        }
+
+      </CustomBottomSheet>
+
+      <CustomBottomSheet
+        visible={filterBottomSheetVisible}
+        onClose={() => setFilterBottomSheetVisible(false)}
+        
+        showHandle={false}
+        height="50%"
+      >
+        <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000' }]}>فلتر</Text>
+            <TouchableOpacity onPress={() => setFilterBottomSheetVisible(false)}>
+              <AntDesign name="close" size={20} color="#000" />
             </TouchableOpacity>
           </View>
-        </SafeAreaView>:
-        isHomeDialysisBooking ? null : <HomeDialysisBookingScreen onPressContinue={continueFromHomeDialysisBooking} onPressBack={closeBottomSheetHomeDialysisBooking} selectedOrganization={selectedOrganization} SetInitialStep={handleStepsForHomeDialysisBooking}/> 
-        }
+        <View style={{ flex: 1, backgroundColor: '#fff',paddingHorizontal: 16,paddingTop: 10 }}>
         
+          <Dropdown
+            data={SortBy}
+            containerStyle={{ height: 50 }}
+            dropdownStyle={[{ height: 50 }]}
+            value={sortByValue}
+            onChange={(value: string | number) => {
+              setSortByValue(value.toString());
+            }}
+            placeholder=""
+          />
+          <View style={{ flexDirection: 'row', width: '100%',justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+            <RadioButton
+              selected={selectServiceFilter === 'All'}
+              onPress={() => setSelectServiceFilter('All')}
+              label="طبيب عام"
+              style={{ width: "30%", }}
+            />
+            <RadioButton
+              selected={selectServiceFilter === 'remote'}
+              onPress={() => setSelectServiceFilter('remote')}
+              label="استشاري"
+              style={{ width: "30%", }}
+            />
+            <RadioButton
+              selected={selectServiceFilter === 'onsite'}
+              onPress={() => setSelectServiceFilter('onsite')}
+              label="أخصائي"
+              style={{ width: "30%", }}
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+            <RadioButton
+              selected={selectSpecialtyFilter === 'AllType'}
+              onPress={() => setSelectSpecialtyFilter('AllType')}
+              label="الكل"
+              style={{ width: "30%", }}
+            />
+            <RadioButton
+              selected={selectSpecialtyFilter === 'withHospital'}
+              onPress={() => setSelectSpecialtyFilter('withHospital')}
+              label="تابع لمستشفى"
+              style={{ width: "35%", }}
+            />
+            <RadioButton
+              selected={selectSpecialtyFilter === 'individual'}
+              onPress={() => setSelectSpecialtyFilter('individual')}
+              label="طبيب مستقل"
+              style={{ width: "30%", }}
+            />
+          </View>
+
+          <TouchableOpacity style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 10 }} onPress={() => {
+            setFilterBottomSheetVisible(false)
+            handleApplyFilterPress()
+          }}>
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>تطبيق الفلتر</Text>
+          </TouchableOpacity>
+        </View>
       </CustomBottomSheet>
     </View>
   );

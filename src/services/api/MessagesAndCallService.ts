@@ -26,7 +26,17 @@ export const getVideoSDKToken = async (): Promise<any> => {
     }
 };
 
+export const getConversationList = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('chat/GetConversationBypatient', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error fetching conversation list:', error);
+    }
+};
+
 export const messagesAndCallService = {
     getMessagesList,
-    getVideoSDKToken    
+    getVideoSDKToken,
+    getConversationList
 }; 

@@ -42,5 +42,7 @@ export const ROUTES = {
     logout: "logout",
     OrderDetailScreen: "OrderDetailScreen",
     NotificationScreen: "NotificationScreen",
+    ConversationListScreen: "ConversationListScreen",
+    ChatScreenMainView: "ChatScreenMainView",
   };
   

@@ -29,6 +29,8 @@ import DeleteScreen from '../screens/Profile/DeleteScreen';
 import UpdateProfileScreen from '../screens/Profile/UpdateProfileScreen';
 import OrderDetailScreen from '../screens/Profile/OrderDetailScreen';
 import NotificationScreen from '../screens/NotificationScreen';
+import ConversationListScreen from '../screens/Chat/ConversationListScreen';
+import ChatScreenMainView from '../screens/Chat/ChatScreenMainView';
 
 const Stack = createNativeStackNavigator();
 
@@ -73,6 +75,8 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.delete} component={DeleteScreen} />
       <Stack.Screen name={ROUTES.OrderDetailScreen} component={OrderDetailScreen} />
       <Stack.Screen name={ROUTES.NotificationScreen} component={NotificationScreen} />
+      <Stack.Screen name={ROUTES.ConversationListScreen} component={ConversationListScreen} />
+      <Stack.Screen name={ROUTES.ChatScreenMainView} component={ChatScreenMainView} />
     </Stack.Navigator>
   );
 };

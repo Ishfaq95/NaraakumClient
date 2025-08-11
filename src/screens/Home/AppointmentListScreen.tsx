@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
 import { useDispatch, useSelector } from 'react-redux';
-import { setNotificationList, setTopic, setUser } from '../../shared/redux/reducers/userReducer';
+import { setNotificationList, setTopic, setUser, setUnreadMessages } from '../../shared/redux/reducers/userReducer';
 import { styles } from '../../components/appointments/styles';
 import CurrentAppointments from '../../components/appointments/CurrentAppointments';
 import UpcomingAppointments from '../../components/appointments/UpcomingAppointments';
@@ -96,6 +96,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
   const [openGoogleMapBottomSheet, setOpenGoogleMapBottomSheet] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [routeInfo, setRouteInfo] = useState<{distance: string, duration: string} | null>(null);
+  const unreadMessages = useSelector((state: any) => state.root.user.unreadMessages);
   const requestPermissions = async () => {
     return Platform.OS === 'ios' ? requestiOSPermissions() : requestAndroidPermissions();
   };
@@ -193,7 +194,30 @@ const AppointmentListScreen = ({ navigation }: any) => {
     };
   }, [isScreenFocused, patientReminderList, checkTimeCondition]);
 
-  
+  const socketCommandHandler = (socketEvent: any) => {
+    if(socketEvent.Command == 74){
+      // Convert message string to number
+      const messageCount = parseInt(socketEvent.Message, 10);
+      // Dispatch only if the number is greater than 0
+      if(messageCount > 0){
+        dispatch(setUnreadMessages(socketEvent.Message));
+      }else{
+        dispatch(setUnreadMessages(0));
+      }
+    }
+  }
+
+  const checkUnreadMessages = () => {
+    const socket = webSocketService.getSocket();
+    if(socket){
+      const getCountUnreadMessages = {
+        ConnectionMode: 1,
+        Command: 74,
+        FromUser: {Id: user.Id},
+      };
+      socket.send(JSON.stringify(getCountUnreadMessages));
+    }
+  }
 
   // Handle WebSocket connection
   useEffect(() => {
@@ -207,6 +231,22 @@ const AppointmentListScreen = ({ navigation }: any) => {
       // Only connect if not already connected
       if (!webSocketService.isSocketConnected()) {
         webSocketService.connect(presence, communicationKey, UserId);
+      }
+
+      // Get the socket instance and add message event listener
+      const socket = webSocketService.getSocket();
+      if (socket) {
+        socket.onmessage = (event) => {
+          try {
+            const socketEvent = JSON.parse(event.data);
+            socketCommandHandler(socketEvent);
+            checkUnreadMessages();
+          } catch (error) {
+            console.error('Error parsing socket message:', error);
+          }
+        };
+
+        checkUnreadMessages();
       }
     } else {
       webSocketService.disconnect();
@@ -303,6 +343,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       }
       leftComponent={
+        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
         <TouchableOpacity onPress={() => navigation.navigate(ROUTES.NotificationScreen)} style={{}}>
           <View style={{ position: 'relative' }}>
             <Ionicons name="notifications" size={24} color="black" />
@@ -313,6 +354,18 @@ const AppointmentListScreen = ({ navigation }: any) => {
             )}
           </View>
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate(ROUTES.ConversationListScreen)} style={{paddingLeft:15}}>
+          <View style={{ position: 'relative' }}>
+            <Ionicons name="chatbox" size={24} color="black" />
+            {unreadMessages > 0 && (
+              <View style={{ position: 'absolute', top: -15, right: -10, backgroundColor: 'red', padding: 5, width: 22, height: 22, borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: 'white', fontSize: 10, }}>{unreadMessages > 100 ? '99+' : unreadMessages}</Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+        </View>
+        
       }
     />
   );
