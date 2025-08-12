@@ -8,7 +8,10 @@ export const ROUTES = {
     Login: "Login",
     AppointmentList: "AppointmentList",
     AuthWelcome: "AuthWelcome",
-
+    ForgotPassword: "ForgotPassword",
+    ForgotOTP: "ForgotOTP",
+    ConfirmPassword: "ConfirmPassword",
+    
     HomeStack: "HomeStack",
     CartStack: "CartStack",
     ProfileStack: "ProfileStack",

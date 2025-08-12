@@ -36,6 +36,8 @@ import AuthHeader from '../components/AuthHeader';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { globalTextStyles } from '../styles/globalStyles';
 import CustomPhoneInput from '../components/common/CustomPhoneInput';
+import { ROUTES } from '../shared/utils/routes';
+import { useNavigation } from '@react-navigation/native';
 
 const MIN_HEIGHT = 550; // Absolute minimum height
 const OPTIMAL_HEIGHT = 750; // Height for medium screens
@@ -50,6 +52,7 @@ interface Country {
 
 const LoginScreen = () => {
   const { height: windowHeight } = useWindowDimensions();
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState<'email' | 'mobile'>('mobile');
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
@@ -120,7 +123,7 @@ const LoginScreen = () => {
       }
 
       const digits = phoneNumber.replace(/\D/g, '');
-      if (digits.length !== selectedCountry?.maxLength) {
+      if (activeTab === 'mobile' && digits.length !== selectedCountry?.maxLength) {
         setError(true);
         hasError = true;
       }
@@ -455,7 +458,7 @@ const LoginScreen = () => {
                     </View>
                     <Text style={styles.rememberText}>{t('remember_me')}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => navigation.navigate(ROUTES.ForgotPassword)}>
                     <Text style={styles.forgotPassword}>{t('forgot_password')}</Text>
                   </TouchableOpacity>
                 </View>

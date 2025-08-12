@@ -41,24 +41,75 @@ export const loginWithSocialMedia = async (googleUser: any) => {
 };
 
 export const deleteAccount = async (credentials: any) => {
-  try {
-    const response = await axiosInstance.post(
-      `user/AuthenticatedUserDeleteAccount`,
-      credentials
-    );
-    return response.data;
-  } catch (error: any) {
-    throw {
-      message: error?.response?.data?.message || 'Delete account failed',
-      status: error?.response?.status,
-      code: error?.response?.data?.code
-    };
-  }
+    try {
+        const response = await axiosInstance.post(
+            `user/AuthenticatedUserDeleteAccount`,
+            credentials
+        );
+        return response.data;
+    } catch (error: any) {
+        throw {
+            message: error?.response?.data?.message || 'Delete account failed',
+            status: error?.response?.status,
+            code: error?.response?.data?.code
+        };
+    }
+};
+
+export const forgotPassword = async (credentials: any) => {
+    try {
+        const response = await axiosInstance.post(
+            `patients/ForgetpasswordByFilter`,
+            credentials
+        );
+        return response.data;
+    } catch (error: any) {
+        throw {
+            message: error?.response?.data?.message || 'Forgot password failed',
+            status: error?.response?.status,
+            code: error?.response?.data?.code
+        };
+    }
+};
+
+export const verifyOTP = async (credentials: any) => {
+    try {
+        const response = await axiosInstance.post(
+            `patients/VerifyRegisteredUser`,
+            credentials
+        );
+        return response.data;
+    } catch (error: any) {
+        throw {
+            message: error?.response?.data?.message || 'Verify OTP failed',
+            status: error?.response?.status,
+            code: error?.response?.data?.code
+        };
+    }
+};
+
+export const resetPassword = async (credentials: any) => {
+    try {
+        const response = await axiosInstance.post(
+            `patients/ResetPassword`,
+            credentials
+        );
+        return response.data;
+    } catch (error: any) {
+        throw {
+            message: error?.response?.data?.message || 'Reset password failed',
+            status: error?.response?.status,
+            code: error?.response?.data?.code
+        };
+    }
 };
 
 // Export all auth related functions
 export const authService = {
     login,
     loginWithSocialMedia,
-    deleteAccount
+    deleteAccount,
+    forgotPassword,
+    verifyOTP,
+    resetPassword
 }; 

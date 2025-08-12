@@ -32,6 +32,9 @@ import NotificationScreen from '../screens/NotificationScreen';
 import ConversationListScreen from '../screens/Chat/ConversationListScreen';
 import ChatScreenMainView from '../screens/Chat/ChatScreenMainView';
 import CustomPhoneInputDemo from '../components/common/CustomPhoneInputDemo';
+import ForgotPassword from '../screens/ForgotPassword/ForgotPassword';
+import ForgotOTP from '../screens/ForgotPassword/ForgotOTP';
+import ConfirmPassword from '../screens/ForgotPassword/ConfirmPassword';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +47,9 @@ const RootNavigator = () => {
         {/* <Stack.Screen name={'CustomPhoneInputDemo'} component={CustomPhoneInputDemo} /> */}
         <Stack.Screen name={ROUTES.AuthWelcome} component={AuthWelcomeScreen} />
         <Stack.Screen name={ROUTES.Login} component={LoginScreen} />
+        <Stack.Screen name={ROUTES.ForgotPassword} component={ForgotPassword} />
+        <Stack.Screen name={ROUTES.ForgotOTP} component={ForgotOTP} />
+        <Stack.Screen name={ROUTES.ConfirmPassword} component={ConfirmPassword} />
       </Stack.Navigator>
     );
   }
