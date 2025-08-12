@@ -35,6 +35,7 @@ import { signInWithGoogle } from '../services/auth/googleAuthService';
 import AuthHeader from '../components/AuthHeader';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { globalTextStyles } from '../styles/globalStyles';
+import CustomPhoneInput from '../components/common/CustomPhoneInput';
 
 const MIN_HEIGHT = 550; // Absolute minimum height
 const OPTIMAL_HEIGHT = 750; // Height for medium screens
@@ -55,10 +56,9 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(countries.find(c => c.code === 'sa'));
   const [isValidNumber, setIsValidNumber] = useState(false);
   const [formattedNumber, setFormattedNumber] = useState('');
-  const [fullNumber, setFullNumber] = useState('');
+  // const [fullNumber, setFullNumber] = useState('');
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const { t, i18n } = useTranslation();
@@ -68,6 +68,29 @@ const LoginScreen = () => {
   const isSmallScreen = windowHeight < MIN_HEIGHT;
   const [isLoading, setIsLoading] = useState(false);
   const { rememberMeRedux } = useSelector((state: any) => state.root.user);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<any>({
+    code: 'SA',
+    name: 'Saudi Arabia',
+    nameAr: 'المملكة العربية السعودية',
+    flag: '🇸🇦',
+    dialCode: '+966',
+    pattern: '## ### ####',
+    maxLength: 9,
+  });
+  const [error, setError] = useState(false);
+  const [apiError, setAPIError] = useState(false);
+
+  const handlePhoneNumberChange = (text: string) => {
+    setPhoneNumber(text);
+    setError(false); // Clear error when user types
+    if(apiError) setAPIError(false);
+  };
+
+  const handleCountryChange = (country: any) => {
+    setSelectedCountry(country);
+    console.log('Selected country:', country);
+  };
 
   useEffect(() => {
     if (rememberMeRedux) {
@@ -77,19 +100,6 @@ const LoginScreen = () => {
       setRememberMe(true);
     }
   }, [rememberMeRedux]);
-
-  const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
-    setMobileNumber(data.phoneNumber);
-    setIsValidNumber(data.isValid);
-    setFullNumber(data.fullNumber);
-  };
-
-  // Format the initial number when country changes
-  useEffect(() => {
-    if (mobileNumber) {
-      handlePhoneNumberChange({ phoneNumber: mobileNumber, isValid: isValidNumber, countryCode: '', fullNumber: '' });
-    }
-  }, [selectedCountry]);
 
   const handleLogin = async () => {
     // Dismiss keyboard immediately
@@ -104,6 +114,17 @@ const LoginScreen = () => {
         hasError = true;
       }
 
+      if (activeTab === 'mobile' && !phoneNumber.trim()) {
+        setError(true);
+        hasError = true;
+      }
+
+      const digits = phoneNumber.replace(/\D/g, '');
+      if (digits.length !== selectedCountry?.maxLength) {
+        setError(true);
+        hasError = true;
+      }
+
       if (!password.trim()) {
         setPasswordError(true);
         hasError = true;
@@ -114,6 +135,8 @@ const LoginScreen = () => {
         return;
       }
 
+      const fullNumber = selectedCountry.dialCode + digits;
+
       let data = {
         "Username": activeTab === 'mobile' ? fullNumber : emailOrUsername,
         "Password": password,
@@ -123,18 +146,23 @@ const LoginScreen = () => {
       const response = await authService.login(data);
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
-        setIsLoading(false);
-        dispatch(setUser(response.Userinfo));
-        if(rememberMe){
-          const data = {
-            "Username": activeTab === 'mobile' ? fullNumber : emailOrUsername,
-            "Password": password,
-            "Filter": activeTab === 'mobile' ? "mob" : "email"
+        if(response.StatusCode.STATUSCODE == 200){
+          setIsLoading(false);
+          dispatch(setUser(response.Userinfo));
+          if (rememberMe) {
+            const data = {
+              "Username": activeTab === 'mobile' ? fullNumber : emailOrUsername,
+              "Password": password,
+              "Filter": activeTab === 'mobile' ? "mob" : "email"
+            }
+            dispatch(setRememberMeRedux(data));
+          } else {
+            dispatch(setRememberMeRedux(null));
           }
-          dispatch(setRememberMeRedux(data));
         }else{
-          dispatch(setRememberMeRedux(null));
+          setAPIError(true);
         }
+        
       } else {
         Alert.alert(
           "Error",
@@ -153,11 +181,13 @@ const LoginScreen = () => {
   const handleEmailChange = (text: string) => {
     setEmailOrUsername(text);
     if (emailError) setEmailError(false);
+    if(apiError) setAPIError(false);
   };
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
     if (passwordError) setPasswordError(false);
+    if(apiError) setAPIError(false);
   };
 
   const handleGoogleLogin = async () => {
@@ -170,11 +200,11 @@ const LoginScreen = () => {
         "Username": googleUser.name,
         "Email": googleUser.email,
         "UniqueSocialId": googleUser.id,
-        "RegistrationPlatformId":Platform.OS === 'ios' ? 3 : 2,
-        "RegistrationTypeId":2,
-        "CatSocialServerId":1, 
-        "CatUserTypeId":1,
-        "CatNationalityId":1,
+        "RegistrationPlatformId": Platform.OS === 'ios' ? 3 : 2,
+        "RegistrationTypeId": 2,
+        "CatSocialServerId": 1,
+        "CatUserTypeId": 1,
+        "CatNationalityId": 1,
         "CellNumber": "000000000",
         "DeviceId": "DDRT56789",
         "DateofBirth": "1984-09-09"
@@ -182,7 +212,7 @@ const LoginScreen = () => {
 
       // // Call your API to save the Google user data
       const response = await authService.loginWithSocialMedia(data);
-      
+
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setIsLoading(false);
         dispatch(setUser(response.Userinfo[0]));
@@ -209,7 +239,7 @@ const LoginScreen = () => {
     try {
       // Dismiss any existing modals first
       setIsLoading(false);
-      
+
       const appleAuthResponse = await appleAuth.performRequest({
         requestedOperation: appleAuth.Operation.LOGIN,
         requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
@@ -241,7 +271,7 @@ const LoginScreen = () => {
 
       // Show loading after Apple Sign In is complete
       setIsLoading(true);
-      
+
       const response = await authService.loginWithSocialMedia(data);
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
@@ -280,7 +310,7 @@ const LoginScreen = () => {
             <GoogleIcon width={24} height={24} style={styles.socialIcon} />
             <Text style={styles.socialButtonText}>{t('continue_with_google')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.socialButton, styles.appleButton]}
             onPress={handleAppleLogin}
           >
@@ -370,12 +400,20 @@ const LoginScreen = () => {
                       textAlign="left"
                     />
                   ) : (
-                    <PhoneNumberInput
-                      value={mobileNumber}
-                      onChangePhoneNumber={handlePhoneNumberChange}
-                      placeholder={t('mobile_number')}
-                      errorText={t('mobile_number_not_valid')}
+                    <CustomPhoneInput
+                      value={phoneNumber}
+                      onChangeText={handlePhoneNumberChange}
+                      onCountryChange={handleCountryChange}
+                      placeholder="Enter phone number"
+                      error={error}
+                      initialCountry={selectedCountry}
                     />
+                    // <PhoneNumberInput
+                    //   value={mobileNumber}
+                    //   onChangePhoneNumber={handlePhoneNumberChange}
+                    //   placeholder={t('mobile_number')}
+                    //   errorText={t('mobile_number_not_valid')}
+                    // />
                   )}
 
                   {/* Password Input */}
@@ -421,6 +459,10 @@ const LoginScreen = () => {
                     <Text style={styles.forgotPassword}>{t('forgot_password')}</Text>
                   </TouchableOpacity>
                 </View>
+
+                {apiError && 
+                <Text style={{color: 'red', fontSize: 16, marginTop: 10, textAlign: 'center',fontFamily: globalTextStyles.h5.fontFamily}}>{'رقم الجوال أو كلمة المرور غير صالحة'}</Text>
+                }
 
                 {/* Login Button */}
                 <TouchableOpacity

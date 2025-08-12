@@ -18,6 +18,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     FirebaseApp.configure()
     GMSServices.provideAPIKey("AIzaSyDrIDwxB952Xv0ogIH6ytLJ_iKfxfadfEM")
+    
+    // Set default language to Arabic
+    UserDefaults.standard.set(["ar"], forKey: "AppleLanguages")
+    UserDefaults.standard.synchronize()
+    
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()

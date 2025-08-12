@@ -41,8 +41,8 @@ const AuthHeader = ({
         <BackArrow />
       </TouchableOpacity>
       <View style={{ flex: 1 }} />
-      <TouchableOpacity style={styles.langBtn} onPress={onChangeLanguage}>
-        <Text style={styles.langText}>{I18nManager.isRTL ? 'En' : 'Ar'}</Text>
+      <TouchableOpacity disabled={true} style={styles.langBtn} onPress={onChangeLanguage}>
+        {/* <Text style={styles.langText}>{I18nManager.isRTL ? 'En' : 'Ar'}</Text> */}
       </TouchableOpacity>
     </View>
   );
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   langBtn: {
-    backgroundColor: '#22A6A7',
+    // backgroundColor: '#22A6A7',
     borderRadius: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,

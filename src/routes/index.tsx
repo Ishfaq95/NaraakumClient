@@ -31,6 +31,7 @@ import OrderDetailScreen from '../screens/Profile/OrderDetailScreen';
 import NotificationScreen from '../screens/NotificationScreen';
 import ConversationListScreen from '../screens/Chat/ConversationListScreen';
 import ChatScreenMainView from '../screens/Chat/ChatScreenMainView';
+import CustomPhoneInputDemo from '../components/common/CustomPhoneInputDemo';
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +41,7 @@ const RootNavigator = () => {
   if (!user) {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {/* <Stack.Screen name={'CustomPhoneInputDemo'} component={CustomPhoneInputDemo} /> */}
         <Stack.Screen name={ROUTES.AuthWelcome} component={AuthWelcomeScreen} />
         <Stack.Screen name={ROUTES.Login} component={LoginScreen} />
       </Stack.Navigator>
