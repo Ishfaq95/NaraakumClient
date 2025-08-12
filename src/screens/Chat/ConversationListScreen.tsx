@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, SafeAreaView } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { messagesAndCallService } from '../../services/api/MessagesAndCallService';
 import { useDispatch, useSelector } from 'react-redux';
@@ -166,7 +166,7 @@ const ConversationListScreen = () => {
     );
 
     return (
-        <View style={{ flex: 1, backgroundColor: 'white' }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
             {renderHeader()}
             <View style={{ flex: 1 }}>
                 <FlatList
@@ -180,7 +180,7 @@ const ConversationListScreen = () => {
                     refreshControl={undefined}
                 />
             </View>
-        </View>
+        </SafeAreaView>
     )
 }
 

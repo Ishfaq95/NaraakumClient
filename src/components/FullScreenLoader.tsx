@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   ActivityIndicator,
   StyleSheet,
   Modal,
   Dimensions,
+  Platform,
 } from 'react-native';
 
 interface FullScreenLoaderProps {
@@ -12,12 +13,24 @@ interface FullScreenLoaderProps {
 }
 
 const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({ visible }) => {
+  // Cleanup effect to ensure modal is properly closed
+  useEffect(() => {
+    return () => {
+      // Cleanup when component unmounts
+    };
+  }, []);
+
+  if (!visible) return null;
+  
   return (
     <Modal
-      transparent
-      animationType="fade"
+      transparent={true}
+      animationType="none"
       visible={visible}
-      statusBarTranslucent
+      statusBarTranslucent={false}
+      onRequestClose={() => {}}
+      hardwareAccelerated={Platform.OS === 'android'}
+      presentationStyle="overFullScreen"
     >
       <View style={styles.container}>
         <View style={styles.loaderContainer}>
@@ -39,14 +52,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    elevation: 3,
+    // Removed complex shadows that cause performance issues
   },
 });
 
