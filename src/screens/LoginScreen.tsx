@@ -411,12 +411,6 @@ const LoginScreen = () => {
                       error={error}
                       initialCountry={selectedCountry}
                     />
-                    // <PhoneNumberInput
-                    //   value={mobileNumber}
-                    //   onChangePhoneNumber={handlePhoneNumberChange}
-                    //   placeholder={t('mobile_number')}
-                    //   errorText={t('mobile_number_not_valid')}
-                    // />
                   )}
 
                   {/* Password Input */}

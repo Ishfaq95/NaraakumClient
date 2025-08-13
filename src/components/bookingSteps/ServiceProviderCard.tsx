@@ -138,6 +138,9 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
   const selectedCard = CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId);
   const category = useSelector((state: any) => state.root.booking.category);
+  const user = useSelector((state: any) => state.root.user.user);
+
+  console.log(user);
 
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
@@ -240,14 +243,18 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         updatedCardArray[selectedIndex] = {
           ...updatedCardArray[selectedIndex],
           "OrganizationServiceId": provider.OrganizationServiceIds,
+          "CatNationalityId": user?.CatNationalityId,
           "ServiceCharges": provider.Prices,
+          "ServicePrice": provider.Prices,
         };
       } else {
         updatedCardArray[selectedIndex] = {
           ...updatedCardArray[selectedIndex],
+          "CatNationalityId": user?.CatNationalityId,
           "CatServiceId": getServiceId?.Id || 0,
           "ServiceCharges": selectedPrice,
           "OrganizationServiceId": orgSpecilityID,
+          "ServicePrice": selectedPrice,
         };
       }
     }
@@ -486,9 +493,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         if (!updatedCardArray[selectedIndex].CatSpecialtyId) {
           updatedCardArray[selectedIndex] = {
             ...updatedCardArray[selectedIndex],
+            "CatNationalityId": user?.CatNationalityId,
             "OrganizationServiceId": provider.OrganizationServiceIds,
             "OrganizationId": provider.OrganizationId,
             "ServiceCharges": provider.Prices,
+            "ServicePrice": provider.Prices,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
             "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
@@ -499,9 +508,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         } else {
           updatedCardArray[selectedIndex] = {
             ...updatedCardArray[selectedIndex],
+            "CatNationalityId": user?.CatNationalityId,
             "OrganizationServiceId": orgSpecilityID,
             "OrganizationId": provider.OrganizationId,
             "ServiceCharges": selectedPrice,
+            "ServicePrice": selectedPrice,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
             "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
@@ -538,9 +549,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
           updatedCardArray[itemIndex] = {
             ...updatedCardArray[itemIndex],
+            "CatNationalityId": user?.CatNationalityId,
             "OrganizationServiceId": serviceOrgId,
             "OrganizationId": provider?.OrganizationId,
             "ServiceCharges": servicePrice,
+            "ServicePrice": servicePrice,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
             "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),

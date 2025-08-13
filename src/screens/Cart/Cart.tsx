@@ -134,8 +134,8 @@ const CartScreen = ({ navigation }: any) => {
               ? <Text style={styles.ServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
               : <Text style={styles.ServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
             }
-            {item?.ServiceCharges !== undefined && item?.ServiceCharges !== null &&
-              <Text style={styles.quantityText}>{`SAR ${String(item.ServiceCharges)}`}</Text>
+            {item?.ServicePrice !== undefined && item?.ServicePrice !== null &&
+              <Text style={styles.quantityText}>{`SAR ${String(item.ServicePrice)}`}</Text>
             }
           </View>
         </View>
@@ -206,6 +206,30 @@ const CartScreen = ({ navigation }: any) => {
     </View>
   );
 
+  console.log(CardArray);
+
+  const calculateTotalWithTex = () =>{
+    let subTotal = 0;
+    let tax = 0;
+    let total = 0;
+
+    CardArray.forEach((item: any) => {
+      if(item.CatNationalityId == "213"){
+        subTotal += Number(item.ServiceCharges) || 0;
+      }else{
+        subTotal += (Number(item.ServicePrice) || 0);
+        tax += (Number(item.ServicePrice) || 0) * 0.15;
+      }
+    });
+    
+    total = subTotal + tax;
+    return {
+      subTotal: Number(subTotal.toFixed(2)), 
+      tax: Number(tax.toFixed(2)), 
+      total: Number(total.toFixed(2))
+    };
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
@@ -214,7 +238,7 @@ const CartScreen = ({ navigation }: any) => {
           <View style={styles.headerActions}>
             <Text style={styles.itemsCount}>الخدمات المختارة ({CardArray.length})</Text>
             <View>
-              <Text>{"SAR: " + CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)}</Text>
+              <Text>{"SAR: " + CardArray.reduce((acc: number, item: any) => acc + (Number(item.ServicePrice) || 0), 0)}</Text>
             </View>
           </View>
         )}
@@ -228,15 +252,15 @@ const CartScreen = ({ navigation }: any) => {
         <View style={styles.totalContainer}>
           <View style={styles.totalTextContainer}>
             <Text style={styles.totalText}>{"إجمالي الخدمات"}</Text>
-            <Text style={styles.totalText}>{"SAR: " + CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)}</Text>
+            <Text style={styles.totalText}>{"SAR: " + calculateTotalWithTex().subTotal}</Text>
           </View>
           <View style={styles.totalTextContainer}>
             <Text style={styles.totalText}>{"الضريبة (15%)"}</Text>
-            <Text style={styles.totalText}>{`SAR: ${user.CatNationalityId == "213" ? "0.00" : CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0) * 0.15}`}</Text>
+            <Text style={styles.totalText}>{`SAR: ${calculateTotalWithTex().tax}`}</Text>
           </View>
           <View style={styles.totalTextContainer}>
             <Text style={styles.totalText}>{"المجموع"}</Text>
-            <Text style={styles.totalText}>{`SAR: ${user.CatNationalityId == "213" ? CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0) : CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0) * 0.15 + CardArray.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)} `}</Text>
+            <Text style={styles.totalText}>{`SAR: ${calculateTotalWithTex().total}`}</Text>
           </View>
 
         </View>
@@ -372,6 +396,7 @@ const styles = StyleSheet.create({
   },
   quantityContainer: {
     gap: 10,
+    width: '90%',
   },
   ServiceText: {
     ...globalTextStyles.bodyMedium,

@@ -20,11 +20,23 @@ import { store } from '../../shared/redux/store';
 import RNFS from 'react-native-fs';
 // import { TrackPlayerService } from '../../services/TrackPlayerService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import { convertUTCToLocalDateTime } from '../../utils/timeUtils';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { ROUTES } from '../../shared/utils/routes';
 import { useNavigation } from '@react-navigation/native';
+import CustomPhoneInput, { COUNTRIES } from '../../components/common/CustomPhoneInput';
+import Dropdown from "../../components/common/Dropdown";
+
+const beneficiaries = [
+  { label: 'مستفيد جديد', value: 'new' },
+  { label: 'مستفيد سابق', value: 'former' },
+];
+
+const nationalities = [
+  { label: 'مواطن (معفى من الضريبة)', value: 'citizen' },
+  { label: 'مقيم', value: 'resident' },
+];
 
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
@@ -61,7 +73,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const [fullNumber, setFullNumber] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [isValidNumber, setIsValidNumber] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<any | undefined>(countries.find(c => c.code === 'sa'));
+  // const [selectedCountry, setSelectedCountry] = useState<any | undefined>(countries.find(c => c.code === 'sa'));
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [actualRecordingDuration, setActualRecordingDuration] = useState(0);
@@ -77,11 +89,19 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const audioRecorderPlayer = useRef<AudioRecorderPlayer>(new AudioRecorderPlayer());
   const progressIntervalRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<any>();
+  const [nationality, setNationality] = useState('citizen');
+  const [idNumber, setIdNumber] = useState('');
+  const [beneficiary, setBeneficiary] = useState('new');
+  const [beneficiaryName, setBeneficiaryName] = useState('');
+  const [nameError, setNameError] = useState('');
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
   const [showGroupedArray, setShowGroupedArray] = useState([]);
+  const [relationshipValue, setRelationshipValue] = useState('');
+  const [relationship, setRelationship] = useState([]);
   const selectedDoctor: any = showGroupedArray[selectedIndex];
   const dispatch = useDispatch();
 
@@ -125,9 +145,9 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
       }
 
       // Cleanup track player (silently handle any errors)
-        // TrackPlayerService.stop().catch(() => {
-        //   // Silently ignore cleanup errors
-        // });
+      // TrackPlayerService.stop().catch(() => {
+      //   // Silently ignore cleanup errors
+      // });
     };
   }, []);
 
@@ -308,16 +328,16 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
       try {
         const fileHeader = await RNFetchBlob.fs.readFile(cleanPath, 'base64');
         const headerPreview = fileHeader.substring(0, 100);
-        
+
         // Check for common audio file signatures
         if (headerPreview.startsWith('SUQz')) {
-        
+
         } else if (headerPreview.startsWith('ftyp')) {
-        
+
         } else if (headerPreview.startsWith('RIFF')) {
-        
+
         } else {
-        
+
         }
       } catch (headerError) {
       }
@@ -431,7 +451,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             toFile: filePath,
             background: true,
             progress: (res) => {
-              
+
             },
           }).promise;
 
@@ -534,13 +554,13 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
           // Check if playback finished
           // if (position >= currentDuration) {
-            if (progressIntervalRef.current) {
-              // clearInterval(progressIntervalRef.current);
-              // progressIntervalRef.current = null;
-            }
-            setIsPlayingAudio(false);
-            setAudioProgress(0);
-            setAudioCurrentTime(0);
+          if (progressIntervalRef.current) {
+            // clearInterval(progressIntervalRef.current);
+            // progressIntervalRef.current = null;
+          }
+          setIsPlayingAudio(false);
+          setAudioProgress(0);
+          setAudioCurrentTime(0);
           // }
         } catch (error) {
         }
@@ -603,7 +623,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           setShowGroupedArray(groupedArray);
 
           dispatch(addCardItem(updatedCardItems));
-        }else{
+        } else {
           dispatch(addCardItem([]));
           navigation.navigate(ROUTES.AppNavigator, {
             screen: ROUTES.HomeStack,
@@ -689,11 +709,11 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     }
   }
 
-  useEffect(() => {
-    if (mobileNumber) {
-      handlePhoneNumberChange({ phoneNumber: mobileNumber, isValid: isValidNumber, countryCode: '', fullNumber: '' });
-    }
-  }, [selectedCountry]);
+  // useEffect(() => {
+  //   if (mobileNumber) {
+  //     handlePhoneNumberChange({ phoneNumber: mobileNumber, isValid: isValidNumber, countryCode: '', fullNumber: '' });
+  //   }
+  // }, [selectedCountry]);
 
   const handleNext = () => {
     createOrderMainBeforePayment();
@@ -705,10 +725,20 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     onPressBack();
   };
 
-  const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
-    setMobileNumber(data.phoneNumber);
-    setIsValidNumber(data.isValid);
-    setFullNumber(data.fullNumber);
+  // const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
+  //   setMobileNumber(data.phoneNumber);
+  //   setIsValidNumber(data.isValid);
+  //   setFullNumber(data.fullNumber);
+  // };
+
+  const handlePhoneNumberChange = (text: string) => {
+    setPhoneNumber(text);
+    // setError(false); // Clear error when user types
+    // if(apiError) setAPIError(false);
+  };
+  const handleCountryChange = (country: any) => {
+    setSelectedCountry(country);
+    console.log('Selected country:', country);
   };
 
   // Function to calculate duration between start and end time
@@ -786,10 +816,17 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     return { countryCode: 'SA', phoneNumber: cleanNumber.replace(/^\+/, '') };
   };
 
+  useEffect(() => {
+    const phoneInfo = extractPhoneInfo(user?.CellNumber || '');
+    const getCountry = COUNTRIES.find(c => c.code === phoneInfo.countryCode);
+    setSelectedCountry(getCountry);
+    setPhoneNumber(phoneInfo.phoneNumber);
+    // const defaultCountryCode = phoneInfo.countryCode;
+    // const defaultPhoneNumber = phoneInfo.phoneNumber; 
+  }, [user]);
+
   // Extract phone info from user
-  const phoneInfo = extractPhoneInfo(user?.CellNumber || '');
-  const defaultCountryCode = phoneInfo.countryCode;
-  const defaultPhoneNumber = phoneInfo.phoneNumber;
+
 
   // Helper to format time
   const formatTime = (seconds: number) => {
@@ -799,9 +836,11 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  console.log("selected ", selected);
+
   return (
     <View style={styles.container}>
-      <View style={{ height: 120,alignItems:"flex-start" }}>
+      <View style={{ height: 120, alignItems: "flex-start" }}>
         {/* Doctor tags */}
         <FlatList
           data={showGroupedArray}
@@ -823,7 +862,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
             if (item.SchedulingDate && item.SchedulingTime) {
               displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
-        displayTime = convert24HourToArabicTime(item.SchedulingTime);
+              displayTime = convert24HourToArabicTime(item.SchedulingTime);
             }
 
             return (
@@ -896,15 +935,96 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             editable={false}
           />
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }]}>رقم الجوال</Text>
-          <PhoneNumberInput
-            value={defaultPhoneNumber}
-            onChangePhoneNumber={handlePhoneNumberChange}
-            placeholder={t('mobile_number')}
-            errorText={t('mobile_number_not_valid')}
-            defaultCountry={defaultCountryCode}
-            editable={false}
+          <CustomPhoneInput
+            value={phoneNumber}
+            onChangeText={handlePhoneNumberChange}
+            onCountryChange={handleCountryChange}
+            placeholder="Enter phone number"
+            error={false}
+            disabled={true}
+            initialCountry={selectedCountry}
           />
         </View>
+        {selected === 'other' && (
+          <View style={{ paddingTop: 16 }}>
+            {/* Beneficiary */}
+            <View style={styles.fieldGroup}>
+              <View style={[styles.row, { justifyContent: 'flex-start' }]}>
+                {beneficiaries.map((item) => (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={styles.radioContainer}
+                    onPress={() => setBeneficiary(item.value)}
+                  >
+                    <View style={[styles.radioOuter, beneficiary === item.value && styles.radioOuterSelected]}>
+                      {beneficiary === item.value && <View style={styles.radioInner} />}
+                    </View>
+                    <Text style={styles.radioLabel}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+            <View style={styles.questionRow}>
+              <Text style={styles.questionText}>{'اسم المستفيد '}</Text>
+              <Text style={styles.requiredAsterisk}> *</Text>
+            </View>
+            <TextInput
+              style={[styles.textInput, nameError && styles.inputError]}
+              placeholder="ضع الاسم الثلاثى"
+              placeholderTextColor="#999"
+              textAlign="right"
+              value={beneficiaryName}
+              onChangeText={(text) => {
+                setBeneficiaryName(text);
+                if (nameError) setNameError('');
+              }}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <View style={styles.questionRow}>
+              <Text style={styles.questionText}>{'صلة القرابة '}</Text>
+              <Text style={styles.requiredAsterisk}> *</Text>
+            </View>
+            <Dropdown
+          data={relationship}
+          containerStyle={{ height: 50 }}
+          dropdownStyle={[{ height: 50 }, { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
+          value={relationshipValue}
+          disabled={relationshipValue === ''}
+          onChange={(value: string | number) => {
+            setRelationshipValue(value.toString());
+          }}
+          placeholder=""
+        />
+          </View>
+
+           {/* Nationality */}
+           <View style={styles.fieldGroup}>
+              <View style={[styles.row, { justifyContent: 'flex-start' }]}>
+                {nationalities.map((item) => (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={styles.radioContainer}
+                    onPress={() => setNationality(item.value)}
+                  >
+                    <View style={[styles.radioOuter, nationality === item.value && styles.radioOuterSelected]}>
+                      {nationality === item.value && <View style={styles.radioInner} />}
+                    </View>
+                    <Text style={styles.radioLabel}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            {/* ID Number */}
+            {nationality === 'citizen' && <View style={styles.fieldGroup}>
+              <Text style={styles.label}>رقم الهوية</Text>
+              <TextInput style={styles.input} value={idNumber} onChangeText={setIdNumber} placeholder="رقم الهوية" keyboardType="numeric" />
+            </View>}
+          </View>
+        )}
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>وصف الشكوى المرضية (إختياري)</Text>
         </View>
@@ -1305,6 +1425,101 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: -10,
+  },
+  fieldGroup: {
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 15,
+    color: '#222',
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    height: 50,
+    fontSize: 15,
+    color: '#222',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    textAlign: 'right',
+  },
+  row: {
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  radioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 18,
+    marginLeft: 0,
+  },
+  radioOuter: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#23a2a4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
+    marginRight: 4,
+  },
+  radioOuterSelected: {
+    borderColor: '#23a2a4',
+    backgroundColor: '#e4f1ef',
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#23a2a4',
+  },
+  radioLabel: {
+    fontSize: 14,
+    color: '#222',
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+  },
+  inputGroup: {
+    marginBottom: 15,
+  },
+  questionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  requiredAsterisk: {
+    color: '#FF0000',
+    fontSize: 16,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  questionText: {
+    ...globalTextStyles.bodyMedium,
+    color: '#333',
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+  },
+  textInput: {
+    ...globalTextStyles.bodyMedium,
+    color: '#333',
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    minHeight: 44,
+    textAlignVertical: 'top',
+  },
+  inputError: {
+    borderColor: '#FF0000',
+    borderWidth: 1,
   },
 });
 

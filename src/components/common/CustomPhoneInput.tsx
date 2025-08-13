@@ -36,7 +36,7 @@ interface CustomPhoneInputProps {
   initialCountry?: Country;
 }
 
-const COUNTRIES: Country[] = [
+export const COUNTRIES: Country[] = [
   {
     code: 'SA',
     name: 'Saudi Arabia',
