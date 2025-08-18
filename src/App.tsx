@@ -77,7 +77,7 @@ const App = () => {
               <CrashlyticsProvider
                 userId="user"
                 customKeys={{
-                  appVersion: '1.0.3',
+                  appVersion: '1.0.4',
                   environment: 'production',
                 }}>
                 <NavigationContainer ref={navigationRef}>

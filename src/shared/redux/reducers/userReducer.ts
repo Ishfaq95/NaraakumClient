@@ -16,7 +16,7 @@ const initialState: State = {
   topic: null,
   token: null,
   expiresAt: null,
-  appVersionCode: Platform.OS=="android"? "1.0.3":"1.0.3",
+  appVersionCode: Platform.OS=="android"? "1.0.4":"1.0.4",
   mediaToken: null,
   mediaTokenExpiresAt: null,
 };
