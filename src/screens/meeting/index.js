@@ -30,7 +30,8 @@ export default function ({ navigation, route }) {
           meetingId: meetingId,
           micEnabled: micEnabled,
           webcamEnabled: webcamEnabled,
-          name: name,
+          name: Data.Data.displayName,
+          participantId: Data.Data.patientId,
           notification: {
             title: "Video SDK Meeting",
             message: "Meeting is running.",
