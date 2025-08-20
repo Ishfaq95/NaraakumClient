@@ -204,6 +204,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
             <GooglePlacesAutocomplete
               ref={placesRef}
               listViewDisplayed={true}
+              timeout={20000}
               onPress={(data, details = null) => {
                 if (details && details.geometry && details.geometry.location) {
                   const { lat, lng } = details.geometry.location;
