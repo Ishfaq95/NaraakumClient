@@ -8,11 +8,16 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Alert,
+  TextInput,
+  Keyboard,
+  TouchableWithoutFeedback,
+  SafeAreaView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { appointmentService, Appointment } from '../../services/api/appointmentService';
 import { styles } from './styles';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 import NoAppointmentsIcon from '../../assets/icons/NoAppointmentsIcon';
 import RemoteAppointmentCard from './RemoteAppointmentCard';
@@ -21,6 +26,7 @@ import CustomBottomSheet from '../common/CustomBottomSheet';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { generateVisitHistoryPDF } from '../../components/GeneratePDF/VisitConsultantLog';
 import { profileService } from '../../services/api/ProfileService';
+import { ROUTES } from '../../shared/utils/routes';
 
 const PAGE_SIZE = 10;
 
@@ -37,9 +43,26 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-
+  const navigation = useNavigation<any>();
   const [visitHistoryData, setVisitHistoryData] = useState<any>(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [medicalCenterRating, setMedicalCenterRating] = useState(0);
+  const [timingRating, setTimingRating] = useState(0);
+  const [staffRating, setStaffRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const ratingScrollViewRef = useRef<ScrollView>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isRatingVisible, setIsRatingVisible] = useState(false);
+  const [openMoreOptionBottomSheet, setOpenMoreOptionBottomSheet] = useState(false);
+
+  const MoreOptionMenu = (item: any) => [
+    { title: 'معلومات الحجز', key: 'booking_info', onPress: () => { setOpenMoreOptionBottomSheet(false); navigation.navigate(ROUTES.OrderDetailScreen, {OrderId:item?.OrderId}); } },
+    { title: 'ارسال رسالة', key: 'send_message', onPress: () => { setOpenMoreOptionBottomSheet(false);  } },
+    { title: 'سجل الجلسات', key: 'session_log', onPress: () => { setOpenMoreOptionBottomSheet(false); navigation.navigate(ROUTES.visit_consultant_log); } },
+    { title: 'تحميل الفاتورة', key: 'download_invoice', onPress: () => { setOpenMoreOptionBottomSheet(false);  } },
+    { title: 'الغاء الحجز', key: 'cancel_booking', onPress: () => { setOpenMoreOptionBottomSheet(false);  } },
+  ];
 
   const getVisitMainRecordDetails = async (item: any) => {
     try {
@@ -62,7 +85,25 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
     }
   }
 
+// Keyboard listeners for rating bottom sheet
+useEffect(() => {
+  const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
+    setKeyboardHeight(e.endCoordinates.height);
+    // Scroll to comment section when keyboard appears
+    setTimeout(() => {
+      ratingScrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  });
 
+  const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+    setKeyboardHeight(0);
+  });
+
+  return () => {
+    keyboardDidShowListener?.remove();
+    keyboardDidHideListener?.remove();
+  };
+}, []);
 
   const fetchAppointments = async (page: number, append: boolean = false) => {
     if (!userId || isLoading) return;
@@ -132,13 +173,90 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
     getVisitMainRecordDetails(appointment);
   };
   const onNewAppointment = (appointment: Appointment) => {
-    console.log(appointment);
+    navigation.navigate(ROUTES.AppNavigator, {
+      screen: ROUTES.HomeStack,
+      params: {
+          screen: ROUTES.Services,
+      }
+  });
   };
   const onRating = (appointment: Appointment) => {
-    console.log(appointment);
+    setSelectedAppointment(appointment);
+    setMedicalCenterRating(0); // Reset ratings when opening
+    setTimingRating(0);
+    setStaffRating(0);
+    setComment(''); // Reset comment
+    setIsRatingVisible(true);
   };
+
+  const handleCommentFocus = () => {
+    // Immediate scroll when focus starts
+    ratingScrollViewRef.current?.scrollToEnd({ animated: true });
+
+    // Multiple scroll attempts to ensure visibility
+    setTimeout(() => {
+      ratingScrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 50);
+
+    setTimeout(() => {
+      ratingScrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 200);
+
+    setTimeout(() => {
+      ratingScrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 400);
+  };
+
+  const handleMedicalCenterStarPress = (starIndex: number) => {
+    setMedicalCenterRating(starIndex + 1);
+  };
+
+  const handleTimingStarPress = (starIndex: number) => {
+    setTimingRating(starIndex + 1);
+  };
+
+  const handleStaffStarPress = (starIndex: number) => {
+    setStaffRating(starIndex + 1);
+  };
+
+  const handleSubmitRating = async () => {
+    const payload = {
+      "UserloginInfoId": userId,
+      "Comment": comment,
+      "OrderId": selectedAppointment?.OrderId,
+      "RelationOrderAndOrganizationCategoryId": selectedAppointment?.RelationOrderAndOrganizationCategoryId,
+      "OrganizationId": selectedAppointment?.OrganizationId,
+      "Rating": [
+        { "TargetId": selectedAppointment?.ServiceProviderId, "CatRatingTypeId": 1, "RatingValue": medicalCenterRating },
+        { "TargetId": selectedAppointment?.ServiceProviderId, "CatRatingTypeId": 2, "RatingValue": timingRating },
+        { "TargetId": selectedAppointment?.ServiceProviderId, "CatRatingTypeId": 3, "RatingValue": staffRating }],
+      "VisitMainId": selectedAppointment?.VisitMainId,
+      "TaskMainId": selectedAppointment?.TaskId
+    }
+
+    const response = await profileService.submitRating(payload);
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
+      setMedicalCenterRating(0);
+      setTimingRating(0);
+      setStaffRating(0);
+      setComment('');
+
+      Alert.alert('تم تحديث التقييم', 'تم تحديث التقييم بنجاح', [
+        {
+          text: 'موافق',
+          onPress: () => {
+            setIsRatingVisible(false);
+          }
+        }
+      ]);
+    }
+    // Here you can add API call to submit the ratings
+
+  };
+
   const onMoreIcon = (appointment: Appointment) => {
-    console.log(appointment);
+    setSelectedAppointment(appointment);
+    setOpenMoreOptionBottomSheet(true);
   };
 
   const renderItem = useCallback(({ item }: { item: Appointment }) => (
@@ -189,6 +307,7 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
         windowSize={10}
         initialNumToRender={5}
       />
+
       <CustomBottomSheet
         visible={isBottomSheetVisible}
         onClose={() => setIsBottomSheetVisible(false)}
@@ -581,6 +700,209 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
             </View>
           </ScrollView>
         </View>
+      </CustomBottomSheet>
+
+      <CustomBottomSheet
+        visible={isRatingVisible}
+        onClose={() => setIsRatingVisible(false)}
+        height="80%"
+        showHandle={false}
+      >
+        <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+          {/* Header */}
+          <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', borderTopLeftRadius: 10, borderTopRightRadius: 10, paddingHorizontal: 16 }}>
+            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
+              {'إستبيان مدى رضاك عن الخدمة'}
+            </Text>
+            <TouchableOpacity onPress={() => setIsRatingVisible(false)}>
+              <AntDesign name="close" size={24} color="#979e9eff" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            ref={ratingScrollViewRef}
+            style={{ flexGrow: 1, flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: keyboardHeight }}
+          >
+            <View style={{ flex: 1, paddingHorizontal: 16 }}>
+              <View style={{ flex: 1 }}>
+                <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم المركز الطبي</Text>
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>بشكل عام ما مدى رضاكم عن الخدمة ؟</Text>
+
+                {/* Star Rating */}
+                <View style={{ alignItems: 'center', marginTop: 20 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                    {[0, 1, 2, 3, 4].map((starIndex) => (
+                      <TouchableOpacity
+                        key={starIndex}
+                        onPress={() => handleMedicalCenterStarPress(starIndex)}
+                        style={{ marginHorizontal: 5 }}
+                      >
+                        <AntDesign
+                          name={starIndex < medicalCenterRating ? "star" : "staro"}
+                          size={40}
+                          color={starIndex < medicalCenterRating ? "#23a2a4" : "#D3D3D3"}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
+                </View>
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>كيف كان التوقيت المتعلق بتقديم الخدمة ووصولها اليكم ؟</Text>
+
+                {/* Star Rating */}
+                <View style={{ alignItems: 'center', marginTop: 20 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                    {[0, 1, 2, 3, 4].map((starIndex) => (
+                      <TouchableOpacity
+                        key={starIndex}
+                        onPress={() => handleTimingStarPress(starIndex)}
+                        style={{ marginHorizontal: 5 }}
+                      >
+                        <AntDesign
+                          name={starIndex < timingRating ? "star" : "staro"}
+                          size={40}
+                          color={starIndex < timingRating ? "#23a2a4" : "#D3D3D3"}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
+                </View>
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم الطبيب المعالج / الطاقم الطبي</Text>
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>ما مدى راحتك مع الطاقم الطبي/الأخصائي/التمريض ؟</Text>
+
+                {/* Star Rating */}
+                <View style={{ alignItems: 'center', marginTop: 20 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                    {[0, 1, 2, 3, 4].map((starIndex) => (
+                      <TouchableOpacity
+                        key={starIndex}
+                        onPress={() => handleStaffStarPress(starIndex)}
+                        style={{ marginHorizontal: 5 }}
+                      >
+                        <AntDesign
+                          name={starIndex < staffRating ? "star" : "staro"}
+                          size={40}
+                          color={starIndex < staffRating ? "#23a2a4" : "#D3D3D3"}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
+                </View>
+              </View>
+
+              {/* Comment Section */}
+              <View style={{ marginTop: 20, paddingHorizontal: 16 }}>
+                <Text style={{
+                  fontSize: 16,
+                  fontWeight: '600',
+                  color: '#000',
+                  textAlign: 'center',
+                  marginBottom: 10,
+                  fontFamily: CAIRO_FONT_FAMILY.bold
+                }}>
+                  تعليقات إضافية (اختياري)
+                </Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#ddd',
+                    borderRadius: 8,
+                    padding: 12,
+                    textAlignVertical: 'top',
+                    minHeight: 100,
+                    fontFamily: CAIRO_FONT_FAMILY.regular,
+                    fontSize: 14,
+                    color: '#333',
+                    textAlign: 'right'
+                  }}
+                  placeholder="اكتب تعليقك هنا..."
+                  placeholderTextColor="#999"
+                  multiline={true}
+                  numberOfLines={4}
+                  value={comment}
+                  onChangeText={setComment}
+                  onFocus={handleCommentFocus}
+                />
+              </View>
+
+              {/* Submit Button */}
+              <View style={{ marginTop: 30, paddingHorizontal: 20, marginBottom: 20 }}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: (medicalCenterRating > 0 || timingRating > 0 || staffRating > 0) ? '#23a2a4' : '#D3D3D3',
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    opacity: (medicalCenterRating > 0 || timingRating > 0 || staffRating > 0) ? 1 : 0.6
+                  }}
+                  onPress={handleSubmitRating}
+                  disabled={(medicalCenterRating === 0 && timingRating === 0 && staffRating === 0)}
+                >
+                  <Text style={{
+                    color: '#fff',
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    fontFamily: CAIRO_FONT_FAMILY.bold
+                  }}>
+                    إرسال التقييم
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </CustomBottomSheet>
+
+      <CustomBottomSheet
+        visible={openMoreOptionBottomSheet}
+        onClose={() => setOpenMoreOptionBottomSheet(false)}
+        height="25%"
+        showHandle={false}
+      >
+        <TouchableWithoutFeedback>
+          <View style={styles.modalBackground}>
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.sheetHeaderContainer}>
+                <TouchableOpacity onPress={() => setOpenMoreOptionBottomSheet(false)}>
+                  <AntDesign name="close" size={24} color="#979e9eff" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.menuContainer}>
+                {MoreOptionMenu(selectedAppointment).map((item, index, arr) => (
+                  <View
+                    key={index}
+                    style={{
+                      width: '100%',
+                      borderBottomWidth: index === arr.length - 1 ? 0 : 1,
+                      borderBottomColor: '#d9d9d9',
+                    }}
+                  >
+                    <TouchableOpacity disabled={item.key == 'cancel_booking' || item.key == 'send_message'} style={{ opacity: item.key == 'cancel_booking' || item.key == 'send_message' ? 0.5 : 1 }} onPress={item.onPress}>
+                      <Text style={styles.menuText}>{item.title}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </SafeAreaView>
+
+          </View>
+        </TouchableWithoutFeedback>
       </CustomBottomSheet>
     </>
   );

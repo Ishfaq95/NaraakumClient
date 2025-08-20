@@ -11,6 +11,8 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { profileService } from '../../../services/api/ProfileService';
 import { useSelector } from 'react-redux';
 import { globalTextStyles, CAIRO_FONT_FAMILY } from '../../../styles/globalStyles';
+import Feather from 'react-native-vector-icons/Feather';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 
 const ReservationReceivedItemRender = ({ item, onClickOrderDetails, getUpdatedOrders }: any) => {
     const { t } = useTranslation();
@@ -44,7 +46,7 @@ const ReservationReceivedItemRender = ({ item, onClickOrderDetails, getUpdatedOr
     }, [onClickOrderDetails, item]);
 
     const formattedDate = useMemo(() => moment(item?.OrderDate).locale('en').format('DD/MM/YYYY'), [item?.OrderDate]);
-    const totalPriceText = useMemo(() => `${item?.TotalPrice} ${t('sar')}`, [item?.TotalPrice, t]);
+    const totalPriceText = useMemo(() => `SAR ${item?.TotalPrice}`, [item?.TotalPrice, t]);
     const showDeleteButton = useMemo(() => item?.CatOrderStatusId == '22', [item?.CatOrderStatusId]);
     const showAddMoreButton = useMemo(() => item?.CatOrderStatusId == '22', [item?.CatOrderStatusId]);
 
@@ -54,7 +56,7 @@ const ReservationReceivedItemRender = ({ item, onClickOrderDetails, getUpdatedOr
             <View style={styles.row}>
                 <View style={{ alignItems: "flex-start" }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#000' }]}>اسم المستفيد</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { color: '#000' }]}>{item?.PatientFullnameSlang}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.PatientFullnameSlang}</Text>
                 </View>
                 {showDeleteButton && <TouchableOpacity onPress={() => handleDeleteOrder(item)} style={{}}>
                     <MaterialCommunityIcons name="delete" size={24} color="red" />
@@ -64,38 +66,38 @@ const ReservationReceivedItemRender = ({ item, onClickOrderDetails, getUpdatedOr
             {/* Info Rows */}
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                    <MaterialIcons name="local-hospital" size={16} color="#23a2a4" style={styles.icon} />
+                    <Feather name="hash" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>رقم الطلب</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{item?.OrderID}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.OrderID}</Text>
             </View>
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                    <FontAwesome5 name="user-md" size={16} color="#23a2a4" style={styles.icon} />
+                    <MaterialCommunityIcons name="calendar-range-outline" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>تاريخ الاستلام</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{formattedDate}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{formattedDate}</Text>
             </View>
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                    <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
+                <MaterialCommunityIcons name="office-building-outline" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>جهة الارسال</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{item?.CPFullnameSlang}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.CPFullnameSlang}</Text>
             </View>
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                    <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
+                    <MaterialCommunityIcons name="stethoscope" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>عدد الخدمات</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{item?.TotalServices}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.TotalServices}</Text>
             </View>
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                    <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
+                    <FontAwesome6 name="receipt" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>اجمالى الفاتورة</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{totalPriceText}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{totalPriceText}</Text>
             </View>
 
             {/* Buttons */}

@@ -120,7 +120,7 @@ const ReservationReceivedScreen = () => {
         <Text style={[globalTextStyles.caption, { textAlign: 'center', color: '#000' }]}>يمكن لمقدم الخدمة أن يرسل إليك مجموعة من الخدمات في أثناء الزيارة. عليك فقط إتمام الحجز!</Text>
       </View>
       <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16, paddingVertical: 10, alignItems: 'flex-start', }}>
-        <Text style={[globalTextStyles.bodyMedium, { color: '#000', marginBottom: 10 }]}>{`الحجوزات المستلمة : (${cpAddedOrders.length})`}</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#000', marginBottom: 10 }]}>{`الحجوزات المستلمة : (${cpAddedOrders.length})`}</Text>
         <View style={styles.contentContainer}>
 
           <FlatList
@@ -190,12 +190,12 @@ const ReservationReceivedScreen = () => {
 
                   </View>
                   <View style={{ paddingTop: 5, width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
-                    <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>الأسم</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.FullNameSlang}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, {width:'15%', color: '#36454f' }]}>الأسم</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { width:'85%', fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333',flexWrap:'wrap' }]}>{`${orderDetailsByServiceProvider?.OrderDetail[0]?.FullNameSlang} testing `}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>صلة القرابة</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.RelationSLang}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{orderDetailsByServiceProvider?.OrderDetail[0]?.RelationSLang ? orderDetailsByServiceProvider?.OrderDetail[0]?.RelationSLang : 'نفسي'}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>الاقامة</Text>
@@ -221,11 +221,11 @@ const ReservationReceivedScreen = () => {
                   </View>
                   <View style={{ paddingTop: 5, width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>اجمالى الخدمات</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.PriceBySP, 0)?.toFixed(2)}`}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.medium, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.PriceBySP, 0)?.toFixed(2)}`}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>الضريبة (15%)</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.TaxAmt, 0)?.toFixed(2)}`}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.medium, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.TaxAmt, 0)?.toFixed(2)}`}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>المجموع</Text>
@@ -234,10 +234,10 @@ const ReservationReceivedScreen = () => {
 
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', marginTop: 20, paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>اجمالى الفاتورة</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>{`SAR ${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.PriceCharged, 0)?.toFixed(2)}`}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#23a2a4' }]}>{`${orderDetailsByServiceProvider?.OrderDetail?.reduce((acc: any, item: any) => acc + item.PriceCharged, 0)?.toFixed(2)}`}</Text>
                   </View>
                 </View>
-                <TouchableOpacity disabled={selectedOrder?.CatOrderStatusId != 22} onPress={handleClickPayAndPay} style={[{ width: '94%', marginHorizontal: 10, height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }, selectedOrder?.CatOrderStatusId != 22 && { backgroundColor: '#ccc' }]}>
+                <TouchableOpacity disabled={selectedOrder?.CatOrderStatusId != 22} onPress={handleClickPayAndPay} style={[{ width: '94%', marginHorizontal: 10, height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }, selectedOrder?.CatOrderStatusId != 22 && { backgroundColor: '#23a2a4',opacity:0.5 }]}>
                   <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>الدفع والسداد</Text>
                 </TouchableOpacity>
               </View>

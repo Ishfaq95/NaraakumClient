@@ -21,7 +21,7 @@ import RightArrow from '../../assets/icons/RightArrow';
 import { BaseURL, MediaBaseURL } from '../../shared/utils/constants';
 import { formatDate, formatTime, getDuration, getStatusStyle } from '../../shared/services/service';
 import SettingIconSelected from '../../assets/icons/SettingIconSelected';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import Entypo from 'react-native-vector-icons/Entypo';
 
 interface AppointmentCardProps {
@@ -77,8 +77,8 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
                         <Text style={styles.doctorName} numberOfLines={1}>
                             {appointment?.ServiceProviderSName}
                         </Text>
-                        <TouchableOpacity style={{ height: 35, width: 30, backgroundColor: '#23A2A4', borderRadius: 15, alignItems: 'center', justifyContent: 'center' }} onPress={() => onMoreIcon(appointment)}>
-                            <Entypo name="dots-three-vertical" size={24} color="white" />
+                        <TouchableOpacity style={{ height: 35, width: 35, borderWidth: 1, borderColor: '#23A2A4', borderRadius: 30, alignItems: 'center', justifyContent: 'center' }} onPress={() => onMoreIcon(appointment)}>
+                            <Entypo name="dots-three-vertical" size={24} color="#23A2A4" />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.specialtiesContainer}>
@@ -168,7 +168,7 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
 
             {/* Info Bar (not a button) */}
             <View style={styles.infoBar}>
-                <Participants width={20} height={20} />
+                <Image source={require('../../assets/icons/cameramovie.png')} style={{ tintColor: '#fff', width: 20, height: 20 }} />
                 <Text style={styles.infoBarText}>
                     {/* {t('استشارة عن بعد 30 دقيقة / طبيب عام')} */}
                     {`${appointment?.TitleSlangCategory} ${getDuration(appointment)} / ${appointment?.TitleSlangSpecialty || appointment?.TitleSlangService}`}
@@ -182,7 +182,7 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
                         styles.callBtn,
                         isCallEnabled ? styles.callBtnEnabled : styles.callBtnDisabled
                     ]}
-                    disabled={false}
+                    disabled={!isCallEnabled}
                     onPress={() => onJoinMeeting(appointment)}
                 >
                     <CallIcon
@@ -217,12 +217,12 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
             </View>
 
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}> */}
                 {/* Call Button */}
                 <TouchableOpacity
                     style={[
                         styles.callBtn,
-                        { backgroundColor: '#fff', borderWidth: 1, borderColor: '#23a2a4' }
+                        { backgroundColor: '#fff', borderWidth: 1, borderColor: '#23a2a4', width: '100%' }
                     ]}
                     disabled={false}
                     onPress={() => onNewAppointment(appointment)}
@@ -239,7 +239,7 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
                 <TouchableOpacity
                     style={[
                         styles.callBtn,
-                        { backgroundColor: '#fff', borderWidth: 1, borderColor: '#23a2a4' }
+                        { backgroundColor: '#fff', borderWidth: 1, borderColor: '#23a2a4', width: '100%' }
                     ]}
                     onPress={() => onRating(appointment)}
                 >
@@ -251,7 +251,7 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
                         {'تقييم مقدم الخدمة'}
                     </Text>
                 </TouchableOpacity>
-            </View>
+            {/* </View> */}
         </View>
     );
 });
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     },
     doctorName: {
         ...globalTextStyles.bodyMedium,
-        fontFamily: globalTextStyles.h5.fontFamily,
+        fontFamily: CAIRO_FONT_FAMILY.bold,
         color: '#222',
         marginBottom: 4,
         textAlign: 'left',

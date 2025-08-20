@@ -12,7 +12,7 @@ import { TabBar, SceneMap, TabView } from 'react-native-tab-view';
 import UpcomingAppointments from '../../components/appointments/UpcomingAppointments';
 import CurrentAppointments from '../../components/appointments/CurrentAppointments';
 import PreviousAppointments from '../../components/appointments/PreviousAppointments';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 
 const RemoteOrderListScreen = () => {
   const [index, setIndex] = useState(0);
@@ -20,89 +20,113 @@ const RemoteOrderListScreen = () => {
   const layout = useWindowDimensions();
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.root.user.user);
-  const {topic} = useSelector((state: any) => state.root.user);
+  const { topic } = useSelector((state: any) => state.root.user);
   const webSocketService = WebSocketService.getInstance();
   const isFocused = useIsFocused();
   const navigation = useNavigation();
 
-    const handleBack = () => {
-        navigation.goBack();
-      };
+  const handleBack = () => {
+    navigation.goBack();
+  };
 
-      const handleJoinMeeting = (appointment: any) => {
+  const handleJoinMeeting = (appointment: any) => {
 
-        // Parse the date and time separately
-        const date = moment.utc(appointment.SchedulingDate);
-        const [startHours, startMinutes] = appointment.SchedulingTime.split(':');
-        const [endHours, endMinutes] = appointment.SchedulingEndTime.split(':');
-    
-        // Create UTC moments with the correct time
-        let startTimeUTC = moment.utc(date).set({
-          hours: parseInt(startHours),
-          minutes: parseInt(startMinutes)
-        });
-        
-        let endDateTimeUTC = moment.utc(date).set({
-          hours: parseInt(endHours),
-          minutes: parseInt(endMinutes)
-        });
-    
-        // Convert to local time
-        let startTimeLocal = startTimeUTC.local();
-        let endTimeLocal = endDateTimeUTC.local();
-    
-        let meetingInfo = {
-          toUserId: appointment.ServiceProviderId,
-          sessionStartTime: startTimeLocal.toISOString(),
-          bookingId: appointment.TaskId,
-          patientProfileId: appointment.PatientUserProfileInfoId,
-          meetingId: appointment.VideoSDKMeetingId,
-          Name: appointment.ServiceProviderSName,
-          displayName: appointment.PatientSName,
-          sessionEndTime: endTimeLocal.toISOString(),
-          patientId: appointment.UserLoginInfoId,
-          serviceProviderId: appointment.ServiceProviderId
-        }; 
-        
-        navigation.navigate(ROUTES.preViewCall, {Data: meetingInfo});
-      };
-    
-      const renderHeader = () => (
-        <Header
-          centerComponent={
-            <Text numberOfLines={1} style={styles.headerTitle}>{t('remote_orders')}</Text>
-          }
-          leftComponent={
-            <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
-              <ArrowRightIcon />
-            </TouchableOpacity>
-          }
-          containerStyle={styles.headerContainer}
-        />
-      );
-    
-      const routes = [
-        { key: 'current', title: t('current') },
-        { key: 'upcoming', title: t('upcoming') },
-        { key: 'previous', title: t('previous') },
-      ];
-    
-      const renderTabBar = (props: any) => (
-        <TabBar
-          {...props}
-          indicatorStyle={styles.indicator}
-          style={styles.tabBar}
-          labelStyle={styles.tabLabel}
-          activeColor="#008080"
-          inactiveColor="#666666"
-        />
-      );
-    
-      const renderScene = SceneMap({
-        current: () => <CurrentAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
-        upcoming: () => <UpcomingAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
-        previous: () =><PreviousAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
-      });
+    // Parse the date and time separately
+    const date = moment.utc(appointment.SchedulingDate);
+    const [startHours, startMinutes] = appointment.SchedulingTime.split(':');
+    const [endHours, endMinutes] = appointment.SchedulingEndTime.split(':');
+
+    // Create UTC moments with the correct time
+    let startTimeUTC = moment.utc(date).set({
+      hours: parseInt(startHours),
+      minutes: parseInt(startMinutes)
+    });
+
+    let endDateTimeUTC = moment.utc(date).set({
+      hours: parseInt(endHours),
+      minutes: parseInt(endMinutes)
+    });
+
+    // Convert to local time
+    let startTimeLocal = startTimeUTC.local();
+    let endTimeLocal = endDateTimeUTC.local();
+
+    let meetingInfo = {
+      toUserId: appointment.ServiceProviderId,
+      sessionStartTime: startTimeLocal.toISOString(),
+      bookingId: appointment.TaskId,
+      patientProfileId: appointment.PatientUserProfileInfoId,
+      meetingId: appointment.VideoSDKMeetingId,
+      Name: appointment.ServiceProviderSName,
+      displayName: appointment.PatientSName,
+      sessionEndTime: endTimeLocal.toISOString(),
+      patientId: appointment.UserLoginInfoId,
+      serviceProviderId: appointment.ServiceProviderId
+    };
+
+    navigation.navigate(ROUTES.preViewCall, { Data: meetingInfo });
+  };
+
+  const renderHeader = () => (
+    <Header
+      centerComponent={
+        <Text numberOfLines={1} style={styles.headerTitle}>{t('remote_orders')}</Text>
+      }
+      leftComponent={
+        <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
+          <ArrowRightIcon />
+        </TouchableOpacity>
+      }
+      containerStyle={styles.headerContainer}
+    />
+  );
+
+  const routes = [
+    { key: 'current', title: t('current') },
+    { key: 'upcoming', title: t('upcoming') },
+    { key: 'previous', title: t('previous') },
+  ];
+
+  const renderTabBar = (props: any) => (
+    <TabBar
+      {...props}
+      indicatorStyle={styles.indicator}
+      style={styles.tabBar}
+      labelStyle={styles.tabLabel}
+      activeColor="#008080"
+      inactiveColor="#666666"
+      pressOpacity={1}
+      options={{
+        current: {
+          label: ({ focused, color }: { focused: boolean; color: string }) => (
+            <Text style={[styles.tabLabel, { color, fontFamily: CAIRO_FONT_FAMILY.medium }]}>
+              مواعيد اليوم
+            </Text>
+          ),
+        },
+        previous: {
+          label: ({ focused, color }: { focused: boolean; color: string }) => (
+            <Text style={[styles.tabLabel, { color, fontFamily: CAIRO_FONT_FAMILY.medium }]}>
+              القادمة
+            </Text>
+          ),
+        },
+        cancelled: {
+          label: ({ focused, color }: { focused: boolean; color: string }) => (
+            <Text style={[styles.tabLabel, { color, fontFamily: CAIRO_FONT_FAMILY.medium }]}>
+              السابقة
+            </Text>
+          ),
+        },
+      }}
+    />
+  );
+
+  const renderScene = SceneMap({
+    current: () => <CurrentAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
+    upcoming: () => <UpcomingAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
+    previous: () => <PreviousAppointments userId={user?.Id} onJoinMeeting={handleJoinMeeting} />,
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -113,7 +137,7 @@ const RemoteOrderListScreen = () => {
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
         renderTabBar={renderTabBar}
-        swipeEnabled={true}
+        swipeEnabled={false}
         animationEnabled={true}
         lazy={true}
         lazyPreloadDistance={0}
@@ -124,15 +148,15 @@ const RemoteOrderListScreen = () => {
   )
 }
 
-const styles=StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: '#fff' 
-    },
- contentContainer: { 
-    flex: 1, 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff'
+  },
+  contentContainer: {
+    flex: 1,
     backgroundColor: '#fff',
-},
+  },
   headerTitle: {
     ...globalTextStyles.h5,
     color: '#000'

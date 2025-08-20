@@ -149,6 +149,8 @@ export const styles = StyleSheet.create({
     paddingLeft: 10,
     marginBottom: 8,
     fontFamily: CAIRO_FONT_FAMILY.bold,
+    backgroundColor: '#e4f1ef',
+    paddingVertical: 10,
   },
   vitalSignsContainer: {
     flexDirection: 'row',
@@ -388,5 +390,44 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     fontFamily: CAIRO_FONT_FAMILY.bold,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 0,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  modalContainer: {
+    width: '100%',
+    backgroundColor: 'white',
+    paddingBottom: 20,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    overflow: 'hidden'
+  },
+  menuContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  menuText: {
+    fontSize: 15,
+    textAlign: 'left',
+    marginVertical: 4,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    color: '#000',
+  },
+  sheetHeaderContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E4F1EF',
+    padding: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
 }); 

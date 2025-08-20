@@ -13,6 +13,8 @@ import {
   Platform,
   Keyboard,
   Alert,
+  TouchableWithoutFeedback,
+  SafeAreaView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { appointmentService, Appointment } from '../../services/api/appointmentService';
@@ -56,6 +58,15 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
   const [comment, setComment] = useState('');
   const ratingScrollViewRef = useRef<ScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [openMoreOptionBottomSheet, setOpenMoreOptionBottomSheet] = useState(false);
+
+  const MoreOptionMenu = (item: any) => [
+    { title: 'معلومات الحجز', key: 'booking_info', onPress: () => { setOpenMoreOptionBottomSheet(false); navigation.navigate(ROUTES.OrderDetailScreen, {OrderId:item?.OrderId}); } },
+    { title: 'ارسال رسالة', key: 'send_message', onPress: () => { setOpenMoreOptionBottomSheet(false);  } },
+    { title: 'سجل الجلسات', key: 'session_log', onPress: () => { setOpenMoreOptionBottomSheet(false); navigation.navigate(ROUTES.visit_consultant_log); } },
+    { title: 'تحميل الفاتورة', key: 'download_invoice', onPress: () => { setOpenMoreOptionBottomSheet(false);  } },
+    { title: 'الغاء الحجز', key: 'cancel_booking', onPress: () => { setOpenMoreOptionBottomSheet(false);  } },
+  ];
 
   const getVisitMainRecordDetails = async (item: any) => {
     try {
@@ -322,6 +333,8 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
 
   };
   const onMoreIcon = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setOpenMoreOptionBottomSheet(true);
   };
 
   const renderItem = useCallback(({ item }: { item: Appointment }) => (
@@ -930,6 +943,43 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
             </View>
           </ScrollView>
         </View>
+      </CustomBottomSheet>
+
+      <CustomBottomSheet
+        visible={openMoreOptionBottomSheet}
+        onClose={() => setOpenMoreOptionBottomSheet(false)}
+        height="25%"
+        showHandle={false}
+      >
+        <TouchableWithoutFeedback>
+          <View style={styles.modalBackground}>
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.sheetHeaderContainer}>
+                <TouchableOpacity onPress={() => setOpenMoreOptionBottomSheet(false)}>
+                  <AntDesign name="close" size={24} color="#979e9eff" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.menuContainer}>
+                {MoreOptionMenu(selectedAppointment).map((item, index, arr) => (
+                  <View
+                    key={index}
+                    style={{
+                      width: '100%',
+                      borderBottomWidth: index === arr.length - 1 ? 0 : 1,
+                      borderBottomColor: '#d9d9d9',
+                    }}
+                  >
+                    <TouchableOpacity disabled={item.key == 'cancel_booking' || item.key == 'send_message'} style={{ opacity: item.key == 'cancel_booking' || item.key == 'send_message' ? 0.5 : 1 }} onPress={item.onPress}>
+                      <Text style={styles.menuText}>{item.title}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </SafeAreaView>
+
+          </View>
+        </TouchableWithoutFeedback>
       </CustomBottomSheet>
     </>
 
