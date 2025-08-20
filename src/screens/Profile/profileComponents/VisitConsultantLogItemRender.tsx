@@ -11,8 +11,8 @@ const VisitConsultantLogItemRender = memo(({ item, getMedicine, getVisitMainReco
         <View style={styles.card}>
             {/* Top Row: Image and Info */}
             <View style={styles.row}>
-                <View style={{ alignItems: "flex-start" }}>
-                    <Text style={[styles.label, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>اسم المستفيد</Text>
+                <View style={{width: '75%', alignItems: "flex-start" }}>
+                    <Text style={[styles.label, { fontFamily: CAIRO_FONT_FAMILY.medium }]}>اسم المستفيد</Text>
                     <Text style={[styles.beneficiaryName, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.PatientFullNameSLang}</Text>
                 </View>
                 <Image
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 8,
+        width: '100%',
     },
     avatar: {
         width: 48,
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 12,
-        color: '#888',
+        color: 'black',
         fontFamily: CAIRO_FONT_FAMILY.regular,
     },
     beneficiaryName: {

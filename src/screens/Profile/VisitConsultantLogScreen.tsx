@@ -30,6 +30,7 @@ const VisitConsultantLogScreen = () => {
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [visitHistoryData, setVisitHistoryData] = useState<any>(null);
+
   useEffect(() => {
     getBeneficiaries();
     getVisitConsultantLog();
@@ -61,9 +62,10 @@ const VisitConsultantLogScreen = () => {
 
     if (response?.ResponseStatus?.STATUSCODE == 200) {
       const patients = response?.RefferalUserList?.map((item: any) => ({
-        label: item.FullnameSlang,
+        label: `${item.FullnameSlang} (${item.RelationshipTitleSlang})`,
         value: item.UserProfileinfoId
       }));
+      
       setPatientList(patients);
 
       // Auto-select the first patient if available
@@ -129,7 +131,7 @@ const VisitConsultantLogScreen = () => {
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{t('visit_consultant_log')}</Text>
+        <Text numberOfLines={1} style={styles.headerTitle}>{t('visit_consultant_log')}</Text>
       }
       leftComponent={
         <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
@@ -147,11 +149,12 @@ const VisitConsultantLogScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', }}>
+      <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16, paddingVertical: 10, }}>
+      <Text style={[globalTextStyles.bodyMedium, { color: '#000',textAlign:'left' }]}>سجل زيارات المستفيد</Text>
         <Dropdown data={patientList} value={selectedPatient} onChange={(value: string | number) => setSelectedPatient(value.toString())} placeholder={t('select_patient')} />
 
         <View style={{ paddingHorizontal: 16, marginTop: 10, alignSelf:"flex-start" }}>
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{`النتائج : (${filteredVisitConsultantLog.length})`}</Text>
+        <Text style={[globalTextStyles.arabicTextBold, { color: '#000' }]}>{`النتائج : (${filteredVisitConsultantLog.length})`}</Text>
       </View>
         <View style={styles.contentContainer}>
           {isDataLoading ? (
@@ -593,7 +596,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   headerTitle: {
-    ...globalTextStyles.h3,
+    ...globalTextStyles.h4,
     color: '#000'
   },
   headerContainer: {

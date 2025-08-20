@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TextInput, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TextInput, Platform, SafeAreaView } from 'react-native'
 import React, { useState } from 'react'
 import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import Header from '../../components/common/Header';
@@ -64,7 +64,7 @@ const ForgotOTP = ({ route }: any) => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {renderHeader()}
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.content}>
@@ -116,7 +116,7 @@ const ForgotOTP = ({ route }: any) => {
       </ScrollView>
 
       <FullScreenLoader visible={isLoading} />
-    </View>
+    </SafeAreaView>
   )
 }
 

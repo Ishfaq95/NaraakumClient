@@ -709,12 +709,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     }
   }
 
-  // useEffect(() => {
-  //   if (mobileNumber) {
-  //     handlePhoneNumberChange({ phoneNumber: mobileNumber, isValid: isValidNumber, countryCode: '', fullNumber: '' });
-  //   }
-  // }, [selectedCountry]);
-
   const handleNext = () => {
     createOrderMainBeforePayment();
   };
@@ -725,20 +719,11 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     onPressBack();
   };
 
-  // const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
-  //   setMobileNumber(data.phoneNumber);
-  //   setIsValidNumber(data.isValid);
-  //   setFullNumber(data.fullNumber);
-  // };
-
   const handlePhoneNumberChange = (text: string) => {
     setPhoneNumber(text);
-    // setError(false); // Clear error when user types
-    // if(apiError) setAPIError(false);
   };
   const handleCountryChange = (country: any) => {
     setSelectedCountry(country);
-    console.log('Selected country:', country);
   };
 
   // Function to calculate duration between start and end time
@@ -821,12 +806,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     const getCountry = COUNTRIES.find(c => c.code === phoneInfo.countryCode);
     setSelectedCountry(getCountry);
     setPhoneNumber(phoneInfo.phoneNumber);
-    // const defaultCountryCode = phoneInfo.countryCode;
-    // const defaultPhoneNumber = phoneInfo.phoneNumber; 
   }, [user]);
-
-  // Extract phone info from user
-
 
   // Helper to format time
   const formatTime = (seconds: number) => {

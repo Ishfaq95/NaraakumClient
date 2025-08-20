@@ -24,6 +24,7 @@ import EmailUpdateComponent, { PhoneUpdateComponent, VerificationCodeCompoent } 
 import { setUser } from '../../shared/redux/reducers/userReducer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialDesignIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import CustomPhoneInput, { COUNTRIES } from '../../components/common/CustomPhoneInput';
 
 const genders = [
   { label: 'ذكر', value: 'male' },
@@ -62,6 +63,8 @@ const UpdateProfileScreen = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [showIcon, setShowIcon] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [selectedCountry, setSelectedCountry] = useState<any>();
+  const [selectedCountryUpdated, setSelectedCountryUpdated] = useState<any>();
   const [openEmailBottomSheet, setOpenEmailBottomSheet] = useState(false)
   const [openPhoneBottomSheet, setOpenPhoneBottomSheet] = useState(false)
   const [openVerifyBottomSheet, setOpenVerifyBottomSheet] = useState(false)
@@ -72,9 +75,11 @@ const UpdateProfileScreen = () => {
   const [updatedFullPhoneNumber, setUpdatedFullPhoneNumber] = useState('');
   const [bottomSheetType, setBottomSheetType] = useState<'phone' | 'email' | null>(null);
   const [emailBottomSheetHeight, setEmailBottomSheetHeight] = useState("35%")
-  const [phoneBottomSheetHeight, setPhoneBottomSheetHeight] = useState("35%")
+  const [phoneBottomSheetHeight, setPhoneBottomSheetHeight] = useState("30%")
   const [emailInputError, setEmailInputError] = useState(false)
   const [phoneInputError, setPhoneInputError] = useState(false)
+  const [OTPForText, setOTPForText] = useState('')
+  const [OTPFrom,setOTPFrom] = useState('')
   const mediaToken = useSelector((state: any) => state.root.user.mediaToken);
   const [loadingImage, setLoadingImage] = useState(false)
   const isRTL = I18nManager.isRTL;
@@ -82,7 +87,14 @@ const UpdateProfileScreen = () => {
   const dispatch = useDispatch()
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordModalMessage, setPasswordModalMessage] = useState('');
-
+  const [updatedPhoneNumberError, setUpdatedPhoneNumberError] = useState(false);
+  const [selectedFullPhoneNumber, setSelectedFullPhoneNumber] = useState('')
+  const [currentPasswordBottomSheet, setCurrentPasswordBottomSheet] = useState(false);
+  const [currentPasswordBottomSheetHeight, setCurrentPasswordBottomSheetHeight] = useState("30%");
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [nameInputError, setNameInputError] = useState(false);
+  const [idNumberInputError, setIdNumberInputError] = useState(false);
+  const [resentCode,setResentCode] = useState(false)
   // Password validation function
   const validatePassword = (pwd: string) => {
     // At least 8 characters, at least one uppercase, one lowercase, one number, one special character
@@ -97,6 +109,9 @@ const UpdateProfileScreen = () => {
     if (openPhoneBottomSheet) {
       setPhoneBottomSheetHeight("65%");
     }
+    if (currentPasswordBottomSheet) {
+      setCurrentPasswordBottomSheetHeight("65%");
+    }
   }
 
   const handleKeyboardClose = () => {
@@ -105,6 +120,9 @@ const UpdateProfileScreen = () => {
     }
     if (openPhoneBottomSheet) {
       setPhoneBottomSheetHeight("35%");
+    }
+    if (currentPasswordBottomSheet) {
+      setCurrentPasswordBottomSheetHeight("30%");
     }
   }
 
@@ -173,17 +191,27 @@ const UpdateProfileScreen = () => {
     return { countryCode: 'SA', phoneNumber: cleanNumber.replace(/^\+/, '') };
   };
 
-  // Extract phone info from user
-  const phoneInfo = extractPhoneInfo(user?.CellNumber || '');
-  const defaultCountryCode = phoneInfo.countryCode;
-  const defaultPhoneNumber = phoneInfo.phoneNumber;
+  const handleCountryChange = (country: any) => {
+    setSelectedCountry(country);
+  };
+
+  const handleCountryUpdate = (country: any) => {
+    setSelectedCountryUpdated(country);
+  };
 
   useEffect(() => {
     setName(user?.FullnameSlang);
     setEmail(user?.Email);
     setAge(user?.Age);
     setGender(user?.Gender);
-    setPhoneNumber(defaultPhoneNumber)
+    const phoneInfo = extractPhoneInfo(user?.CellNumber || '');
+    const getCountry = COUNTRIES.find(c => c.code === phoneInfo.countryCode);
+    setSelectedCountry(getCountry);
+    setSelectedCountryUpdated(getCountry);
+    setUpdatedPhoneNumber(phoneInfo.phoneNumber);
+    setPhoneNumber(phoneInfo.phoneNumber);
+    setSelectedFullPhoneNumber(user?.CellNumber)
+    setUpdatedEmail(user?.Email)
     if (user?.ImagePath) {
       setDefaultUserImage(user?.ImagePath)
     } else {
@@ -206,10 +234,12 @@ const UpdateProfileScreen = () => {
     navigation.goBack();
   };
 
-  const handlePhoneNumberChange = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
-    setMobileNumber(data.phoneNumber);
-    setIsValidNumber(data.isValid);
-    setFullNumber(data.fullNumber);
+  const handlePhoneNumberChange = (text: string) => {
+    setPhoneNumber(text);
+  };
+
+  const handlePhoneNumberUpdate = (text: string) => {
+    setUpdatedPhoneNumber(text);
   };
 
   const renderHeader = () => (
@@ -246,16 +276,32 @@ const UpdateProfileScreen = () => {
         setConfirmPasswordError(true);
         return;
       }
+
+      if(!currentPassword){
+        setCurrentPasswordBottomSheet(true)
+        return;
+      }
     }
+
+    if(!name){
+      setNameInputError(true)
+      return;
+    } 
+
+    if(nationality == 'citizen' && !idNumber){
+      setIdNumberInputError(true)
+      return;
+    }
+
     setPasswordError(false); // reset on valid
     setConfirmPasswordError(false);
     try {
       setIsUploading(true);
-      const payload = {
+      const payload: any = {
         "FullNamePlang": name,
         "FullNameSlang": name,
-        "CellNumber": user?.CellNumber,
-        "Email": email,
+        "CellNumber": selectedFullPhoneNumber,
+        "Email": updatedEmail,
         "CatNationalityId": nationality == 'citizen' ? 213 : 187,
         "IDNumber": nationality == 'citizen' ? idNumber : '',
         "Gender": gender === 'male' ? "1" : "0",
@@ -265,16 +311,19 @@ const UpdateProfileScreen = () => {
         "UserLoginInfoId": user?.Id,
       }
 
+      if(password && currentPassword){
+        payload.CurrentPassword = currentPassword;
+      }
+
       const response = await profileService.updateUserProfile(payload)
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
-
-        const payloadSuccessUpdateProfile = {
-          "UserlogiInfoId": user?.Id
-        }
-        const responseUpdateprofile = await profileService.getUserUpdatedData(payloadSuccessUpdateProfile)
-        dispatch(setUser(responseUpdateprofile.UserDetail[0]));
-
+        setCurrentPassword('')
+        setPassword('')
+        setConfirmPassword('')
+        getLatestUser()
+        
+        Alert.alert('تم تحديث معلومات المستخدم بنجاح');
       }
     } catch (error: any) {
     } finally {
@@ -282,7 +331,13 @@ const UpdateProfileScreen = () => {
     }
   }
 
-
+const getLatestUser = async () => {
+  const payloadSuccessUpdateProfile = {
+    "UserlogiInfoId": user?.Id
+  }
+  const responseUpdateprofile = await profileService.getUserUpdatedData(payloadSuccessUpdateProfile)
+  dispatch(setUser(responseUpdateprofile.UserDetail[0]));
+}
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
@@ -411,12 +466,10 @@ const UpdateProfileScreen = () => {
 
   const HandleOpenEmailBottomSheet = () => {
     setOpenEmailBottomSheet(true)
-    setUpdatedEmail('')
   }
 
   const HandleOpenPhoneBottomSheet = () => {
     setOpenPhoneBottomSheet(true)
-    setUpdatedPhoneNumber('')
   }
 
   const HandleEmailUpdate = async () => {
@@ -434,6 +487,8 @@ const UpdateProfileScreen = () => {
       const response = await profileService.userUpdatedEmail(payload)
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setOpenEmailBottomSheet(false)
+        setOTPFrom('email')
+        setOTPForText(updatedEmail)
         setTimeout(() => {
           setOpenVerifyBottomSheet(true)
         }, 500)
@@ -446,21 +501,24 @@ const UpdateProfileScreen = () => {
   }
 
   const HandlePhoneUpdate = async () => {
-    if (!updatedFullPhoneNumber || updatedFullPhoneNumber.trim() === '') {
-      setPhoneInputError(true)
+    if (!updatedPhoneNumber || updatedPhoneNumber.trim() === '') {
+      setUpdatedPhoneNumberError(true)
       return;
     }
     try {
+      const fullPhoneNumber = `${selectedCountryUpdated?.dialCode}${updatedPhoneNumber.replace(/\s+/g, "")}`
       setIsUploading(true)
       const payload = {
-        "Phonenumber": updatedPhoneNumber,
+        "Phonenumber": fullPhoneNumber,
         "UserId": user.Id
       }
 
       const response = await profileService.userUpdatedPhone(payload)
-      setUpdatedPhoneNumber('')
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setOpenPhoneBottomSheet(false)
+        setSelectedFullPhoneNumber(fullPhoneNumber)
+        setOTPFrom('phone')
+        setOTPForText(fullPhoneNumber)
         setTimeout(() => {
           setOpenVerifyBottomSheet(true)
         }, 500)
@@ -480,6 +538,9 @@ const UpdateProfileScreen = () => {
       }
 
       const response = await profileService.resendOtp(payload)
+      if(response?.StatusCode?.STATUSCODE == 3009){
+        setResentCode(true)
+      }
 
     } catch (error) {
     } finally {
@@ -497,6 +558,9 @@ const UpdateProfileScreen = () => {
       }
 
       const response = await profileService.verifyUserUpdatedData(payload)
+      if(response?.StatusCode?.STATUSCODE == 3007){
+        updateUserProfileHandler()
+      }
       setOpenVerifyBottomSheet(false)
       setOtpValue('')
 
@@ -509,14 +573,6 @@ const UpdateProfileScreen = () => {
 
   const HandleCloseEmailModal = () => {
     setOpenEmailBottomSheet(false)
-    setUpdatedEmail('')
-    handleKeyboardClose()
-  }
-
-  const HandleClosePhoneModal = () => {
-    handleKeyboardClose()
-    setOpenPhoneBottomSheet(false)
-    setUpdatedPhoneNumber('')
   }
 
   const HandleCloseVerifyModal = () => {
@@ -524,16 +580,16 @@ const UpdateProfileScreen = () => {
     setOpenVerifyBottomSheet(false)
   }
 
-  const HandleChangePhoneNumber = (data: { phoneNumber: string; isValid: boolean; countryCode: string; fullNumber: string }) => {
-    setUpdatedPhoneNumber(data.phoneNumber);
-    setUpdatedFullPhoneNumber(data.fullNumber);
-    setPhoneInputError(false)
-  }
-
   const getFileName = (url: string) => {
     const fileName = url.split('/').pop();
     return fileName;
   }
+
+  useEffect(() => {
+   if(!openVerifyBottomSheet){
+    setResentCode(false)
+   }
+  }, [openVerifyBottomSheet])
 
   return (
     <SafeAreaView style={styles.container}>
@@ -573,21 +629,22 @@ const UpdateProfileScreen = () => {
             {/* Name */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>الاسم</Text>
-              <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="الاسم" />
+              <TextInput style={[styles.input,nameInputError && {borderWidth:1,borderColor:'red'}]} value={name} onChangeText={setName} placeholder="الاسم" />
             </View>
             {/* Mobile */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>رقم الجوال</Text>
               <View style={styles.row}>
-                <PhoneNumberInput
+                <CustomPhoneInput
                   value={phoneNumber}
-                  onChangePhoneNumber={handlePhoneNumberChange}
-                  placeholder={t('mobile_number')}
-                  errorText={t('mobile_number_not_valid')}
-                  defaultCountry={defaultCountryCode}
-                  editable={false}
+                  onChangeText={handlePhoneNumberChange}
+                  onCountryChange={handleCountryChange}
+                  placeholder="Enter phone number"
+                  error={false}
+                  disabled={true}
+                  initialCountry={selectedCountry}
                 />
-                <TouchableOpacity onPress={HandleOpenPhoneBottomSheet} style={styles.updateBtn}>
+                <TouchableOpacity onPress={HandleOpenPhoneBottomSheet} style={[styles.updateBtn, { height: 46, top: 5 }]}>
                   <Text style={styles.updateBtnText}>تحديث</Text>
                   <Icon name="edit" size={18} color="#fff" style={{ marginLeft: 4 }} />
                 </TouchableOpacity>
@@ -630,8 +687,11 @@ const UpdateProfileScreen = () => {
             </View>
             {/* ID Number */}
             {nationality === 'citizen' && <View style={styles.fieldGroup}>
-              <Text style={styles.label}>رقم الهوية</Text>
-              <TextInput style={styles.input} value={idNumber} onChangeText={setIdNumber} placeholder="رقم الهوية" keyboardType="numeric" />
+              {/* <Text style={styles.label}>رقم الهوية</Text> */}
+              <TextInput style={[styles.input,idNumberInputError && {borderWidth:1,borderColor:'red'}]} value={idNumber} onChangeText={(text) => {
+                setIdNumber(text)
+                setIdNumberInputError(false)
+              }} placeholder="رقم الهوية" placeholderTextColor="#999" keyboardType="numeric" />
             </View>}
             {/* Gender & Age */}
             <View style={[styles.fieldGroup, styles.row]}>
@@ -653,7 +713,7 @@ const UpdateProfileScreen = () => {
                   isRTL && styles.rtlInput,
                   passwordError && styles.inputError
                 ]}
-                placeholder={t('password')}
+                placeholder={"********"}
                 value={password}
                 onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
@@ -683,7 +743,7 @@ const UpdateProfileScreen = () => {
                   isRTL && styles.rtlInput,
                   confirmPasswordError && styles.inputError
                 ]}
-                placeholder={t('password')}
+                placeholder={"********"}
                 value={confirmPassword}
                 textContentType='oneTimeCode'
                 onChangeText={handleConfirmPasswordChange}
@@ -728,14 +788,33 @@ const UpdateProfileScreen = () => {
         height={phoneBottomSheetHeight}
       >
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-          <View style={[styles.modalContainer, { marginTop: 20 }]}>
-            <PhoneUpdateComponent
-              HandleEmailUpdate={HandlePhoneUpdate}
-              handlePhoneNumberChange={HandleChangePhoneNumber}
-              mobileNumber={updatedPhoneNumber}
-              onClosePress={HandleClosePhoneModal}
-              inputError={phoneInputError}
-            />
+          <View style={[styles.modalContainer]}>
+            <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+              <Text style={{
+                fontSize: 16,
+                fontFamily: CAIRO_FONT_FAMILY.bold,
+                color: '#36454F',
+
+              }}>تغيير رقم الهااتف</Text>
+              <TouchableOpacity onPress={() => setOpenPhoneBottomSheet(false)}>
+                <AntDesign name="close" size={24} color="#979e9eff" />
+              </TouchableOpacity>
+
+            </View>
+            <View style={{paddingHorizontal: 16, marginTop: 16 }}>
+              <Text style={styles.label}>أدخل رقم هاتفك الجديد</Text>
+              <CustomPhoneInput
+                value={updatedPhoneNumber}
+                onChangeText={handlePhoneNumberUpdate}
+                onCountryChange={handleCountryUpdate}
+                placeholder="Enter phone number"
+                error={updatedPhoneNumberError}
+                initialCountry={selectedCountryUpdated}
+              />
+              <TouchableOpacity onPress={HandlePhoneUpdate} style={styles.saveBtn}>
+                <Text style={styles.saveBtnText}>حفظ</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </TouchableWithoutFeedback>
       </CustomBottomSheet>
@@ -747,7 +826,7 @@ const UpdateProfileScreen = () => {
         height={emailBottomSheetHeight}
       >
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-          <View style={[styles.modalContainer, { marginTop: 20 }]}>
+          <View style={[styles.modalContainer]}>
             <EmailUpdateComponent
               HandleEmailUpdate={HandleEmailUpdate}
               onChangeText={(text) => {
@@ -759,6 +838,39 @@ const UpdateProfileScreen = () => {
               inputError={emailInputError}
             />
 
+          </View>
+        </TouchableWithoutFeedback>
+      </CustomBottomSheet>
+
+      <CustomBottomSheet
+        visible={currentPasswordBottomSheet}
+        onClose={() => setCurrentPasswordBottomSheet(false)}
+        showHandle={false}
+        height={currentPasswordBottomSheetHeight}
+      >
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View style={[styles.modalContainer]}>
+            <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+              <Text style={{
+                fontSize: 16,
+                fontFamily: CAIRO_FONT_FAMILY.bold,
+                color: '#36454F',
+              }}>تغيير كلمة المرور</Text>
+              <TouchableOpacity onPress={() => setCurrentPasswordBottomSheet(false)}>
+                <AntDesign name="close" size={24} color="#979e9eff" />
+              </TouchableOpacity>
+            </View>
+            <View style={{paddingHorizontal: 16, marginTop: 16 }}>
+              <Text style={styles.label}>دخل كلمة المرور الحالية</Text>
+              <TextInput style={[styles.input,{width:'100%'}]} value={currentPassword} onChangeText={setCurrentPassword} placeholder="كلمة المرور الحالية" secureTextEntry={true} />
+              <TouchableOpacity onPress={() => {
+                updateUserProfileHandler()
+                setCurrentPasswordBottomSheet(false)
+              }} style={styles.saveBtn}>
+              <Text style={styles.saveBtnText}>حفظ</Text>
+            </TouchableOpacity>
+            </View>
+            
           </View>
         </TouchableWithoutFeedback>
       </CustomBottomSheet>
@@ -783,12 +895,14 @@ const UpdateProfileScreen = () => {
                 <View style={styles.modalContainer}>
                   <VerificationCodeCompoent
                     onClosePress={HandleCloseVerifyModal}
-                    otpNumEmail={updatedEmail ? updatedEmail : updatedFullPhoneNumber}
-                    userName={name || ''}
+                    OTPFor={OTPForText}
+                    OTPForText={OTPFrom == 'email' ? "تغيير البريد الإلكتروني" : "تغيير الرقم"}
                     onChangeText={(text) => setOtpValue(text)}
                     value={otpValue}
                     OtpSubmitButton={HandleOtpSubmit}
-                    HandleResendPress={HandleOtpResendButton} />
+                    HandleResendPress={HandleOtpResendButton}
+                    resentCode={resentCode}
+                  />
                 </View>
               </View>
             </KeyboardAvoidingView>
@@ -813,7 +927,7 @@ const UpdateProfileScreen = () => {
               <Text style={{ color: '#3a434a', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>خطأ</Text>
             </View>
             <AntDesign name="exclamationcircle" size={64} color="#d84d48" style={{ marginVertical: 18 }} />
-            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontWeight: 'bold', lineHeight: 28 }}>
+            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center',fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
               {passwordModalMessage}
             </Text>
           </View>
@@ -876,6 +990,7 @@ const styles = StyleSheet.create({
     color: '#222',
     fontFamily: CAIRO_FONT_FAMILY.regular,
     textAlign: 'right',
+    
   },
   row: {
     flexDirection: 'row',
@@ -902,6 +1017,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 3,
+    height: 43,
     backgroundColor: '#23a2a4',
     borderRadius: 8,
     paddingHorizontal: 14,
@@ -945,7 +1061,7 @@ const styles = StyleSheet.create({
   radioLabel: {
     fontSize: 14,
     color: '#222',
-    fontFamily: CAIRO_FONT_FAMILY.medium,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   passwordInputContainer: {
     flexDirection: 'row',
@@ -987,10 +1103,10 @@ const styles = StyleSheet.create({
   saveBtn: {
     backgroundColor: '#23a2a4',
     borderRadius: 8,
-    paddingVertical: 14,
+    height: 46,
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 18,
-    marginBottom: 24,
   },
   saveBtnText: {
     color: '#fff',

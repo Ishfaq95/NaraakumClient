@@ -18,11 +18,17 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
   const inputRef = React.useRef<TextInput>(null);
   return (
     <View style={styles.mainContainer}>
-      <View style={[styles.sheetHeaderContainer, { backgroundColor: '#fff' }]}>
+      <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+        <Text style={{
+          fontSize: 16,
+          fontFamily: CAIRO_FONT_FAMILY.bold,
+          color: '#36454F',
+
+        }}>تغيير البريد الإلكتروني</Text>
         <TouchableOpacity onPress={onClosePress}>
-          <AntDesign name="close" size={30} color="#979e9eff" />
+          <AntDesign name="close" size={24} color="#979e9eff" />
         </TouchableOpacity>
-        <Text style={styles.bottomSheetHeaderText}>تغيير البريد الإلكتروني</Text>
+
       </View>
       <View style={{ width: '100%', paddingHorizontal: 16 }}>
         <Text style={styles.emailTitle}>أدخل بريدك الإلكتروني الجديد</Text>
@@ -93,37 +99,54 @@ export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUp
 
 interface smsProps {
   onClosePress: () => void;
-  otpNumEmail: string | number;
-  userName: string;
+  OTPFor: string;
+  OTPForText: string;
   onChangeText: (text: string) => void;
   value: string;
   OtpSubmitButton: () => void;
   HandleResendPress: () => void
 }
 
-export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, otpNumEmail, userName, onChangeText, value, OtpSubmitButton, HandleResendPress }) => {
+export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText, onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode }) => {
   return (
-    <View style={[styles.mainContainer, { padding: 20 }]}>
-      <TouchableOpacity onPress={onClosePress}>
-        <AntDesign name="close" size={30} color="#979e9eff" />
-      </TouchableOpacity>
+    <View style={[styles.mainContainer]}>
+      <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+        <Text style={{
+          fontSize: 16,
+          fontFamily: CAIRO_FONT_FAMILY.bold,
+          color: '#36454F',
 
-      <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
-      <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
-      <Text style={styles.optHeaderText}>{otpNumEmail}</Text>
-      <Text style={styles.optHeaderText}>{userName}</Text>
-      <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
-      <View style={styles.otpView}>
-        <TextInput value={value} onChangeText={onChangeText} placeholder="0000" style={styles.inputText} />
-      </View>
-      <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton}>
-        <Text style={styles.saveBtnText}>حفظ</Text>
-      </TouchableOpacity>
-      <View style={styles.resendOptTextContainer}>
-        <Text style={styles.optNotGet}>لم يصلني الكود</Text>
-        <TouchableOpacity onPress={HandleResendPress}>
-          <Text style={styles.resendPress}>إعادة الارسال</Text>
+        }}></Text>
+        <TouchableOpacity onPress={onClosePress}>
+          <AntDesign name="close" size={24} color="#979e9eff" />
         </TouchableOpacity>
+
+      </View>
+      <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+        <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
+        <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
+        <Text style={styles.optHeaderText}>{OTPFor}</Text>
+        <TouchableOpacity onPress={onClosePress}>
+          <Text style={{ color: '#23a2a4', fontSize: 15, fontFamily: CAIRO_FONT_FAMILY.bold, textAlign: 'center' }}>{OTPForText}</Text>
+        </TouchableOpacity>
+        <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
+        <View style={styles.otpView}>
+          <TextInput value={value} onChangeText={onChangeText} placeholder="ضع الرمز" style={[styles.inputText, { textAlign: 'center', width: '100%' }]} />
+        </View>
+        <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton}>
+          <Text style={styles.saveBtnText}>تاكيد</Text>
+        </TouchableOpacity>
+        {resentCode && (
+          <Text style={{ color: '#198754', fontSize: 15, fontFamily: CAIRO_FONT_FAMILY.bold, textAlign: 'center' }}>تم إعادة إرسال رمز التحقق بنجاح</Text>
+        )}
+
+        <View style={styles.resendOptTextContainer}>
+          <Text style={styles.optNotGet}>لم يصلني الكود</Text>
+          <TouchableOpacity onPress={HandleResendPress}>
+            <Text style={styles.resendPress}>إعادة الارسال</Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
     </View>
   )
@@ -529,134 +552,134 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
   };
 
   return (
-      <View style={styles.whiteContainer}>
-        {/* Name */}
-        <Text style={styles.titleText}>اسم المستفيد <Text style={{ color: 'red' }}>*</Text></Text>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => nameInputRef.current && nameInputRef.current.focus()}
-          style={[styles.inputView, nameError && { borderColor: 'red' }]}
-        >
-          <TextInput
-            ref={nameInputRef}
-            style={[styles.fullWidthInput]}
-            placeholder="اسم المستفيد"
-            value={nameValue}
-            onChangeText={text => {
-              setNameError(false);
-              onChangeTextName(text);
-            }}
-            placeholderTextColor="#d9d9d9"
-            onFocus={() => setFocusedField('name')}
-            onBlur={() => setFocusedField('')}
-          />
-        </TouchableOpacity>
-
-        {/* Relation */}
-        <Text style={styles.titleText}>صلة القرابة <Text style={{ color: 'red' }}>*</Text></Text>
-        <Dropdown
-          data={Relation}
-          containerStyle={{ height: 50 }}
-          dropdownStyle={[{ height: 50 }, relationError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
-          value={relationValue}
-          onChange={value => {
-            setRelationError(false);
-            onChangeTextRelation(value.toString());
+    <View style={styles.whiteContainer}>
+      {/* Name */}
+      <Text style={styles.titleText}>اسم المستفيد <Text style={{ color: 'red' }}>*</Text></Text>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => nameInputRef.current && nameInputRef.current.focus()}
+        style={[styles.inputView, nameError && { borderColor: 'red' }]}
+      >
+        <TextInput
+          ref={nameInputRef}
+          style={[styles.fullWidthInput]}
+          placeholder="اسم المستفيد"
+          value={nameValue}
+          onChangeText={text => {
+            setNameError(false);
+            onChangeTextName(text);
           }}
-          placeholder="اختر الجنس"
+          placeholderTextColor="#d9d9d9"
+          onFocus={() => setFocusedField('name')}
+          onBlur={() => setFocusedField('')}
         />
+      </TouchableOpacity>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          {/* Age */}
-          <View style={{ width: '48%' }}>
-            <Text style={styles.titleText}>العمر / سنة</Text>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => ageInputRef.current && ageInputRef.current.focus()}
-              style={[styles.inputView, { alignItems: 'flex-end' }]}
-            >
-              <TextInput
-                ref={ageInputRef}
-                style={styles.fullWidthInput}
-                placeholder="0"
-                placeholderTextColor="#1e2525ff"
-                keyboardType="numeric"
-                value={ageValue}
-                onChangeText={onChangeTextAge}
-              />
-            </TouchableOpacity>
-          </View>
-          {/* Gender Dropdown */}
-          <View style={{ width: '48%' }}>
-            <Text style={styles.titleText}>الجنس</Text>
-            <Dropdown
-              data={genders}
-              containerStyle={{ height: 50 }}
-              dropdownStyle={[{ height: 50 }, genderError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
-              value={genderValue}
-              onChange={value => {
-                setGenderError(false);
-                onChangeTextGender(value.toString());
-              }}
-              placeholder="اختر الجنس"
-            />
-          </View>
-        </View>
+      {/* Relation */}
+      <Text style={styles.titleText}>صلة القرابة <Text style={{ color: 'red' }}>*</Text></Text>
+      <Dropdown
+        data={Relation}
+        containerStyle={{ height: 50 }}
+        dropdownStyle={[{ height: 50 }, relationError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
+        value={relationValue}
+        onChange={value => {
+          setRelationError(false);
+          onChangeTextRelation(value.toString());
+        }}
+        placeholder="اختر الجنس"
+      />
 
-        {/* Insurance Dropdown */}
-        <Text style={styles.titleText}>شركة التأمين</Text>
-        <Dropdown
-          data={insurances}
-          containerStyle={{ height: 50 }}
-          dropdownStyle={{ height: 50 }}
-          value={insuranceValue}
-          onChange={(value: string | number) => onChangeTextInsurance(value.toString())}
-          placeholder="اختر شركة التأمين"
-        />
-
-        {/* Nationality Radio */}
-        <View style={styles.fieldGroup}>
-          <View style={[styles.row, { justifyContent: 'flex-start' }]}>
-            {nationalities.map((item) => (
-              <TouchableOpacity
-                key={item.value}
-                style={styles.radioContainer}
-                onPress={() => PressNationality(item.value)}
-              >
-                <View style={[styles.radioOuter, nationality === item.value && styles.radioOuterSelected]}>
-                  {nationality === item.value && <View style={styles.radioInner} />}
-                </View>
-                <Text style={styles.radioLabel}>{item.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {nationality === 'citizen' && (
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        {/* Age */}
+        <View style={{ width: '48%' }}>
+          <Text style={styles.titleText}>العمر / سنة</Text>
           <TouchableOpacity
             activeOpacity={1}
-            onPress={() => idNumberInputRef.current && idNumberInputRef.current.focus()}
-            style={styles.inputView}
+            onPress={() => ageInputRef.current && ageInputRef.current.focus()}
+            style={[styles.inputView, { alignItems: 'flex-end' }]}
           >
             <TextInput
-              ref={idNumberInputRef}
-              style={[styles.fullWidthInput]}
-              placeholder="ضع رقم الهوية (إجبارى)"
-              value={idNumberValue}
-              onChangeText={onChangeTextIdNumber}
-              onFocus={() => setFocusedField('idNumber')}
-              onBlur={() => setFocusedField('')}
-              placeholderTextColor="#d9d9d9"
-              underlineColorAndroid="transparent"
+              ref={ageInputRef}
+              style={styles.fullWidthInput}
+              placeholder="0"
+              placeholderTextColor="#1e2525ff"
+              keyboardType="numeric"
+              value={ageValue}
+              onChangeText={onChangeTextAge}
             />
           </TouchableOpacity>
-        )}
-
-        {/* Submit */}
-        <TouchableOpacity onPress={handleSubmit} style={styles.optButton}>
-          <Text style={styles.saveBtnText}>حفظ</Text>
-        </TouchableOpacity>
+        </View>
+        {/* Gender Dropdown */}
+        <View style={{ width: '48%' }}>
+          <Text style={styles.titleText}>الجنس</Text>
+          <Dropdown
+            data={genders}
+            containerStyle={{ height: 50 }}
+            dropdownStyle={[{ height: 50 }, genderError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
+            value={genderValue}
+            onChange={value => {
+              setGenderError(false);
+              onChangeTextGender(value.toString());
+            }}
+            placeholder="اختر الجنس"
+          />
+        </View>
       </View>
+
+      {/* Insurance Dropdown */}
+      <Text style={styles.titleText}>شركة التأمين</Text>
+      <Dropdown
+        data={insurances}
+        containerStyle={{ height: 50 }}
+        dropdownStyle={{ height: 50 }}
+        value={insuranceValue}
+        onChange={(value: string | number) => onChangeTextInsurance(value.toString())}
+        placeholder="اختر شركة التأمين"
+      />
+
+      {/* Nationality Radio */}
+      <View style={styles.fieldGroup}>
+        <View style={[styles.row, { justifyContent: 'flex-start' }]}>
+          {nationalities.map((item) => (
+            <TouchableOpacity
+              key={item.value}
+              style={styles.radioContainer}
+              onPress={() => PressNationality(item.value)}
+            >
+              <View style={[styles.radioOuter, nationality === item.value && styles.radioOuterSelected]}>
+                {nationality === item.value && <View style={styles.radioInner} />}
+              </View>
+              <Text style={styles.radioLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {nationality === 'citizen' && (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => idNumberInputRef.current && idNumberInputRef.current.focus()}
+          style={styles.inputView}
+        >
+          <TextInput
+            ref={idNumberInputRef}
+            style={[styles.fullWidthInput]}
+            placeholder="ضع رقم الهوية (إجبارى)"
+            value={idNumberValue}
+            onChangeText={onChangeTextIdNumber}
+            onFocus={() => setFocusedField('idNumber')}
+            onBlur={() => setFocusedField('')}
+            placeholderTextColor="#d9d9d9"
+            underlineColorAndroid="transparent"
+          />
+        </TouchableOpacity>
+      )}
+
+      {/* Submit */}
+      <TouchableOpacity onPress={handleSubmit} style={styles.optButton}>
+        <Text style={styles.saveBtnText}>حفظ</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -723,7 +746,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 20,
     fontFamily: CAIRO_FONT_FAMILY.medium,
-    marginVertical: 8,
     color: '#000'
   },
   inputHeaderText: {
@@ -737,11 +759,11 @@ const styles = StyleSheet.create({
     height: 50,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: 'gray',
+    borderColor: '#999',
     marginVertical: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#dcfafcff'
+    // backgroundColor: '#dcfafcff'
   },
   optButton: {
     width: '100%',
@@ -779,7 +801,7 @@ const styles = StyleSheet.create({
   resendPress: {
     color: '#23a2a4',
     fontSize: 14,
-    fontFamily: CAIRO_FONT_FAMILY.medium
+    fontFamily: CAIRO_FONT_FAMILY.bold
   },
   mainContainer: {
     width: '100%',
@@ -851,8 +873,8 @@ const styles = StyleSheet.create({
     fontFamily: CAIRO_FONT_FAMILY.medium,
   },
   fullWidthInput: {
-    height:'100%',
-    width:'100%',
+    height: '100%',
+    width: '100%',
     paddingHorizontal: 20,
     fontSize: 16,
     fontFamily: CAIRO_FONT_FAMILY.regular,

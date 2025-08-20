@@ -37,17 +37,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#fff',
+    width: '100%',
   },
   headerLeft: {
-    flex: 1,
+      width: '15%',
     alignItems: 'flex-start',
   },
   headerCenter: {
-    flex: 2,
+    width: '70%',
     alignItems: 'center',
   },
   headerRight: {
-    flex: 1,
+    width: '15%',
     alignItems: 'flex-end',
   },
   placeholder: {

@@ -43,9 +43,9 @@ const VisitOrderListScreen = () => {
   );
 
   const routes = [
-    { key: 'current', title: 'الطلبات الحالية' },
-    { key: 'previous', title: 'الطلبات السابقة' },
-    { key: 'cancelled', title: 'الطلبات الملغاه' },
+    { key: 'current', title: t('current') },
+    { key: 'previous', title: t('previous') },
+    { key: 'cancelled', title: t('cancelled') },
   ];
 
   const renderTabBar = (props: any) => (
@@ -53,36 +53,38 @@ const VisitOrderListScreen = () => {
       {...props}
       indicatorStyle={styles.indicator}
       style={styles.tabBar}
-      labelStyle={styles.tabLabel}
+      labelStyle={{
+        fontFamily: CAIRO_FONT_FAMILY.medium,
+        fontSize: 14,
+        textTransform: 'none',
+        includeFontPadding: false,
+      }}
       activeColor="#008080"
       inactiveColor="#666666"
       pressColor="transparent"
       pressOpacity={1}
-      renderTabBarItem={({ route, onPress, onLongPress, onLayout, accessibilityLabel, testID, ...rest }) => {
-        const isFocused = rest.navigationState.index === rest.navigationState.routes.findIndex(r => r.key === route.key);
-        return (
-          <View style={styles.tabItem} onLayout={onLayout}>
-            <TouchableOpacity
-              onPress={onPress}
-              onLongPress={onLongPress}
-              accessibilityLabel={accessibilityLabel}
-              testID={testID}
-              style={styles.tabButton}
-            >
-              <Text 
-                style={[
-                  styles.tabLabel,
-                  {
-                    color: isFocused ? '#008080' : '#666666',
-                    fontWeight: isFocused ? '600' : '500',
-                  }
-                ]}
-              >
-                {route.title}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        );
+      options={{
+        current: {
+          label: ({ focused, color }: { focused: boolean; color: string }) => (
+            <Text style={[styles.tabLabel, { color, fontFamily: CAIRO_FONT_FAMILY.medium }]}>
+              الطلبات الحالية
+            </Text>
+          ),
+        },
+        previous: {
+          label: ({ focused, color }: { focused: boolean; color: string }) => (
+            <Text style={[styles.tabLabel, { color, fontFamily: CAIRO_FONT_FAMILY.medium }]}>
+              الطلبات السابقة
+            </Text>
+          ),
+        },
+        cancelled: {
+          label: ({ focused, color }: { focused: boolean; color: string }) => (
+            <Text style={[styles.tabLabel, { color, fontFamily: CAIRO_FONT_FAMILY.medium }]}>
+              الطلبات الملغاه
+            </Text>
+          ),
+        },
       }}
     />
   );
@@ -102,7 +104,7 @@ const VisitOrderListScreen = () => {
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
         renderTabBar={renderTabBar}
-        swipeEnabled={true}
+        swipeEnabled={false}
         animationEnabled={true}
         lazy={true}
         lazyPreloadDistance={0}
@@ -153,25 +155,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   tabLabel: {
-    fontFamily: CAIRO_FONT_FAMILY.medium,
-    fontSize: 14,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    includeFontPadding: false,
-    paddingVertical: 8,
-    lineHeight: 20,
-    textTransform: 'none',
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    // Base style - font properties are applied directly in renderLabel
   },
   indicator: {
     backgroundColor: '#008080',

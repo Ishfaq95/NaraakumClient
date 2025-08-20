@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, TextInput, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, TextInput, ScrollView, SafeAreaView } from 'react-native'
 import React, { useState } from 'react'
 import { globalTextStyles } from '../../styles/globalStyles';
 import Header from '../../components/common/Header';
@@ -98,7 +98,7 @@ const ForgotPassword = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             {renderHeader()}
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                 <View style={styles.content}>
@@ -166,7 +166,7 @@ const ForgotPassword = () => {
                 </View>
             </ScrollView>
             <FullScreenLoader visible={isLoading} />
-        </View>
+        </SafeAreaView>
     )
 }
 

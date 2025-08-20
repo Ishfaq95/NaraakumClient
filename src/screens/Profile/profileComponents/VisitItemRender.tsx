@@ -21,15 +21,15 @@ const VisitItemRender = React.memo(({item}: {item: VisitItem}) => {
     return (
         <View style={styles.container}>
             <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
-                <Text style={{fontSize:16,fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`تاريخ الطلب : `}</Text>
+                <Text style={{fontSize:14,fontWeight:'400', fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`تاريخ الطلب : `}</Text>
                 <Text style={styles.orderDateText}>{` ${moment(item.OrderDate).locale('en').format('DD/MM/YYYY')}`}</Text>
             </View>
             <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
-                <Text style={{fontSize:16,fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`رقم الطلب :`}</Text>
+                <Text style={{fontSize:14,fontWeight:'400',fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`رقم الطلب : `}</Text>
                 <Text style={styles.orderDateText}>{`${item.OrderID}`}</Text>
             </View>
             <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
-                <Text style={{fontSize:16,fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`اجمالى الفاتورة : `}</Text>
+                <Text style={{fontSize:14,fontWeight:'400',fontFamily:CAIRO_FONT_FAMILY.medium,color:"#000"}}>{`اجمالى الفاتورة : `}</Text>
                 <Text style={styles.orderDateText}>{`SAR ${item.TotalPrice}`}</Text>
             </View>
 

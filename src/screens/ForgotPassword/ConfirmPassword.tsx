@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TextInput, Platform, I18nManager } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TextInput, Platform, I18nManager, SafeAreaView } from 'react-native'
 import React, { useState } from 'react'
 import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import Header from '../../components/common/Header';
@@ -48,7 +48,7 @@ const ConfirmPassword = ({ route }: any) => {
   );
 
   const handleConfirmPassword = async () => {
-    setIsLoading(true);
+    
     if (newPassword.trim() === '') {
       setNewPasswordError('كلمة المرور الجديدة مطلوبة');
       return;
@@ -67,7 +67,9 @@ const ConfirmPassword = ({ route }: any) => {
     } else {
       setPasswordNotMatch(false);
     }
+
     try {
+      setIsLoading(true);
       const payload = {
         "UserloginInfoId": UserId,
         "Password": newPassword,
@@ -87,7 +89,7 @@ const ConfirmPassword = ({ route }: any) => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {renderHeader()}
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.content}>
@@ -189,7 +191,7 @@ const ConfirmPassword = ({ route }: any) => {
       </ScrollView>
 
       <FullScreenLoader visible={isLoading} />
-    </View>
+    </SafeAreaView>
   )
 }
 
