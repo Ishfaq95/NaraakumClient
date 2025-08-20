@@ -193,7 +193,7 @@ const VisitConsultantLogScreen = () => {
         <View style={{ flex: 1, backgroundColor: '#eff5f5',borderTopLeftRadius: 10,borderTopRightRadius: 10 }}>
           {/* Header */}
           <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row',borderTopLeftRadius: 10,borderTopRightRadius: 10, paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
+            <Text style={[globalTextStyles.bodyLarge, {fontSize:16, color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
               {visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId === 42 ? 'سجل الجلسة' : 'سجل الزيارة'}
             </Text>
             <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
@@ -204,11 +204,11 @@ const VisitConsultantLogScreen = () => {
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             <View style={{flex:1,paddingHorizontal:16}}>
             {/* Patient Name */}
-            <View style={{ paddingVertical: 10, alignItems: 'flex-start' }}>
+            {/* <View style={{ paddingVertical: 10, alignItems: 'flex-start' }}>
               <Text style={[globalTextStyles.h3, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
                 {visitHistoryData?.patientName || 'مريض'}
               </Text>
-            </View>
+            </View> */}
 
             {/* Hospital Information */}
             <View style={styles.sectionContainer}>
@@ -570,7 +570,7 @@ const VisitConsultantLogScreen = () => {
                   }
                 }}
               >
-                <Text style={styles.downloadButtonText}>تحميل PDF</Text>
+                <Text style={styles.downloadButtonText}>تحميل السجل PDF</Text>
               </TouchableOpacity>
             </View>
             </View>
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
   sectionContainer: {
     marginBottom: 15,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    // borderRadius: 8,
     overflow: 'hidden',
   },
   sectionHeader: {
@@ -621,8 +621,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
     fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   sectionBody: {
@@ -900,16 +899,16 @@ const styles = StyleSheet.create({
     fontFamily: CAIRO_FONT_FAMILY.regular,
   },
   downloadButton: {
-    backgroundColor: '#23a2a4',
+    borderColor: '#23a2a4',
+    borderWidth: 1,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
   },
   downloadButtonText: {
-    color: '#fff',
+    color: '#23a2a4',
     fontSize: 16,
-    fontWeight: 'bold',
     fontFamily: CAIRO_FONT_FAMILY.bold,
   },
 })

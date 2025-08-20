@@ -28,14 +28,14 @@ const VisitConsultantLogItemRender = memo(({ item, getMedicine, getVisitMainReco
                     <MaterialIcons name="local-hospital" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>المركز الطبى</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{item?.TitleSlang}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.TitleSlang}</Text>
             </View>
             <View style={styles.infoRow}>
                 <View style={{ flexDirection: "row", alignItems: "center",gap:5 }}>
                     <FontAwesome5 name="user-md" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>مقدم الرعاية</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{item?.FullnameSlang}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.FullnameSlang}</Text>
 
             </View>
             <View style={styles.infoRow}>
@@ -43,7 +43,7 @@ const VisitConsultantLogItemRender = memo(({ item, getMedicine, getVisitMainReco
             <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>تاريخ الجلسة</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{moment(item?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
+                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{moment(item?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
             </View>
 
             {/* Buttons */}
@@ -131,8 +131,7 @@ const styles = StyleSheet.create({
     },
     outlineBtnText: {
         color: '#23a2a4',
-        fontWeight: 'bold',
-        fontSize: 15,
+        fontSize: 14,
         fontFamily: CAIRO_FONT_FAMILY.bold,
     },
     filledBtn: {
@@ -143,8 +142,7 @@ const styles = StyleSheet.create({
     },
     filledBtnText: {
         color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 15,
+        fontSize: 14,
         fontFamily: CAIRO_FONT_FAMILY.bold,
     },
 });

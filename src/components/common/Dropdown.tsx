@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-    // alignItems:'flex-start'
+    alignItems:'flex-start'
   },
   selectedItem: {
     backgroundColor: '#f8f8f8',
