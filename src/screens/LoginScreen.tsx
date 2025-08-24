@@ -92,7 +92,6 @@ const LoginScreen = () => {
 
   const handleCountryChange = (country: any) => {
     setSelectedCountry(country);
-    console.log('Selected country:', country);
   };
 
   useEffect(() => {

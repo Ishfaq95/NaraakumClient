@@ -1,14 +1,18 @@
 import { View, Text } from 'react-native'
-import React, { memo, useMemo } from 'react'
+import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { useNavigation } from '@react-navigation/native';
 import ChatScreen from './ChatSceen';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
+import WebSocketService from '../../components/WebSocketService';
 
 const MemoizedChatScreen = memo(ChatScreen);
 
 const ChatScreenMainView = ({route}: any) => {
-    const {patientId, serviceProviderId, displayName} = route.params;
+    const {patientId, serviceProviderId, displayName,item} = route.params;
+    const socketService = useRef(WebSocketService.getInstance());
+    const user = useSelector((state: any) => state.root.user.user);
 
-    console.log("route", route.params);
     const navigation = useNavigation();
 
     const handleBackPress = () => {
@@ -30,11 +34,40 @@ const ChatScreenMainView = ({route}: any) => {
     ],
   );
 
-  console.log("chatScreenProps", chatScreenProps);
+  // Add sendReadReceipt function
+  const sendReadReceipt = () => {
+    if (socketService.current.getSocket()) {
+      const socketEvent = {
+        ConnectionMode: 1,
+        Command: 72,
+        FromUser: {Id: user.Id},
+        Conversation: {
+          ConversationId: item?._id,
+          SenderId: item?.careProviderId,
+          ReceiverId: item?.patientId,
+        },
+        Message: JSON.stringify({
+          ConversationId: item?._id,
+          SenderId: item?.careProviderId,
+          ReceiverId: item?.patientId,
+        }),
+        timestamp: new Date().toISOString(),
+      };
+
+      socketService.current.sendMessage(socketEvent);
+    }
+  };
+
+  useEffect(() => {
+    if(item?.unseenmsgCount > 0){
+      sendReadReceipt();
+    }
+  }, [item?.unseenmsgCount]);
+
   return (
-    <View style={{flex:1}}>
+    <SafeAreaView style={{flex:1,backgroundColor:'#fff'}}>
       <MemoizedChatScreen {...chatScreenProps} />
-    </View>
+    </SafeAreaView>
   )
 }
 

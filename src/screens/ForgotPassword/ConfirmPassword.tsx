@@ -74,16 +74,12 @@ const ConfirmPassword = ({ route }: any) => {
         "UserloginInfoId": UserId,
         "Password": newPassword,
       }
-      console.log("payload", payload);
       const response = await authService.resetPassword(payload);
-      console.log(response);
       if (response.ResponseStatus.STATUSCODE == 200) {
         navigation.navigate(ROUTES.Login);
       } else {
-        console.log(response);
       }
     } catch (error) {
-      console.log("error", error);
     }
     setIsLoading(false);
   }

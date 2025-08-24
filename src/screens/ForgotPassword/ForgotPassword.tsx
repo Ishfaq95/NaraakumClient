@@ -66,7 +66,6 @@ const ForgotPassword = () => {
 
     const handleCountryChange = (country: any) => {
         setSelectedCountry(country);
-        console.log('Selected country:', country);
     };
 
     const handleContinue = async () => {

@@ -74,7 +74,9 @@ const CartScreen = ({ navigation }: any) => {
         console.error('Error fetching unpaid orders:', error);
       }
     }
-    getUnPaidUserOrders();
+    if(isFocused) {
+      getUnPaidUserOrders();
+    }
   }, [user, isFocused]);
 
   const renderHeader = () => (
@@ -205,8 +207,6 @@ const CartScreen = ({ navigation }: any) => {
       <Text style={[globalTextStyles.bodyMedium, { color: '#666' }]}>لا توجد مواعيد محجوزة</Text>
     </View>
   );
-
-  console.log(CardArray);
 
   const calculateTotalWithTex = () =>{
     let subTotal = 0;

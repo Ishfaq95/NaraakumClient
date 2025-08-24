@@ -27,6 +27,8 @@ import { ROUTES } from '../../shared/utils/routes';
 import { useNavigation } from '@react-navigation/native';
 import CustomPhoneInput, { COUNTRIES } from '../../components/common/CustomPhoneInput';
 import Dropdown from "../../components/common/Dropdown";
+import { profileService } from '../../services/api/ProfileService';
+import MenuItem from 'screens/meeting/Components/MenuItem';
 
 const beneficiaries = [
   { label: 'مستفيد جديد', value: 'new' },
@@ -41,33 +43,7 @@ const nationalities = [
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const DoctorsNameArray = [
-    {
-      name: "د. سامي محمد",
-      service: "استشارة عن بعد / طبيب عام",
-      image: "https://via.placeholder.com/80x80.png?text=Dr+Sami",
-      date: "17/06/2025",
-      time: "05:00 م",
-      duration: "1 ساعة"
-    },
-    {
-      name: "د. أحمد علي",
-      service: "استشارة عن بعد / طبيب أطفال",
-      image: "https://via.placeholder.com/80x80.png?text=Dr+Ahmed",
-      date: "18/06/2025",
-      time: "06:00 م",
-      duration: "1 ساعة"
-    },
-    {
-      name: "د. فاطمة حسن",
-      service: "استشارة عن بعد / طبيب نساء",
-      image: "https://via.placeholder.com/80x80.png?text=Dr+Fatima",
-      date: "19/06/2025",
-      time: "07:00 م",
-      duration: "1 ساعة"
-    },
-  ];
-
+ 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selected, setSelected] = useState('myself');
   const [fullNumber, setFullNumber] = useState('');
@@ -95,15 +71,72 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const [idNumber, setIdNumber] = useState('');
   const [beneficiary, setBeneficiary] = useState('new');
   const [beneficiaryName, setBeneficiaryName] = useState('');
-  const [nameError, setNameError] = useState('');
+  const [nameError, setNameError] = useState(false);
+  const [idNumberError, setIdNumberError] = useState(false);
+  const [beneficiariesList, setBeneficiariesList] = useState([]);
+  const [selectedBeneficiary, setSelectedBeneficiary] = useState("");
+  const [selectedBeneficiaryItem, setSelectedBeneficiaryItem] = useState<any>(null);
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
   const [showGroupedArray, setShowGroupedArray] = useState([]);
   const [relationshipValue, setRelationshipValue] = useState('');
-  const [relationship, setRelationship] = useState([]);
+  const [relationshipError, setRelationshipError] = useState(false);
+  const [addedBeneficiary, setAddedBeneficiary] = useState<any>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<{uniqueId: string, value: string} | null>(null);
+  const [needAPICall, setNeedAPICall] = useState(false);
+  // const [relationship, setRelationship] = useState([]);
+  const Relation = [
+    { label: 'اختر من فضلك', value: '' },
+    { label: 'أب', value: '1' },
+    { label: 'الأم', value: '2' },
+    { label: 'ابن', value: '3' },
+    { label: 'زوجة', value: '4' },
+    { label: 'بنت', value: '5' },
+    { label: 'صديق', value: '6' },
+  ];
   const selectedDoctor: any = showGroupedArray[selectedIndex];
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    getBeneficiaries();
+  }, []);
+
+  const getBeneficiaries = async () => {
+    setIsLoading(true);
+    const payload = {
+      "UserId": user?.Id,
+    }
+    const response = await profileService.getBeneficiaries(payload);
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
+      const filteredList = response?.RefferalUserList.filter((item: any) => item.UserloginInfoId != user?.Id);
+      const modifiedList: any = [
+        { label: 'يرجى التحديد', value: '0' },
+        ...filteredList.map((item: any) => ({ label: item.FullnameSlang, value: item.UserProfileinfoId, item: item })),
+      ]
+      setBeneficiariesList(modifiedList);
+      if(addedBeneficiary) {
+        const addedUser = modifiedList.find((item: any) => item.value == addedBeneficiary);
+        if(needAPICall){
+          setNeedAPICall(false);
+          updatePatientInfoInSelectedDoctor(addedUser)
+        }
+        if(addedUser) {
+          setSelected("other")
+          setBeneficiary('former')
+          setSelectedBeneficiary(addedUser.value);
+          setSelectedBeneficiaryItem(addedUser.item);
+        }
+      }
+    }
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
+    if (addedBeneficiary) {
+      getBeneficiaries();
+    }
+  }, [addedBeneficiary]);
 
   useEffect(() => {
     // Request microphone permission
@@ -583,6 +616,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           const convertedCardItems = response.Cart;
 
           // Check for existing items and replace duplicates instead of adding
+          setShowGroupedArray([]);
           const existingCardItems: any[] = [];
           const updatedCardItems = [...existingCardItems];
 
@@ -608,13 +642,24 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
               newItem.SchedulingDate = startTime.localDate;
               newItem.SchedulingTime = startTime.localTime;
               newItem.SchedulingEndTime = endTime.localTime;
-              const newItemObject = {
-                ...newItem,
-                "ItemUniqueId": generateUniqueId(),
-                PatientUserProfileInfoId: user.UserProfileInfoId,
-                TextDescription: "",
+
+              if(newItem.PatientUserProfileInfoId != "0") {
+                const newItemObject = {
+                  ...newItem,
+                  "ItemUniqueId": newItem.ItemUniqueId ? newItem.ItemUniqueId : generateUniqueId()
+                }
+                updatedCardItems.push(newItemObject);
+              }else{
+                const newItemObject = {
+                  ...newItem,
+                  "ItemUniqueId": newItem.ItemUniqueId ? newItem.ItemUniqueId : generateUniqueId(),
+                  PatientUserProfileInfoId: user.UserProfileInfoId,
+                  TextDescription: "",
+                }
+                updatedCardItems.push(newItemObject);
               }
-              updatedCardItems.push(newItemObject);
+
+              
             }
           });
 
@@ -692,6 +737,55 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     )
   }
 
+  const updatePatientInfoInSelectedDoctor = (selectedItem: any) => {
+    if(selectedItem.value == "0") {
+      return;
+    }
+    const uniqueId = selectedDoctor?.items[0].ItemUniqueId;
+    const updatedCardArray = [...CardArray];
+    const index = updatedCardArray.findIndex((item: any) => item.ItemUniqueId == uniqueId);
+    if(index != -1) {
+      updatedCardArray[index] = {
+        ...updatedCardArray[index],
+        PatientUserProfileInfoId: selectedItem.value,
+        CatRelationshipId: selectedItem.item.CatRelationshipId,
+      };
+      // Set pending update before dispatching
+      setPendingUpdate({
+        uniqueId: uniqueId,
+        value: selectedItem.value
+      });
+      dispatch(addCardItem(updatedCardArray));
+    }
+  }
+
+  // Effect to monitor Redux updates
+  useEffect(() => {
+    if (pendingUpdate) {
+      // Check if the update has been applied to Redux state
+      const updatedItem = CardArray.find((item: any) => item.ItemUniqueId === pendingUpdate.uniqueId);
+      
+      if (updatedItem && updatedItem.PatientUserProfileInfoId === pendingUpdate.value) {
+        // Redux state has been updated
+        console.log('Redux updated successfully:', CardArray);
+        updatePatientInfoInOrder();
+        
+        // Clear the pending update
+        setPendingUpdate(null);
+      }
+    }
+  }, [CardArray, pendingUpdate]);
+
+  const updatePatientInfoInOrder = async () => {
+    const payload = {
+      "OrderId": CardArray[0].OrderID,
+      "CatPlatformId": 1,
+      "OrderDetail": generatePayloadforUpdateOrderMainBeforePayment(CardArray)
+    }
+
+    await bookingService.updateOrderMainBeforePayment(payload);
+  }
+
   const createOrderMainBeforePayment = async () => {
     const payload = {
       "OrderId": CardArray[0].OrderID,
@@ -710,6 +804,12 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   }
 
   const handleNext = () => {
+    if (selected == "other") {
+      if (selectedBeneficiary == "new") {
+        Alert.alert("لا يمكنك المتابعة دون تعيين المريض");
+        return;
+      }
+    }
     createOrderMainBeforePayment();
   };
 
@@ -816,11 +916,60 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  console.log("selected ", selected);
+  const handleSaveBeneficiary = async () => {
+    if(beneficiaryName == "") {
+      setNameError(true);
+      return;
+    }
+    if(relationshipValue == "") {
+      setRelationshipError(true);
+      return;
+    }
+    if(nationality == "citizen") {
+      if(idNumber == "") {
+        setIdNumberError(true);
+        return;
+      }
+    }
+
+    
+    const Payload = {
+      "FullNamePlang": beneficiaryName,
+      "FullNameSlang": beneficiaryName,
+      "CatRelationshipId": relationshipValue,
+      "RefferalUserloginInfoId": user.Id,
+      "CatInsuranceCompanyId": null,
+      "Gender": null,
+      "Age": null,
+      "CatNationalityId": nationality == 'citizen' ? 213 : 187,
+      "IDNumber": nationality == 'citizen' ? idNumber : '',
+    }
+    console.log('check passed', Payload);
+    const response = await bookingService.addBeneficiary(Payload)
+
+    if(response.StatusCode.STATUSCODE == 3008) {
+      const addedUser = response?.Userinfo[0]
+      setNeedAPICall(true);
+      setAddedBeneficiary(addedUser.Id)
+    }
+  }
+
+  useEffect(() => {
+    if(selectedDoctor) {
+      const mySelfOrOther = selectedDoctor.items[0].PatientUserProfileInfoId == user.UserProfileInfoId ? 'myself' : 'other';
+      setSelected(mySelfOrOther);
+      if(mySelfOrOther == 'other') {
+        setBeneficiary('former')
+        setSelectedBeneficiary(selectedDoctor.items[0].PatientUserProfileInfoId)
+        setSelectedBeneficiaryItem(beneficiariesList.find((item: any) => item.value == selectedDoctor.items[0].PatientUserProfileInfoId))
+      }
+      
+    }
+  }, [selectedDoctor]);
 
   return (
     <View style={styles.container}>
-      <View style={{ height: 120, alignItems: "flex-start" }}>
+      <View style={{ height: 120, width: "100%", alignItems: "flex-start", backgroundColor: "#e4f1ef" }}>
         {/* Doctor tags */}
         <FlatList
           data={showGroupedArray}
@@ -892,7 +1041,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>المرضى المراد حجز الجلسة لهم</Text>
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', }}>
           <CommonRadioButton
             selected={selected === 'myself'}
             onPress={() => setSelected('myself')}
@@ -906,6 +1055,113 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             style={{ width: "48%" }}
           />
         </View>
+        {selected === 'other' && (
+          <View style={{ marginTop: 10, paddingTop: 16, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, padding: 10, backgroundColor: "#fff" }}>
+            {/* Beneficiary */}
+            <View style={styles.fieldGroup}>
+              <View style={[styles.row, { justifyContent: 'flex-start' }]}>
+                {beneficiaries.map((item) => (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={styles.radioContainer}
+                    onPress={() => setBeneficiary(item.value)}
+                  >
+                    <View style={[styles.radioOuter, beneficiary === item.value && styles.radioOuterSelected]}>
+                      {beneficiary === item.value && <View style={styles.radioInner} />}
+                    </View>
+                    <Text style={styles.radioLabel}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {beneficiary == "former" ? <View>
+              <Dropdown
+                data={beneficiariesList}
+                containerStyle={{ height: 50 }}
+                dropdownStyle={[{ height: 50 }, relationshipError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
+                value={selectedBeneficiary}
+                // disabled={relationshipValue === ''}
+                onChange={(value: string | number) => {
+                  setSelectedBeneficiary(value.toString());
+                  const selectedItem = beneficiariesList.find((item: any) => item.value == value);
+                  setSelectedBeneficiaryItem(selectedItem);
+                  updatePatientInfoInSelectedDoctor(selectedItem)
+                }}
+                placeholder=""
+              />
+            </View> :
+              <View>
+                <View style={styles.inputGroup}>
+                  <View style={styles.questionRow}>
+                    <Text style={styles.questionText}>{'اسم المستفيد '}</Text>
+                    <Text style={styles.requiredAsterisk}> *</Text>
+                  </View>
+                  <TextInput
+                    style={[styles.textInput, nameError && styles.inputError]}
+                    placeholder="ضع الاسم الثلاثى"
+                    placeholderTextColor="#999"
+                    textAlign="right"
+                    value={beneficiaryName}
+                    onChangeText={(text) => {
+                      setBeneficiaryName(text);
+                      if (nameError) setNameError(false);
+                    }}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <View style={styles.questionRow}>
+                    <Text style={styles.questionText}>{'صلة القرابة '}</Text>
+                    <Text style={styles.requiredAsterisk}> *</Text>
+                  </View>
+                  <Dropdown
+                    data={Relation}
+                    containerStyle={{ height: 50 }}
+                    dropdownStyle={[{ height: 50 }, relationshipError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
+                    value={relationshipValue}
+                    // disabled={relationshipValue === ''}
+                    onChange={(value: string | number) => {
+                      setRelationshipValue(value.toString());
+                      if(relationshipError) setRelationshipError(false);
+                    }}
+                    placeholder=""
+                  />
+                </View>
+
+                {/* Nationality */}
+                <View style={styles.fieldGroup}>
+                  <View style={[styles.row, { justifyContent: 'flex-start' }]}>
+                    {nationalities.map((item) => (
+                      <TouchableOpacity
+                        key={item.value}
+                        style={styles.radioContainer}
+                        onPress={() => setNationality(item.value)}
+                      >
+                        <View style={[styles.radioOuter, nationality === item.value && styles.radioOuterSelected]}>
+                          {nationality === item.value && <View style={styles.radioInner} />}
+                        </View>
+                        <Text style={styles.radioLabel}>{item.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                {/* ID Number */}
+                {nationality === 'citizen' && <View style={[styles.fieldGroup]}>
+                  <Text style={styles.label}>رقم الهوية</Text>
+                  <TextInput style={[styles.input, idNumberError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]} value={idNumber} onChangeText={(text) => {
+                    setIdNumber(text);
+                    if(idNumberError) setIdNumberError(false);
+                  }} placeholder="رقم الهوية" keyboardType="numeric" />
+                </View>}
+                <TouchableOpacity onPress={handleSaveBeneficiary} style={{ width: "100%", backgroundColor: "#23a2a4", paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
+                  <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>يحفظ</Text>
+                </TouchableOpacity>
+              </View>}
+
+
+          </View>
+        )}
         <View style={{ width: "100%", alignItems: "flex-start" }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }]}>اسمك</Text>
           <TextInput
@@ -925,86 +1181,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             initialCountry={selectedCountry}
           />
         </View>
-        {selected === 'other' && (
-          <View style={{ paddingTop: 16 }}>
-            {/* Beneficiary */}
-            <View style={styles.fieldGroup}>
-              <View style={[styles.row, { justifyContent: 'flex-start' }]}>
-                {beneficiaries.map((item) => (
-                  <TouchableOpacity
-                    key={item.value}
-                    style={styles.radioContainer}
-                    onPress={() => setBeneficiary(item.value)}
-                  >
-                    <View style={[styles.radioOuter, beneficiary === item.value && styles.radioOuterSelected]}>
-                      {beneficiary === item.value && <View style={styles.radioInner} />}
-                    </View>
-                    <Text style={styles.radioLabel}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
 
-            <View style={styles.inputGroup}>
-            <View style={styles.questionRow}>
-              <Text style={styles.questionText}>{'اسم المستفيد '}</Text>
-              <Text style={styles.requiredAsterisk}> *</Text>
-            </View>
-            <TextInput
-              style={[styles.textInput, nameError && styles.inputError]}
-              placeholder="ضع الاسم الثلاثى"
-              placeholderTextColor="#999"
-              textAlign="right"
-              value={beneficiaryName}
-              onChangeText={(text) => {
-                setBeneficiaryName(text);
-                if (nameError) setNameError('');
-              }}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.questionRow}>
-              <Text style={styles.questionText}>{'صلة القرابة '}</Text>
-              <Text style={styles.requiredAsterisk}> *</Text>
-            </View>
-            <Dropdown
-          data={relationship}
-          containerStyle={{ height: 50 }}
-          dropdownStyle={[{ height: 50 }, { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]}
-          value={relationshipValue}
-          disabled={relationshipValue === ''}
-          onChange={(value: string | number) => {
-            setRelationshipValue(value.toString());
-          }}
-          placeholder=""
-        />
-          </View>
-
-           {/* Nationality */}
-           <View style={styles.fieldGroup}>
-              <View style={[styles.row, { justifyContent: 'flex-start' }]}>
-                {nationalities.map((item) => (
-                  <TouchableOpacity
-                    key={item.value}
-                    style={styles.radioContainer}
-                    onPress={() => setNationality(item.value)}
-                  >
-                    <View style={[styles.radioOuter, nationality === item.value && styles.radioOuterSelected]}>
-                      {nationality === item.value && <View style={styles.radioInner} />}
-                    </View>
-                    <Text style={styles.radioLabel}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-            {/* ID Number */}
-            {nationality === 'citizen' && <View style={styles.fieldGroup}>
-              <Text style={styles.label}>رقم الهوية</Text>
-              <TextInput style={styles.input} value={idNumber} onChangeText={setIdNumber} placeholder="رقم الهوية" keyboardType="numeric" />
-            </View>}
-          </View>
-        )}
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>وصف الشكوى المرضية (إختياري)</Text>
         </View>

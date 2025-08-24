@@ -672,7 +672,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }
 
   const handleApplyFilterPress = () => {
-    console.log('handleApplyFilterPress')
   }
 
   const getNextButtonEnabled = useCallback(() => {

@@ -140,8 +140,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const category = useSelector((state: any) => state.root.booking.category);
   const user = useSelector((state: any) => state.root.user.user);
 
-  console.log(user);
-
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);

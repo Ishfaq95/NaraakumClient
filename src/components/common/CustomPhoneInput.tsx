@@ -988,7 +988,6 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
   initialCountry,
   inputContainerStyle,
 }) => {
-  console.log("initialCountry",initialCountry)
   const [selectedCountry, setSelectedCountry] = useState<Country>(initialCountry || COUNTRIES[0]); // Use initialCountry or default to Saudi Arabia
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1008,7 +1007,6 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
       );
       setFilteredCountries(filtered);
     }
-    console.log('Filtered countries count:', filteredCountries.length);
   }, [searchQuery]);
 
   useEffect(() => {
@@ -1016,7 +1014,6 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
   }, [initialCountry]);
 
   const handleCountrySelect = (country: Country) => {
-    console.log('Country selected:', country);
     setSelectedCountry(country);
     setShowCountryModal(false);
     setSearchQuery('');
@@ -1089,7 +1086,6 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
         <TouchableOpacity
           style={styles.countrySelector}
           onPress={() => {
-            console.log('Opening country modal');
             setShowCountryModal(true);
           }}
           disabled={disabled}

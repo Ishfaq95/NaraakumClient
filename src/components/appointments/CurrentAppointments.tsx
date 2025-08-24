@@ -112,7 +112,7 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
   }, []);
 
   const isAppointmentEnabled = useCallback((appointment: Appointment) => {
-    return enabledAppointmentsRef.current.has(`${appointment.OrderId}-${appointment.OrderDetailId}`);
+    return enabledAppointmentsRef.current.has(`${appointment.OrderId}-${appointment.TaskId}`);
   }, []);
 
   const fetchAppointments = async (page: number, append: boolean = false) => {
@@ -175,7 +175,7 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
       const enabled = new Set<string>();
       appointments.forEach(appointment => {
         if (checkTimeCondition(appointment)) {
-          enabled.add(`${appointment.OrderId}-${appointment.OrderDetailId}`);
+          enabled.add(`${appointment.OrderId}-${appointment.TaskId}`);
         }
       });
       enabledAppointmentsRef.current = enabled;
@@ -190,7 +190,7 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
 
         appointments.forEach(appointment => {
           const isEnabled = checkTimeCondition(appointment);
-          const appointmentId = `${appointment.OrderId}-${appointment.OrderDetailId}`;
+          const appointmentId = `${appointment.OrderId}-${appointment.TaskId}`;
 
           if (isEnabled) {
             enabled.add(appointmentId);
@@ -362,7 +362,7 @@ const CurrentAppointments: React.FC<CurrentAppointmentsProps> = ({ userId, onJoi
       <FlatList
         data={appointments}
         renderItem={renderItem}
-        keyExtractor={(item) => `${item.OrderId}-${item.OrderDetailId}`}
+        keyExtractor={(item) => `${item.OrderId}-${item.TaskId}`}
         contentContainerStyle={styles.contentContainer}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}

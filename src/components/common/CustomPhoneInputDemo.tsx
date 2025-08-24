@@ -23,7 +23,6 @@ const CustomPhoneInputDemo = () => {
 
   const handleCountryChange = (country: any) => {
     setSelectedCountry(country);
-    console.log('Selected country:', country);
   };
 
   const validateAndSubmit = () => {

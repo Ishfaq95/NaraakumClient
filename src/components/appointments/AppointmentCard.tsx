@@ -154,7 +154,8 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
 
       {/* Info Bar (not a button) */}
       <View style={styles.infoBar}>
-        <Participants width={20} height={20} />
+        {/* <Participants width={20} height={20} /> */}
+        <Image source={require('../../assets/icons/cameramovie.png')} style={{ tintColor: '#fff', width: 20, height: 20 }} />
         <Text style={styles.infoBarText}>
           {/* {t('استشارة عن بعد 30 دقيقة / طبيب عام')} */}
           {`استشارة عن بعد ${getDuration(appointment)} / ${appointment?.TaskDetail[0]?.TitleSlangSpecialty || appointment?.TaskDetail[0]?.TitleSlangService}`}
@@ -167,7 +168,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
           styles.callBtn,
           isCallEnabled ? styles.callBtnEnabled : styles.callBtnDisabled
         ]}
-        disabled={false}
+        disabled={!isCallEnabled}
         onPress={() => onJoinMeeting(appointment)}
       >
         <CallIcon 

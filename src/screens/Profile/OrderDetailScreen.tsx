@@ -134,7 +134,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   };
 
   const handleSubmitRating = async () => {
-    console.log("selectedDoctor?.items[0]",selectedDoctor?.items[0])
     const payload = {
       "UserloginInfoId": user?.Id,
       "Comment": comment,
@@ -1637,8 +1636,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
             selectedDoctor?.items?.map((item: any, index: number) => {
               let displayDate = '';
               let displayTime = '';
-
-              console.log("item",item)
 
               let visitRecord = [];
               if (item?.TaskMainId) {

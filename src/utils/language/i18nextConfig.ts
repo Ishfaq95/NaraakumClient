@@ -29,8 +29,6 @@ export const initializeI18Next = async () => {
     I18nManager.forceRTL(isRtl);
     I18nManager.allowRTL(isRtl);
 
-    console.log('Initializing i18n with language:', defaultLanguage, 'RTL:', isRtl);
-
     i18n.use(initReactI18next).init({
       debug: false,
       resources,
@@ -42,8 +40,6 @@ export const initializeI18Next = async () => {
       },
     });
 
-    // Verify the language was set correctly
-    console.log('i18n initialized with language:', i18n.language);
   } catch (error) {
     console.error('Error initializing i18n:', error);
     // Fallback to Arabic on error

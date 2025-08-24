@@ -77,7 +77,6 @@ const UniversalImage: React.FC<UniversalImageProps> = ({
               height: '100%'
             }}
             onError={() => {
-              console.log('SVG loading failed, falling back to Image component');
               setSvgError(true);
             }}
           />

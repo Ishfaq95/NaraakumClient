@@ -47,18 +47,14 @@ const ForgotOTP = ({ route }: any) => {
         "VerificationCode": otp,
         "VerificationPlatformId": Platform.OS === 'ios' ? 3 : 2
       }
-      console.log("payload", payload);
       const response = await authService.verifyOTP(payload);
-      console.log(response);
       if (response.ResponseStatus.STATUSCODE == 200) {
         if (response.StatusCode.STATUSCODE == 3007) {
           navigation.navigate(ROUTES.ConfirmPassword, { UserId: UserId });
         }
       } else {
-        console.log(response);
       }
     } catch (error) {
-      console.log("error", error);
     }
     setIsLoading(false);
   }

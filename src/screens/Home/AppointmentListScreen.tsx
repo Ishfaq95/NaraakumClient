@@ -144,114 +144,95 @@ const AppointmentListScreen = ({ navigation }: any) => {
     }
   }
 
+  // Separate effect for initial setup only - runs once
   useEffect(() => {
-    if (isScreenFocused && patientReminderList?.length > 0) {
-      // Initial check
-      const enabled = new Set<string>();
-      patientReminderList.forEach(appointment => {
-        if (checkTimeCondition(appointment)) {
-          enabled.add(`${appointment.OrderId}-${appointment.OrderDetailId}`);
-        }
-      });
-      enabledAppointmentsRef.current = enabled;
+    // Initialize the ref
+    enabledAppointmentsRef.current = new Set<string>();
+  }, []);
 
-      // Set up interval
+  // Main effect for timer and WebSocket
+  useEffect(() => {
+    if (isScreenFocused) {
+      // Start periodic unread message checking in the WebSocketService
+      if (user) {
+        webSocketService.startPeriodicUnreadCheck(user.Id, 5000);
+      }
+
+      // Set up interval for appointment status only
       timerRef.current = setInterval(() => {
-        if (!patientReminderList?.length) {
-          return;
-        }
-        const enabled = new Set<string>();
-        let hasChanges = false;
+        // Only process appointments if they exist
+        if (patientReminderList?.length > 0) {
+          const enabled = new Set<string>();
+          let hasChanges = false;
 
-        patientReminderList.forEach(appointment => {
-          const isEnabled = checkTimeCondition(appointment);
-          const appointmentId = `${appointment.OrderId}-${appointment.OrderDetailId}`;
+          patientReminderList.forEach(appointment => {
+            const isEnabled = checkTimeCondition(appointment);
+            const appointmentId = `${appointment.OrderId}-${appointment.TaskId}`;
 
-          if (isEnabled) {
-            enabled.add(appointmentId);
+            if (isEnabled) {
+              enabled.add(appointmentId);
+            }
+
+            // Check if the enabled state has changed
+            if (isEnabled !== enabledAppointmentsRef.current.has(appointmentId)) {
+              hasChanges = true;
+            }
+          });
+
+          // Only update if there are actual changes
+          if (hasChanges) {
+            enabledAppointmentsRef.current = enabled;
+            // Force a re-render of the FlatList
+            setPatientReminderList(prev => [...prev]);
           }
-
-          // Check if the enabled state has changed
-          if (isEnabled !== enabledAppointmentsRef.current.has(appointmentId)) {
-            hasChanges = true;
-          }
-        });
-
-        // Only update if there are actual changes
-        if (hasChanges) {
-          enabledAppointmentsRef.current = enabled;
-          // Force a re-render of the FlatList
-          setPatientReminderList(prev => [...prev]);
         }
-      }, 5000);
+      }, 1000);
     }
 
     return () => {
+      // Clean up appointment timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+      
+      // We don't stop the WebSocketService periodic check here
+      // because we want it to continue across screens
     };
-  }, [isScreenFocused, patientReminderList, checkTimeCondition]);
+  }, [isScreenFocused, user,patientReminderList]);
 
-  const socketCommandHandler = (socketEvent: any) => {
-    if(socketEvent.Command == 74){
-      // Convert message string to number
-      const messageCount = parseInt(socketEvent.Message, 10);
-      // Dispatch only if the number is greater than 0
-      if(messageCount > 0){
-        dispatch(setUnreadMessages(socketEvent.Message));
-      }else{
-        dispatch(setUnreadMessages(0));
-      }
-    }
-  }
+  
 
   const checkUnreadMessages = () => {
-    const socket = webSocketService.getSocket();
-    if(socket){
-      const getCountUnreadMessages = {
-        ConnectionMode: 1,
-        Command: 74,
-        FromUser: {Id: user.Id},
-      };
-      socket.send(JSON.stringify(getCountUnreadMessages));
+    if (user) {
+      webSocketService.checkUnreadMessages(user.Id);
     }
   }
 
   // Handle WebSocket connection
   useEffect(() => {
-
     if (user) {
       const presence = 1;
       const communicationKey = user.CommunicationKey;
       const UserId = user.Id;
       subsribeTopic(UserId, topic, dispatch);
-
+      
       // Only connect if not already connected
       if (!webSocketService.isSocketConnected()) {
         webSocketService.connect(presence, communicationKey, UserId);
+      } else {
+        // If already connected, make sure the global handler is set
+        webSocketService.addGlobalMessageHandler();
       }
-
-      // Get the socket instance and add message event listener
-      const socket = webSocketService.getSocket();
-      if (socket) {
-        socket.onmessage = (event) => {
-          try {
-            const socketEvent = JSON.parse(event.data);
-            socketCommandHandler(socketEvent);
-            checkUnreadMessages();
-          } catch (error) {
-            console.error('Error parsing socket message:', error);
-          }
-        };
-
+      
+      // Check for unread messages when screen is focused
+      if (isScreenFocused) {
         checkUnreadMessages();
       }
     } else {
       webSocketService.disconnect();
     }
-  }, [user]);
+  }, [user, isScreenFocused]);
 
   const afterLogin = async () => {
     try {
@@ -282,7 +263,24 @@ const AppointmentListScreen = ({ navigation }: any) => {
     }
     const response = await bookingService.getPatientReminderList(payload);
     if (response.ResponseStatus.STATUSCODE == 200) {
-      setPatientReminderList(response.ReminderList);
+      // Update enabled appointments ref before setting state
+      const reminderList = response.ReminderList;
+      
+      // Initialize the enabled appointments set
+      const enabled = new Set<string>();
+      
+      // Check each appointment
+      reminderList.forEach((appointment: any) => {
+        if (checkTimeCondition(appointment)) {
+          enabled.add(`${appointment.OrderId}-${appointment.TaskId}`);
+        }
+      });
+      
+      // Update the ref
+      enabledAppointmentsRef.current = enabled;
+      
+      // Now set the state
+      setPatientReminderList(reminderList);
     }
     setIsLoading(false);
   }
@@ -371,7 +369,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
   );
 
   const isAppointmentEnabled = useCallback((appointment: any) => {
-    return enabledAppointmentsRef.current.has(`${appointment.OrderId}-${appointment.OrderDetailId}`);
+    return enabledAppointmentsRef.current.has(`${appointment.OrderId}-${appointment.TaskId}`);
   }, []);
 
   const renderItem = useCallback(({ item }: { item: any }) => (
@@ -390,6 +388,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
   const rendervisitItem = useCallback(({ item }: { item: any }) => (
     <AppointmentVisitCard appointment={item} onPressMapButton={onPressMapButton} />
   ), []);
+
 
   return (
     <SafeAreaView style={styles.container}>

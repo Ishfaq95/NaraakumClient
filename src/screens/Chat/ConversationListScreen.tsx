@@ -17,6 +17,7 @@ const ConversationListScreen = () => {
     const { t } = useTranslation();
     const user = useSelector((state: any) => state.root.user.user);
     const [conversationList, setConversationList] = useState<any[]>([]);
+    const unreadMessages = useSelector((state: any) => state.root.user.unreadMessages);
     const [refreshing, setRefreshing] = useState(false);
     const webSocketService = WebSocketService.getInstance();
     const navigation = useNavigation();
@@ -24,55 +25,7 @@ const ConversationListScreen = () => {
     const dispatch = useDispatch();
     useEffect(() => {
         getConversationList();
-    }, [isFocused]);
-
-    const socketCommandHandler = (socketEvent: any) => {
-        if (socketEvent.Command == 56) {
-            const parsedData = JSON.parse(socketEvent.Message);
-            const messageType = parsedData.MessageType;
-            
-            getConversationList();
-            
-        } else if(socketEvent.Command == 74){
-            // Convert message string to number
-            const messageCount = parseInt(socketEvent.Message, 10);
-            // Dispatch only if the number is greater than 0
-            if(messageCount > 0){
-              dispatch(setUnreadMessages(socketEvent.Message));
-            }else{
-                dispatch(setUnreadMessages(0));
-            }
-          }
-      }
-
-    useEffect(() => {
-
-        if (user) {
-          const presence = 1;
-          const communicationKey = user.CommunicationKey;
-          const UserId = user.Id;
-    
-          // Only connect if not already connected
-          if (!webSocketService.isSocketConnected()) {
-            webSocketService.connect(presence, communicationKey, UserId);
-          }
-    
-          // Get the socket instance and add message event listener
-          const socket = webSocketService.getSocket();
-          if (socket) {
-            socket.onmessage = (event) => {
-              try {
-                const socketEvent = JSON.parse(event.data);
-                socketCommandHandler(socketEvent);
-              } catch (error) {
-                console.error('Error parsing socket message:', error);
-              }
-            };
-          }
-        } else {
-          webSocketService.disconnect();
-        }
-      }, [user]);
+    }, [isFocused,unreadMessages]);
 
     const getConversationList = async () => {
         try {
@@ -90,10 +43,13 @@ const ConversationListScreen = () => {
                 setConversationList(sortedData);
             }
         } catch (error) {
-            console.log(error);
         }
 
     }
+
+    useEffect(() => {
+       webSocketService.addGlobalMessageHandler();
+    }, [isFocused]);
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -106,13 +62,12 @@ const ConversationListScreen = () => {
     }
 
     const renderConversationTile = ({ item }: any) => {
-        console.log("item", item);
         return (
             <TouchableOpacity
                 style={styles.conversationTile}
                 onPress={() => {
                     // Navigate to chat screen with conversation details
-                    navigation.navigate(ROUTES.ChatScreenMainView, { patientId: item?.patientDetails?.userlogininfoId, serviceProviderId: item?.careproviderDetails?.userlogininfoId, displayName: item?.careproviderDetails?.username });
+                    navigation.navigate(ROUTES.ChatScreenMainView, { patientId: item?.patientDetails?.userlogininfoId, serviceProviderId: item?.careproviderDetails?.userlogininfoId, displayName: item?.careproviderDetails?.username,item:item });
                 }}
             >
                 <View style={styles.avatarContainer}>
