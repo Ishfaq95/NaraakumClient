@@ -477,6 +477,7 @@ interface beneficiaryProps {
   idNumberValue: string;
   onChangeTextIdNumber: (text: string) => void;
   setFocusedField: (field: string) => void;
+  isLoading: boolean
 }
 
 export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
@@ -495,7 +496,8 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
   SubmitButton,
   idNumberValue,
   onChangeTextIdNumber,
-  setFocusedField
+  setFocusedField,
+  isLoading
 }) => {
   const idNumberInputRef = useRef<TextInput>(null);
   const nameInputRef = useRef<TextInput>(null);
@@ -503,6 +505,7 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
   const [nameError, setNameError] = React.useState(false);
   const [relationError, setRelationError] = React.useState(false);
   const [genderError, setGenderError] = React.useState(false);
+  const [idNumberError, setIdNumberError] = React.useState(false);
   const nationalities = [
     { label: 'مواطن (معفى من الضريبة)', value: 'citizen' },
     { label: 'مقيم', value: 'resident' },
@@ -534,6 +537,7 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
 
   // Custom submit handler to validate fields before calling SubmitButton
   const handleSubmit = () => {
+      if (isLoading) return; 
     let hasError = false;
     if (!nameValue) {
       setNameError(true);
@@ -545,6 +549,11 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
     }
     if (!genderValue) {
       setGenderError(true);
+      hasError = true;
+    }
+
+    if(nationality === 'citizen' && !idNumberValue){
+      setIdNumberError(true);
       hasError = true;
     }
     if (hasError) return;
@@ -606,6 +615,8 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
               keyboardType="numeric"
               value={ageValue}
               onChangeText={onChangeTextAge}
+               onFocus={() => setFocusedField('age')}
+               onBlur={() => setFocusedField('')}
             />
           </TouchableOpacity>
         </View>
@@ -659,14 +670,17 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
         <TouchableOpacity
           activeOpacity={1}
           onPress={() => idNumberInputRef.current && idNumberInputRef.current.focus()}
-          style={styles.inputView}
+          style={[styles.inputView, idNumberError && { borderColor: 'red' }]}
         >
           <TextInput
             ref={idNumberInputRef}
             style={[styles.fullWidthInput]}
             placeholder="ضع رقم الهوية (إجبارى)"
             value={idNumberValue}
-            onChangeText={onChangeTextIdNumber}
+             onChangeText={text => {
+            setIdNumberError(false);
+            onChangeTextIdNumber(text);
+          }}
             onFocus={() => setFocusedField('idNumber')}
             onBlur={() => setFocusedField('')}
             placeholderTextColor="#d9d9d9"
@@ -676,7 +690,7 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
       )}
 
       {/* Submit */}
-      <TouchableOpacity onPress={handleSubmit} style={styles.optButton}>
+      <TouchableOpacity onPress={handleSubmit} disabled={isLoading} style={styles.optButton}>
         <Text style={styles.saveBtnText}>حفظ</Text>
       </TouchableOpacity>
     </View>

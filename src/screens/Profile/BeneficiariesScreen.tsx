@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid, ScrollView } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +20,7 @@ import { MediaBaseURL } from '../../shared/utils/constants';
 // @ts-ignore
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const BeneficiariesScreen = () => {
   const { t } = useTranslation();
@@ -39,6 +40,7 @@ const BeneficiariesScreen = () => {
   const [reportType, setReportType] = useState<any>('')
   const [medicalData, setMedicalData] = useState<any>({})
   const [isDownloading, setIsDownloading] = useState(false);
+   const [sheetHeight, setSheetHeight] = useState("65%");
   const [beneficiaryForm, setBeneficiaryForm] = useState({
     name: '',
     relation: '',
@@ -48,6 +50,29 @@ const BeneficiariesScreen = () => {
     nationality: 'citizen',
     idNumber: '',
   })
+
+
+ useEffect(() => {
+  const showEvent = Platform.OS === 'ios' ? 'keyboardDidShow' : 'keyboardDidShow';
+  const hideEvent = Platform.OS === 'ios' ? 'keyboardDidHide' : 'keyboardDidHide';
+
+  const keyboardShowListener = Keyboard.addListener(showEvent, () => {
+    if (focusedField === 'age') {
+      setSheetHeight('80%');
+    } else if (focusedField === 'idNumber' && beneficiaryForm.nationality === 'citizen') {
+      setSheetHeight('100%');
+    }
+  });
+
+  const keyboardHideListener = Keyboard.addListener(hideEvent, () => setSheetHeight('65%'));
+
+  return () => {
+    keyboardShowListener.remove();
+    keyboardHideListener.remove();
+  };
+}, [focusedField, beneficiaryForm.nationality]);
+
+
 
   const SelfMenu = [
     { title: 'التقارير الطبية', onPress: () => { setOpenBottomSheetMenu(false); HandleReportPress(selectedItem, 'report') } },
@@ -622,6 +647,7 @@ const BeneficiariesScreen = () => {
   }
 
   const HandleSubmitFormData = async () => {
+    if (isLoading) return;
     try {
       setIsLoading(true)
 
@@ -642,14 +668,13 @@ const BeneficiariesScreen = () => {
         setOpenBottomSheet(false)
         setTimeout(() => { getBeneficiaries(); }, 500);
       } else {
-        const Gender = beneficiaryForm.gender === 'male' ? '1' : '0';
         const Payload = {
           "FullNamePlang": beneficiaryForm.name,
           "FullNameSlang": beneficiaryForm.name,
           "CatRelationshipId": beneficiaryForm.relation,
           "RefferalUserloginInfoId": user.Id,
           "CatInsuranceCompanyId": beneficiaryForm.insurance,
-          "Gender": Gender,
+          "Gender": beneficiaryForm.gender === 'male' ? '1' : '0',
           "Age": beneficiaryForm.age,
           "CatNationalityId": beneficiaryForm.nationality === 'citizen' ? 213 : 187,
           "IDNumber": beneficiaryForm.nationality === 'citizen' ? beneficiaryForm.idNumber : '',
@@ -762,7 +787,7 @@ const BeneficiariesScreen = () => {
         visible={openBottomSheet}
         onClose={() => setOpenBottomSheet(false)}
         showHandle={false}
-        height="65%"
+        height={sheetHeight}
       >
         <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
           <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -777,7 +802,12 @@ const BeneficiariesScreen = () => {
             // contentContainerStyle={{ paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-          >
+            >
+            <KeyboardAvoidingView
+            style={{ flex: 1 }}
+  behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+  keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+            >
             <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
               <View style={styles.modalBackground}>
                 <View style={styles.modalContainer}>
@@ -798,10 +828,12 @@ const BeneficiariesScreen = () => {
                     idNumberValue={beneficiaryForm.idNumber}
                     onChangeTextIdNumber={(text) => updateBeneficiaryField('idNumber', text)}
                     setFocusedField={setFocusedField}
+                    isLoading={isLoading}
                   />
                 </View>
               </View>
             </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
           </ScrollView>
         </View>
       </CustomBottomSheet>
