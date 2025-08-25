@@ -18,7 +18,7 @@ import RNFetchBlob from 'rn-fetch-blob';
 import axiosInstance from '../../Network/axiosInstance';
 import { store } from '../../shared/redux/store';
 import RNFS from 'react-native-fs';
-// import { TrackPlayerService } from '../../services/TrackPlayerService';
+import { TrackPlayerService } from '../../services/TrackPlayerService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import { convertUTCToLocalDateTime } from '../../utils/timeUtils';
@@ -178,9 +178,9 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
       }
 
       // Cleanup track player (silently handle any errors)
-      // TrackPlayerService.stop().catch(() => {
-      //   // Silently ignore cleanup errors
-      // });
+      TrackPlayerService.stop().catch(() => {
+        // Silently ignore cleanup errors
+      });
     };
   }, []);
 
@@ -412,12 +412,11 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         const duration = formatRecordingTime(actualRecordingDuration);
 
         setUploadedFileUrl(uploadedUrl);
+        updateAudioFile(uploadedUrl);
 
         // Update the cart with audio description (similar to web implementation)
         const audioDescription = `${uploadedUrl}^${duration}`;
 
-        // Optional: Show success message
-        Alert.alert('Success', 'Audio file uploaded successfully!');
       } else {
         throw new Error(
           responseData.ResponseStatus?.MESSAGE || 'Upload failed',
@@ -529,12 +528,12 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     if (isPlayingAudio) {
       try {
         // Stop track player
-        // await TrackPlayerService.stop();
+        await TrackPlayerService.stop();
 
         // Clear progress interval
         if (progressIntervalRef.current) {
-          // clearInterval(progressIntervalRef.current);
-          // progressIntervalRef.current = null;
+            clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
         }
 
         setIsPlayingAudio(false);
@@ -550,51 +549,51 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     try {
 
       // Setup track player if not already done
-      // await TrackPlayerService.setupPlayer();
+      await TrackPlayerService.setupPlayer();
 
       // Wait a moment for setup to complete
       await new Promise(resolve => setTimeout(() => resolve(undefined), 200));
 
       // Reset any existing tracks
-      // await TrackPlayerService.stop();
+      await TrackPlayerService.stop();
 
       // Wait a moment for reset to complete
       await new Promise(resolve => setTimeout(() => resolve(undefined), 200));
 
       // Add track to player
-      // await TrackPlayerService.addTrack(audioUrl, 'Audio Recording');
+      await TrackPlayerService.addTrack(audioUrl, 'Audio Recording');
 
       // Wait a moment for track to be loaded
       await new Promise(resolve => setTimeout(() => resolve(undefined), 500));
 
       // Get duration
-      // const duration = await TrackPlayerService.getDuration();
+      const duration = await TrackPlayerService.getDuration();
       setAudioDuration(duration);
 
       // Start playing  
-      // await TrackPlayerService.play();
+      await TrackPlayerService.play();
       setIsPlayingAudio(true);
 
       // Start progress tracking
       progressIntervalRef.current = setInterval(async () => {
         try {
-          // const position = await TrackPlayerService.getPosition();
-          // const currentDuration = await TrackPlayerService.getDuration();
+          const position = await TrackPlayerService.getPosition();
+          const currentDuration = await TrackPlayerService.getDuration();
 
-          // setAudioCurrentTime(position);
-          // const progress = currentDuration > 0 ? (position / currentDuration) * 100 : 0;
-          // setAudioProgress(progress);
+          setAudioCurrentTime(position);
+          const progress = currentDuration > 0 ? (position / currentDuration) * 100 : 0;
+          setAudioProgress(progress);
 
           // Check if playback finished
-          // if (position >= currentDuration) {
-          if (progressIntervalRef.current) {
-            // clearInterval(progressIntervalRef.current);
-            // progressIntervalRef.current = null;
+          if (position >= currentDuration) {
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
           }
           setIsPlayingAudio(false);
           setAudioProgress(0);
           setAudioCurrentTime(0);
-          // }
+          }
         } catch (error) {
         }
       }, 100);
@@ -759,6 +758,20 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     }
   }
 
+  const updateAudioFile = (audioFile: any) => {
+    const uniqueId = selectedDoctor?.items[0].ItemUniqueId;
+    const updatedCardArray = [...CardArray];
+    const index = updatedCardArray.findIndex((item: any) => item.ItemUniqueId == uniqueId);
+    if(index != -1) {
+      updatedCardArray[index] = {
+        ...updatedCardArray[index],
+        AudioDescription: audioFile,
+      };
+     
+      dispatch(addCardItem(updatedCardArray));
+    }
+  }
+
   // Effect to monitor Redux updates
   useEffect(() => {
     if (pendingUpdate) {
@@ -794,6 +807,12 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     }
 
     const response = await bookingService.updateOrderMainBeforePayment(payload);
+
+    console.log('response', response);
+    if(response == ""){
+      Alert.alert("خطأ في الخادم الداخلي");
+      return;
+    }
 
     if (response.ResponseStatus.STATUSCODE == 200) {
       dispatch(setApiResponse(response.Data))
@@ -1339,7 +1358,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         </TouchableOpacity>
       </View>
 
-      <FullScreenLoader visible={isLoading} />
+      <FullScreenLoader visible={isLoading || isUploading} />
     </View>
   )
 }

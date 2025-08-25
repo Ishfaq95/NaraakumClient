@@ -107,6 +107,7 @@ interface ServiceProvider {
   ServiceServe: any[];
   slots?: any[];
   OrganizationServiceIds: string;
+  ServicePrice: string;
 }
 
 interface ServiceProviderCardProps {
@@ -243,6 +244,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           "OrganizationServiceId": provider.OrganizationServiceIds,
           "CatNationalityId": user?.CatNationalityId,
           "ServiceCharges": provider.Prices,
+          "PriceswithTax": provider.PriceswithTax,
           "ServicePrice": provider.Prices,
         };
       } else {
@@ -252,6 +254,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           "CatServiceId": getServiceId?.Id || 0,
           "ServiceCharges": selectedPrice,
           "OrganizationServiceId": orgSpecilityID,
+          "PriceswithTax": provider.PriceswithTax,
           "ServicePrice": selectedPrice,
         };
       }
@@ -495,6 +498,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             "OrganizationServiceId": provider.OrganizationServiceIds,
             "OrganizationId": provider.OrganizationId,
             "ServiceCharges": provider.Prices,
+            "PriceswithTax": provider.PriceswithTax,
             "ServicePrice": provider.Prices,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
@@ -510,6 +514,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             "OrganizationServiceId": orgSpecilityID,
             "OrganizationId": provider.OrganizationId,
             "ServiceCharges": selectedPrice,
+            "PriceswithTax": provider.PriceswithTax,
             "ServicePrice": selectedPrice,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
@@ -551,6 +556,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             "OrganizationServiceId": serviceOrgId,
             "OrganizationId": provider?.OrganizationId,
             "ServiceCharges": servicePrice,
+            "PriceswithTax": provider.PriceswithTax,
             "ServicePrice": servicePrice,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),

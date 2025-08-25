@@ -347,7 +347,7 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
       "CatServiceId": item.CatServiceId,
       "CatCategoryTypeId": item.CatCategoryTypeId,
       "OrganizationServiceId": item.OrganizationServiceId,
-      "ServiceCharges": item.ServiceCharges,
+      "ServiceCharges": item.CatNationalityId == "213" ? item.ServiceCharges : item.PriceswithTax,
       "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId || item.ServiceProviderloginInfoId,
       "CatSpecialtyId": item.CatSpecialtyId,
       "OrganizationSpecialtiesId": 0,
@@ -370,6 +370,7 @@ export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) =
   
 
   const payload = CardArray.map((item: any) => {
+    console.log('item', item);
     let schedulingDate = item.SchedulingDate;
     let schedulingTime = item.SchedulingTime;
     if(schedulingDate.includes("T")){
@@ -388,7 +389,7 @@ export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) =
       "CatServiceId": item.CatServiceId,
       "CatCategoryTypeId": item.CatCategoryTypeId,
       "OrganizationServiceId": item.OrganizationServiceId,
-      "ServiceCharges": item.ServiceCharges,
+      "ServiceCharges":item.CatNationalityId == "213" ? item.ServicePrice : item.ServiceCharges,
       "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId,
       "CatSpecialtyId": item.CatSpecialtyId,
       "OrganizationSpecialtiesId": item.OrganizationSpecialtiesId || 0,
@@ -400,6 +401,7 @@ export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) =
       "AvailabilityId": item.AvailabilityId,
       "PatientUserProfileInfoId": item.PatientUserProfileInfoId,
       "TextDescription": item.TextDescription,
+      "AudioDescription": item.AudioDescription,
       "OrderAddress": item.Address,
       "OrderAddressArea": item.Area,
       "OrderAddressGoogleLocation": item.GoogleLocation,
