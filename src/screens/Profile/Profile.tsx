@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList,SafeAreaView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome5';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -17,7 +17,6 @@ import { bookingService } from '../../services/api/BookingService';
 import { RootState } from '../../shared/redux/store';
 import { globalTextStyles } from '../../styles/globalStyles';
 import { profileService } from '../../services/api/ProfileService';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const menuItems = [
   { label: 'حسابي', icon: <Icon name="person" size={20} color="#239EA0" />, key: 'account', route: ROUTES.updateProfile },
@@ -124,7 +123,7 @@ const ProfileScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
+    flex: 1,
     backgroundColor: '#F5F5F5',
   },
   headerTitle: {

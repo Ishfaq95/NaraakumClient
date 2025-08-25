@@ -1,8 +1,7 @@
-import { View, Text } from 'react-native'
+import { View, Text, SafeAreaView } from 'react-native'
 import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { useNavigation } from '@react-navigation/native';
 import ChatScreen from './ChatSceen';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import WebSocketService from '../../components/WebSocketService';
 

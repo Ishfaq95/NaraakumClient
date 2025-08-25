@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Button, StyleSheet, TouchableOpacity, Text, Modal, Image } from 'react-native';
+import { View, Button, StyleSheet, TouchableOpacity, Text, Modal, Image, SafeAreaView } from 'react-native';
 import Stepper from '../../components/Stepper';
 import DoctorListing from '../../components/bookingSteps/DoctorListing';
 import ReviewOrder from '../../components/bookingSteps/ReviewOrder';
@@ -17,7 +17,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { bookingService } from '../../services/api/BookingService';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const BookingScreen = ({ navigation, route }: any) => {
   const { t } = useTranslation();

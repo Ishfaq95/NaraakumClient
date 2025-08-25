@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, FlatList,SafeAreaView, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid, ScrollView } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -20,7 +20,6 @@ import { MediaBaseURL } from '../../shared/utils/constants';
 // @ts-ignore
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const BeneficiariesScreen = () => {
   const { t } = useTranslation();

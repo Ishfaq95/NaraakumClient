@@ -6,6 +6,7 @@ import {
   useWindowDimensions,
   Platform,
   FlatList,
+  SafeAreaView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
@@ -32,7 +33,6 @@ import CustomBottomSheet from '../../components/common/CustomBottomSheet';
 import { globalTextStyles } from '../../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AppointmentTrackingMap from '../../components/AppointmentTrackingMap';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 export interface Appointment {
   CardNumber: string | null;

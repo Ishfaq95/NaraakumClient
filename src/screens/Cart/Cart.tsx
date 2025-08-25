@@ -1,5 +1,5 @@
 import Header from "../../components/common/Header";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList,SafeAreaView, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
 import { removeCardItem, clearCardItems, addCardItem, setSelectedUniqueId } from "../../shared/redux/reducers/bookingReducer";
@@ -13,7 +13,6 @@ import { globalTextStyles } from "../../styles/globalStyles";
 import { convert24HourToArabicTime, generatePayloadforOrderMainBeforePayment, generateUniqueId } from "../../shared/services/service";
 import FullScreenLoader from "../../components/FullScreenLoader";
 import { convertUTCToLocalDateTime } from "../../utils/timeUtils";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const CartScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
@@ -279,7 +278,7 @@ const CartScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
+    flex: 1,
     backgroundColor: '#F5F5F5',
   },
   content: {

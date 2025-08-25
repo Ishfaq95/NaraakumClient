@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, PermissionsAndroid, Platform, TouchableWithoutFeedback, Keyboard, Share } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity,SafeAreaView, ScrollView, TextInput, Alert, PermissionsAndroid, Platform, TouchableWithoutFeedback, Keyboard, Share } from 'react-native';
 import * as DocumentPicker from '@react-native-documents/picker';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
@@ -24,7 +24,6 @@ import { globalTextStyles, CAIRO_FONT_FAMILY } from '../../styles/globalStyles';
 import { profileService } from '../../services/api/ProfileService';
 import Header from '../../components/common/Header';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomBottomSheet from '../../components/common/CustomBottomSheet';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Dropdown from '../../components/common/Dropdown';

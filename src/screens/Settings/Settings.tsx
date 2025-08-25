@@ -1,6 +1,6 @@
 import Header from "../../components/common/Header";
 import { useTranslation } from "react-i18next";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList,SafeAreaView, TouchableOpacity } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import CustomBottomSheet from "../../components/common/CustomBottomSheet";
@@ -11,7 +11,6 @@ import { settingService } from "../../services/api/settingService";
 import { useIsFocused } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const menuItems = [
   { label: 'إعداد التذكير', icon: <Ionicons name="alarm" size={20} color="#239EA0" />, key: 'reminderSetting' },
@@ -287,7 +286,7 @@ const SettingsScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
+    flex: 1,
     backgroundColor: '#F5F5F5',
   },
   headerTitle: {

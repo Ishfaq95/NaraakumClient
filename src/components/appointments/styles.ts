@@ -4,13 +4,13 @@ const windowHeight = Dimensions.get('window').height;
 
 export const styles = StyleSheet.create({
   container: {
-    // flex: 1,
+    flex: 1,
     backgroundColor: '#F5F5F5',
   },
   emptyContentContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: windowHeight - 200,
+    height: windowHeight,
   },
   contentContainer: {
     padding: 16,

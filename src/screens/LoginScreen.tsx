@@ -16,8 +16,8 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Alert,
+  SafeAreaView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Dropdown } from 'react-native-element-dropdown';
 import { parsePhoneNumber, AsYouType, isValidPhoneNumber, CountryCode } from 'libphonenumber-js';
 import GoogleIcon from '../assets/icons/GoogleIcon';
@@ -217,7 +217,7 @@ const LoginScreen = () => {
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setIsLoading(false);
-        dispatch(setUser(response.Userinfo[0]));
+        dispatch(setUser(response.Userinfo));
       } else {
         Alert.alert(
           "Error",
@@ -278,7 +278,7 @@ const LoginScreen = () => {
 
       if (response?.ResponseStatus?.STATUSCODE === 200) {
         setIsLoading(false);
-        dispatch(setUser(response.Userinfo[0]));
+        dispatch(setUser(response.Userinfo));
       } else {
         Alert.alert(
           "Error",
