@@ -5,20 +5,16 @@ import ClockIcon from '../../assets/icons/ClockIcon';
 import SettingIconSelected from '../../assets/icons/SettingIconSelected';
 import { useTranslation } from 'react-i18next';
 import CommonRadioButton from '../../components/common/CommonRadioButton';
-import PhoneNumberInput from '../../components/PhoneNumberInput';
-import { countries } from '../../utils/countryData';
 import { addCardItem, setApiResponse, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
 import { bookingService } from '../../services/api/BookingService';
 import { convert24HourToArabicTime, generatePayloadforOrderMainBeforePayment, generatePayloadforUpdateOrderMainBeforePayment, generateUniqueId } from '../../shared/services/service';
 import { useDispatch, useSelector } from 'react-redux';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import moment from 'moment';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import AudioRecorderPlayer, { AudioEncoderAndroidType, AudioSourceAndroidType, AVEncoderAudioQualityIOSType, AVEncodingOption } from 'react-native-audio-recorder-player';
 import RNFetchBlob from 'rn-fetch-blob';
-import axiosInstance from '../../Network/axiosInstance';
 import { store } from '../../shared/redux/store';
 import RNFS from 'react-native-fs';
-import { TrackPlayerService } from '../../services/TrackPlayerService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import { convertUTCToLocalDateTime } from '../../utils/timeUtils';
@@ -28,7 +24,19 @@ import { useNavigation } from '@react-navigation/native';
 import CustomPhoneInput, { COUNTRIES } from '../../components/common/CustomPhoneInput';
 import Dropdown from "../../components/common/Dropdown";
 import { profileService } from '../../services/api/ProfileService';
-import MenuItem from 'screens/meeting/Components/MenuItem';
+
+// Conditionally import TrackPlayerService only for Android
+const TrackPlayerService = Platform.OS === 'android' 
+  ? require('../../services/TrackPlayerService').TrackPlayerService 
+  : {
+    // Mock implementation for iOS
+    setupPlayer: async () => {},
+    stop: async () => {},
+    play: async () => {},
+    addTrack: async () => {},
+    getDuration: async () => 0,
+    getPosition: async () => 0,
+  };
 
 const beneficiaries = [
   { label: 'مستفيد جديد', value: 'new' },
@@ -43,13 +51,9 @@ const nationalities = [
 const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const { t } = useTranslation();
   const navigation = useNavigation();
- 
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selected, setSelected] = useState('myself');
-  const [fullNumber, setFullNumber] = useState('');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [isValidNumber, setIsValidNumber] = useState(false);
-  // const [selectedCountry, setSelectedCountry] = useState<any | undefined>(countries.find(c => c.code === 'sa'));
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [actualRecordingDuration, setActualRecordingDuration] = useState(0);
@@ -83,9 +87,9 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const [relationshipValue, setRelationshipValue] = useState('');
   const [relationshipError, setRelationshipError] = useState(false);
   const [addedBeneficiary, setAddedBeneficiary] = useState<any>(null);
-  const [pendingUpdate, setPendingUpdate] = useState<{uniqueId: string, value: string} | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<{ uniqueId: string, value: string } | null>(null);
   const [needAPICall, setNeedAPICall] = useState(false);
-  // const [relationship, setRelationship] = useState([]);
+  
   const Relation = [
     { label: 'اختر من فضلك', value: '' },
     { label: 'أب', value: '1' },
@@ -115,13 +119,13 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         ...filteredList.map((item: any) => ({ label: item.FullnameSlang, value: item.UserProfileinfoId, item: item })),
       ]
       setBeneficiariesList(modifiedList);
-      if(addedBeneficiary) {
+      if (addedBeneficiary) {
         const addedUser = modifiedList.find((item: any) => item.value == addedBeneficiary);
-        if(needAPICall){
+        if (needAPICall) {
           setNeedAPICall(false);
           updatePatientInfoInSelectedDoctor(addedUser)
         }
-        if(addedUser) {
+        if (addedUser) {
           setSelected("other")
           setBeneficiary('former')
           setSelectedBeneficiary(addedUser.value);
@@ -139,22 +143,16 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   }, [addedBeneficiary]);
 
   useEffect(() => {
-    // Request microphone permission
     requestMicrophonePermission();
 
-    // Set up audio recorder with proper settings
     audioRecorderPlayer.current.setSubscriptionDuration(0.1);
 
-    // Add record back listener for debugging
     audioRecorderPlayer.current.addRecordBackListener((e) => {
     });
 
-    // Set up audio session for better recording quality
     const setupAudioSession = async () => {
       try {
-        // Enable recording in silence mode for better audio quality
         if (Platform.OS === 'ios') {
-          // iOS specific audio session setup
         }
       } catch (error) {
       }
@@ -163,24 +161,20 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     setupAudioSession();
 
     return () => {
-      // Cleanup timer on unmount
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
-      // Cleanup audio recorder
       if (audioRecorderPlayer.current) {
         audioRecorderPlayer.current.removeRecordBackListener();
+        try {
+          audioRecorderPlayer.current.stopPlayer();
+        } catch (e) {
+        }
       }
-      // Cleanup progress interval
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
-
-      // Cleanup track player (silently handle any errors)
-      TrackPlayerService.stop().catch(() => {
-        // Silently ignore cleanup errors
-      });
     };
   }, []);
 
@@ -208,16 +202,14 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
   const handleStartRecording = async () => {
     try {
-      // Configure recording with better settings for proper metadata
       const audioSet = {
-        AudioEncoderAndroid: 'aac',
-        AudioSourceAndroid: 'mic',
-        AVEncoderAudioQualityKeyIOS: 'high',
+        AVSampleRateKeyIOS: 44100,
+        AVFormatIDKeyIOS: AVEncodingOption.aac,
+        AVEncoderAudioQualityKeyIOS: AVEncoderAudioQualityIOSType.high,
         AVNumberOfChannelsKeyIOS: 2,
-        AVFormatIDKeyIOS: 'aac',
-        OutputFormatAndroid: 'aac',
-        AudioSamplingRateAndroid: 44100,
-        AudioEncodingBitRateAndroid: 128000,
+
+        AudioEncoderAndroid: AudioEncoderAndroidType.AAC,
+        AudioSourceAndroid: AudioSourceAndroidType.MIC,
       } as any;
 
       const result = await audioRecorderPlayer.current.startRecorder(undefined, audioSet);
@@ -227,7 +219,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
       setAudioFile(null);
       setUploadedFileUrl(null);
 
-      // Start timer to track recording duration
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
@@ -252,19 +243,16 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         return;
       }
 
-      // Store the actual recording duration before resetting the timer
       const finalDuration = recordingTime;
+      setAudioDuration(finalDuration);
       setActualRecordingDuration(finalDuration);
 
       setAudioFile(audioFile);
 
-      // Reset timer display
       setRecordingTime(0);
 
-      // Wait a moment for the file to be fully written
       await new Promise<void>(resolve => setTimeout(resolve, 500));
 
-      // Automatically upload the file
       await uploadAudioFile(audioFile);
     } catch (error) {
       Alert.alert('Error', 'Failed to stop recording. Please try again.');
@@ -272,23 +260,19 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   };
 
   const uploadAudioFile = async (audioFile: any) => {
-
     if (!audioFile) {
       Alert.alert('Error', 'No audio file to upload');
       return;
     }
 
-    // Remove file:// prefix if present for file existence check
     const cleanPath = audioFile.replace('file://', '');
 
-    // Check if file exists
     const fileExists = await RNFetchBlob.fs.exists(cleanPath);
     if (!fileExists) {
       Alert.alert('Error', 'Audio file not found');
       return;
     }
 
-    // Check file size
     const fileInfo = await RNFetchBlob.fs.stat(cleanPath);
     if (fileInfo.size < 1000) { // Less than 1KB
       Alert.alert('Error', 'Audio file is too small, recording may have failed');
@@ -299,227 +283,91 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     setUploadProgress(0);
 
     try {
-      // Create form data for file upload
-      const formData = new FormData();
-
-      // Get file info and create proper filename
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-
-      // Determine file extension based on the actual file
       const fileExtension = audioFile.split('.').pop() || 'm4a';
-      // Use the actual file extension for better compatibility
       const fileName = `audio_${timestamp}.${fileExtension}`;
-
-      // Copy file to a temporary location to ensure proper file handling
       const tempFilePath = `${RNFetchBlob.fs.dirs.CacheDir}/${fileName}`;
+
       try {
         await RNFetchBlob.fs.cp(cleanPath, tempFilePath);
       } catch (copyError) {
       }
 
-      // Determine MIME type based on file extension
       const getMimeType = (ext: string) => {
         switch (ext.toLowerCase()) {
-          case 'mp3':
-            return 'audio/mpeg';
-          case 'm4a':
-            return 'audio/mp4';
-          case 'wav':
-            return 'audio/wav';
-          case 'aac':
-            return 'audio/aac';
-          default:
-            return 'audio/mpeg';
+          case 'mp3': return 'audio/mpeg';
+          case 'm4a': return 'audio/mp4';
+          case 'wav': return 'audio/wav';
+          case 'aac': return 'audio/aac';
+          default: return 'audio/mpeg';
         }
       };
 
-      // Create file object that matches backend expectations (like ChatScreen)
-      const fileData = {
-        uri: Platform.OS === 'ios' ? `file://${tempFilePath}` : tempFilePath,
-        type: getMimeType(fileExtension), // Use correct MIME type based on file extension
-        name: fileName,
-      };
+      let responseData;
 
-      // If copying failed, use the original file
-      const finalFileData = await RNFetchBlob.fs.exists(tempFilePath) ? fileData : {
-        uri: Platform.OS === 'ios' ? `file://${audioFile}` : audioFile,
-        type: getMimeType(fileExtension), // Use correct MIME type based on file extension
-        name: fileName,
-      };
+      if (Platform.OS === 'ios') {
+        const formData = new FormData();
 
-      // Append file with the exact field name expected by backend
-      formData.append('file', finalFileData);
+        const fileData = {
+          uri: `file://${tempFilePath}`,
+          type: getMimeType(fileExtension),
+          name: fileName,
+        };
 
+        formData.append('file', fileData);
+        formData.append('UserType', user?.CatUserTypeId || '1');
+        formData.append('Id', user?.Id || '0');
+        formData.append('ResourceCategory', '3');
+        formData.append('ResourceType', '4');
 
-      // Add the required fields - using same pattern as ChatScreen
-      formData.append('UserType', user?.CatUserTypeId || '1');
-      formData.append('Id', user?.Id || '0');
-      formData.append('ResourceCategory', '3'); // Try different category like ChatScreen
-      formData.append('ResourceType', '4'); // Use same as ChatScreen for file uploads
+        const url = `${MediaBaseURL}/common/upload`;
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json',
+            'Authorization': `Bearer${store.getState().root.user.mediaToken}`,
+          },
+        });
 
-      // Validate the audio file by checking its header
-      try {
-        const fileHeader = await RNFetchBlob.fs.readFile(cleanPath, 'base64');
-        const headerPreview = fileHeader.substring(0, 100);
-
-        // Check for common audio file signatures
-        if (headerPreview.startsWith('SUQz')) {
-
-        } else if (headerPreview.startsWith('ftyp')) {
-
-        } else if (headerPreview.startsWith('RIFF')) {
-
-        } else {
-
-        }
-      } catch (headerError) {
-      }
-
-      // Try to read a small portion of the file to verify it's valid
-      try {
-        const fileContent = await RNFetchBlob.fs.readFile(tempFilePath, 'base64');
-      } catch (readError) {
-      }
-
-      // Make API call to upload file using the correct endpoint with MediaBaseURL
-      const url = `${MediaBaseURL}/common/upload`;
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Accept: 'application/json',
-          Authorization: `Bearer${store.getState().root.user.mediaToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-
-        if (response.status === 504) {
-          throw new Error('Server took too long to respond. Please try again.');
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
         }
 
-        throw new Error(
-          `Upload failed with status ${response.status}: ${errorText}`,
+        responseData = await response.json();
+      } else {
+        const finalPath = await RNFetchBlob.fs.exists(tempFilePath) ? tempFilePath : cleanPath;
+
+        const response = await RNFetchBlob.fetch(
+          'POST',
+          `${MediaBaseURL}/common/upload`,
+          {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json',
+            'Authorization': `Bearer${store.getState().root.user.mediaToken}`,
+          },
+          [
+            { name: 'file', filename: fileName, type: getMimeType(fileExtension), data: RNFetchBlob.wrap(finalPath) },
+            { name: 'UserType', data: user?.CatUserTypeId || '1' },
+            { name: 'Id', data: user?.Id || '0' },
+            { name: 'ResourceCategory', data: '3' },
+            { name: 'ResourceType', data: '4' },
+          ]
         );
-      }
 
-      const responseData = await response.json();
+        responseData = JSON.parse(response.data);
+      }
 
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
         const uploadedUrl = responseData.Data?.Path || responseData.Data?.AbsolutePath;
-        const duration = formatRecordingTime(actualRecordingDuration);
-
-        // Use the updateAudioFile function to set the URL
         updateAudioFile(uploadedUrl);
-
-        // Get audio duration immediately after upload
-        try {
-          console.log('Platform.OS', Platform.OS);
-          // For iOS, we need to download the file first
-          if (Platform.OS === 'ios') {
-            const fileName = `audio_${Date.now()}.m4a`;
-            const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-            
-            // Create full URL
-            const fullUrl = uploadedUrl.startsWith('http')
-              ? uploadedUrl
-              : `${MediaBaseURL}/${uploadedUrl}`;
-              
-            // Download the file
-            const downloadResult = await RNFS.downloadFile({
-              fromUrl: fullUrl,
-              toFile: filePath,
-              background: true,
-            }).promise;
-            
-            if (downloadResult.statusCode === 200) {
-              try {
-                // Setup track player to get duration
-                await TrackPlayerService.setupPlayer();
-                
-                // Add a longer delay to ensure the file is properly loaded
-                await new Promise(resolve => setTimeout(() => resolve(undefined), 1000));
-                
-                await TrackPlayerService.addTrack(filePath, 'Audio Recording');
-                
-                // Add another delay after adding the track
-                await new Promise(resolve => setTimeout(() => resolve(undefined), 1000));
-                
-                const audioDuration = await TrackPlayerService.getDuration();
-                console.log('iOS Audio duration:', audioDuration);
-                
-                // Only update if we got a valid duration
-                if (audioDuration > 0) {
-                  setAudioDuration(audioDuration);
-                } else {
-                  // Use recording duration as fallback
-                  console.log('Using recording duration as fallback:', actualRecordingDuration);
-                  setAudioDuration(actualRecordingDuration);
-                }
-                
-                await TrackPlayerService.stop();
-              } catch (playerError) {
-                console.log('iOS player error:', playerError);
-                // Fallback to recorded duration
-                setAudioDuration(actualRecordingDuration);
-              }
-            }
-          } else {
-            // Android implementation
-            const fullUrl = uploadedUrl.startsWith('http')
-              ? uploadedUrl
-              : `${MediaBaseURL}/${uploadedUrl}`;
-            
-            try {
-              // Setup track player to get duration
-              await TrackPlayerService.setupPlayer();
-              
-              // Add a delay to ensure setup is complete
-              await new Promise(resolve => setTimeout(() => resolve(undefined), 500));
-              
-              await TrackPlayerService.addTrack(fullUrl, 'Audio Recording');
-              
-              // Add a delay after adding the track
-              await new Promise(resolve => setTimeout(() => resolve(undefined), 500));
-              
-              const audioDuration = await TrackPlayerService.getDuration();
-              console.log('Android Audio duration:', audioDuration);
-              
-              // Only update if we got a valid duration
-              if (audioDuration > 0) {
-                setAudioDuration(audioDuration);
-              } else {
-                // Use recording duration as fallback
-                console.log('Using recording duration as fallback:', actualRecordingDuration);
-                setAudioDuration(actualRecordingDuration);
-              }
-              
-              await TrackPlayerService.stop();
-            } catch (playerError) {
-              console.log('Android player error:', playerError);
-              // Fallback to recorded duration
-              setAudioDuration(actualRecordingDuration);
-            }
-          }
-        } catch (durationError) {
-          console.log('Error getting audio duration:', durationError);
-          // Fallback to recorded duration
-          setAudioDuration(actualRecordingDuration);
-        }
-
-        // Update the cart with audio description (similar to web implementation)
-        const audioDescription = `${uploadedUrl}^${duration}`;
-
-        // Optional: Show success message
-        Alert.alert('Success', 'Audio file uploaded successfully!');
       } else {
         throw new Error(
           responseData.ResponseStatus?.MESSAGE || 'Upload failed',
         );
       }
-
     } catch (error) {
       Alert.alert('Upload Failed', 'Failed to upload audio file. Please try again.');
     } finally {
@@ -541,52 +389,52 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     }
 
     try {
-      // Stop any currently playing audio
       if (isPlayingAudio) {
-        await audioRecorderPlayer.current.stopPlayer();
+        try {
+          if (Platform.OS === 'ios') {
+            // For iOS, use audioRecorderPlayer to stop
+            await audioRecorderPlayer.current.stopPlayer();
+            audioRecorderPlayer.current.removePlayBackListener();
+          } else {
+            // For Android, use TrackPlayer
+            await TrackPlayerService.stop();
+          }
+        } catch (error) {
+          console.log('Error stopping playback:', error);
+        }
+
         setIsPlayingAudio(false);
         setAudioProgress(0);
         setAudioCurrentTime(0);
+
+        // Clear interval if it exists
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+
         return;
       }
 
-      // Reset progress
       setAudioProgress(0);
       setAudioCurrentTime(0);
 
-      // Set up audio session for playback
-      try {
-        // For iOS, add a small delay to ensure audio session is ready
-        if (Platform.OS === 'ios') {
-          await new Promise(resolve => setTimeout(() => resolve(undefined), 100));
-        }
-      } catch (error) {
-      }
-
-      // Create full URL
       const fullUrl = uploadedFileUrl.startsWith('http')
         ? uploadedFileUrl
         : `${MediaBaseURL}/${uploadedFileUrl}`;
 
-      // For iOS, download the file first then use track player
       if (Platform.OS === 'ios') {
         try {
           const fileName = `audio_${Date.now()}.m4a`;
           const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
-          // Download with progress tracking
           const downloadResult = await RNFS.downloadFile({
             fromUrl: fullUrl,
             toFile: filePath,
             background: true,
-            progress: (res) => {
-
-            },
           }).promise;
 
           if (downloadResult.statusCode === 200) {
-
-            // Verify file exists and has content
             const fileExists = await RNFS.exists(filePath);
             if (!fileExists) {
               throw new Error('Downloaded file does not exist');
@@ -597,16 +445,37 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
               throw new Error('Downloaded file is too small');
             }
 
+            // Use the audio recorder player for iOS playback instead of TrackPlayer
             try {
-              await playAudioWithTrackPlayer(filePath);
-            } catch (trackPlayerError) {
+              // Set up event listeners for iOS playback
+              audioRecorderPlayer.current.addPlayBackListener((e) => {
+                if (e.currentPosition >= e.duration) {
+                  // Playback finished
+                  setIsPlayingAudio(false);
+                  setAudioProgress(0);
+                  setAudioCurrentTime(0);
+                  audioRecorderPlayer.current.removePlayBackListener();
+                } else {
+                  // Update progress
+                  setAudioCurrentTime(e.currentPosition / 1000); // Convert to seconds
+                  setAudioProgress((e.currentPosition / e.duration) * 100);
+                  setAudioDuration(e.duration / 1000); // Convert to seconds
+                }
+              });
+
+              // Start playback using audioRecorderPlayer
+              await audioRecorderPlayer.current.startPlayer(`file://${filePath}`);
+              setIsPlayingAudio(true);
+
+            } catch (playbackError) {
+              console.log('iOS playback error:', playbackError);
               setIsPlayingAudio(false);
             }
           } else {
             throw new Error(`Download failed with status: ${downloadResult.statusCode}`);
           }
-
         } catch (error) {
+          console.log('iOS audio error:', error);
           setIsPlayingAudio(false);
         }
       } else {
@@ -614,64 +483,61 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         try {
           await playAudioWithTrackPlayer(fullUrl);
         } catch (error) {
+          console.log('Android playback error:', error);
           setIsPlayingAudio(false);
         }
       }
     } catch (error) {
+      console.log('General playback error:', error);
     }
   };
 
   const stopAudio = async () => {
     if (isPlayingAudio) {
       try {
-        // Stop track player
-        await TrackPlayerService.stop();
+        if (Platform.OS === 'ios') {
+          // For iOS, use audioRecorderPlayer to stop
+          await audioRecorderPlayer.current.stopPlayer();
+          audioRecorderPlayer.current.removePlayBackListener();
+        } else {
+          // For Android, use TrackPlayer
+          await TrackPlayerService.stop();
+        }
 
-        // Clear progress interval
+        // Clear progress interval if it exists
         if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-            progressIntervalRef.current = null;
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
         }
 
         setIsPlayingAudio(false);
         setAudioProgress(0);
         setAudioCurrentTime(0);
       } catch (error) {
+        console.log('Error stopping audio:', error);
       }
     }
   };
 
   // Audio playback using react-native-track-player
   const playAudioWithTrackPlayer = async (audioUrl: string) => {
+    
     try {
-
-      // Setup track player if not already done
       await TrackPlayerService.setupPlayer();
 
-      // Wait a moment for setup to complete
       await new Promise(resolve => setTimeout(() => resolve(undefined), 200));
 
-      // Reset any existing tracks
       await TrackPlayerService.stop();
 
-      // Wait a moment for reset to complete
       await new Promise(resolve => setTimeout(() => resolve(undefined), 200));
 
-      // Add track to player
       await TrackPlayerService.addTrack(audioUrl, 'Audio Recording');
 
-      // Wait a moment for track to be loaded
       await new Promise(resolve => setTimeout(() => resolve(undefined), 500));
 
-      // Get duration
-      const duration = await TrackPlayerService.getDuration();
-      setAudioDuration(duration);
-
-      // Start playing  
       await TrackPlayerService.play();
       setIsPlayingAudio(true);
 
-      // Start progress tracking
       progressIntervalRef.current = setInterval(async () => {
         try {
           const position = await TrackPlayerService.getPosition();
@@ -686,17 +552,19 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             if (progressIntervalRef.current) {
               clearInterval(progressIntervalRef.current);
               progressIntervalRef.current = null;
-          }
-          setIsPlayingAudio(false);
-          setAudioProgress(0);
-          setAudioCurrentTime(0);
+            }
+            setIsPlayingAudio(false);
+            setAudioProgress(0);
+            setAudioCurrentTime(0);
           }
         } catch (error) {
+          console.log('Error tracking progress:', error);
         }
       }, 100);
 
       return true;
     } catch (error) {
+      console.log('TrackPlayer error:', error);
       throw error;
     }
   };
@@ -708,16 +576,13 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
 
         if (response.Cart && response.Cart.length > 0) {
-          // Convert API response to cardItems format
           const convertedCardItems = response.Cart;
 
-          // Check for existing items and replace duplicates instead of adding
           setShowGroupedArray([]);
           const existingCardItems: any[] = [];
           const updatedCardItems = [...existingCardItems];
 
           convertedCardItems.forEach((newItem: any) => {
-            // Find if item already exists by OrderDetailId and OrderId
             const existingIndex = updatedCardItems.findIndex((existingItem: any) =>
               existingItem.OrderDetailId === newItem.OrderDetailId &&
               existingItem.OrderId === newItem.OrderId
@@ -729,23 +594,21 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
               newItem.SchedulingDate = startTime.localDate;
               newItem.SchedulingTime = startTime.localTime;
               newItem.SchedulingEndTime = endTime.localTime;
-              // Replace existing item with new one
               updatedCardItems[existingIndex] = newItem;
             } else {
-              // Add new item if it doesn't exist
               const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
               const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
               newItem.SchedulingDate = startTime.localDate;
               newItem.SchedulingTime = startTime.localTime;
               newItem.SchedulingEndTime = endTime.localTime;
 
-              if(newItem.PatientUserProfileInfoId != "0") {
+              if (newItem.PatientUserProfileInfoId != "0") {
                 const newItemObject = {
                   ...newItem,
                   "ItemUniqueId": newItem.ItemUniqueId ? newItem.ItemUniqueId : generateUniqueId()
                 }
                 updatedCardItems.push(newItemObject);
-              }else{
+              } else {
                 const newItemObject = {
                   ...newItem,
                   "ItemUniqueId": newItem.ItemUniqueId ? newItem.ItemUniqueId : generateUniqueId(),
@@ -755,11 +618,10 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
                 updatedCardItems.push(newItemObject);
               }
 
-              
+
             }
           });
 
-          // Dispatch the updated array
           const groupedArray: any = groupArrayByUniqueIdAsArray(updatedCardItems);
           setShowGroupedArray(groupedArray);
 
@@ -825,7 +687,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             <Text style={[styles.serviceName, selectedIndex === index && { color: '#fff' }]}>{name}</Text>
           </View>
         </TouchableOpacity>
-        {/* Arrow below the tag */}
         {selectedIndex === index && <View style={[styles.arrowIndicatorSimple]}>
           <Text style={styles.arrowText}>▼</Text>
         </View>}
@@ -834,13 +695,13 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   }
 
   const updatePatientInfoInSelectedDoctor = (selectedItem: any) => {
-    if(selectedItem.value == "0") {
+    if (selectedItem.value == "0") {
       return;
     }
     const uniqueId = selectedDoctor?.items[0].ItemUniqueId;
     const updatedCardArray = [...CardArray];
     const index = updatedCardArray.findIndex((item: any) => item.ItemUniqueId == uniqueId);
-    if(index != -1) {
+    if (index != -1) {
       updatedCardArray[index] = {
         ...updatedCardArray[index],
         PatientUserProfileInfoId: selectedItem.value,
@@ -857,23 +718,17 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
   // Restore the original updateAudioFile function
   const updateAudioFile = (audioFile: any) => {
-    // Store the URL for later use
     setUploadedFileUrl(audioFile);
-    
-    // We'll get the duration when playing, as immediate duration detection is unreliable
-    // Just set a placeholder duration based on the recording time
-    setAudioDuration(actualRecordingDuration);
-    
-    // Update the Redux store
+
     const uniqueId = selectedDoctor?.items[0].ItemUniqueId;
     const updatedCardArray = [...CardArray];
     const index = updatedCardArray.findIndex((item: any) => item.ItemUniqueId == uniqueId);
-    if(index != -1) {
+    if (index != -1) {
       updatedCardArray[index] = {
         ...updatedCardArray[index],
         AudioDescription: audioFile,
       };
-      
+
       dispatch(addCardItem(updatedCardArray));
     }
   };
@@ -883,12 +738,12 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     if (pendingUpdate) {
       // Check if the update has been applied to Redux state
       const updatedItem = CardArray.find((item: any) => item.ItemUniqueId === pendingUpdate.uniqueId);
-      
+
       if (updatedItem && updatedItem.PatientUserProfileInfoId === pendingUpdate.value) {
         // Redux state has been updated
         console.log('Redux updated successfully:', CardArray);
         updatePatientInfoInOrder();
-        
+
         // Clear the pending update
         setPendingUpdate(null);
       }
@@ -915,7 +770,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     const response = await bookingService.updateOrderMainBeforePayment(payload);
 
     console.log('response', response);
-    if(response == ""){
+    if (response == "") {
       Alert.alert("خطأ في الخادم الداخلي");
       return;
     }
@@ -1042,22 +897,22 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleSaveBeneficiary = async () => {
-    if(beneficiaryName == "") {
+    if (beneficiaryName == "") {
       setNameError(true);
       return;
     }
-    if(relationshipValue == "") {
+    if (relationshipValue == "") {
       setRelationshipError(true);
       return;
     }
-    if(nationality == "citizen") {
-      if(idNumber == "") {
+    if (nationality == "citizen") {
+      if (idNumber == "") {
         setIdNumberError(true);
         return;
       }
     }
 
-    
+
     const Payload = {
       "FullNamePlang": beneficiaryName,
       "FullNameSlang": beneficiaryName,
@@ -1072,30 +927,33 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     console.log('check passed', Payload);
     const response = await bookingService.addBeneficiary(Payload)
 
-    if(response.StatusCode.STATUSCODE == 3008) {
+    if (response.StatusCode.STATUSCODE == 3008) {
       const addedUser = response?.Userinfo[0]
       setNeedAPICall(true);
       setAddedBeneficiary(addedUser.Id)
     }
   }
 
+  const getAudioDuration = async () => {
+  }
+
   useEffect(() => {
-    if(selectedDoctor) {
+    if (selectedDoctor) {
       const mySelfOrOther = selectedDoctor.items[0].PatientUserProfileInfoId == user.UserProfileInfoId ? 'myself' : 'other';
       setSelected(mySelfOrOther);
-      if(mySelfOrOther == 'other') {
+      setUploadedFileUrl(selectedDoctor.items[0].AudioDescription)
+      if (mySelfOrOther == 'other') {
         setBeneficiary('former')
         setSelectedBeneficiary(selectedDoctor.items[0].PatientUserProfileInfoId)
         setSelectedBeneficiaryItem(beneficiariesList.find((item: any) => item.value == selectedDoctor.items[0].PatientUserProfileInfoId))
       }
-      
+
     }
   }, [selectedDoctor]);
 
   return (
     <View style={styles.container}>
       <View style={{ height: 120, width: "100%", alignItems: "flex-start", backgroundColor: "#e4f1ef" }}>
-        {/* Doctor tags */}
         <FlatList
           data={showGroupedArray}
           renderItem={renderDoctorTag}
@@ -1108,7 +966,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
       </View>
 
       {selectedDoctor?.uniqueId && <ScrollView style={{ flex: 1, marginBottom: 60 }}>
-        {/* Details card for selected doctor */}
         {
           selectedDoctor?.items?.map((item: any, index: number) => {
             let displayDate = '';
@@ -1134,7 +991,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
                   }
                   <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>1</Text></View>
                 </View>
-                {/* Session info with icons */}
                 <View style={styles.sessionInfoDetailsContainer}>
                   <View style={styles.sessionInfoDetailItem}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -1248,7 +1104,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
                     // disabled={relationshipValue === ''}
                     onChange={(value: string | number) => {
                       setRelationshipValue(value.toString());
-                      if(relationshipError) setRelationshipError(false);
+                      if (relationshipError) setRelationshipError(false);
                     }}
                     placeholder=""
                   />
@@ -1276,7 +1132,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
                   <Text style={styles.label}>رقم الهوية</Text>
                   <TextInput style={[styles.input, idNumberError && { borderColor: 'red', borderWidth: 1, borderRadius: 8 }]} value={idNumber} onChangeText={(text) => {
                     setIdNumber(text);
-                    if(idNumberError) setIdNumberError(false);
+                    if (idNumberError) setIdNumberError(false);
                   }} placeholder="رقم الهوية" keyboardType="numeric" />
                 </View>}
                 <TouchableOpacity onPress={handleSaveBeneficiary} style={{ width: "100%", backgroundColor: "#23a2a4", paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
@@ -1347,7 +1203,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           shadowRadius: 4,
           elevation: 1,
         }}>
-          {/* Play/Pause Button */}
           <TouchableOpacity
             onPress={isPlayingAudio ? stopAudio : playUploadedAudio}
             style={{ marginRight: 12 }}
@@ -1361,12 +1216,10 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             />
           </TouchableOpacity>
 
-          {/* Time and Progress */}
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
             <Text style={{ color: '#888', fontSize: 15, fontVariant: ['tabular-nums'], minWidth: 60 }}>
-              {formatTime(audioCurrentTime)} / {formatTime(audioDuration)}
+              {Platform.OS == 'ios' ? `${formatTime(audioCurrentTime)} / ${formatTime(audioDuration)}` : `${formatTime(audioDuration)} / ${formatTime(audioCurrentTime)}`}
             </Text>
-            {/* Progress Bar */}
             <View style={{ flex: 1, height: 4, backgroundColor: '#e0e0e0', borderRadius: 2, marginHorizontal: 10 }}>
               <View
                 style={{
@@ -1413,23 +1266,6 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
               {isRecording ? `إيقاف التسجيل (${formatRecordingTime(recordingTime)})` : "بدء التسجيل"}
             </Text>
           </TouchableOpacity>
-
-          {audioFile && !uploadedFileUrl && !isUploading && (
-            <View style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: "#f0f8f0",
-              borderRadius: 8,
-              paddingVertical: 8,
-              paddingHorizontal: 18,
-              marginTop: 8
-            }}>
-              <Text style={{ fontSize: 16, color: "#4CAF50", marginLeft: 6 }}>✅</Text>
-              <Text style={{ color: "#4CAF50", fontWeight: "bold", fontSize: 14 }}>
-                تم حفظ التسجيل بنجاح
-              </Text>
-            </View>
-          )}
 
           {isUploading && (
             <View style={{
