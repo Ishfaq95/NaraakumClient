@@ -253,13 +253,14 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
       await new Promise<void>(resolve => setTimeout(resolve, 500));
 
-      await uploadAudioFile(audioFile);
+      await uploadAudioFile(audioFile, finalDuration);
     } catch (error) {
       Alert.alert('Error', 'Failed to stop recording. Please try again.');
     }
   };
 
-  const uploadAudioFile = async (audioFile: any) => {
+  const uploadAudioFile = async (audioFile: any, audioDuration: number) => {
+
     if (!audioFile) {
       Alert.alert('Error', 'No audio file to upload');
       return;
@@ -302,9 +303,9 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           default: return 'audio/mpeg';
         }
       };
-
+      
       let responseData;
-
+      
       if (Platform.OS === 'ios') {
         const formData = new FormData();
 
@@ -330,12 +331,12 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             'Authorization': `Bearer${store.getState().root.user.mediaToken}`,
           },
         });
-
+        
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
         }
-
+        
         responseData = await response.json();
       } else {
         const finalPath = await RNFetchBlob.fs.exists(tempFilePath) ? tempFilePath : cleanPath;
@@ -359,15 +360,21 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
 
         responseData = JSON.parse(response.data);
       }
-
+      
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
         const uploadedUrl = responseData.Data?.Path || responseData.Data?.AbsolutePath;
-        updateAudioFile(uploadedUrl);
+        
+        // Format the URL with the duration using ^ as separator
+        const formattedUrl = `${uploadedUrl}^${audioDuration}`;
+        
+        // Update the audio file with the formatted URL
+        updateAudioFile(formattedUrl);
       } else {
         throw new Error(
           responseData.ResponseStatus?.MESSAGE || 'Upload failed',
         );
       }
+
     } catch (error) {
       Alert.alert('Upload Failed', 'Failed to upload audio file. Please try again.');
     } finally {
@@ -716,20 +723,32 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     }
   }
 
-  // Restore the original updateAudioFile function
+  // Update the updateAudioFile function to handle URL with duration
   const updateAudioFile = (audioFile: any) => {
-    setUploadedFileUrl(audioFile);
+    // Extract the URL part from the audioFile (which has format "url^duration")
+    const audioUrl = getAudioUrl(audioFile);
+    
+    // Set the URL for playback
+    setUploadedFileUrl(audioUrl);
+    
+    // Get the duration from the audioFile
+    const duration = getAudioDuration(audioFile);
+    setAudioDuration(duration);
 
+    // Update the Redux store with the full audioFile string (URL^duration)
     const uniqueId = selectedDoctor?.items[0].ItemUniqueId;
     const updatedCardArray = [...CardArray];
     const index = updatedCardArray.findIndex((item: any) => item.ItemUniqueId == uniqueId);
     if (index != -1) {
       updatedCardArray[index] = {
         ...updatedCardArray[index],
-        AudioDescription: audioFile,
+        AudioDescription: audioFile, // Store the full string with URL and duration
       };
-
+      
       dispatch(addCardItem(updatedCardArray));
+      
+      // Show success message after updating Redux
+      Alert.alert('Success', 'Audio file uploaded successfully!');
     }
   };
 
@@ -934,22 +953,61 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     }
   }
 
-  const getAudioDuration = async () => {
+  const getAudioDuration = (audioUrl: string): number => {
+    const duration = audioUrl.split('^')[1];
+    if (duration) {
+      return parseInt(duration);
+    }
+    
+    return 0;
+  };
+
+  const getAudioUrl = (audioUrl: string): string => {
+    const audioUrlValue = audioUrl.split('^')[0];
+    if (audioUrlValue) {
+      return audioUrlValue;
+    }
+    return '';
   }
 
   useEffect(() => {
     if (selectedDoctor) {
       const mySelfOrOther = selectedDoctor.items[0].PatientUserProfileInfoId == user.UserProfileInfoId ? 'myself' : 'other';
       setSelected(mySelfOrOther);
-      setUploadedFileUrl(selectedDoctor.items[0].AudioDescription)
+      
+      // Get audio description if available
+      const audioDescription = selectedDoctor.items[0].AudioDescription;
+      if (audioDescription) {
+        setUploadedFileUrl(getAudioUrl(audioDescription));
+        
+        // Get audio duration directly
+        const duration = getAudioDuration(audioDescription);
+        if (duration > 0) {
+          setAudioDuration(duration);
+        }
+      }
+      
       if (mySelfOrOther == 'other') {
         setBeneficiary('former')
         setSelectedBeneficiary(selectedDoctor.items[0].PatientUserProfileInfoId)
         setSelectedBeneficiaryItem(beneficiariesList.find((item: any) => item.value == selectedDoctor.items[0].PatientUserProfileInfoId))
       }
-
     }
   }, [selectedDoctor]);
+  
+  // // Add another effect to update duration when uploadedFileUrl changes
+  // useEffect(() => {
+  //   if (uploadedFileUrl) {
+  //     const fetchDuration = async () => {
+  //       const duration = await getAudioDuration(uploadedFileUrl);
+  //       if (duration > 0) {
+  //         setAudioDuration(duration);
+  //       }
+  //     };
+      
+  //     fetchDuration();
+  //   }
+  // }, [uploadedFileUrl]);
 
   return (
     <View style={styles.container}>
