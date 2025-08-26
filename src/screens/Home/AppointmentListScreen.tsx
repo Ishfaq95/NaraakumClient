@@ -320,8 +320,8 @@ const AppointmentListScreen = ({ navigation }: any) => {
       bookingId: appointment.TaskId,
       patientProfileId: appointment.PatientUserProfileInfoId,
       meetingId: appointment.VideoSDKMeetingId,
-      Name: appointment.ServiceProviderSName,
-      displayName: appointment.PatientSName,
+      Name: appointment.FullnameSlang,
+      displayName: appointment.PatientFullnameSlang,
       sessionEndTime: endTimeLocal.toISOString(),
       patientId: appointment.UserLoginInfoId,
       serviceProviderId: appointment.ServiceProviderId

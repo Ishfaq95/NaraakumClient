@@ -698,10 +698,10 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
         // Fallback to internal Downloads
         destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
         await RNFS.copyFile(filePath, destinationPath);
-        Alert.alert(
-          'File downloaded successfully',
-          'Saved to internal storage'
-        );
+        // Alert.alert(
+        //   'File downloaded successfully',
+        //   'Saved to internal storage'
+        // );
       }
     } else {
       // iOS - use Documents directory

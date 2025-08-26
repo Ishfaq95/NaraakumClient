@@ -44,7 +44,11 @@ const OrderSuccess = ({ navigation, route }: any) => {
 
         // Generate and download the invoice
          await generateAndDownloadInvoice(invoiceData);
-        
+
+         if(Platform.OS === 'ios'){
+          
+         }else{
+          
         // // Show success message
         Alert.alert(
           'تم التحميل بنجاح',
@@ -53,15 +57,18 @@ const OrderSuccess = ({ navigation, route }: any) => {
             {
               text: 'حسناً',
               onPress: () => {
-                // Navigate to appointment tab after successful download
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'MainTabNavigator', params: { screen: 'AppointmentTab' } }],
+                navigation.navigate(ROUTES.AppNavigator, {
+                  screen: ROUTES.HomeStack,
+                  params: {
+                    screen: ROUTES.AppointmentListScreen,
+                  }
                 });
               }
             }
           ]
         );
+         }
+        
         
       } else {
         Alert.alert('خطأ', 'لا توجد بيانات الفاتورة متاحة');
