@@ -411,12 +411,109 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         const uploadedUrl = responseData.Data?.Path || responseData.Data?.AbsolutePath;
         const duration = formatRecordingTime(actualRecordingDuration);
 
-        setUploadedFileUrl(uploadedUrl);
+        // Use the updateAudioFile function to set the URL
         updateAudioFile(uploadedUrl);
+
+        // Get audio duration immediately after upload
+        try {
+          console.log('Platform.OS', Platform.OS);
+          // For iOS, we need to download the file first
+          if (Platform.OS === 'ios') {
+            const fileName = `audio_${Date.now()}.m4a`;
+            const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+            
+            // Create full URL
+            const fullUrl = uploadedUrl.startsWith('http')
+              ? uploadedUrl
+              : `${MediaBaseURL}/${uploadedUrl}`;
+              
+            // Download the file
+            const downloadResult = await RNFS.downloadFile({
+              fromUrl: fullUrl,
+              toFile: filePath,
+              background: true,
+            }).promise;
+            
+            if (downloadResult.statusCode === 200) {
+              try {
+                // Setup track player to get duration
+                await TrackPlayerService.setupPlayer();
+                
+                // Add a longer delay to ensure the file is properly loaded
+                await new Promise(resolve => setTimeout(() => resolve(undefined), 1000));
+                
+                await TrackPlayerService.addTrack(filePath, 'Audio Recording');
+                
+                // Add another delay after adding the track
+                await new Promise(resolve => setTimeout(() => resolve(undefined), 1000));
+                
+                const audioDuration = await TrackPlayerService.getDuration();
+                console.log('iOS Audio duration:', audioDuration);
+                
+                // Only update if we got a valid duration
+                if (audioDuration > 0) {
+                  setAudioDuration(audioDuration);
+                } else {
+                  // Use recording duration as fallback
+                  console.log('Using recording duration as fallback:', actualRecordingDuration);
+                  setAudioDuration(actualRecordingDuration);
+                }
+                
+                await TrackPlayerService.stop();
+              } catch (playerError) {
+                console.log('iOS player error:', playerError);
+                // Fallback to recorded duration
+                setAudioDuration(actualRecordingDuration);
+              }
+            }
+          } else {
+            // Android implementation
+            const fullUrl = uploadedUrl.startsWith('http')
+              ? uploadedUrl
+              : `${MediaBaseURL}/${uploadedUrl}`;
+            
+            try {
+              // Setup track player to get duration
+              await TrackPlayerService.setupPlayer();
+              
+              // Add a delay to ensure setup is complete
+              await new Promise(resolve => setTimeout(() => resolve(undefined), 500));
+              
+              await TrackPlayerService.addTrack(fullUrl, 'Audio Recording');
+              
+              // Add a delay after adding the track
+              await new Promise(resolve => setTimeout(() => resolve(undefined), 500));
+              
+              const audioDuration = await TrackPlayerService.getDuration();
+              console.log('Android Audio duration:', audioDuration);
+              
+              // Only update if we got a valid duration
+              if (audioDuration > 0) {
+                setAudioDuration(audioDuration);
+              } else {
+                // Use recording duration as fallback
+                console.log('Using recording duration as fallback:', actualRecordingDuration);
+                setAudioDuration(actualRecordingDuration);
+              }
+              
+              await TrackPlayerService.stop();
+            } catch (playerError) {
+              console.log('Android player error:', playerError);
+              // Fallback to recorded duration
+              setAudioDuration(actualRecordingDuration);
+            }
+          }
+        } catch (durationError) {
+          console.log('Error getting audio duration:', durationError);
+          // Fallback to recorded duration
+          setAudioDuration(actualRecordingDuration);
+        }
 
         // Update the cart with audio description (similar to web implementation)
         const audioDescription = `${uploadedUrl}^${duration}`;
 
+        // Optional: Show success message
+        Alert.alert('Success', 'Audio file uploaded successfully!');
       } else {
         throw new Error(
           responseData.ResponseStatus?.MESSAGE || 'Upload failed',
@@ -758,7 +855,16 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
     }
   }
 
+  // Restore the original updateAudioFile function
   const updateAudioFile = (audioFile: any) => {
+    // Store the URL for later use
+    setUploadedFileUrl(audioFile);
+    
+    // We'll get the duration when playing, as immediate duration detection is unreliable
+    // Just set a placeholder duration based on the recording time
+    setAudioDuration(actualRecordingDuration);
+    
+    // Update the Redux store
     const uniqueId = selectedDoctor?.items[0].ItemUniqueId;
     const updatedCardArray = [...CardArray];
     const index = updatedCardArray.findIndex((item: any) => item.ItemUniqueId == uniqueId);
@@ -767,10 +873,10 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         ...updatedCardArray[index],
         AudioDescription: audioFile,
       };
-     
+      
       dispatch(addCardItem(updatedCardArray));
     }
-  }
+  };
 
   // Effect to monitor Redux updates
   useEffect(() => {

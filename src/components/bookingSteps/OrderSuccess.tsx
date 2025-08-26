@@ -39,47 +39,33 @@ const OrderSuccess = ({ navigation, route }: any) => {
 
   const handleDownloadInvoice = async () => {
     try {
-      // if (SuccessResponse && SuccessResponse.Data) {
-        const invoiceData = {
-          OrderId: '000000',
-          TitleSlangService: 'خدمة طبية',
-          TitleSlangSpecialty: '',
-          CardNumber: '',
-          TaxAmt: 0,
-          ServiceCharges: 0,
-          ServicePrice: 0,
-          ServiceProviderSName: 'مقدم الخدمة',
-          SchedulingDate: new Date().toISOString(),
-          SchedulingTime: '00:00',
-          PatientSName: 'المريض',
-          PatientPhone: '+966000000000',
-          PatientEmail: 'patient@example.com',
-        };
+      if (OrderDetail) {
+        const invoiceData = OrderDetail;
 
         // Generate and download the invoice
          await generateAndDownloadInvoice(invoiceData);
         
-        // Show success message
-        // Alert.alert(
-        //   'تم التحميل بنجاح',
-        //   'تم حفظ الفاتورة في مجلد المستندات',
-        //   [
-        //     {
-        //       text: 'حسناً',
-        //       onPress: () => {
-        //         // Navigate to appointment tab after successful download
-        //         navigation.reset({
-        //           index: 0,
-        //           routes: [{ name: 'MainTabNavigator', params: { screen: 'AppointmentTab' } }],
-        //         });
-        //       }
-        //     }
-        //   ]
-        // );
+        // // Show success message
+        Alert.alert(
+          'تم التحميل بنجاح',
+          'تم حفظ الفاتورة في مجلد المستندات',
+          [
+            {
+              text: 'حسناً',
+              onPress: () => {
+                // Navigate to appointment tab after successful download
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabNavigator', params: { screen: 'AppointmentTab' } }],
+                });
+              }
+            }
+          ]
+        );
         
-      // } else {
-      //   Alert.alert('خطأ', 'لا توجد بيانات الفاتورة متاحة');
-      // }
+      } else {
+        Alert.alert('خطأ', 'لا توجد بيانات الفاتورة متاحة');
+      }
     } catch (error) {
       console.error('Error generating invoice:', error);
       Alert.alert('خطأ', 'حدث خطأ أثناء إنشاء الفاتورة');

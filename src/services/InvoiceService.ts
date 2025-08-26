@@ -4,7 +4,8 @@ import RNFS from 'react-native-fs';
 // import Share from 'react-native-share';
 import moment from 'moment';
 import RNFetchBlob from 'rn-fetch-blob';
-import { Alert, Platform, PermissionsAndroid } from 'react-native';
+import { Alert, Platform, PermissionsAndroid, Share } from 'react-native';
+import { store } from '../shared/redux/store';
 
 interface InvoiceData {
   OrderId: string;
@@ -37,35 +38,48 @@ const convertTo12Hour = (time24: string): string => {
 };
 
 // Generate HTML for the invoice
-const generateInvoiceHTML = (data: InvoiceData): string => {
-  const invoiceNumber = `NAR-${data.OrderId}`;
-  const invoiceDate = moment().format('DD/MM/YYYY');
+const generateInvoiceHTML = (data: any): string => {
+  const invoiceNumber = `NAR-${data[0].OrderID}`;
+  const invoiceDate = moment().locale("en").format('DD/MM/YYYY');
+  const userInfo = store.getState().root.user.user;
+
+  console.log('userInfo', userInfo);
 
   // Determine payment method
   let paymentMethod = 'محفظة';
   let cardNumber = '';
 
-  if (data.CardNumber) {
-    if (data.CardNumber.startsWith('5')) {
+  if (data[0].CardNumber) {
+    if (data[0].CardNumber.startsWith('5')) {
       paymentMethod = 'Mastercard';
-      cardNumber = `xxxxxxxxxxxx${data.CardNumber.slice(-3)}`;
-    } else if (data.CardNumber.startsWith('4')) {
+      cardNumber = `xxxxxxxxxxxx${data[0].CardNumber.slice(-3)}`;
+    } else if (data[0].CardNumber.startsWith('4')) {
       paymentMethod = 'Visa';
-      cardNumber = `xxxxxxxxxxxx${data.CardNumber.slice(-3)}`;
+      cardNumber = `xxxxxxxxxxxx${data[0].CardNumber.slice(-3)}`;
     }
   }
 
-  // Format service name
-  let serviceName = `استشارة عن بعد / ${data.TitleSlangService}`;
-  if (data.TitleSlangSpecialty) {
-    serviceName += ` (${data.TitleSlangSpecialty})`;
-  }
+  // // Format service name
+  // let serviceName = `استشارة عن بعد / ${data.TitleSlangService}`;
+  // if (data.TitleSlangSpecialty) {
+  //   serviceName += ` (${data.TitleSlangSpecialty})`;
+  // }
 
-  // Format date and time
-  const dateTimeUTC = moment.utc(`${data.SchedulingDate.split('T')[0]}T${data.SchedulingTime}`);
-  const dateTimeLocal = dateTimeUTC.local();
-  const schedulingDate = dateTimeLocal.format('DD/MM/YYYY');
-  const schedulingTime = convertTo12Hour(dateTimeLocal.format('HH:mm'));
+  // // Format date and time
+  // const dateTimeUTC = moment.utc(`${data.SchedulingDate.split('T')[0]}T${data.SchedulingTime}`);
+  // const dateTimeLocal = dateTimeUTC.local();
+  // const schedulingDate = dateTimeLocal.format('DD/MM/YYYY');
+  // const schedulingTime = convertTo12Hour(dateTimeLocal.format('HH:mm'));
+
+  const calculateTotalTax = (data: any) =>{
+    let totalTax = 0;
+    data.forEach((item: any) => {
+      if(item.CatNationalityId != "213"){
+        totalTax += (parseFloat(item.ServicePrice) - parseFloat(item.ServiceCharges));
+      }
+    });
+    return totalTax;
+  }
 
   const html = `
     <!DOCTYPE html>
@@ -280,9 +294,9 @@ const generateInvoiceHTML = (data: InvoiceData): string => {
             </thead>
             <tbody>
               <tr>
-                <td>${data.PatientSName}</td>
-                <td><span dir="ltr">${data.PatientPhone}</span></td>
-                <td>${data.PatientEmail}</td>
+                <td>${userInfo.FullnameSlang}</td>
+                <td><span dir="ltr">${userInfo.CellNumber}</span></td>
+                <td>${userInfo.Email}</td>
               </tr>
             </tbody>
           </table>
@@ -301,32 +315,49 @@ const generateInvoiceHTML = (data: InvoiceData): string => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>${serviceName}</td>
-                <td>1</td>
-                <td>${data.ServiceProviderSName}</td>
-                <td align="right">
-                  <span class="date">
-                    <p style="direction: ltr;">${schedulingDate} ${schedulingTime}</p>
-                  </span>
-                </td>
-                <td>${data.ServicePrice.toString()}</td>
-                <td>${data.TaxAmt.toString()}</td>
-              </tr>
+              ${data.map((item: any, index: number) => {
+                // Format service name
+                let serviceName = item.CatCategoryID == "42" ? `استشارة عن بعد / ${item.ServiceTitleSlang}` : `${item.ServiceTitleSlang}`;
+                // if (item.TitleSlangSpecialty) {
+                //   serviceName += ` (${item.TitleSlangSpecialty})`;
+                // }
+
+                // Format date and time
+                const dateTimeUTC = moment.utc(`${item.SchedulingDate.split('T')[0]}T${item.SchedulingTime}`);
+                const dateTimeLocal = dateTimeUTC.local();
+                const schedulingDate = dateTimeLocal.locale('en').format('DD/MM/YYYY');
+                const schedulingTime = convertTo12Hour(dateTimeLocal.locale('en').format('HH:mm'));
+                const texCalculate = item.CatNationalityId == "213" ? item.ServicePrice : parseFloat(item.ServiceCharges) - parseFloat(item.ServicePrice);
+
+                return `
+                <tr>
+                  <td>${serviceName}</td>
+                  <td>1</td>
+                  <td>${item.ServiceProviderFullnameSlang}</td>
+                  <td align="right">
+                    <span class="date">
+                      <p style="direction: ltr;">${schedulingDate} ${schedulingTime}</p>
+                    </span>
+                  </td>
+                  <td>${item.ServicePrice?.toString() || 0}</td>
+                  <td>${texCalculate?.toString() || 0}</td>
+                </tr>
+                `;
+              }).join('')}
               <tr class="pt">
                 <td colspan="5">
                   <p class="text-end">الخدمات</p>
                   <p class="text-end">الضريبة (15%)</p>
                 </td>
                 <td>
-                  <p>${data.ServicePrice.toString()}</p>
-                  <p>${data.TaxAmt.toString()}</p>
+                  <p>${data.reduce((sum: number, item: InvoiceData) => sum + item.ServicePrice, 0)?.toString()}</p>
+                  <p>${calculateTotalTax(data)}</p>
                 </td>
               </tr>
               <tr>
                 <td colspan="4"></td>
                 <td colspan="1" class="bg-sub-color text-left">المجموع</td>
-                <td class="bg-sub-color total">${data.ServiceCharges.toString()}</td>
+                <td class="bg-sub-color total">${data.reduce((sum: number, item: InvoiceData) => sum + item.ServiceCharges, 0)?.toString()}</td>
               </tr>
             </tbody>
           </table>
@@ -395,24 +426,33 @@ const generateInvoiceHTML = (data: InvoiceData): string => {
 };
 
 // Generate PDF from HTML
-const generateInvoicePDF = async (data: InvoiceData): Promise<string> => {
+const generateInvoicePDF = async (data: any): Promise<string> => {
   try {
     const html = generateInvoiceHTML(data);
-    const fileName = `Naraakum_Invoice_${data.OrderId}`;
+    
+    // Add timestamp to make filename unique
+    const timestamp = new Date().getTime();
+    const fileName = `Naraakum_Invoice_${data[0].OrderID}_${timestamp}`;
+
+    console.log('Generating PDF for invoice:', fileName);
 
     const options = {
       html,
       fileName,
       directory: 'Documents',
       base64: false,
+      height: 842, // A4 height in points
+      width: 595,  // A4 width in points
+      padding: 10,
     };
 
     const file = await RNHTMLtoPDF.convert(options);
 
-    if (file.filePath) {
-      
+    if (file && file.filePath) {
+      console.log('PDF generated successfully at:', file.filePath);
       return file.filePath;
     } else {
+      console.error('Failed to generate PDF, no file path returned');
       throw new Error('Failed to generate PDF');
     }
   } catch (error) {
@@ -421,30 +461,30 @@ const generateInvoicePDF = async (data: InvoiceData): Promise<string> => {
   }
 };
 
-const downloadFIleForIOS = (url: any, fileName: any) => {
-  const { config, fs } = RNFetchBlob;
-  const DocumentDir = fs.dirs.DocumentDir; // Use DocumentDir for iOS
-  const filePath = `${DocumentDir}/${fileName}`; // Set the file path to DocumentDir for iOS
+// const downloadFIleForIOS = (url: any, fileName: any) => {
+//   const { config, fs } = RNFetchBlob;
+//   const DocumentDir = fs.dirs.DocumentDir; // Use DocumentDir for iOS
+//   const filePath = `${DocumentDir}/${fileName}`; // Set the file path to DocumentDir for iOS
 
-  // Use config to set the download path and file handling
-  config({
-    fileCache: true,
-    path: filePath, // Use the correct file path
-  })
-    .fetch('GET', url)
-    .then(res => {
-      Alert.alert(
-        'File downloaded successfully',
-        'The file is saved to your device.',
-      );
+//   // Use config to set the download path and file handling
+//   config({
+//     fileCache: true,
+//     path: filePath, // Use the correct file path
+//   })
+//     .fetch('GET', url)
+//     .then(res => {
+//       Alert.alert(
+//         'File downloaded successfully',
+//         'The file is saved to your device.',
+//       );
 
-      // Optional: Preview the document after downloading
-      RNFetchBlob.ios.previewDocument(filePath); // Preview the downloaded document on iOS
-    })
-    .catch(error => {
-      Alert.alert('File downloading error.');
-    });
-};
+//       // Optional: Preview the document after downloading
+//       RNFetchBlob.ios.previewDocument(filePath); // Preview the downloaded document on iOS
+//     })
+//     .catch(error => {
+//       Alert.alert('File downloading error.');
+//     });
+// };
 
 // Request storage permissions for Android
 const requestStoragePermission = async (): Promise<boolean> => {
@@ -475,6 +515,148 @@ const requestStoragePermission = async (): Promise<boolean> => {
   } catch (err) {
     console.warn(err);
     return false;
+  }
+};
+
+const shareFile = async (filePath: string, fileName: string) => {
+  try {
+    console.log('Sharing file from path:', filePath);
+    
+    // Ensure the file exists
+    const fileExists = await RNFetchBlob.fs.exists(filePath);
+    if (!fileExists) {
+      console.error('File does not exist at path:', filePath);
+      Alert.alert('Error', 'File does not exist. Please try again.');
+      return;
+    }
+    
+    // For iOS, we need to use the file:// protocol
+    const fileUrl = Platform.OS === 'ios' ? `file://${filePath}` : filePath;
+    
+    // Check file size
+    const fileInfo = await RNFetchBlob.fs.stat(filePath);
+    console.log('File size:', fileInfo.size, 'bytes');
+    
+    if (Platform.OS === 'ios') {
+      // On iOS, use RNFetchBlob's previewDocument for PDF files
+      try {
+        console.log('Opening PDF preview with path:', filePath);
+        await RNFetchBlob.ios.previewDocument(filePath);
+        console.log('PDF preview opened successfully');
+      } catch (previewError) {
+        console.error('Error previewing document:', previewError);
+        
+        // Fallback to share API if preview fails
+        try {
+          console.log('Falling back to Share API');
+          await Share.share({
+            url: fileUrl,
+            title: fileName,
+          });
+        } catch (shareError) {
+          console.error('Share API error:', shareError);
+          throw shareError; // Re-throw to trigger the fallback copy
+        }
+      }
+    } else {
+      // On Android, use Share API
+      await Share.share({
+        url: fileUrl,
+        title: fileName,
+        message: `Sharing ${fileName}`
+      });
+    }
+  } catch (error) {
+    console.error('Share error:', error);
+    
+    // Fallback: try to copy file to a more accessible location
+    try {
+      const { fs } = RNFetchBlob;
+      const DocumentDir = fs.dirs.DocumentDir;
+      const SharedDir = `${DocumentDir}/Shared`;
+      
+      // Create directory if it doesn't exist
+      const dirExists = await fs.exists(SharedDir);
+      if (!dirExists) {
+        console.log('Creating Shared directory');
+        await fs.mkdir(SharedDir);
+      }
+
+      // Generate unique filename to avoid conflicts
+      const timestamp = new Date().getTime();
+      const uniqueFileName = fileName.replace('.pdf', `_${timestamp}.pdf`);
+      const newPath = `${SharedDir}/${uniqueFileName}`;
+
+      console.log('Copying file to:', newPath);
+      
+      // Copy file to shared location
+      await fs.cp(filePath, newPath);
+      console.log('File copied successfully to:', newPath);
+
+      Alert.alert(
+        'File Saved',
+        'File has been saved to Documents folder. You can find it in the Files app under "On My iPhone/iPad" > "Documents" > "Shared".',
+        [
+          {
+            text: 'OK',
+            style: 'default'
+          }
+        ]
+      );
+    } catch (copyError) {
+      console.error('Copy error:', copyError);
+      Alert.alert('Error', 'Could not save file. Please try again.');
+    }
+  }
+};
+
+const downloadFIleForIOS = (url: string, fileName: string) => {
+  const { config, fs } = RNFetchBlob;
+
+  // For iOS, we'll use the Documents directory and then share the file
+  const DocumentDir = fs.dirs.DocumentDir;
+  
+  // Add timestamp to make filename unique
+  const timestamp = new Date().getTime();
+  const uniqueFileName = fileName.replace('.pdf', `_${timestamp}.pdf`);
+  const filePath = `${DocumentDir}/${uniqueFileName}`;
+  
+  console.log('Downloading to unique path:', filePath);
+
+  // Check if the URL is a local file path
+  if (url.startsWith('file://') || url.startsWith('/')) {
+    // It's already a local file, just copy it to the destination
+    const sourcePath = url.startsWith('file://') ? url.replace('file://', '') : url;
+    
+    // Copy the file to the destination
+    fs.cp(sourcePath, filePath)
+      .then(() => {
+        console.log('File copied successfully to:', filePath);
+        shareFile(filePath, uniqueFileName);
+      })
+      .catch((error) => {
+        console.error('Error copying file:', error);
+        
+        // If copy fails, try to use the original file directly
+        console.log('Attempting to use source file directly:', sourcePath);
+        shareFile(sourcePath, fileName);
+      });
+  } else {
+    // It's a remote URL, download it
+    config({
+      fileCache: true,
+      path: filePath,
+      overwrite: true, // Overwrite if file exists
+    })
+      .fetch('GET', url)
+      .then(res => {
+        console.log('File downloaded successfully to:', res.path());
+        shareFile(res.path(), uniqueFileName);
+      })
+      .catch(error => {
+        console.error('Download error:', error);
+        Alert.alert('File downloading error.', error.message || 'Unknown error');
+      });
   }
 };
 
@@ -536,17 +718,27 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
 };
 
 // Generate and download invoice
-export const generateAndDownloadInvoice = async (data: InvoiceData) => {  
+export const generateAndDownloadInvoice = async (data: any) => {  
   try {
     const filePath = await generateInvoicePDF(data);
-    const fileName = `Naraakum_Invoice_${data.OrderId}`;
-  
-    const downloadPath = await downloadFile(filePath, fileName);
     
-    return downloadPath;
+    // Extract the filename from the path
+    const pathParts = filePath.split('/');
+    const fileName = pathParts[pathParts.length - 1];
+    
+    console.log('Generated PDF at path:', filePath);
+    console.log('Using filename:', fileName);
+    
+    if (Platform.OS === 'ios') {
+      // On iOS, the filePath from RNHTMLtoPDF is already a local file path
+      downloadFIleForIOS(filePath, fileName);
+    } else {
+      await downloadFile(filePath, fileName);
+    }
+    
   } catch (error) {
     console.error('Error in generateAndDownloadInvoice:', error);
-    throw error;
+    Alert.alert('Error', 'Failed to generate invoice. Please try again.');
   }
 };
 

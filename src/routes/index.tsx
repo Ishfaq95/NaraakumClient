@@ -56,7 +56,6 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-       
       <Stack.Screen name={ROUTES.AppNavigator} component={AppNavigator} />
       <Stack.Screen name={ROUTES.AppointmentList} component={AppointmentListScreen} />
       <Stack.Screen name={ROUTES.Home} component={HomeScreen} />
