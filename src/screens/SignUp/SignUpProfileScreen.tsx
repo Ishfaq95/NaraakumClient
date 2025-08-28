@@ -12,6 +12,7 @@ import FullScreenLoader from '../../components/FullScreenLoader';
 import { authService } from '../../services/api/authService';
 import { setSignUpFlow, setUser } from '../../shared/redux/reducers/userReducer';
 import { useDispatch } from 'react-redux';
+import { profileService } from '../../services/api/ProfileService';
 
 const genders = [
     { label: 'ذكر', value: 'male' },
@@ -45,6 +46,7 @@ const SignUpProfileScreen = ({ route }: any) => {
     const [emailError, setEmailError] = useState(false)
     const [ageError, setAgeError] = useState(false)
     const [passwordNotMatchError, setPasswordNotMatchError] = useState(false)
+    const [emailValidationError, setEmailValidationError] = useState(false)
     // Password validation function
     const validatePassword = (pwd: string) => {
         // At least 8 characters, at least one uppercase, one lowercase, one number, one special character
@@ -70,9 +72,24 @@ const SignUpProfileScreen = ({ route }: any) => {
         />
     );
 
+    const getLatestUser = async (LoginId:any) => {
+        const payloadSuccessUpdateProfile = {
+          "UserlogiInfoId": LoginId
+        }
+        const responseUpdateprofile = await profileService.getUserUpdatedData(payloadSuccessUpdateProfile)
+        dispatch(setUser(responseUpdateprofile.UserDetail[0]));
+      }
+
     const handleSignUpStep2 = async () => {
         if (!email) {
             setEmailError(true)
+            return;
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setEmailValidationError(true);
             return;
         }
 
@@ -86,8 +103,21 @@ const SignUpProfileScreen = ({ route }: any) => {
             return;
         }
 
+        // Validate that ID number starts with 1 for citizens
+        if (nationality == 'citizen' && (!idNumber.startsWith('1'))) {
+            setIdNumberInputError(true);
+            return;
+        }
+
         if (password == '') {
             setPasswordError(true)
+            return;
+        }
+
+        // Password validation using the regex pattern
+        if (!validatePassword(password)) {
+            setPasswordError(true);
+            Alert.alert("خطأ", "كلمة المرور يجب أن تحتوي على الأقل على 8 أحرف، حرف كبير واحد، حرف صغير واحد، رقم واحد، وحرف خاص واحد");
             return;
         }
 
@@ -100,6 +130,14 @@ const SignUpProfileScreen = ({ route }: any) => {
             setPasswordNotMatchError(true)
             return;
         }
+
+        setPasswordNotMatchError(false)
+        setPasswordError(false)
+        setConfirmPasswordError(false)
+        setIdNumberInputError(false)
+        setEmailValidationError(false)
+        setEmailError(false)
+        setAgeError(false)
 
         try {
             setIsUploading(true);
@@ -116,8 +154,12 @@ const SignUpProfileScreen = ({ route }: any) => {
             const response = await authService.signUpStep2(payload)
 
             if (response?.ResponseStatus?.STATUSCODE == 200) {
+                if(response.StatusCode.STATUSCODE == 3002){
+                    Alert.alert("خطأ", "البريد الالكتروني موجود بالفعل");
+                    return;
+                }
                 dispatch(setSignUpFlow(true))
-                dispatch(setUser(response.Userinfo));                
+                getLatestUser(response.Userinfo.userid)
             }
         } catch (error: any) {
         } finally {
@@ -160,11 +202,12 @@ const SignUpProfileScreen = ({ route }: any) => {
                             <Text style={styles.label}>البريد الإلكتروني</Text>
                             <View style={styles.row}>
                                 <TextInput
-                                    style={[styles.input, emailError && { borderWidth: 1, borderColor: 'red' }, { flex: 1, textAlign: 'left' }]}
+                                    style={[styles.input, (emailError || emailValidationError) && { borderWidth: 1, borderColor: 'red' }, { flex: 1, textAlign: 'left' }]}
                                     value={email}
                                     onChangeText={(text) => {
                                         setEmail(text)
                                         setEmailError(false)
+                                        setEmailValidationError(false)
                                     }}
                                     placeholder="abcd@xyz.com"
                                     keyboardType="email-address"

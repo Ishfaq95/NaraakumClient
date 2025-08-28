@@ -17,6 +17,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { bookingService } from '../../services/api/BookingService';
+import { globalTextStyles } from '../../styles/globalStyles';
 
 const BookingScreen = ({ navigation, route }: any) => {
   const { t } = useTranslation();
@@ -249,9 +250,8 @@ const styles = StyleSheet.create({
     padding: 16
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000'
+    ...globalTextStyles.h3,
+    color: '#000',
   },
   headerContainer: {
     backgroundColor: '#fff',

@@ -25,7 +25,7 @@ import CustomBottomSheet from '../common/CustomBottomSheet';
 import HomeDialysisBookingScreen from '../../screens/Booking/HomeDialysisBookingScreen';
 import Dropdown from '../common/Dropdown';
 import RadioButton from './RadioButton';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
@@ -38,7 +38,7 @@ const SortBy = [
   { label: 'الأقل إلى الأعلى', value: 'Asc' },
 ];
 const { width: deviceWidth } = Dimensions.get('window');
-const minItemWidth = 48;
+const minItemWidth = 60;
 const numVisibleItems = 8; // 7 days + 1 calendar icon
 const totalMargin = CARD_MARGIN * 2 * numVisibleItems;
 const calculatedItemWidth = (deviceWidth - totalMargin) / numVisibleItems;
@@ -1108,11 +1108,10 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 1,
   },
   day: {
-    fontSize: 11,
-    color: '#333',
+    ...globalTextStyles.bodySmall,
+    color: '#333'
   },
   searchContainer: {
     flexDirection: 'row',
@@ -1140,9 +1139,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterButtonText: {
+    ...globalTextStyles.bodySmall,
     color: '#179c8e',
-    fontSize: 14,
-    fontWeight: '500',
   },
   bottomSheetBackground: {
     backgroundColor: '#fff',
@@ -1225,7 +1223,7 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   providerCard: {
     backgroundColor: '#fff',
@@ -1365,9 +1363,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
   },
   modalTitle: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    color: '#2d3a3a',
+    ...globalTextStyles.bodyMedium,
   },
   closeIcon: {
     fontSize: 22,
@@ -1378,8 +1374,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalMessage: {
-    fontSize: 16,
-    color: '#2d3a3a',
+    ...globalTextStyles.bodyMedium,
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -1396,9 +1391,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   modalButtonText: {
+    ...globalTextStyles.bodyMedium,
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 

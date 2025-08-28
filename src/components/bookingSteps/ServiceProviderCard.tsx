@@ -8,7 +8,7 @@ import { generateSlotsForDate } from '../../utils/timeUtils';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
 import { addCardItem, manageTempSlotDetail, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import { convert24HourToArabicTime } from '../../shared/services/service';
 
 interface Specialty {
@@ -289,10 +289,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         </View>
         <View style={{ width: '70%' }}>
           <Text style={styles.providerName}>{provider.FullnameSlang}</Text>
-          <View style={{ flexDirection: 'row', marginVertical: 2 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
+            <Text style={{ color: '#FFD700', fontSize: 18, marginRight: 2 }}>★</Text>
             <Text style={styles.ratingText}>{provider.AccumulativeRatingAvg.toFixed(1)}</Text>
             <Text style={[globalTextStyles.caption, { color: '#888' }]}> ({provider.AccumulativeRatingNum} تقييم)</Text>
-            <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
+
           </View>
         </View>
       </View>
@@ -307,7 +308,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         </>
         : selectedCard[0].CatLevelId == 3 ?
           <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
-            <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
+            <Text style={[styles.priceText, { textAlign: 'left' }]}>
               {isRTL ? `سعر ${Number(provider.Prices).toFixed(0)}` : `Price ${Number(provider.Prices).toFixed(0)}`}
             </Text>
           </View> :
@@ -334,7 +335,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
               if (validServices.length === 1) {
                 const service = validServices[0];
                 return (
-                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '100%', justifyContent: 'center' }}>
+                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '100%', justifyContent: 'flex-end' }}>
                     <Text style={[styles.priceText, { textAlign: isRTL ? 'right' : 'left' }]}>
                       {`${service.title}: ${Number(service.price).toFixed(0)}`}
                     </Text>
@@ -577,22 +578,22 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
   // Function to convert Arabic 12-hour time to 24-hour format
   const convertArabicTimeTo24Hour = (timeString: string): string => {
-    if (!timeString) return timeString; 
-    
+    if (!timeString) return timeString;
+
     // Remove any extra spaces and split by space
     const parts = timeString.trim().split(' ');
     if (parts.length < 2) {
       return timeString; // If no AM/PM indicator, return as is
     }
-    
+
     const timePart = parts[0]; // e.g., "2:30"
     const periodPart = parts[1]; // e.g., "ص" (ص for AM) or "م" (م for PM)
-    
+
     // Split time into hours and minutes
     const [hours, minutes] = timePart.split(':').map(Number);
-    
+
     let hour24 = hours;
-    
+
     // Convert based on Arabic period indicators
     // ص = صباح (morning/AM)
     // م = مساء (evening/PM)
@@ -608,27 +609,27 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       }
     } else {
     }
-    
+
     const result = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    
+
     return result;
   };
 
-  const getLocalReservedSlots = (ProviderId:string,Slot:any) =>{
+  const getLocalReservedSlots = (ProviderId: string, Slot: any) => {
     // Convert slot time from Arabic 12-hour to 24-hour format
     const slotStartTime24Hour = convertArabicTimeTo24Hour(Slot.start_time);
-    
-    const reservedSlots = CardArray.filter((item:any) => {
+
+    const reservedSlots = CardArray.filter((item: any) => {
       // Convert item's scheduling time to 24-hour format for comparison
       const itemTime24Hour = convertArabicTimeTo24Hour(item.SchedulingTime);
-      
-      return item.ServiceProviderUserloginInfoId == ProviderId && 
-             itemTime24Hour === slotStartTime24Hour;
+
+      return item.ServiceProviderUserloginInfoId == ProviderId &&
+        itemTime24Hour === slotStartTime24Hour;
     });
-    
+
     return reservedSlots.length > 0 ? true : false;
   }
-  
+
   const renderTimeSlots = useMemo(() => {
     return (
       <View style={styles.specialtyContainer}>
@@ -658,10 +659,10 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                 selectedSlotInfo?.slotTime === slot.start_time;
               const isPast = isPastTime(slot);
               const isDisabled = !slot.available || isPast;
-              const isReserved = getLocalReservedSlots(provider.UserId,slot);
+              const isReserved = getLocalReservedSlots(provider.UserId, slot);
               const isBooked = slot.is_booked;
 
-              if(isDisabled){
+              if (isDisabled) {
                 return null
               }
 
@@ -671,8 +672,8 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                   style={[
                     styles.timeButton,
                     isSelected ? styles.selectedTimeButton : (isDisabled && styles.disabledTimeButton,
-                    (isBooked || isReserved) && styles.bookedTimeButton),
-                    
+                      (isBooked || isReserved) && styles.bookedTimeButton),
+
                   ]}
                   onPress={() => !isDisabled && handleSlotSelect(slot)}
                   activeOpacity={0.5}
@@ -707,7 +708,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, width: '100%' }}>
         <Text style={styles.videoInfo}>استشارة طبية فيديو :</Text>
-        <Text style={{ color: '#179c8e' }}>{provider.SlotDuration} دقيقة</Text>
+        <Text style={{ color: '#179c8e', fontFamily: CAIRO_FONT_FAMILY.bold }}>{provider.SlotDuration} دقيقة</Text>
 
       </View>
       <View style={styles.divider} />
@@ -748,8 +749,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   providerName: {
+    ...globalTextStyles.bodyMedium,
     fontWeight: 'bold',
-    fontSize: 16,
     marginTop: 4,
     marginBottom: 2,
     color: '#222',
@@ -763,7 +764,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     color: '#179c8e',
-    fontWeight: '600',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
     fontSize: 16,
     marginVertical: 4,
   },
@@ -804,12 +805,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   specialtyText: {
-    color: '#222',
-    fontSize: 12,
+    ...globalTextStyles.bodySmall,
   },
   videoInfo: {
-    color: '#888',
-    fontSize: 13,
+    ...globalTextStyles.bodySmall,
     marginVertical: 4,
   },
   divider: {
@@ -819,8 +818,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   selectTimeLabel: {
-    color: '#888',
-    fontSize: 13,
+    ...globalTextStyles.bodySmall,
     marginBottom: 4,
   },
   timeButton: {

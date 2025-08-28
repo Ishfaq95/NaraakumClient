@@ -643,7 +643,7 @@ const getLatestUser = async () => {
                   value={phoneNumber}
                   onChangeText={handlePhoneNumberChange}
                   onCountryChange={handleCountryChange}
-                  placeholder="Enter phone number"
+                  placeholder="رقم الجوال"
                   error={false}
                   disabled={true}
                   initialCountry={selectedCountry}
@@ -811,7 +811,7 @@ const getLatestUser = async () => {
                 value={updatedPhoneNumber}
                 onChangeText={handlePhoneNumberUpdate}
                 onCountryChange={handleCountryUpdate}
-                placeholder="Enter phone number"
+                placeholder="رقم الجوال"
                 error={updatedPhoneNumberError}
                 initialCountry={selectedCountryUpdated}
               />

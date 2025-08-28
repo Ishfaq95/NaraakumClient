@@ -54,7 +54,7 @@ const CustomPhoneInputDemo = () => {
         value={phoneNumber}
         onChangeText={handlePhoneNumberChange}
         onCountryChange={handleCountryChange}
-        placeholder="Enter phone number"
+        placeholder="رقم الجوال"
         error={error}
         initialCountry={selectedCountry}
       />

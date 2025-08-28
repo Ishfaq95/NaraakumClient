@@ -1118,7 +1118,7 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
       </Text> */}
 
       {/* Error Message */}
-      {error && <Text style={styles.errorText}>{'رقم جوال غير صالح'}</Text>}
+      {/* {error && <Text style={styles.errorText}>{'رقم جوال غير صالح'}</Text>} */}
 
       {/* Country Selection Modal */}
       <CustomBottomSheet

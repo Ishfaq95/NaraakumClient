@@ -1078,7 +1078,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
         }
 
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>المرضى المراد حجز الجلسة لهم</Text>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>معلومات المستفيد (المريض)</Text>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', }}>
           <CommonRadioButton
@@ -1214,7 +1214,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
             value={phoneNumber}
             onChangeText={handlePhoneNumberChange}
             onCountryChange={handleCountryChange}
-            placeholder="Enter phone number"
+            placeholder="رقم الجوال"
             error={false}
             disabled={true}
             initialCountry={selectedCountry}
@@ -1225,6 +1225,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
           <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>وصف الشكوى المرضية (إختياري)</Text>
         </View>
         <View style={{ width: "100%", alignItems: "flex-start", marginBottom: 24 }}>
+          <Text style={[globalTextStyles.bodyMedium, {  color: '#333' }]}>صف شكواك كتابة (إختياري)</Text>
           <TextInput
             style={{
               width: "100%",
@@ -1235,16 +1236,17 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
               paddingHorizontal: 10,
               paddingVertical: 8,
               textAlign: "right",
-              fontSize: 15,
+              ...globalTextStyles.bodyMedium,
               backgroundColor: "#fff"
             }}
             placeholder="الوصف النصي"
             multiline
+            placeholderTextColor="#999"
             numberOfLines={4}
           />
         </View>
 
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333', textAlign: 'left', paddingVertical: 16 }]}>
+        <Text style={[globalTextStyles.bodyMedium, { color: '#333', textAlign: 'left', paddingVertical: 16 }]}>
           صف شكواك بالتسجيل الصوتي (إختياري)
         </Text>
 
@@ -1425,15 +1427,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   doctorName: {
-    fontSize: 15,
+    ...globalTextStyles.bodyMedium,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 2,
     textAlign: 'left',
   },
   serviceName: {
-    fontSize: 13,
-    color: '#666',
+    ...globalTextStyles.bodySmall,
     textAlign: 'left',
   },
   separator: {
@@ -1456,9 +1456,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   detailsHeaderText: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     fontWeight: 'bold',
-    color: '#333',
   },
   editButton: {
     backgroundColor: '#e0e0e0',
@@ -1467,8 +1466,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   editButtonText: {
-    fontSize: 16,
-    color: '#333',
+    ...globalTextStyles.bodyMedium,
   },
   selectedServiceRow: {
     flexDirection: 'row',
@@ -1496,13 +1494,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   selectedServiceText: {
-    fontSize: 15,
+    ...globalTextStyles.bodyMedium,
     color: '#23a2a4',
     fontWeight: 'bold',
   },
   sessionInfoTitle: {
-    fontSize: 15,
-    color: '#333',
+    ...globalTextStyles.bodyMedium,
     fontWeight: 'bold',
     marginTop: 16,
     marginBottom: 8,
@@ -1519,14 +1516,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sessionInfoLabel: {
-    fontSize: 13,
-    color: '#888',
+    ...globalTextStyles.bodySmall,
     marginBottom: 2,
     marginLeft: 2,
   },
   sessionInfoValue: {
-    fontSize: 15,
-    color: '#333',
+    ...globalTextStyles.bodyMedium,
     fontWeight: 'bold',
     marginTop: 2,
   },
@@ -1555,14 +1550,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#179c8e',
   },
   backButtonText: {
-    color: '#179c8e',
-    fontSize: 16,
-    fontWeight: '600',
+    ...globalTextStyles.bodyMedium,
   },
   nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    ...globalTextStyles.bodyMedium,
   },
   BottomContainer: {
     flexDirection: 'row',
@@ -1592,23 +1583,20 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   arrowText: {
-    fontSize: 20,
-    color: '#23a2a4',
-    fontWeight: 'bold',
+    ...globalTextStyles.bodyMedium,
+    color: "#23a2a4",
   },
   arrowIndicatorSimple: {
     height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -10,
+    marginTop: -6,
   },
   fieldGroup: {
     marginBottom: 12,
   },
   label: {
-    fontSize: 15,
-    color: '#222',
-    fontFamily: CAIRO_FONT_FAMILY.medium,
+    ...globalTextStyles.bodyMedium,
     marginBottom: 4,
     textAlign: 'left',
   },
@@ -1619,9 +1607,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 12,
     height: 50,
-    fontSize: 15,
-    color: '#222',
-    fontFamily: CAIRO_FONT_FAMILY.regular,
+    ...globalTextStyles.bodyMedium,
     textAlign: 'right',
   },
   row: {
@@ -1658,9 +1644,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#23a2a4',
   },
   radioLabel: {
-    fontSize: 14,
-    color: '#222',
-    fontFamily: CAIRO_FONT_FAMILY.medium,
+    ...globalTextStyles.bodySmall,
   },
   inputGroup: {
     marginBottom: 15,
@@ -1671,19 +1655,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   requiredAsterisk: {
-    color: '#FF0000',
-    fontSize: 16,
-    fontFamily: CAIRO_FONT_FAMILY.bold,
+    ...globalTextStyles.bodyMedium,
   },
   questionText: {
     ...globalTextStyles.bodyMedium,
-    color: '#333',
-    fontFamily: CAIRO_FONT_FAMILY.medium,
   },
   textInput: {
     ...globalTextStyles.bodyMedium,
-    color: '#333',
-    fontFamily: CAIRO_FONT_FAMILY.regular,
     borderWidth: 1,
     borderColor: '#E0E0E0',
     borderRadius: 8,

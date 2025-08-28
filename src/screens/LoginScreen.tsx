@@ -197,34 +197,44 @@ const LoginScreen = () => {
       setIsLoading(true);
       const googleUser = await signInWithGoogle();
 
-      const data = {
-        "FullName": googleUser.name,
-        "Username": googleUser.name,
-        "Email": googleUser.email,
-        "UniqueSocialId": googleUser.id,
-        "RegistrationPlatformId": Platform.OS === 'ios' ? 3 : 2,
-        "RegistrationTypeId": 2,
-        "CatSocialServerId": 1,
-        "CatUserTypeId": 1,
-        "CatNationalityId": 1,
-        "CellNumber": "000000000",
-        "DeviceId": "DDRT56789",
-        "DateofBirth": "1984-09-09"
-      }
+      if(googleUser){
 
-      // // Call your API to save the Google user data
-      const response = await authService.loginWithSocialMedia(data);
-
-      if (response?.ResponseStatus?.STATUSCODE === 200) {
-        setIsLoading(false);
-        dispatch(setUser(response.Userinfo));
-      } else {
+        const data = {
+          "FullName": googleUser.name,
+          "Username": googleUser.name,
+          "Email": googleUser.email,
+          "UniqueSocialId": googleUser.id,
+          "RegistrationPlatformId": Platform.OS === 'ios' ? 3 : 2,
+          "RegistrationTypeId": 2,
+          "CatSocialServerId": 1,
+          "CatUserTypeId": 1,
+          "CatNationalityId": 1,
+          "CellNumber": "000000000",
+          "DeviceId": "DDRT56789",
+          "DateofBirth": "1984-09-09"
+        }
+  
+        // // Call your API to save the Google user data
+        const response = await authService.loginWithSocialMedia(data);
+  
+        if (response?.ResponseStatus?.STATUSCODE === 200) {
+          setIsLoading(false);
+          dispatch(setUser(response.Userinfo));
+        } else {
+          Alert.alert(
+            "Error",
+            response?.ResponseStatus?.MESSAGE,
+            [{ text: "OK" }]
+          );
+        }
+      }else{
         Alert.alert(
           "Error",
-          response?.ResponseStatus?.MESSAGE,
+          "Google login failed",
           [{ text: "OK" }]
         );
       }
+
     } catch (error: any) {
       console.error('Google login error:', error);
       Alert.alert(
@@ -406,7 +416,7 @@ const LoginScreen = () => {
                       value={phoneNumber}
                       onChangeText={handlePhoneNumberChange}
                       onCountryChange={handleCountryChange}
-                      placeholder="Enter phone number"
+                      placeholder="رقم الجوال"
                       error={error}
                       initialCountry={selectedCountry}
                     />
@@ -489,7 +499,7 @@ const LoginScreen = () => {
                       styles.signUpText,
                       isLargeScreen && { fontSize: 14 }
                     ]}>{t('dont_have_an_account')}</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate(ROUTES.SignUp)}>
                       <Text style={[
                         styles.signUpLink,
                         isLargeScreen && { fontSize: 14 }

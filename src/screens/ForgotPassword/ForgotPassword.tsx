@@ -73,11 +73,13 @@ const ForgotPassword = () => {
         if (activeTab === 'email' && !emailOrUsername.trim()) {
             setEmailError(true);
             hasError = true;
+            return;
         }
 
         if (activeTab === 'mobile' && !phoneNumber.trim()) {
             setError(true);
             hasError = true;
+            return;
         }
         const digits = phoneNumber.replace(/\D/g, '');
         const fullNumber = selectedCountry.dialCode + digits;
@@ -148,7 +150,7 @@ const ForgotPassword = () => {
                                 value={phoneNumber}
                                 onChangeText={handlePhoneNumberChange}
                                 onCountryChange={handleCountryChange}
-                                placeholder="Enter phone number"
+                                placeholder="رقم الجوال"
                                 error={error}
                                 initialCountry={selectedCountry}
                             />

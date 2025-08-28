@@ -82,7 +82,9 @@ const SignUpScreen = () => {
     const [OTPForText, setOTPForText] = useState('')
     const [resentCode, setResentCode] = useState(false)
     const [userInfo,setUserInfo] = useState<any>(null)
-
+    const [otpError, setOTPError] = useState(false)
+    const [otpApiError, setOTPApiError] = useState(false)
+    const [otpLoading, setOtpLoading] = useState(false)
     const handlePhoneNumberChange = (text: string) => {
         setPhoneNumber(text);
         setError(false); // Clear error when user types
@@ -171,6 +173,10 @@ const SignUpScreen = () => {
             const response = await authService.signUpStep1(data);
 
             if (response?.ResponseStatus?.STATUSCODE == 200) {
+                if(response.StatusCode.STATUSCODE == 3020){
+                    Alert.alert("خطأ", "رقم الجوال موجود مسبقاً");
+                    return;
+                }
                 setOTPForText(fullNumber)
                 if(response.Userinfo){
                     setUserInfo(response.Userinfo)
@@ -190,6 +196,8 @@ const SignUpScreen = () => {
             console.error('Login error:', error);
             setIsLoading(false);
             // Handle login error here (show error message, etc.)
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -198,33 +206,35 @@ const SignUpScreen = () => {
             setIsLoading(true);
             const googleUser = await signInWithGoogle();
 
-            const data = {
-                "FullName": googleUser.name,
-                "Username": googleUser.name,
-                "Email": googleUser.email,
-                "UniqueSocialId": googleUser.id,
-                "RegistrationPlatformId": Platform.OS === 'ios' ? 3 : 2,
-                "RegistrationTypeId": 2,
-                "CatSocialServerId": 1,
-                "CatUserTypeId": 1,
-                "CatNationalityId": 1,
-                "CellNumber": "000000000",
-                "DeviceId": "DDRT56789",
-                "DateofBirth": "1984-09-09"
-            }
-
-            // // Call your API to save the Google user data
-            const response = await authService.loginWithSocialMedia(data);
-
-            if (response?.ResponseStatus?.STATUSCODE === 200) {
-                setIsLoading(false);
-                dispatch(setUser(response.Userinfo));
-            } else {
-                Alert.alert(
-                    "Error",
-                    response?.ResponseStatus?.MESSAGE,
-                    [{ text: "OK" }]
-                );
+            if(googleUser){
+                const data = {
+                    "FullName": googleUser.name,
+                    "Username": googleUser.name,
+                    "Email": googleUser.email,
+                    "UniqueSocialId": googleUser.id,
+                    "RegistrationPlatformId": Platform.OS === 'ios' ? 3 : 2,
+                    "RegistrationTypeId": 2,
+                    "CatSocialServerId": 1,
+                    "CatUserTypeId": 1,
+                    "CatNationalityId": 1,
+                    "CellNumber": "000000000",
+                    "DeviceId": "DDRT56789",
+                    "DateofBirth": "1984-09-09"
+                }
+    
+                // // Call your API to save the Google user data
+                const response = await authService.loginWithSocialMedia(data);
+    
+                if (response?.ResponseStatus?.STATUSCODE === 200) {
+                    setIsLoading(false);
+                    dispatch(setUser(response.Userinfo));
+                } else {
+                    Alert.alert(
+                        "Error",
+                        response?.ResponseStatus?.MESSAGE,
+                        [{ text: "OK" }]
+                    );
+                }   
             }
         } catch (error: any) {
             console.error('Google login error:', error);
@@ -311,7 +321,7 @@ const SignUpScreen = () => {
                         onPress={handleGoogleLogin}
                     >
                         <GoogleIcon width={24} height={24} style={styles.socialIcon} />
-                        <Text style={styles.socialButtonText}>{t('continue_with_google')}</Text>
+                        <Text numberOfLines={1} style={styles.socialButtonText}>{t('continue_with_google')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.socialButton, styles.appleButton]}
@@ -344,13 +354,20 @@ const SignUpScreen = () => {
 
     const HandleCloseVerifyModal = () => {
         setOtpBottomSheet(false)
+        setOTPApiError(false)
+        setOTPError(false)
+        setOtpValue('')
     }
 
-    console.log(userInfo)
-
     const HandleOtpSubmit = async () => {
+
+        if(otpValue.length < 4){
+            setOTPError(true)
+            return;
+        }
+
         try {
-            setIsLoading(true)
+            setOtpLoading(true)
             const payload = {
                 "UserId": userInfo?.userid,
                 "VerificationCode": otpValue,
@@ -360,14 +377,15 @@ const SignUpScreen = () => {
             const response = await profileService.verifyUserUpdatedData(payload)
             if (response?.StatusCode?.STATUSCODE == 3007) {
                 setOtpBottomSheet(false)
+                setOtpValue('')
                 navigation.navigate(ROUTES.SignUpProfileScreen,{userInfo:userInfo})
+            }else{
+                setOTPApiError(true)
             }
-            setOtpBottomSheet(false)
-            setOtpValue('')
 
         } catch (error) {
         } finally {
-            setIsLoading(false)
+            setOtpLoading(false)
         }
 
     }
@@ -393,7 +411,7 @@ const SignUpScreen = () => {
     return (
         <SafeAreaView style={styles.container}>
             <AuthHeader />
-            <FullScreenLoader visible={isLoading} />
+            <FullScreenLoader visible={isLoading || otpLoading} />
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardAvoidingView}>
@@ -505,7 +523,7 @@ const SignUpScreen = () => {
                 transparent={true}
                 animationType="slide"
                 statusBarTranslucent={true}
-                onRequestClose={() => setOtpBottomSheet(false)}
+                // onRequestClose={() => setOtpBottomSheet(false)}
             >
                 <SafeAreaView style={{ flex: 1, paddingBottom: 20 }}>
                     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -521,12 +539,19 @@ const SignUpScreen = () => {
                                         onClosePress={HandleCloseVerifyModal}
                                         OTPFor={OTPForText}
                                         OTPForText={"تغيير الرقم"}
-                                        onChangeText={(text) => setOtpValue(text)}
+                                        onChangeText={(text) => {
+                                            setOtpValue(text)
+                                            setOTPError(false)
+                                            setOTPApiError(false)
+                                        }}
                                         value={otpValue}
                                         OtpSubmitButton={HandleOtpSubmit}
                                         HandleResendPress={HandleOtpResendButton}
                                         resentCode={resentCode}
                                         headerText={"التحقق من رقم الجوال"}
+                                        otpError={otpError}
+                                        otpApiError={otpApiError}
+                                        isLoading={otpLoading}
                                     />
                                 </View>
                             </View>

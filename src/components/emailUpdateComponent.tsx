@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, SafeAreaView } from "react-native";
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, SafeAreaView, ActivityIndicator, Alert } from "react-native";
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { CAIRO_FONT_FAMILY } from "../styles/globalStyles";
 import PhoneNumberInput from "./PhoneNumberInput";
@@ -16,6 +16,19 @@ interface EmailUpdateProps {
 
 const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, onChangeText, value, onClosePress, inputError = false }) => {
   const inputRef = React.useRef<TextInput>(null);
+  
+  const validateAndSubmit = () => {
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!value || !emailRegex.test(value)) {
+      Alert.alert("خطأ", "الرجاء إدخال بريد إلكتروني صحيح");
+      return;
+    }
+    
+    // If email is valid, proceed with the update
+    HandleEmailUpdate();
+  };
+  
   return (
     <View style={styles.mainContainer}>
       <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -33,7 +46,7 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
       <View style={{ width: '100%', paddingHorizontal: 16 }}>
         <Text style={styles.emailTitle}>أدخل بريدك الإلكتروني الجديد</Text>
         <TouchableOpacity
-          style={[styles.inputView, inputError && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }].filter(Boolean)}
+          style={inputError ? { ...styles.inputView, borderWidth: 1, borderColor: 'red', borderRadius: 8 } : styles.inputView}
           activeOpacity={1}
           onPress={() => inputRef.current && inputRef.current.focus()}
         >
@@ -43,9 +56,11 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
             onChangeText={onChangeText}
             placeholder="البريد الالكترونى"
             style={styles.inputText}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
         </TouchableOpacity>
-        <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
+        <TouchableOpacity onPress={validateAndSubmit} style={styles.sheetButton}>
           <Text style={styles.saveBtnText}>حفظ</Text>
         </TouchableOpacity>
       </View>
@@ -87,7 +102,7 @@ export const PhoneUpdateComponent: React.FC<PhoneUpdateProps> = ({ HandleEmailUp
           onChangePhoneNumber={handlePhoneNumberChange}
           placeholder={t('mobile_number')}
           errorText={t('mobile_number_not_valid')}
-          containerStyle={[{ marginVertical: 7 }, inputError && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }]}
+          containerStyle={inputError ? { marginVertical: 7, borderWidth: 1, borderColor: 'red', borderRadius: 8 } : { marginVertical: 7 }}
         />
         <TouchableOpacity onPress={HandleEmailUpdate} style={styles.sheetButton}>
           <Text style={styles.saveBtnText}>حفظ</Text>
@@ -107,9 +122,12 @@ interface smsProps {
   OtpSubmitButton: () => void;
   HandleResendPress: () => void
   resentCode: boolean
+  otpError?: boolean
+  otpApiError?: boolean
+  isLoading?: boolean
 }
 
-export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText,headerText="", onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode }) => {
+export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText, headerText = "", onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode, otpError = false, otpApiError = false, isLoading = false }) => {
   return (
     <View style={[styles.mainContainer]}>
       <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -128,15 +146,33 @@ export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTP
         <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
         <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
         <Text style={styles.optHeaderText}>{OTPFor}</Text>
-        <TouchableOpacity onPress={onClosePress}>
-          <Text style={{ color: '#23a2a4', fontSize: 15, fontFamily: CAIRO_FONT_FAMILY.bold, textAlign: 'center' }}>{OTPForText}</Text>
-        </TouchableOpacity>
-        <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
-        <View style={styles.otpView}>
-          <TextInput value={value} onChangeText={onChangeText} placeholder="ضع الرمز" style={[styles.inputText, { textAlign: 'center', width: '100%' }]} />
+        
+        {/* Center container to position the button */}
+        <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center', marginVertical: 5 }}>
+          {/* TouchableOpacity with hitSlop to control touch area */}
+          <TouchableOpacity 
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            onPress={onClosePress}
+          >
+            <Text style={{ 
+              color: '#23a2a4', 
+              fontSize: 15, 
+              padding: 5, 
+              fontFamily: CAIRO_FONT_FAMILY.bold, 
+              textAlign: 'center',
+            }}>
+              {OTPForText}
+            </Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton}>
-          <Text style={styles.saveBtnText}>تاكيد</Text>
+        
+        <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
+        <View style={[styles.otpView, otpError && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }]}>
+          <TextInput value={value} onChangeText={onChangeText} placeholder="ضع الرمز" style={[styles.inputText, { textAlign: 'center', width: '100%' },]} />
+        </View>
+        {otpApiError && <Text style={{ color: 'red', fontSize: 12, fontFamily: CAIRO_FONT_FAMILY.bold, textAlign: 'left' }}>رمز التحقق غير صالح</Text>}
+        <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton} disabled={isLoading}>
+          {isLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>تاكيد</Text>}
         </TouchableOpacity>
         {resentCode && (
           <Text style={{ color: '#198754', fontSize: 15, fontFamily: CAIRO_FONT_FAMILY.bold, textAlign: 'center' }}>تم إعادة إرسال رمز التحقق بنجاح</Text>
@@ -539,7 +575,7 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
 
   // Custom submit handler to validate fields before calling SubmitButton
   const handleSubmit = () => {
-      if (isLoading) return; 
+    if (isLoading) return;
     let hasError = false;
     if (!nameValue) {
       setNameError(true);
@@ -554,7 +590,7 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
       hasError = true;
     }
 
-    if(nationality === 'citizen' && !idNumberValue){
+    if (nationality === 'citizen' && !idNumberValue) {
       setIdNumberError(true);
       hasError = true;
     }
@@ -617,8 +653,8 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
               keyboardType="numeric"
               value={ageValue}
               onChangeText={onChangeTextAge}
-               onFocus={() => setFocusedField('age')}
-               onBlur={() => setFocusedField('')}
+              onFocus={() => setFocusedField('age')}
+              onBlur={() => setFocusedField('')}
             />
           </TouchableOpacity>
         </View>
@@ -679,10 +715,10 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
             style={[styles.fullWidthInput]}
             placeholder="ضع رقم الهوية (إجبارى)"
             value={idNumberValue}
-             onChangeText={text => {
-            setIdNumberError(false);
-            onChangeTextIdNumber(text);
-          }}
+            onChangeText={text => {
+              setIdNumberError(false);
+              onChangeTextIdNumber(text);
+            }}
             onFocus={() => setFocusedField('idNumber')}
             onBlur={() => setFocusedField('')}
             placeholderTextColor="#d9d9d9"

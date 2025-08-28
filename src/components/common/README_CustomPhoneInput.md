@@ -24,7 +24,7 @@ const MyComponent = () => {
       value={phoneNumber}
       onChangeText={setPhoneNumber}
       onCountryChange={setSelectedCountry}
-      placeholder="Enter phone number"
+      placeholder="رقم الجوال"
       error=""
     />
   );

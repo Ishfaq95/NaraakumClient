@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { globalTextStyles } from '../../styles/globalStyles';
 
-const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialty: (specialty: any) => void, onContinueWithService: (service: any) => void}) => {
+const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpecialty: (specialty: any) => void, onContinueWithService: (service: any) => void }) => {
   const category = useSelector((state: any) => state.root.booking.category);
   const [search, setSearch] = useState('');
   const [offeredServices, setOfferedServices] = useState<any>(null);
@@ -23,12 +23,12 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
   const dispatch = useDispatch();
-  
+
   useEffect(() => {
     if (category) {
-      if(category.Id == "42" || category.Id == "32") {
-      fetchServicesAndSpecialtiesData();
-      }else{
+      if (category.Id == "42" || category.Id == "32") {
+        fetchServicesAndSpecialtiesData();
+      } else {
         fetchOfferedServicesData();
       }
     }
@@ -47,7 +47,7 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
         merged = [general, ...merged];
       }
       dispatch(setServices(offered.OfferedServices));
-      setSpecialties(merged); 
+      setSpecialties(merged);
     } catch (error) {
       console.error('Error fetching booking data:', error);
     } finally {
@@ -113,14 +113,14 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
     const uri = getSanitizedImageUrl(item.ImagePath);
     const isSvg = uri.endsWith('.svg');
     const isSelected = selectedServices.some(service => service.Id === item.Id);
-    
+
     // Clean the TitleSlang by removing all types of line breaks
     const cleanTitle = item.TitleSlang?.replace(/[\r\n]+/g, ' ').trim() || '';
-    
+
     return (
-      <TouchableOpacity 
-        onPress={() => toggleServiceSelection(item)} 
-        style={[styles.card, isSelected && styles.selectedCard]} 
+      <TouchableOpacity
+        onPress={() => toggleServiceSelection(item)}
+        style={[styles.card, isSelected && styles.selectedCard]}
         activeOpacity={0.8}
       >
         <View style={styles.row}>
@@ -128,17 +128,17 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
             {cleanTitle}
           </Text>
         </View>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-            <TouchableOpacity onPress={() => {
-              setSelectedService(item);
-              setShowServiceModal(true);
-            }}>
-              <Ionicons name="information-circle" size={16} color={isSelected ? "#fff" : "#23a2a4"} />
-            </TouchableOpacity>
-            <Text style={[globalTextStyles.caption, { color: isSelected ? "#fff" : "#2B3034", fontWeight: '500' }]}>
-              {t('service_details')}
-            </Text>
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <TouchableOpacity onPress={() => {
+            setSelectedService(item);
+            setShowServiceModal(true);
+          }}>
+            <Ionicons name="information-circle" size={16} color={isSelected ? "#fff" : "#23a2a4"} />
+          </TouchableOpacity>
+          <Text style={[globalTextStyles.caption, { color: isSelected ? "#fff" : "#2B3034", fontWeight: '500' }]}>
+            {t('service_details')}
+          </Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -146,10 +146,10 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
   const renderItem = ({ item }: { item: any }) => {
     const uri = getSanitizedImageUrl(item.ImagePath);
     const isSvg = uri.endsWith('.svg');
-    
+
     // Clean the TitleSlang by removing all types of line breaks
     const cleanTitle = item.TitleSlang?.replace(/[\r\n]+/g, ' ').trim() || '';
-    
+
     return (
       <TouchableOpacity onPress={() => onPressSpecialty(item)} style={styles.cardSpecialty} activeOpacity={0.8}>
         <View style={styles.rowSpecialty}>
@@ -180,39 +180,39 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
         onChangeText={setSearch}
       />
       <View style={{ flex: 1, paddingTop: 12 }}>
-        
-      {(category.Id == "42" || category.Id == "32") ?
-      <FlatList
-        data={filteredSpecialties}
-        renderItem={renderItem}
-        keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
-        numColumns={2}
-        columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12, columnGap: 8 }}
-        contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
-        showsVerticalScrollIndicator={false}
-      />:
-      <FlatList
-        data={filteredOfferedServices}
-        renderItem={renderSelectableItem}
-        keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
-        numColumns={1}
-        contentContainerStyle={{ paddingTop: 16, paddingBottom: 80 }}
-        showsVerticalScrollIndicator={false}
-      />}
+
+        {(category.Id == "42" || category.Id == "32") ?
+          <FlatList
+            data={filteredSpecialties}
+            renderItem={renderItem}
+            keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
+            numColumns={2}
+            columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12, columnGap: 8 }}
+            contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
+            showsVerticalScrollIndicator={false}
+          /> :
+          <FlatList
+            data={filteredOfferedServices}
+            renderItem={renderSelectableItem}
+            keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
+            numColumns={1}
+            contentContainerStyle={{ paddingTop: 16, paddingBottom: 80 }}
+            showsVerticalScrollIndicator={false}
+          />}
       </View>
-      
+
       {/* Bottom Button for Multiple Selection */}
       {!(category.Id == "42" || category.Id == "32") && (
         <View style={styles.bottomButtonContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.continueButton, selectedServices.length === 0 && styles.disabledButton]}
             onPress={handleContinuePress}
             disabled={selectedServices.length === 0}
             activeOpacity={0.8}
           >
             <Text style={styles.continueButtonText}>
-              {selectedServices.length > 0 
-                ? `متابعة (${selectedServices.length} خدمة مختارة)` 
+              {selectedServices.length > 0
+                ? `متابعة (${selectedServices.length} خدمة مختارة)`
                 : 'اختر خدمة واحدة على الأقل'
               }
             </Text>
@@ -220,7 +220,7 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
         </View>
       )}
 
-<Modal
+      <Modal
         visible={showServiceModal}
         onRequestClose={() => setShowServiceModal(false)}
         transparent={true}
@@ -248,7 +248,7 @@ const Specialties = ({onPressSpecialty, onContinueWithService}: {onPressSpecialt
           </View>
         </View>
       </Modal>
-      
+
       <FullScreenLoader visible={loading} />
     </View>
   );
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     minHeight: 54,
     maxHeight: 70,
-    
+
   },
   rowSpecialty: {
     flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row',
@@ -289,9 +289,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 16,
+    ...globalTextStyles.bodyMedium,
     color: '#2B3034',
-    fontWeight: '500',
     flex: 1,
     textAlign: 'left',
     marginHorizontal: 6,
