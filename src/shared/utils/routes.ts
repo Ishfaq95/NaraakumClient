@@ -6,6 +6,8 @@ export const ROUTES = {
     VideoCallScreen:'VideoCallScreen',
     Meeting: "Meeting_Screen",
     Login: "Login",
+    SignUp: "SignUp",
+    SignUpProfileScreen: "SignUpProfileScreen",
     AppointmentList: "AppointmentList",
     AuthWelcome: "AuthWelcome",
     ForgotPassword: "ForgotPassword",
@@ -31,6 +33,7 @@ export const ROUTES = {
 
     // Profile section
     updateProfile: "updateProfile",
+    updateProfileSignUp: "updateProfileSignUp",
     visitOrderList: "visitOrderList",
     remoteOrderList: "remoteOrderList",
     visit_consultant_log: "visit_consultant_log",

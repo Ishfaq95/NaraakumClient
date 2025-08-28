@@ -235,6 +235,50 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
   }, [serviceProviders, availability])
 
+  function mergeAvailabilityArrays(...arrays: any[]) {
+    const mergedMap = new Map();
+
+    // Process all arrays
+    arrays.forEach(array => {
+      if (!Array.isArray(array)) {
+        console.warn('Skipping non-array input:', array);
+        return;
+      }
+
+      array.forEach(item => {
+        if (!item || typeof item !== 'object') {
+          console.warn('Skipping invalid item:', item);
+          return;
+        }
+
+        // Use fullTime as unique identifier for each time slot
+        const key = item.fullTime;
+
+        if (!key) {
+          console.warn('Skipping item without fullTime:', item);
+          return;
+        }
+
+        const existingItem = mergedMap.get(key);
+
+        if (!existingItem) {
+          // First occurrence of this time slot
+          mergedMap.set(key, { ...item });
+        } else if (item.available === true && existingItem.available === false) {
+          // Replace if new item is available and existing is not
+          mergedMap.set(key, { ...item });
+        }
+        // If existing item is already available=true, keep it
+        // If both are false or both are true, keep the existing one
+      });
+    });
+
+    // Convert map back to array and sort by fullTime
+    return Array.from(mergedMap.values()).sort((a, b) => {
+      return a.fullTime.localeCompare(b.fullTime);
+    });
+  }
+
   const getSlotsWithProvider = async () => {
     setSlotsLoaded(true)
     const tempProvider: any = []
@@ -247,11 +291,25 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       const formattedDate = selectedDate.locale('en').format('YYYY-MM-DD');
 
       if (providerAvailability.length > 0) {
-        const DoctorAvailable: any = generateSlotsForDate(
-          providerAvailability[0],
-          formattedDate,
-          slotDuration,
-        );
+
+        const DoctorAvailableArray: any = []
+        providerAvailability.map((item: any) => {
+          const DoctorAvailablelocal: any = generateSlotsForDate(
+            item,
+            formattedDate,
+            slotDuration,
+          );
+          DoctorAvailableArray.push(DoctorAvailablelocal)
+        })
+
+        const DoctorAvailable: any = DoctorAvailableArray.length > 1 ? mergeAvailabilityArrays(...DoctorAvailableArray) : DoctorAvailableArray[0]
+
+
+        // const DoctorAvailable: any = generateSlotsForDate(
+        //   providerAvailability[0],
+        //   formattedDate,
+        //   slotDuration,
+        // );
 
         const tempDoctorObj = {
           ...provider,
@@ -950,18 +1008,18 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       <CustomBottomSheet
         visible={filterBottomSheetVisible}
         onClose={() => setFilterBottomSheetVisible(false)}
-        
+
         showHandle={false}
         height="50%"
       >
         <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000' }]}>فلتر</Text>
-            <TouchableOpacity onPress={() => setFilterBottomSheetVisible(false)}>
-              <AntDesign name="close" size={20} color="#000" />
-            </TouchableOpacity>
-          </View>
-        <View style={{ flex: 1, backgroundColor: '#fff',paddingHorizontal: 16,paddingTop: 10 }}>
-        
+          <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000' }]}>فلتر</Text>
+          <TouchableOpacity onPress={() => setFilterBottomSheetVisible(false)}>
+            <AntDesign name="close" size={20} color="#000" />
+          </TouchableOpacity>
+        </View>
+        <View style={{ flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 10 }}>
+
           <Dropdown
             data={SortBy}
             containerStyle={{ height: 50 }}
@@ -972,7 +1030,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             }}
             placeholder=""
           />
-          <View style={{ flexDirection: 'row', width: '100%',justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
             <RadioButton
               selected={selectServiceFilter === 'All'}
               onPress={() => setSelectServiceFilter('All')}

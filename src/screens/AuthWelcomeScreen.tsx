@@ -11,6 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { globalTextStyles } from '../styles/globalStyles';
+import { ROUTES } from '../shared/utils/routes';
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,17 +24,12 @@ const AuthWelcomeScreen = ({ navigation }: any) => {
       resizeMode="cover"
     >
       <SafeAreaView style={styles.safeArea}>
-        
-
-        
-
-        
         {/* Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity activeOpacity={0.8} style={styles.loginButton} onPress={() => navigation.navigate('Login')}>
             <Text style={styles.loginButtonText}>{t('login')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.8} style={styles.createButton} onPress={() => {}}>
+          <TouchableOpacity activeOpacity={0.8} style={styles.createButton} onPress={() => navigation.navigate(ROUTES.SignUp)}>
             <Text style={styles.createButtonText}>{t('createNewAccount')}</Text>
           </TouchableOpacity>
           

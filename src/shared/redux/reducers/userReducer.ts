@@ -12,6 +12,7 @@ interface State {
   rememberMeRedux: any;
   notificationList: any;
   unreadMessages: any;
+  signUpFlow: any;
 }
 
 const initialState = {
@@ -25,6 +26,7 @@ const initialState = {
   rememberMeRedux: null,
   notificationList: null,
   unreadMessages: 0,
+  signUpFlow: false,
 } as State;
 
 export const userReducer = createSlice({
@@ -56,9 +58,12 @@ export const userReducer = createSlice({
     },
     setUnreadMessages: (state, action) => {
       state.unreadMessages = action.payload;
+    },
+    setSignUpFlow: (state, action) => {
+      state.signUpFlow = action.payload;
     }
   },
 });
 
-export const {setTopic, setToken, setUser, setMediaToken, logout, setRememberMeRedux, setNotificationList, setUnreadMessages} = userReducer.actions;
+export const {setTopic, setToken, setUser, setMediaToken, logout, setRememberMeRedux, setNotificationList, setUnreadMessages, setSignUpFlow} = userReducer.actions;
 export default userReducer.reducer;

@@ -104,6 +104,39 @@ export const resetPassword = async (credentials: any) => {
     }
 };
 
+export const signUpStep1 = async (credentials: any) => {
+    try {
+        const response = await axiosInstance.post(
+            `patients/PatientRegistrationStep1`,
+            credentials
+        );
+        return response.data;
+    } catch (error: any) {
+        throw {
+            message: error?.response?.data?.message || 'Sign up failed',
+            status: error?.response?.status,
+            code: error?.response?.data?.code
+        };
+    }
+};
+
+export const signUpStep2 = async (credentials: any) => {
+    try {
+        const response = await axiosInstance.post(
+            `patients/PatientRegistrationStep2`,
+            credentials
+        );
+        return response.data;
+    } catch (error: any) {
+        console.log(error)
+        throw {
+            message: error?.response?.data?.message || 'Sign up failed',
+            status: error?.response?.status,
+            code: error?.response?.data?.code
+        };
+    }
+};
+
 // Export all auth related functions
 export const authService = {
     login,
@@ -111,5 +144,7 @@ export const authService = {
     deleteAccount,
     forgotPassword,
     verifyOTP,
-    resetPassword
+    resetPassword,
+    signUpStep1,
+    signUpStep2
 }; 

@@ -101,13 +101,15 @@ interface smsProps {
   onClosePress: () => void;
   OTPFor: string;
   OTPForText: string;
+  headerText?: string;
   onChangeText: (text: string) => void;
   value: string;
   OtpSubmitButton: () => void;
   HandleResendPress: () => void
+  resentCode: boolean
 }
 
-export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText, onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode }) => {
+export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText,headerText="", onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode }) => {
   return (
     <View style={[styles.mainContainer]}>
       <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -116,7 +118,7 @@ export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTP
           fontFamily: CAIRO_FONT_FAMILY.bold,
           color: '#36454F',
 
-        }}></Text>
+        }}>{headerText}</Text>
         <TouchableOpacity onPress={onClosePress}>
           <AntDesign name="close" size={24} color="#979e9eff" />
         </TouchableOpacity>

@@ -35,11 +35,14 @@ import CustomPhoneInputDemo from '../components/common/CustomPhoneInputDemo';
 import ForgotPassword from '../screens/ForgotPassword/ForgotPassword';
 import ForgotOTP from '../screens/ForgotPassword/ForgotOTP';
 import ConfirmPassword from '../screens/ForgotPassword/ConfirmPassword';
+import SignUpScreen from '../screens/SignUp/SignUpScreen';
+import SignUpProfileScreen from '../screens/SignUp/SignUpProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
 const RootNavigator = () => {
   const user = useSelector((state: any) => state.root.user.user);
+  const signUpFlow = useSelector((state: any) => state.root.user.signUpFlow);
 
   if (!user) {
     return (
@@ -47,6 +50,8 @@ const RootNavigator = () => {
         {/* <Stack.Screen name={'CustomPhoneInputDemo'} component={CustomPhoneInputDemo} /> */}
         <Stack.Screen name={ROUTES.AuthWelcome} component={AuthWelcomeScreen} />
         <Stack.Screen name={ROUTES.Login} component={LoginScreen} />
+        <Stack.Screen name={ROUTES.SignUp} component={SignUpScreen} />
+        <Stack.Screen name={ROUTES.SignUpProfileScreen} component={SignUpProfileScreen} />
         <Stack.Screen name={ROUTES.ForgotPassword} component={ForgotPassword} />
         <Stack.Screen name={ROUTES.ForgotOTP} component={ForgotOTP} />
         <Stack.Screen name={ROUTES.ConfirmPassword} component={ConfirmPassword} />
@@ -56,6 +61,7 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {signUpFlow && <Stack.Screen name={ROUTES.updateProfileSignUp} component={UpdateProfileScreen} />}
       <Stack.Screen name={ROUTES.AppNavigator} component={AppNavigator} />
       <Stack.Screen name={ROUTES.AppointmentList} component={AppointmentListScreen} />
       <Stack.Screen name={ROUTES.Home} component={HomeScreen} />

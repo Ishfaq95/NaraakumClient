@@ -21,10 +21,11 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { setHomeDialysisFilePaths } from 'shared/redux/reducers/bookingReducer';
 import CustomBottomSheet from '../../components/common/CustomBottomSheet';
 import EmailUpdateComponent, { PhoneUpdateComponent, VerificationCodeCompoent } from '../../components/emailUpdateComponent';
-import { setUser } from '../../shared/redux/reducers/userReducer';
+import { setSignUpFlow, setUser } from '../../shared/redux/reducers/userReducer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialDesignIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomPhoneInput, { COUNTRIES } from '../../components/common/CustomPhoneInput';
+import { ROUTES } from '../../shared/utils/routes';
 
 const genders = [
   { label: 'ذكر', value: 'male' },
@@ -148,8 +149,6 @@ const UpdateProfileScreen = () => {
     };
   }, [openEmailBottomSheet, openPhoneBottomSheet]);
 
-
-
   // Function to extract country code and phone number from full number
   const extractPhoneInfo = (fullNumber: string) => {
     if (!fullNumber) return { countryCode: 'SA', phoneNumber: '' };
@@ -231,7 +230,12 @@ const UpdateProfileScreen = () => {
   }, [user]);
 
   const handleBack = () => {
-    navigation.goBack();
+    if(navigation.canGoBack()){
+      navigation.goBack();
+    }else{
+      dispatch(setSignUpFlow(false))
+      navigation.navigate(ROUTES.AppNavigator)
+    }
   };
 
   const handlePhoneNumberChange = (text: string) => {
@@ -910,6 +914,7 @@ const getLatestUser = async () => {
         </SafeAreaView>
 
       </Modal>
+
       <Modal
         visible={passwordModalVisible}
         transparent={true}
