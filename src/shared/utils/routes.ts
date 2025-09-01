@@ -13,7 +13,8 @@ export const ROUTES = {
     ForgotPassword: "ForgotPassword",
     ForgotOTP: "ForgotOTP",
     ConfirmPassword: "ConfirmPassword",
-    
+    PrivacyPolicy: "PrivacyPolicy",
+    TermsAndConditions: "TermsAndConditions",
     HomeStack: "HomeStack",
     CartStack: "CartStack",
     ProfileStack: "ProfileStack",

@@ -128,6 +128,7 @@ interface smsProps {
 }
 
 export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText, headerText = "", onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode, otpError = false, otpApiError = false, isLoading = false }) => {
+  console.log("OTPFor",OTPFor)
   return (
     <View style={[styles.mainContainer]}>
       <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -145,7 +146,10 @@ export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTP
       <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
         <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
         <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
-        <Text style={styles.optHeaderText}>{OTPFor}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={[styles.optHeaderText,{fontFamily: CAIRO_FONT_FAMILY.bold}]}>{OTPFor.replace(/^\+/, '')}</Text>
+          {OTPFor.includes('+') && <Text style={[styles.optHeaderText,{fontFamily: CAIRO_FONT_FAMILY.bold}]}>+</Text>}
+        </View>
         
         {/* Center container to position the button */}
         <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center', marginVertical: 5 }}>
@@ -166,16 +170,18 @@ export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTP
           </TouchableOpacity>
         </View>
         
-        <Text style={styles.inputHeaderText}>ادخل رمز التحقق *</Text>
-        <View style={[styles.otpView, otpError && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }]}>
-          <TextInput value={value} onChangeText={onChangeText} placeholder="ضع الرمز" style={[styles.inputText, { textAlign: 'center', width: '100%' },]} />
+        <Text style={styles.inputHeaderText}>
+          ادخل رمز التحقق <Text style={{ color: 'red' }}>*</Text>
+        </Text>
+        <View style={[styles.otpView, (otpError || otpApiError) && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }]}>
+          <TextInput returnKeyType='done' value={value} onChangeText={onChangeText} placeholder="ضع الرمز" style={[styles.inputText, { textAlign: 'center', width: '90%' },]} />
         </View>
-        {otpApiError && <Text style={{ color: 'red', fontSize: 12, fontFamily: CAIRO_FONT_FAMILY.bold, textAlign: 'left' }}>رمز التحقق غير صالح</Text>}
+        {otpApiError && <Text style={{ color: 'red', fontSize: 12,marginTop: -10, fontFamily: CAIRO_FONT_FAMILY.medium, textAlign: 'left' }}>الرمز غير صالح</Text>}
         <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton} disabled={isLoading}>
           {isLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>تاكيد</Text>}
         </TouchableOpacity>
         {resentCode && (
-          <Text style={{ color: '#198754', fontSize: 15, fontFamily: CAIRO_FONT_FAMILY.bold, textAlign: 'center' }}>تم إعادة إرسال رمز التحقق بنجاح</Text>
+          <Text style={{ color: '#198754', fontSize: 14, fontFamily: CAIRO_FONT_FAMILY.medium, textAlign: 'center' }}>تم إعادة إرسال رمز التحقق بنجاح</Text>
         )}
 
         <View style={styles.resendOptTextContainer}>
@@ -796,12 +802,12 @@ const styles = StyleSheet.create({
   },
   optHeaderText: {
     textAlign: 'center',
-    fontSize: 20,
-    fontFamily: CAIRO_FONT_FAMILY.medium,
-    color: '#000'
+    fontSize: 16,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    // color: '#000'
   },
   inputHeaderText: {
-    fontSize: 20,
+    fontSize: 14,
     fontFamily: CAIRO_FONT_FAMILY.medium,
     textAlign: 'left',
     color: '#000'

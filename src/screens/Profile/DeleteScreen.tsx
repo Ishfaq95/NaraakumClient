@@ -47,6 +47,8 @@ const DeleteScreen = () => {
   const user = useSelector((state: RootState) => state.root.user.user);
   const webSocketService = WebSocketService.getInstance();
 
+  console.log(user);
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -204,14 +206,14 @@ const DeleteScreen = () => {
     if (Platform.OS === 'ios') {
       return (
         <View style={styles.socialButtonsRow}>
-          <TouchableOpacity
+          {user.CatSocialServerId == 1 ?<TouchableOpacity
             style={[styles.socialButton, styles.googleButton]}
             onPress={handleGoogleLogin}
           >
             <GoogleIcon width={24} height={24} style={styles.socialIcon} />
             <Text style={[globalTextStyles.bodySmall, styles.socialButtonText]}>{t('continue_with_google')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          :<TouchableOpacity 
             style={[styles.socialButton, styles.appleButton]}
             onPress={handleAppleLogin}
           >
@@ -224,7 +226,7 @@ const DeleteScreen = () => {
             <Text style={[globalTextStyles.bodySmall, styles.socialButtonText, { color: '#FFFFFF' }]}>
               {t('continue_with_apple')}
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity>}
         </View>
       );
     }

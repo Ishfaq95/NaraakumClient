@@ -6,7 +6,7 @@ import { ROUTES } from "../shared/utils/routes";
 export const Connectivity = () => {
   const netInfo = useNetInfo();
   const [didMount, setDidMount] = useState(false);
-  const [previousConnection, setPreviousConnection] = useState(null);
+  const [previousConnection, setPreviousConnection] = useState(false);
   const navigation=useNavigation()
 
   useEffect(() => {
@@ -19,7 +19,12 @@ export const Connectivity = () => {
         if (!netInfo.isConnected) {
           navigation.navigate(ROUTES.NetworkError)
         } else {
-          // navigation.navigate(ROUTES.Home)
+          navigation.navigate(ROUTES.AppNavigator, {
+            screen: ROUTES.HomeStack,
+            params: {
+              screen: ROUTES.AppointmentListScreen,
+            }
+          });
         }
         setPreviousConnection(netInfo.isConnected);
       }

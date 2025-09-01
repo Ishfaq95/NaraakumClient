@@ -4,29 +4,43 @@ import { ROUTES } from '../shared/utils/routes';
 import { useNetInfo } from "@react-native-community/netinfo";
 import LoaderKit from 'react-native-loader-kit';
 import { globalTextStyles } from '../styles/globalStyles';
+import { useSelector } from 'react-redux';
 
-const NetworkErrorScreen = ({ navigation }:any) => {
-    const netInfo = useNetInfo();
-    const [loading, setLoading] = useState(false);
-    const onRetry=()=>{
-        if (!netInfo.isConnected){
-            setLoading(true)
-            setTimeout(() => {
-                setLoading(false)
-            }, 100);
-        }else{
-            // navigation.navigate(ROUTES.Home)
-        }
-        
+const NetworkErrorScreen = ({ navigation }: any) => {
+  const netInfo = useNetInfo();
+  const [loading, setLoading] = useState(false);
+  const user = useSelector((state: any) => state.root.user.user);
+  const onRetry = () => {
+    console.log("user",netInfo.isConnected)
+    if (!netInfo.isConnected) {
+      setLoading(true)
+      setTimeout(() => {
+        setLoading(false)
+      }, 100);
+    } else {
+      if (user) {
+        navigation.navigate(ROUTES.AppNavigator, {
+          screen: ROUTES.HomeStack,
+          params: {
+            screen: ROUTES.AppointmentListScreen,
+          }
+        });
+      } else {
+        navigation.navigate(ROUTES.Login)
+      }
     }
+
+  }
+
+  console.log("loading",loading)
 
   return (
     <View style={styles.container}>
-      
-          <Text style={styles.errorText}>Something went wrong.</Text>
-          <Text style={styles.errorText}>Please try again.</Text>
-          <Button title="Retry" onPress={onRetry} />
-          {loading && (
+
+      <Text style={styles.errorText}>Something went wrong.</Text>
+      <Text style={styles.errorText}>Please try again.</Text>
+      <Button title="Retry" onPress={onRetry} />
+      {/* {loading && (
         <View style={styles.loader}>
           <LoaderKit
             style={{ width: 100, height: 100 }}
@@ -34,7 +48,7 @@ const NetworkErrorScreen = ({ navigation }:any) => {
             color={'green'}
           />
         </View>
-      )}
+      )} */}
     </View>
   );
 };

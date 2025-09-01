@@ -34,117 +34,118 @@ interface CommentItem {
 }
 
 const MyRatingScreen = () => {
-    const { t } = useTranslation();
-    const navigation = useNavigation();
-    const user = useSelector((state: RootState) => state.root.user.user);
-    const [patientList, setPatientList] = useState<PatientItem[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [selectedPatient, setSelectedPatient] = useState<string>('');
-    const [patientDetails, setPatientDetails] = useState<PatientDetail[]>([]);
-    const [commentList, setCommentList] = useState<CommentItem[]>([]);
+  const { t } = useTranslation();
+  const navigation = useNavigation();
+  const user = useSelector((state: RootState) => state.root.user.user);
+  const [patientList, setPatientList] = useState<PatientItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<string>('');
+  const [patientDetails, setPatientDetails] = useState<PatientDetail[]>([]);
+  const [commentList, setCommentList] = useState<CommentItem[]>([]);
 
-    useEffect(() => {
-      getBeneficiaries();
-    }, []);
-  
-    const getBeneficiaries = async () => {
-      setIsLoading(true);
-      const payload = {
-        "UserId": user?.Id,
-      }
-      const response = await profileService.getBeneficiaries(payload);
+  useEffect(() => {
+    getBeneficiaries();
+  }, []);
 
-      if (response?.ResponseStatus?.STATUSCODE == 200) {
-        const patients = response?.RefferalUserList?.map((item: any) => ({
-          label: item.FullnameSlang,
-          value: item.UserProfileinfoId
-        }));
-        setPatientList(patients);
-        
-        // Auto-select the first patient if available
-        if (patients && patients.length > 0) {
-          setSelectedPatient(patients[0].value);
-        }
-      }
-      setIsLoading(false);
+  const getBeneficiaries = async () => {
+    setIsLoading(true);
+    const payload = {
+      "UserId": user?.Id,
     }
+    const response = await profileService.getBeneficiaries(payload);
 
-    useEffect(() => {
-      if (selectedPatient) {
-        getPatientRating();
-      }
-    }, [selectedPatient]);
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
+      const patients = response?.RefferalUserList?.map((item: any) => ({
+        label: `${item.FullnameSlang} (${item.RelationshipTitleSlang})`,
+        value: item.UserProfileinfoId
+      }));
+      setPatientList(patients);
 
-    const getPatientRating = async () => {
-      const payload = {
-        "PatientProfileId": selectedPatient,
-      }
-      const response = await profileService.getPatientRating(payload);
-
-      if (response?.ResponseStatus?.STATUSCODE == 200) {
-        setPatientDetails(response?.UserRating || []);
-        setCommentList(response?.CommentList || []);
+      // Auto-select the first patient if available
+      if (patients && patients.length > 0) {
+        setSelectedPatient(patients[0].value);
       }
     }
+    setIsLoading(false);
+  }
 
-    const handleBack = () => {
-        navigation.goBack();
-      };
+  useEffect(() => {
+    if (selectedPatient) {
+      getPatientRating();
+    }
+  }, [selectedPatient]);
 
-    const renderHeader = () => (
-        <Header
-          centerComponent={
-            <Text style={styles.headerTitle}>تقييماتي</Text>
-          }
-          leftComponent={
-            <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
-              <ArrowRightIcon />
-            </TouchableOpacity>
-          }
-          containerStyle={styles.headerContainer}
-        />
-      );
+  const getPatientRating = async () => {
+    const payload = {
+      "PatientProfileId": selectedPatient,
+    }
+    const response = await profileService.getPatientRating(payload);
 
-      const renderItem = ({ item }: { item: CommentItem }) => {
-        return (
-          <View style={{
-            borderRadius: 12,
-            marginVertical: 8,
-            padding: 16,
-            backgroundColor: '#f0f0f0',
-            borderWidth: 1,
-            borderColor: '#e0e0e0',
-          }}>
-          <View style={{flexDirection:"row",width:"100%", alignItems:"center",justifyContent:"space-between"}}>
-            <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#000" }]}>{item.FullnameSlang}</Text>
-            <View style={{flexDirection:"row",height:30,width:80,backgroundColor:"#fff", alignItems:"center",justifyContent:"center",borderRadius:15}}>
-              <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#000", marginRight: 5 }]}>{`${item.RateValue}/5`}</Text>
-              <AntDesign name="star" size={20} color="#23a2a4" />
-            </View>
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
+      setPatientDetails(response?.UserRating || []);
+      setCommentList(response?.CommentList || []);
+    }
+  }
+
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
+  const renderHeader = () => (
+    <Header
+      centerComponent={
+        <Text style={styles.headerTitle}>تقييماتي</Text>
+      }
+      leftComponent={
+        <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
+          <ArrowRightIcon />
+        </TouchableOpacity>
+      }
+      containerStyle={styles.headerContainer}
+    />
+  );
+
+  const renderItem = ({ item }: { item: CommentItem }) => {
+    return (
+      <View style={{
+        borderRadius: 12,
+        marginVertical: 8,
+        padding: 16,
+        backgroundColor: '#f0f0f0',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+      }}>
+        <View style={{ flexDirection: "row", width: "100%", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#000" }]}>{item.FullnameSlang}</Text>
+          <View style={{ flexDirection: "row", height: 30, width: 80, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", borderRadius: 15 }}>
+            <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#000", marginRight: 5 }]}>{`${item.RateValue}/5`}</Text>
+            <AntDesign name="star" size={20} color="#23a2a4" />
           </View>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{item.OrganizationTitleSlang}</Text>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left", paddingVertical: 10 }]}>{item.Comment}</Text>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{moment(item.DateAdded).locale('en').format('DD/MM/YYYY')}</Text>
         </View>
-        )
-    }
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{item.OrganizationTitleSlang}</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left", paddingVertical: 10 }]}>{item.Comment}</Text>
+        <Text style={[globalTextStyles.bodyMedium, { fontWeight: "400", color: "#36454f", textAlign: "left" }]}>{moment(item.DateAdded).locale('en').format('DD/MM/YYYY')}</Text>
+      </View>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 10,marginTop: 10, alignItems: 'center', }}>
-        <Text style={[globalTextStyles.bodyLarge, { color: '#000', marginBottom: 10 }]}>تقييمات سلوك المريض في أثناء الزيارة</Text>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 10, marginTop: 10, alignItems: 'center', }}>
+        <Text numberOfLines={1} style={[globalTextStyles.h3, { color: '#000', }]}>تقييمات سلوك المريض في أثناء الزيارة</Text>
       </View>
-      <View style={{flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16, paddingVertical: 10,marginTop: 10, alignItems: 'center', }}>
+      <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16, paddingBottom: 10, }}>
+        <Text style={[globalTextStyles.bodyLarge, { color: '#000', }]}>سجل تقييمات المستفيد</Text>
         <Dropdown data={patientList} value={selectedPatient} onChange={(value: string | number) => setSelectedPatient(value.toString())} placeholder={t('select_patient')} />
-        <View style={{height:150,width:"100%",marginTop:10,backgroundColor:"#fff",borderRadius:10,alignItems:"center",justifyContent:"center"}}>
-          <Text style={[globalTextStyles.h3, { color: "#000", paddingVertical: 10 }]}>{patientDetails[0]?.FullnameSlang || ''}</Text>
-          <View style={{flexDirection:"row",alignItems:"center",justifyContent:"center"}}>
-            
+        <View style={{ padding: 16, width: "100%", marginTop: 10, backgroundColor: "#fff", borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
+          <Text style={[globalTextStyles.h3, { color: "#000", }]}>{patientDetails[0]?.FullnameSlang || ''}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+
             <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#23a2a4", marginRight: 5 }]}>{`${patientDetails[0]?.AccumulativeRatingAvg || 0}/5`}</Text>
             <AntDesign name="star" size={24} color="#23a2a4" />
           </View>
-          <Text style={[globalTextStyles.bodyMedium, { color: "#000", paddingVertical: 10 }]}>
+          <Text style={[globalTextStyles.bodyMedium, { color: "#000",}]}>
             عدد التقييمات{' '}
             <Text style={[globalTextStyles.bodyMedium, { fontWeight: "bold", color: "#000" }]}>
               {patientDetails[0]?.AccumulativeRatingNum || 0}
@@ -153,28 +154,28 @@ const MyRatingScreen = () => {
         </View>
 
         <View style={styles.contentContainer}>
-        <FlatList
-          data={commentList}
-          renderItem={renderItem}
-          keyExtractor={(item) => item?.Id?.toString()}
-          style={{ width: '100%', }}
-          ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
-            <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{'لا توجد سجلات'}</Text>
-          </View>}
-        />
-      </View>
+          <FlatList
+            data={commentList}
+            renderItem={renderItem}
+            keyExtractor={(item) => item?.Id?.toString()}
+            style={{ width: '100%', }}
+            ListEmptyComponent={() => <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 }}>
+              <Text style={[globalTextStyles.bodyMedium, { fontWeight: '500', color: '#000' }]}>{'لا توجد سجلات'}</Text>
+            </View>}
+          />
+        </View>
       </View>
     </SafeAreaView>
   )
 }
 
-const styles=StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: '#e4f1ef' 
-    },
- contentContainer: { 
-    flex: 1, 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#e4f1ef'
+  },
+  contentContainer: {
+    flex: 1,
     backgroundColor: '#fff',
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -183,7 +184,7 @@ const styles=StyleSheet.create({
     marginTop: 10,
     borderRadius: 10,
     paddingTop: 10,
-},
+  },
   headerTitle: {
     ...globalTextStyles.h3,
     color: '#000'

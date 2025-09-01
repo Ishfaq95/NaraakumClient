@@ -102,7 +102,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && isFocused) {
       getNotificationList();
       getPatientReminderList();
     }
@@ -211,7 +211,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
 
   // Handle WebSocket connection
   useEffect(() => {
-    if (user) {
+    if (user && isFocused) {
       const presence = 1;
       const communicationKey = user.CommunicationKey;
       const UserId = user.Id;

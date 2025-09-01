@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TextInput, Platform, I18nManager, SafeAreaView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, TextInput, Platform, I18nManager, SafeAreaView, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import React, { useState } from 'react'
 import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import Header from '../../components/common/Header';
@@ -13,13 +13,19 @@ import ResetPasswordIcon from '../../assets/icons/ResetPasswordIcon';
 import EyeIcon from '../../assets/icons/EyeIcon';
 import EyeOffIcon from '../../assets/icons/EyeOffIcon';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const { width } = Dimensions.get('window');
+
+// Define the navigation param list type
+type RootStackParamList = {
+  [ROUTES.Login]: undefined;
+};
 
 const ConfirmPassword = ({ route }: any) => {
   const UserId = route.params.UserId;
   const { t } = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newPasswordError, setNewPasswordError] = useState('');
@@ -87,105 +93,114 @@ const ConfirmPassword = ({ route }: any) => {
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View style={styles.content}>
-          {/* Icon Container */}
-          <View style={styles.iconContainer}>
-            <ResetPasswordIcon />
-          </View>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              {/* Icon Container */}
+              <View style={styles.iconContainer}>
+                <ResetPasswordIcon />
+              </View>
 
-          {/* Main Heading */}
-          <Text style={styles.mainHeading}>
-            الرجاء إدخال رمز التحقق المرسل إلى
-          </Text>
-        </View>
-        <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 16, paddingTop: 20 }}>
-
-          <View style={{}}>
-            <View style={styles.questionRow}>
-              <Text style={styles.questionText}>{'كلمة المرور الجديدة '}</Text>
-              <Text style={styles.requiredAsterisk}> *</Text>
+              {/* Main Heading */}
+              <Text style={styles.mainHeading}>
+                الرجاء إدخال رمز التحقق المرسل إلى
+              </Text>
             </View>
-            {/* Password Input */}
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={[
-                  styles.passwordInput,
-                  isRTL && styles.rtlInput,
-                  newPasswordError && styles.inputError
-                ]}
-                placeholder={t('password')}
-                value={newPassword}
-                onChangeText={(text) => {
-                  setNewPassword(text);
-                  if (newPasswordError) setNewPasswordError('');
-                }}
-                secureTextEntry={!showNewPassword}
-                placeholderTextColor="#999"
-                textAlign={isRTL ? 'right' : 'left'}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowNewPassword(!showNewPassword)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                {showNewPassword ? (
-                  <EyeIcon width={22} height={22} color="#666666" />
-                ) : (
-                  <EyeOffIcon width={22} height={22} color="#666666" />
-                )}
-              </TouchableOpacity>
+            <View style={styles.formContainer}>
+              <View style={styles.inputGroup}>
+                <View style={styles.questionRow}>
+                  <Text style={styles.questionText}>{'كلمة المرور الجديدة '}</Text>
+                  <Text style={styles.requiredAsterisk}> *</Text>
+                </View>
+                {/* Password Input */}
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.passwordInput,
+                      isRTL && styles.rtlInput,
+                      newPasswordError && styles.inputError
+                    ]}
+                    placeholder={t('password')}
+                    value={newPassword}
+                    onChangeText={(text) => {
+                      setNewPassword(text);
+                      if (newPasswordError) setNewPasswordError('');
+                    }}
+                    secureTextEntry={!showNewPassword}
+                    placeholderTextColor="#999"
+                    textAlign={isRTL ? 'right' : 'left'}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowNewPassword(!showNewPassword)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    {showNewPassword ? (
+                      <EyeIcon width={22} height={22} color="#666666" />
+                    ) : (
+                      <EyeOffIcon width={22} height={22} color="#666666" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <View style={styles.questionRow}>
+                  <Text style={styles.questionText}>{'تأكيد كلمة المرور '}</Text>
+                  <Text style={styles.requiredAsterisk}> *</Text>
+                </View>
+                {/* Password Input */}
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.passwordInput,
+                      isRTL && styles.rtlInput,
+                      confirmPasswordError && styles.inputError
+                    ]}
+                    placeholder={t('password')}
+                    value={confirmPassword}
+                    onChangeText={(text) => {
+                      setConfirmPassword(text);
+                      if (confirmPasswordError) setConfirmPasswordError('');
+                    }}
+                    secureTextEntry={!showConfirmPassword}
+                    placeholderTextColor="#999"
+                    textAlign={isRTL ? 'right' : 'left'}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeIcon width={22} height={22} color="#666666" />
+                    ) : (
+                      <EyeOffIcon width={22} height={22} color="#666666" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {PasswordNotMatch && <Text style={styles.errorText}>{'تأكيد كلمة المرور وكلمة المرور غير متطابقة'}</Text>}
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity onPress={handleConfirmPassword} style={styles.button}>
+                  <Text style={styles.buttonText}>{'تاكيد'}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-
-          <View style={{}}>
-            <View style={styles.questionRow}>
-              <Text style={styles.questionText}>{'تأكيد كلمة المرور '}</Text>
-              <Text style={styles.requiredAsterisk}> *</Text>
-            </View>
-            {/* Password Input */}
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={[
-                  styles.passwordInput,
-                  isRTL && styles.rtlInput,
-                  confirmPasswordError && styles.inputError
-                ]}
-                placeholder={t('password')}
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  if (confirmPasswordError) setConfirmPasswordError('');
-                }}
-                secureTextEntry={!showConfirmPassword}
-                placeholderTextColor="#999"
-                textAlign={isRTL ? 'right' : 'left'}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                {showConfirmPassword ? (
-                  <EyeIcon width={22} height={22} color="#666666" />
-                ) : (
-                  <EyeOffIcon width={22} height={22} color="#666666" />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {PasswordNotMatch && <Text style={{ color: 'red', fontFamily: CAIRO_FONT_FAMILY.bold, fontSize: 12, marginTop: 10, textAlign: 'center' }}>{'تأكيد كلمة المرور وكلمة المرور غير متطابقة'}</Text>}
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={handleConfirmPassword} style={styles.button}>
-              <Text style={styles.buttonText}>{'تاكيد'}</Text>
-            </TouchableOpacity>
-
-          </View>
-        </View>
-      </ScrollView>
-
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
       <FullScreenLoader visible={isLoading} />
     </SafeAreaView>
   )
@@ -214,11 +229,11 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
-    marginTop: 80,
+    marginTop: 20,
     paddingHorizontal: 16,
   },
   iconContainer: {
-    marginBottom: 30,
+    marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -226,7 +241,7 @@ const styles = StyleSheet.create({
     ...globalTextStyles.h2,
     color: '#008080', // Teal color as shown in the image
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
     fontWeight: 'bold',
   },
   subText: {
@@ -239,6 +254,14 @@ const styles = StyleSheet.create({
   boldText: {
     fontWeight: 'bold',
     color: '#000', // Teal color to match the main heading
+  },
+  formContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   input: {
     backgroundColor: '#FFFFFF',
@@ -340,6 +363,13 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     paddingLeft: 12,
   },
+  errorText: {
+    color: 'red',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+    fontSize: 12,
+    marginTop: 10,
+    textAlign: 'center'
+  }
 })
 
 export default ConfirmPassword

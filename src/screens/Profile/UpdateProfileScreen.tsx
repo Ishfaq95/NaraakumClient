@@ -542,7 +542,7 @@ const getLatestUser = async () => {
       }
 
       const response = await profileService.resendOtp(payload)
-      if(response?.StatusCode?.STATUSCODE == 3009){
+      if(response?.ResponseStatus?.STATUSCODE == 3009){
         setResentCode(true)
       }
 
@@ -887,7 +887,7 @@ const getLatestUser = async () => {
         onRequestClose={() => setOpenVerifyBottomSheet(false)}
       >
 
-        <SafeAreaView style={{ flex: 1, paddingBottom: 20 }}>
+        <SafeAreaView style={{ flex: 1,}}>
           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
 
             <KeyboardAvoidingView
@@ -1125,11 +1125,11 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     backgroundColor: '#fff',
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.25,
-    // shadowRadius: 3.84,
-    // elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0.5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 1.84,
+    elevation: 5,
   },
   bookButton: {
     padding: 5,

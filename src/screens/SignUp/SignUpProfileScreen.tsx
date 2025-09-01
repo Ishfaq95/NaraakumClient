@@ -13,6 +13,7 @@ import { authService } from '../../services/api/authService';
 import { setSignUpFlow, setUser } from '../../shared/redux/reducers/userReducer';
 import { useDispatch } from 'react-redux';
 import { profileService } from '../../services/api/ProfileService';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const genders = [
     { label: 'ذكر', value: 'male' },
@@ -47,6 +48,8 @@ const SignUpProfileScreen = ({ route }: any) => {
     const [ageError, setAgeError] = useState(false)
     const [passwordNotMatchError, setPasswordNotMatchError] = useState(false)
     const [emailValidationError, setEmailValidationError] = useState(false)
+    const [alertModalVisible, setAlertModalVisible] = useState(false)
+    const [alertModalMessage, setAlertModalMessage] = useState('')
     // Password validation function
     const validatePassword = (pwd: string) => {
         // At least 8 characters, at least one uppercase, one lowercase, one number, one special character
@@ -117,7 +120,8 @@ const SignUpProfileScreen = ({ route }: any) => {
         // Password validation using the regex pattern
         if (!validatePassword(password)) {
             setPasswordError(true);
-            Alert.alert("خطأ", "كلمة المرور يجب أن تحتوي على الأقل على 8 أحرف، حرف كبير واحد، حرف صغير واحد، رقم واحد، وحرف خاص واحد");
+            setAlertModalMessage("كلمة المرور يجب أن تحتوي على الأقل على 8 أحرف، حرف كبير واحد، حرف صغير واحد، رقم واحد، وحرف خاص واحد")
+            setAlertModalVisible(true)
             return;
         }
 
@@ -155,7 +159,8 @@ const SignUpProfileScreen = ({ route }: any) => {
 
             if (response?.ResponseStatus?.STATUSCODE == 200) {
                 if(response.StatusCode.STATUSCODE == 3002){
-                    Alert.alert("خطأ", "البريد الالكتروني موجود بالفعل");
+                    setAlertModalMessage("البريد الالكتروني موجود بالفعل")
+                    setAlertModalVisible(true)
                     return;
                 }
                 dispatch(setSignUpFlow(true))
@@ -183,7 +188,7 @@ const SignUpProfileScreen = ({ route }: any) => {
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 30}
             >
                 <ScrollView style={styles.scrollContent}
                     contentContainerStyle={{ flexGrow: 1 }}
@@ -211,6 +216,7 @@ const SignUpProfileScreen = ({ route }: any) => {
                                     }}
                                     placeholder="abcd@xyz.com"
                                     keyboardType="email-address"
+                                    returnKeyType='done'
                                 />
                             </View>
                         </View>
@@ -222,10 +228,23 @@ const SignUpProfileScreen = ({ route }: any) => {
                             </View>
                             <View style={{ width: '48%', }}>
                                 <Text style={styles.label}>العمر</Text>
-                                <TextInput style={[styles.input, ageError && { borderWidth: 1, borderColor: 'red' }]} value={age} onChangeText={(text) => {
-                                    setAge(text)
-                                    setAgeError(false)
-                                }} placeholder="العمر" keyboardType="numeric" />
+                                <TextInput 
+                                    style={[styles.input, ageError && { borderWidth: 1, borderColor: 'red' }]} 
+                                    value={age} 
+                                    placeholderTextColor="#999"
+                                    onChangeText={(text) => {
+                                        // Only allow numbers and limit to 2 digits
+                                        const numericText = text.replace(/[^0-9]/g, '');
+                                        if (numericText.length <= 2) {
+                                            setAge(numericText);
+                                            setAgeError(false);
+                                        }
+                                    }} 
+                                    placeholder="العمر" 
+                                    keyboardType="numeric"
+                                    maxLength={2}
+                                    returnKeyType='done'
+                                />
                             </View>
                         </View>
                         {/* Nationality */}
@@ -252,7 +271,7 @@ const SignUpProfileScreen = ({ route }: any) => {
                             <TextInput style={[styles.input, idNumberInputError && { borderWidth: 1, borderColor: 'red' }]} value={idNumber} onChangeText={(text) => {
                                 setIdNumber(text)
                                 setIdNumberInputError(false)
-                            }} placeholder="رقم الهوية" placeholderTextColor="#999" keyboardType="numeric" />
+                            }} placeholder="رقم الهوية" placeholderTextColor="#999" />
                         </View>}
 
                         {/* Password Input */}
@@ -326,6 +345,30 @@ const SignUpProfileScreen = ({ route }: any) => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            <Modal
+                visible={alertModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => { setAlertModalVisible(false); }}
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+                        <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center',justifyContent: 'space-between' }}>
+                            <TouchableOpacity
+                                onPress={() => { setAlertModalVisible(false); }}
+                            >
+                                <AntDesign name="close" size={24} color="#888" />
+                            </TouchableOpacity>
+                            <Text style={{ color: '#3a434a', fontSize: 20, fontFamily: CAIRO_FONT_FAMILY.bold, }}>خطأ</Text>
+                        </View>
+                        <AntDesign name="exclamationcircle" size={56} color="#d84d48" style={{ marginVertical: 18 }} />
+                        <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+                            {alertModalMessage}
+                        </Text>
+                    </View>
+                </View>
+            </Modal>
 
             <FullScreenLoader visible={isUploading} />
         </SafeAreaView>
@@ -508,17 +551,17 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     headerTitle: {
-        fontSize: 20,
+        fontSize: 16,
         fontFamily: CAIRO_FONT_FAMILY.bold,
         color: '#000'
     },
     headerContainer: {
         backgroundColor: '#fff',
-        // shadowColor: '#000',
-        // shadowOffset: { width: 0, height: 2 },
-        // shadowOpacity: 0.25,
-        // shadowRadius: 3.84,
-        // elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     bookButton: {
         padding: 5,

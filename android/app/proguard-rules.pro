@@ -60,3 +60,6 @@
     java.lang.Object writeReplace();
     java.lang.Object readResolve();
 }
+
+# Fix for missing coil3.PlatformContext error
+-dontwarn coil3.PlatformContext

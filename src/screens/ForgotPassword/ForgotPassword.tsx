@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, TextInput, ScrollView, SafeAreaView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, TextInput, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import React, { useState } from 'react'
 import { globalTextStyles } from '../../styles/globalStyles';
 import Header from '../../components/common/Header';
@@ -11,14 +11,18 @@ import NewPasswordIcon from '../../assets/icons/NewPasswordIcon';
 import { authService } from '../../services/api/authService';
 import { ROUTES } from '../../shared/utils/routes';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const { width } = Dimensions.get('window');
 
-
+// Define the navigation param list type
+type RootStackParamList = {
+    [ROUTES.ForgotOTP]: { OTPSend: string; UserId: string | number };
+};
 
 const ForgotPassword = () => {
     const { t } = useTranslation();
-    const navigation = useNavigation();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [activeTab, setActiveTab] = useState<'email' | 'mobile'>('mobile');
     const [emailOrUsername, setEmailOrUsername] = useState('');
     const [emailError, setEmailError] = useState(false);
@@ -69,7 +73,8 @@ const ForgotPassword = () => {
     };
 
     const handleContinue = async () => {
-        let hasError = false;
+        try {
+            let hasError = false;
         if (activeTab === 'email' && !emailOrUsername.trim()) {
             setEmailError(true);
             hasError = true;
@@ -91,81 +96,100 @@ const ForgotPassword = () => {
         setIsLoading(true);
         const response = await authService.forgotPassword(payload);
         if (response.ResponseStatus.STATUSCODE == 200) {
-            navigation.navigate(ROUTES.ForgotOTP, { OTPSend: activeTab === 'mobile' ? fullNumber : emailOrUsername, UserId:response.Data.UserId });
+            setIsLoading(false);
+            navigation.navigate(ROUTES.ForgotOTP, { OTPSend: activeTab === 'mobile' ? fullNumber : emailOrUsername, UserId:response.UserInfo[0].Id });
         } else {
             setAPIError(true);
         }
         setIsLoading(false);
+        } catch (error) {
+            console.log(error);
+            setIsLoading(false);
+            setAPIError(true);
+        }
+        
     };
 
     return (
         <SafeAreaView style={styles.container}>
             {renderHeader()}
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                <View style={styles.content}>
-                    {/* Icon Container */}
-                    <View style={styles.iconContainer}>
-                        <NewPasswordIcon />
-                    </View>
+            <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <ScrollView 
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
+                        <View style={styles.content}>
+                            {/* Icon Container */}
+                            <View style={styles.iconContainer}>
+                                <NewPasswordIcon />
+                            </View>
 
-                    {/* Main Heading */}
-                    <Text style={styles.mainHeading}>
-                        فقدت كلمة المرور !
-                    </Text>
+                            {/* Main Heading */}
+                            <Text style={styles.mainHeading}>
+                                فقدت كلمة المرور !
+                            </Text>
 
-                    {/* Sub Text */}
-                    <Text style={styles.subText}>
-                        يمكنك تغيير كلمة المرور فقط استخدم الطريقة المناسبة لستلام{' '}
-                        <Text style={styles.boldText}>رمز التحقق</Text>
-                    </Text>
+                            {/* Sub Text */}
+                            <Text style={styles.subText}>
+                                يمكنك تغيير كلمة المرور فقط استخدم الطريقة المناسبة لستلام{' '}
+                                <Text style={styles.boldText}>رمز التحقق</Text>
+                            </Text>
 
-                </View>
-                <View style={{ flex: 1, backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 16, paddingTop: 20 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                        <TouchableOpacity onPress={() => setActiveTab('mobile')} style={[styles.tab, activeTab === 'mobile' && styles.activeTab]}>
-                            <Text style={[styles.tabText, activeTab === 'mobile' && styles.activeTabText]}>{t('mobile_number')}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setActiveTab('email')} style={[styles.tab, activeTab === 'email' && styles.activeTab]}>
-                            <Text style={[styles.tabText, activeTab === 'email' && styles.activeTabText]}> {t('email_username')}</Text>
-                        </TouchableOpacity>
-                    </View>
+                        </View>
+                        <View style={styles.formContainer}>
+                            <View style={styles.tabContainer}>
+                                <TouchableOpacity onPress={() => setActiveTab('mobile')} style={[styles.tab, activeTab === 'mobile' && styles.activeTab]}>
+                                    <Text style={[styles.tabText, activeTab === 'mobile' && styles.activeTabText]}>{t('mobile_number')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => setActiveTab('email')} style={[styles.tab, activeTab === 'email' && styles.activeTab]}>
+                                    <Text style={[styles.tabText, activeTab === 'email' && styles.activeTabText]}> {t('email_username')}</Text>
+                                </TouchableOpacity>
+                            </View>
 
-                    <View style={{ marginTop: 30 }}>
-                        {/* Input Fields */}
-                        {activeTab === 'email' ? (
-                            <TextInput
-                                style={[
-                                    styles.input,
-                                    styles.ltrInput,
-                                    emailError && styles.inputError
-                                ]}
-                                placeholder={"example@info.com"}
-                                value={emailOrUsername}
-                                onChangeText={handleEmailChange}
-                                placeholderTextColor="#999"
-                                textAlign="left"
-                            />
-                        ) : (
-                            <CustomPhoneInput
-                                value={phoneNumber}
-                                onChangeText={handlePhoneNumberChange}
-                                onCountryChange={handleCountryChange}
-                                placeholder="رقم الجوال"
-                                error={error}
-                                initialCountry={selectedCountry}
-                            />
-                        )}
-                    </View>
+                            <View style={{ marginTop: 30 }}>
+                                {/* Input Fields */}
+                                {activeTab === 'email' ? (
+                                    <TextInput
+                                        style={[
+                                            styles.input,
+                                            styles.ltrInput,
+                                            emailError && styles.inputError
+                                        ]}
+                                        placeholder={"example@info.com"}
+                                        value={emailOrUsername}
+                                        onChangeText={handleEmailChange}
+                                        placeholderTextColor="#999"
+                                        textAlign="left"
+                                    />
+                                ) : (
+                                    <CustomPhoneInput
+                                        value={phoneNumber}
+                                        onChangeText={handlePhoneNumberChange}
+                                        onCountryChange={handleCountryChange}
+                                        placeholder="رقم الجوال"
+                                        error={error}
+                                        initialCountry={selectedCountry}
+                                    />
+                                )}
+                            </View>
 
-                    {apiError && <Text style={{ color: 'red', fontSize: 12, fontFamily: globalTextStyles.bodySmall.fontFamily, textAlign: 'center', marginTop: 10 }}>{'المستخدم غير موجود'}</Text>}
+                            {apiError && <Text style={styles.errorText}>{'المستخدم غير موجود'}</Text>}
 
-                    <View style={{ marginTop: 20 }}>
-                        <TouchableOpacity style={styles.button} onPress={handleContinue}>
-                            <Text style={styles.buttonText}>{'استمرار'}</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </ScrollView>
+                            <View style={{ marginTop: 20 }}>
+                                <TouchableOpacity style={styles.button} onPress={handleContinue}>
+                                    <Text style={styles.buttonText}>{'استمرار'}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </ScrollView>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
             <FullScreenLoader visible={isLoading} />
         </SafeAreaView>
     )
@@ -194,11 +218,11 @@ const styles = StyleSheet.create({
     },
     content: {
         alignItems: 'center',
-        marginTop: 80,
+        marginTop: 20,
         paddingHorizontal: 16,
     },
     iconContainer: {
-        marginBottom: 30,
+        marginBottom: 20,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -206,7 +230,7 @@ const styles = StyleSheet.create({
         ...globalTextStyles.h2,
         color: '#008080', // Teal color as shown in the image
         textAlign: 'center',
-        marginBottom: 20,
+        marginBottom: 15,
         fontWeight: 'bold',
     },
     subText: {
@@ -220,6 +244,20 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#000', // Teal color to match the main heading
     },
+    formContainer: {
+        flex: 1,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingTop: 20,
+        paddingBottom: 20,
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 10,
+    },
     tabText: {
         ...globalTextStyles.bodySmall,
         color: '#666',
@@ -232,7 +270,17 @@ const styles = StyleSheet.create({
         color: '#008080',
         fontFamily: globalTextStyles.h5.fontFamily,
     },
-    tab: { flexDirection: 'row', width: '48%', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#e0e0e0' },
+    tab: { 
+        flexDirection: 'row', 
+        width: '48%', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        backgroundColor: '#fff', 
+        borderRadius: 10, 
+        padding: 10, 
+        borderWidth: 1, 
+        borderColor: '#e0e0e0' 
+    },
     input: {
         backgroundColor: '#FFFFFF',
         borderRadius: 8,
@@ -260,6 +308,13 @@ const styles = StyleSheet.create({
         ...globalTextStyles.bodySmall,
         color: '#fff',
     },
+    errorText: {
+        color: 'red',
+        fontSize: 12,
+        fontFamily: globalTextStyles.bodySmall.fontFamily,
+        textAlign: 'center',
+        marginTop: 10
+    }
 })
 
 export default ForgotPassword

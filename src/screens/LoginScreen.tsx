@@ -38,6 +38,7 @@ import { globalTextStyles } from '../styles/globalStyles';
 import CustomPhoneInput from '../components/common/CustomPhoneInput';
 import { ROUTES } from '../shared/utils/routes';
 import { useNavigation } from '@react-navigation/native';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const MIN_HEIGHT = 550; // Absolute minimum height
 const OPTIMAL_HEIGHT = 750; // Height for medium screens
@@ -320,19 +321,14 @@ const LoginScreen = () => {
             onPress={handleGoogleLogin}
           >
             <GoogleIcon width={24} height={24} style={styles.socialIcon} />
-            <Text style={styles.socialButtonText}>{t('continue_with_google')}</Text>
+            <Text numberOfLines={1} style={styles.socialButtonText}>{t('continue_with_google')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.socialButton, styles.appleButton]}
             onPress={handleAppleLogin}
           >
-            <AppleIcon
-              width={24}
-              height={24}
-              style={styles.socialIcon}
-              color="#FFFFFF"
-            />
-            <Text style={[styles.socialButtonText, { color: '#FFFFFF' }]}>
+            <AntDesign name="apple1" size={20} color="#FFFFFF" style={{marginRight: 3}} />
+            <Text numberOfLines={1} style={[styles.socialButtonText, { color: '#FFFFFF' }]}>
               {t('continue_with_apple')}
             </Text>
           </TouchableOpacity>
@@ -389,7 +385,7 @@ const LoginScreen = () => {
                 <Text style={[globalTextStyles.bodySmall, { color: '#666', textAlign: I18nManager.isRTL ? 'left' : 'right' }]}>{t('login_with')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
                   <TouchableOpacity onPress={() => setActiveTab('mobile')} style={[styles.tab, activeTab === 'mobile' && styles.activeTab]}>
-                    <Text style={[styles.tabText, activeTab === 'mobile' && styles.activeTabText]}>{t('mobile_number')}</Text>
+                    <Text style={[styles.tabText, activeTab === 'mobile' && styles.activeTabText]}>{'الدخول بالجوال'}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setActiveTab('email')} style={[styles.tab, activeTab === 'email' && styles.activeTab]}>
                     <Text style={[styles.tabText, activeTab === 'email' && styles.activeTabText]}> {t('email_username')}</Text>
@@ -488,7 +484,7 @@ const LoginScreen = () => {
                     <Text style={[
                       styles.orText,
                       isLargeScreen && { fontSize: 14 }
-                    ]}>{t('or_continue_with')}</Text>
+                    ]}>{'أو بواسطة'}</Text>
                     <View style={styles.orLine} />
                   </View>
 
@@ -499,11 +495,11 @@ const LoginScreen = () => {
                       styles.signUpText,
                       isLargeScreen && { fontSize: 14 }
                     ]}>{t('dont_have_an_account')}</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate(ROUTES.SignUp)}>
+                    <TouchableOpacity style={{paddingLeft: 5}} onPress={() => navigation.navigate(ROUTES.SignUp)}>
                       <Text style={[
                         styles.signUpLink,
                         isLargeScreen && { fontSize: 14 }
-                      ]}>{t('sign_up')}</Text>
+                      ]}>{'إنشاء حساب جديد'}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -704,7 +700,8 @@ const styles = StyleSheet.create({
   },
   rememberText: {
     ...globalTextStyles.caption,
-    color: '#666',
+    color: '#008080',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   forgotPassword: {
     ...globalTextStyles.caption,
@@ -739,9 +736,9 @@ const styles = StyleSheet.create({
   },
   orText: {
     marginHorizontal: 8,
-    ...globalTextStyles.caption,
-    color: '#666',
-  },
+    ...globalTextStyles.label,
+    color: '#000',
+},
   signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -754,7 +751,7 @@ const styles = StyleSheet.create({
   signUpLink: {
     ...globalTextStyles.caption,
     color: '#008080',
-    fontFamily: globalTextStyles.h5.fontFamily,
+    fontFamily: globalTextStyles.h2.fontFamily,
   },
   helpContainer: {
     flexDirection: 'row',

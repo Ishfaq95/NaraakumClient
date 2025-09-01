@@ -40,6 +40,8 @@ import { useNavigation } from '@react-navigation/native';
 import CustomBottomSheet from '../../components/common/CustomBottomSheet';
 import { VerificationCodeCompoent } from '../../components/emailUpdateComponent';
 import { profileService } from '../../services/api/ProfileService';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const MIN_HEIGHT = 550; // Absolute minimum height
 const OPTIMAL_HEIGHT = 750; // Height for medium screens
@@ -54,7 +56,6 @@ interface Country {
 
 const SignUpScreen = () => {
     const { height: windowHeight } = useWindowDimensions();
-    const { user } = useSelector((state: any) => state.root.user);
     const navigation = useNavigation();
     const [name, setName] = useState('');
     const [nameError, setNameError] = useState(false);
@@ -81,10 +82,12 @@ const SignUpScreen = () => {
     const [otpValue, setOtpValue] = useState('');
     const [OTPForText, setOTPForText] = useState('')
     const [resentCode, setResentCode] = useState(false)
-    const [userInfo,setUserInfo] = useState<any>(null)
+    const [userInfo, setUserInfo] = useState<any>(null)
     const [otpError, setOTPError] = useState(false)
     const [otpApiError, setOTPApiError] = useState(false)
     const [otpLoading, setOtpLoading] = useState(false)
+    const [alertModalVisible, setAlertModalVisible] = useState(false)
+    const [alertModalMessage, setAlertModalMessage] = useState('')
     const handlePhoneNumberChange = (text: string) => {
         setPhoneNumber(text);
         setError(false); // Clear error when user types
@@ -173,12 +176,13 @@ const SignUpScreen = () => {
             const response = await authService.signUpStep1(data);
 
             if (response?.ResponseStatus?.STATUSCODE == 200) {
-                if(response.StatusCode.STATUSCODE == 3020){
-                    Alert.alert("خطأ", "رقم الجوال موجود مسبقاً");
+                if (response.StatusCode.STATUSCODE == 3020) {
+                    setAlertModalVisible(true)
+                    setAlertModalMessage("رقم الجوال موجود مسبقاً")
                     return;
                 }
                 setOTPForText(fullNumber)
-                if(response.Userinfo){
+                if (response.Userinfo) {
                     setUserInfo(response.Userinfo)
                 }
                 setTimeout(() => {
@@ -206,7 +210,7 @@ const SignUpScreen = () => {
             setIsLoading(true);
             const googleUser = await signInWithGoogle();
 
-            if(googleUser){
+            if (googleUser) {
                 const data = {
                     "FullName": googleUser.name,
                     "Username": googleUser.name,
@@ -221,10 +225,10 @@ const SignUpScreen = () => {
                     "DeviceId": "DDRT56789",
                     "DateofBirth": "1984-09-09"
                 }
-    
+
                 // // Call your API to save the Google user data
                 const response = await authService.loginWithSocialMedia(data);
-    
+
                 if (response?.ResponseStatus?.STATUSCODE === 200) {
                     setIsLoading(false);
                     dispatch(setUser(response.Userinfo));
@@ -234,7 +238,7 @@ const SignUpScreen = () => {
                         response?.ResponseStatus?.MESSAGE,
                         [{ text: "OK" }]
                     );
-                }   
+                }
             }
         } catch (error: any) {
             console.error('Google login error:', error);
@@ -327,9 +331,9 @@ const SignUpScreen = () => {
                         style={[styles.socialButton, styles.appleButton]}
                         onPress={handleAppleLogin}
                     >
-                        <AppleIcon
-                            width={24}
-                            height={24}
+                        <FontAwesome
+                            name="apple"
+                            size={24}
                             style={styles.socialIcon}
                             color="#FFFFFF"
                         />
@@ -360,8 +364,8 @@ const SignUpScreen = () => {
     }
 
     const HandleOtpSubmit = async () => {
-
-        if(otpValue.length < 4){
+        setResentCode(false)
+        if (otpValue.length < 4) {
             setOTPError(true)
             return;
         }
@@ -378,8 +382,8 @@ const SignUpScreen = () => {
             if (response?.StatusCode?.STATUSCODE == 3007) {
                 setOtpBottomSheet(false)
                 setOtpValue('')
-                navigation.navigate(ROUTES.SignUpProfileScreen,{userInfo:userInfo})
-            }else{
+                navigation.navigate(ROUTES.SignUpProfileScreen, { userInfo: userInfo })
+            } else {
                 setOTPApiError(true)
             }
 
@@ -390,11 +394,13 @@ const SignUpScreen = () => {
 
     }
 
+    console.log("userInfo", userInfo);
+
     const HandleOtpResendButton = async () => {
         try {
             setIsLoading(true)
             const payload = {
-                "UserId": user?.Id,
+                "UserId": userInfo?.userid,
             }
 
             const response = await profileService.resendOtp(payload)
@@ -443,6 +449,7 @@ const SignUpScreen = () => {
                                         placeholderTextColor="#999"
                                         textAlign="right"
                                         value={name}
+                                        returnKeyType="done"
                                         onChangeText={(text) => {
                                             setName(text);
                                             if (nameError) setNameError(false);
@@ -465,8 +472,17 @@ const SignUpScreen = () => {
                                     />
                                 </View>
 
-                                <View>
-                                    <Text style={{ color: '#666', fontFamily: globalTextStyles.h5.fontFamily }}>بالنقر على "تسجيل" توافق على <Text style={{ color: '#008080', fontFamily: globalTextStyles.h5.fontFamily }}>الشروط والأحكام</Text> وسيصل إليك كود التفعيل على جوالك</Text>
+                                <View style={{ width: '100%', paddingHorizontal: 16 }}>
+                                    <Text style={styles.termsText}>
+                                        بالنقر على "تسجيل" توافق على{' '}
+                                        <Text
+                                            style={styles.termsLink}
+                                            onPress={() => navigation.navigate(ROUTES.PrivacyPolicy as never)}
+                                        >
+                                            الشروط والأحكام
+                                        </Text>
+                                        {' '}وسيصل إليك كود التفعيل على جوالك
+                                    </Text>
                                 </View>
 
                                 {apiError &&
@@ -523,7 +539,7 @@ const SignUpScreen = () => {
                 transparent={true}
                 animationType="slide"
                 statusBarTranslucent={true}
-                // onRequestClose={() => setOtpBottomSheet(false)}
+            // onRequestClose={() => setOtpBottomSheet(false)}
             >
                 <SafeAreaView style={{ flex: 1, paddingBottom: 20 }}>
                     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -540,6 +556,9 @@ const SignUpScreen = () => {
                                         OTPFor={OTPForText}
                                         OTPForText={"تغيير الرقم"}
                                         onChangeText={(text) => {
+                                            if (text.length > 10) {
+                                                return;
+                                            }
                                             setOtpValue(text)
                                             setOTPError(false)
                                             setOTPApiError(false)
@@ -558,6 +577,30 @@ const SignUpScreen = () => {
                         </KeyboardAvoidingView>
                     </TouchableWithoutFeedback>
                 </SafeAreaView>
+            </Modal>
+
+            <Modal
+                visible={alertModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => { setAlertModalVisible(false); }}
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+                        <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <TouchableOpacity
+                                onPress={() => { setAlertModalVisible(false); }}
+                            >
+                                <AntDesign name="close" size={28} color="#888" />
+                            </TouchableOpacity>
+                            <Text style={{ color: '#3a434a', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>خطأ</Text>
+                        </View>
+                        <AntDesign name="exclamationcircle" size={64} color="#d84d48" style={{ marginVertical: 18 }} />
+                        <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+                            {alertModalMessage}
+                        </Text>
+                    </View>
+                </View>
             </Modal>
         </SafeAreaView>
     );
@@ -784,8 +827,8 @@ const styles = StyleSheet.create({
     },
     orText: {
         marginHorizontal: 8,
-        ...globalTextStyles.caption,
-        color: '#666',
+        ...globalTextStyles.label,
+        color: '#000',
     },
     signUpContainer: {
         flexDirection: 'row',
@@ -799,7 +842,7 @@ const styles = StyleSheet.create({
     signUpLink: {
         ...globalTextStyles.caption,
         color: '#008080',
-        fontFamily: globalTextStyles.h5.fontFamily,
+        fontFamily: globalTextStyles.h2.fontFamily,
     },
     helpContainer: {
         flexDirection: 'row',
@@ -922,6 +965,29 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
         alignItems: 'center',
         paddingBottom: 0
+    },
+    termsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        marginTop: 10,
+        marginBottom: 15,
+    },
+    termsText: {
+        ...globalTextStyles.bodySmall,
+        color: '#666',
+        fontFamily: globalTextStyles.h5.fontFamily,
+        textAlign: 'center',
+        fontSize: 13,
+        lineHeight: 20,
+    },
+    termsLink: {
+        color: '#008080',
+        fontFamily: globalTextStyles.h2.fontFamily,
+        // textDecorationLine: 'underline',
+        fontSize: 13,
     },
 });
 

@@ -1171,7 +1171,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     minHeight: 56,
   },
@@ -1181,11 +1181,11 @@ const styles = StyleSheet.create({
   countrySelector: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    paddingLeft: 8,
+    paddingLeft: 0,
   },
   countryFlag: {
     fontSize: 20,
-    marginLeft: 8,
+    marginLeft: 6,
   },
   countryCode: {
     ...globalTextStyles.bodyMedium,
@@ -1196,13 +1196,13 @@ const styles = StyleSheet.create({
   dropdownIcon: {
     fontSize: 12,
     color: '#666',
-    marginRight: 4,
+    marginRight: 2,
   },
   separator: {
     width: 1,
     height: 24,
     backgroundColor: '#E0E0E0',
-    marginHorizontal: 12,
+    marginHorizontal: 8,
   },
   phoneInput: {
     flex: 1,

@@ -37,6 +37,7 @@ import ForgotOTP from '../screens/ForgotPassword/ForgotOTP';
 import ConfirmPassword from '../screens/ForgotPassword/ConfirmPassword';
 import SignUpScreen from '../screens/SignUp/SignUpScreen';
 import SignUpProfileScreen from '../screens/SignUp/SignUpProfileScreen';
+import PrivacyPolicy from '../screens/SignUp/PrivicyPolicy';
 
 const Stack = createNativeStackNavigator();
 
@@ -55,6 +56,7 @@ const RootNavigator = () => {
         <Stack.Screen name={ROUTES.ForgotPassword} component={ForgotPassword} />
         <Stack.Screen name={ROUTES.ForgotOTP} component={ForgotOTP} />
         <Stack.Screen name={ROUTES.ConfirmPassword} component={ConfirmPassword} />
+        <Stack.Screen name={ROUTES.PrivacyPolicy} component={PrivacyPolicy} />
       </Stack.Navigator>
     );
   }
