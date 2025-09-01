@@ -69,6 +69,8 @@ const UpdateProfileScreen = () => {
   const [openEmailBottomSheet, setOpenEmailBottomSheet] = useState(false)
   const [openPhoneBottomSheet, setOpenPhoneBottomSheet] = useState(false)
   const [openVerifyBottomSheet, setOpenVerifyBottomSheet] = useState(false)
+  const [openVerifyBottomSheetHeight, setOpenVerifyBottomSheetHeight] = useState("63%")
+  const [otpAPIError, setOTPAPIError] = useState(false)
   const [otpValue, setOtpValue] = useState('')
   const [updatedEmail, setUpdatedEmail] = useState('')
   const [statusCodeEmail, setStatusCodeEmail] = useState(0)
@@ -76,11 +78,11 @@ const UpdateProfileScreen = () => {
   const [updatedFullPhoneNumber, setUpdatedFullPhoneNumber] = useState('');
   const [bottomSheetType, setBottomSheetType] = useState<'phone' | 'email' | null>(null);
   const [emailBottomSheetHeight, setEmailBottomSheetHeight] = useState("35%")
-  const [phoneBottomSheetHeight, setPhoneBottomSheetHeight] = useState("30%")
+  const [phoneBottomSheetHeight, setPhoneBottomSheetHeight] = useState("35%")
   const [emailInputError, setEmailInputError] = useState(false)
   const [phoneInputError, setPhoneInputError] = useState(false)
   const [OTPForText, setOTPForText] = useState('')
-  const [OTPFrom,setOTPFrom] = useState('')
+  const [OTPFrom, setOTPFrom] = useState('')
   const mediaToken = useSelector((state: any) => state.root.user.mediaToken);
   const [loadingImage, setLoadingImage] = useState(false)
   const isRTL = I18nManager.isRTL;
@@ -95,8 +97,11 @@ const UpdateProfileScreen = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [nameInputError, setNameInputError] = useState(false);
   const [idNumberInputError, setIdNumberInputError] = useState(false);
-  const [resentCode,setResentCode] = useState(false)
+  const [resentCode, setResentCode] = useState(false)
   // Password validation function
+  const [alertModalVisible, setAlertModalVisible] = useState(false)
+  const [alertModalMessage, setAlertModalMessage] = useState('')
+  const [otpValueError, setOtpValueError] = useState(false)
   const validatePassword = (pwd: string) => {
     // At least 8 characters, at least one uppercase, one lowercase, one number, one special character
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -104,14 +109,17 @@ const UpdateProfileScreen = () => {
   };
 
   const handleKeyboardOpen = () => {
-    if (openEmailBottomSheet) {
+    if (openEmailBottomSheet && Platform.OS == 'ios') {
       setEmailBottomSheetHeight("65%");
     }
-    if (openPhoneBottomSheet) {
+    if (openPhoneBottomSheet && Platform.OS == 'ios') {
       setPhoneBottomSheetHeight("65%");
     }
     if (currentPasswordBottomSheet) {
       setCurrentPasswordBottomSheetHeight("65%");
+    }
+    if (openVerifyBottomSheet && Platform.OS == 'ios') {
+      setOpenVerifyBottomSheetHeight("85%");
     }
   }
 
@@ -124,6 +132,9 @@ const UpdateProfileScreen = () => {
     }
     if (currentPasswordBottomSheet) {
       setCurrentPasswordBottomSheetHeight("30%");
+    }
+    if (openVerifyBottomSheet && Platform.OS == 'ios') {
+      setOpenVerifyBottomSheetHeight("63%");
     }
   }
 
@@ -147,7 +158,7 @@ const UpdateProfileScreen = () => {
       keyboardDidShowListener?.remove();
       keyboardDidHideListener?.remove();
     };
-  }, [openEmailBottomSheet, openPhoneBottomSheet]);
+  }, [openEmailBottomSheet, openPhoneBottomSheet, openVerifyBottomSheet]);
 
   // Function to extract country code and phone number from full number
   const extractPhoneInfo = (fullNumber: string) => {
@@ -230,9 +241,9 @@ const UpdateProfileScreen = () => {
   }, [user]);
 
   const handleBack = () => {
-    if(navigation.canGoBack()){
+    if (navigation.canGoBack()) {
       navigation.goBack();
-    }else{
+    } else {
       dispatch(setSignUpFlow(false))
       navigation.navigate(ROUTES.AppNavigator)
     }
@@ -281,18 +292,18 @@ const UpdateProfileScreen = () => {
         return;
       }
 
-      if(!currentPassword){
+      if (!currentPassword) {
         setCurrentPasswordBottomSheet(true)
         return;
       }
     }
 
-    if(!name){
+    if (!name) {
       setNameInputError(true)
       return;
-    } 
+    }
 
-    if(nationality == 'citizen' && !idNumber){
+    if (nationality == 'citizen' && !idNumber) {
       setIdNumberInputError(true)
       return;
     }
@@ -315,7 +326,7 @@ const UpdateProfileScreen = () => {
         "UserLoginInfoId": user?.Id,
       }
 
-      if(password && currentPassword){
+      if (password && currentPassword) {
         payload.CurrentPassword = currentPassword;
       }
 
@@ -326,7 +337,7 @@ const UpdateProfileScreen = () => {
         setPassword('')
         setConfirmPassword('')
         getLatestUser()
-        
+
         Alert.alert('تم تحديث معلومات المستخدم بنجاح');
       }
     } catch (error: any) {
@@ -335,13 +346,13 @@ const UpdateProfileScreen = () => {
     }
   }
 
-const getLatestUser = async () => {
-  const payloadSuccessUpdateProfile = {
-    "UserlogiInfoId": user?.Id
+  const getLatestUser = async () => {
+    const payloadSuccessUpdateProfile = {
+      "UserlogiInfoId": user?.Id
+    }
+    const responseUpdateprofile = await profileService.getUserUpdatedData(payloadSuccessUpdateProfile)
+    dispatch(setUser(responseUpdateprofile.UserDetail[0]));
   }
-  const responseUpdateprofile = await profileService.getUserUpdatedData(payloadSuccessUpdateProfile)
-  dispatch(setUser(responseUpdateprofile.UserDetail[0]));
-}
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
@@ -490,6 +501,14 @@ const getLatestUser = async () => {
 
       const response = await profileService.userUpdatedEmail(payload)
       if (response?.ResponseStatus?.STATUSCODE === 200) {
+        if (response?.StatusCode?.STATUSCODE == 3002) {
+          setOpenEmailBottomSheet(false)
+          setTimeout(() => {
+            setAlertModalVisible(true)
+            setAlertModalMessage("البريد الالكتروني موجود بالفعل")
+          }, 500)
+          return;
+        }
         setOpenEmailBottomSheet(false)
         setOTPFrom('email')
         setOTPForText(updatedEmail)
@@ -519,6 +538,14 @@ const getLatestUser = async () => {
 
       const response = await profileService.userUpdatedPhone(payload)
       if (response?.ResponseStatus?.STATUSCODE === 200) {
+        if (response?.StatusCode?.STATUSCODE == 3020) {
+          setOpenPhoneBottomSheet(false)
+          setTimeout(() => {
+            setAlertModalVisible(true)
+            setAlertModalMessage("رقم الجوال موجود مسبقاً")
+          }, 500)
+          return;
+        }
         setOpenPhoneBottomSheet(false)
         setSelectedFullPhoneNumber(fullPhoneNumber)
         setOTPFrom('phone')
@@ -529,6 +556,7 @@ const getLatestUser = async () => {
       }
 
     } catch (error) {
+      console.log(error)
     } finally {
       setIsUploading(false)
     }
@@ -542,9 +570,10 @@ const getLatestUser = async () => {
       }
 
       const response = await profileService.resendOtp(payload)
-      if(response?.ResponseStatus?.STATUSCODE == 3009){
+      if (response?.ResponseStatus?.STATUSCODE == 3009) {
         setResentCode(true)
       }
+
 
     } catch (error) {
     } finally {
@@ -554,6 +583,12 @@ const getLatestUser = async () => {
 
   const HandleOtpSubmit = async () => {
     try {
+      setOTPAPIError(false)
+      if (otpValue == '' || otpValue.length < 4) {
+        setOtpValueError(true)
+        return;
+      }
+
       setIsUploading(true)
       const payload = {
         "UserId": user?.Id,
@@ -562,8 +597,12 @@ const getLatestUser = async () => {
       }
 
       const response = await profileService.verifyUserUpdatedData(payload)
-      if(response?.StatusCode?.STATUSCODE == 3007){
+      if (response?.StatusCode?.STATUSCODE == 3007) {
         updateUserProfileHandler()
+      }
+      if (response?.StatusCode?.STATUSCODE == 3005) {
+        setOTPAPIError(true)
+        return;
       }
       setOpenVerifyBottomSheet(false)
       setOtpValue('')
@@ -577,11 +616,13 @@ const getLatestUser = async () => {
 
   const HandleCloseEmailModal = () => {
     setOpenEmailBottomSheet(false)
+    setEmailBottomSheetHeight("35%")
   }
 
   const HandleCloseVerifyModal = () => {
     setOtpValue('')
     setOpenVerifyBottomSheet(false)
+    setOpenVerifyBottomSheetHeight("63%")
   }
 
   const getFileName = (url: string) => {
@@ -590,9 +631,9 @@ const getLatestUser = async () => {
   }
 
   useEffect(() => {
-   if(!openVerifyBottomSheet){
-    setResentCode(false)
-   }
+    if (!openVerifyBottomSheet) {
+      setResentCode(false)
+    }
   }, [openVerifyBottomSheet])
 
   return (
@@ -633,7 +674,7 @@ const getLatestUser = async () => {
             {/* Name */}
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>الاسم</Text>
-              <TextInput style={[styles.input,nameInputError && {borderWidth:1,borderColor:'red'}]} value={name} onChangeText={setName} placeholder="الاسم" />
+              <TextInput style={[styles.input, nameInputError && { borderWidth: 1, borderColor: 'red' }]} value={name} onChangeText={setName} placeholder="الاسم" />
             </View>
             {/* Mobile */}
             <View style={styles.fieldGroup}>
@@ -692,7 +733,7 @@ const getLatestUser = async () => {
             {/* ID Number */}
             {nationality === 'citizen' && <View style={styles.fieldGroup}>
               {/* <Text style={styles.label}>رقم الهوية</Text> */}
-              <TextInput style={[styles.input,idNumberInputError && {borderWidth:1,borderColor:'red'}]} value={idNumber} onChangeText={(text) => {
+              <TextInput style={[styles.input, idNumberInputError && { borderWidth: 1, borderColor: 'red' }]} value={idNumber} onChangeText={(text) => {
                 setIdNumber(text)
                 setIdNumberInputError(false)
               }} placeholder="رقم الهوية" placeholderTextColor="#999" keyboardType="numeric" />
@@ -800,12 +841,15 @@ const getLatestUser = async () => {
                 color: '#36454F',
 
               }}>تغيير رقم الهااتف</Text>
-              <TouchableOpacity onPress={() => setOpenPhoneBottomSheet(false)}>
+              <TouchableOpacity onPress={() => {
+                setOpenPhoneBottomSheet(false)
+                setPhoneBottomSheetHeight("35%")
+              }}>
                 <AntDesign name="close" size={24} color="#979e9eff" />
               </TouchableOpacity>
 
             </View>
-            <View style={{paddingHorizontal: 16, marginTop: 16 }}>
+            <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
               <Text style={styles.label}>أدخل رقم هاتفك الجديد</Text>
               <CustomPhoneInput
                 value={updatedPhoneNumber}
@@ -864,56 +908,47 @@ const getLatestUser = async () => {
                 <AntDesign name="close" size={24} color="#979e9eff" />
               </TouchableOpacity>
             </View>
-            <View style={{paddingHorizontal: 16, marginTop: 16 }}>
+            <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
               <Text style={styles.label}>دخل كلمة المرور الحالية</Text>
-              <TextInput style={[styles.input,{width:'100%'}]} value={currentPassword} onChangeText={setCurrentPassword} placeholder="كلمة المرور الحالية" secureTextEntry={true} />
+              <TextInput style={[styles.input, { width: '100%' }]} value={currentPassword} onChangeText={setCurrentPassword} placeholder="كلمة المرور الحالية" secureTextEntry={true} />
               <TouchableOpacity onPress={() => {
                 updateUserProfileHandler()
                 setCurrentPasswordBottomSheet(false)
               }} style={styles.saveBtn}>
-              <Text style={styles.saveBtnText}>حفظ</Text>
-            </TouchableOpacity>
+                <Text style={styles.saveBtnText}>حفظ</Text>
+              </TouchableOpacity>
             </View>
-            
+
           </View>
         </TouchableWithoutFeedback>
       </CustomBottomSheet>
 
-      <Modal
+      <CustomBottomSheet
         visible={openVerifyBottomSheet}
-        transparent={true}
-        animationType="slide"
-        statusBarTranslucent={true}
-        onRequestClose={() => setOpenVerifyBottomSheet(false)}
+        onClose={() => setOpenVerifyBottomSheet(false)}
+        showHandle={false}
+        height={openVerifyBottomSheetHeight}
       >
-
-        <SafeAreaView style={{ flex: 1,}}>
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-
-            <KeyboardAvoidingView
-              style={{ flex: 1 }}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-            >
-              <View style={styles.modalBackground}>
-                <View style={styles.modalContainer}>
-                  <VerificationCodeCompoent
-                    onClosePress={HandleCloseVerifyModal}
-                    OTPFor={OTPForText}
-                    OTPForText={OTPFrom == 'email' ? "تغيير البريد الإلكتروني" : "تغيير الرقم"}
-                    onChangeText={(text) => setOtpValue(text)}
-                    value={otpValue}
-                    OtpSubmitButton={HandleOtpSubmit}
-                    HandleResendPress={HandleOtpResendButton}
-                    resentCode={resentCode}
-                  />
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </TouchableWithoutFeedback>
-        </SafeAreaView>
-
-      </Modal>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View style={[styles.modalContainer]}>
+            <VerificationCodeCompoent
+              onClosePress={HandleCloseVerifyModal}
+              OTPFor={OTPForText}
+              OTPForText={OTPFrom == 'email' ? "تغيير البريد الإلكتروني" : "تغيير الرقم"}
+              onChangeText={(text) => {
+                setOtpValue(text)
+                setOtpValueError(false)
+              }}
+              value={otpValue}
+              OtpSubmitButton={HandleOtpSubmit}
+              HandleResendPress={HandleOtpResendButton}
+              resentCode={resentCode}
+              otpError={otpValueError}
+              otpApiError={otpAPIError}
+            />
+          </View>
+        </TouchableWithoutFeedback>
+      </CustomBottomSheet>
 
       <Modal
         visible={passwordModalVisible}
@@ -932,8 +967,32 @@ const getLatestUser = async () => {
               <Text style={{ color: '#3a434a', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>خطأ</Text>
             </View>
             <AntDesign name="exclamationcircle" size={64} color="#d84d48" style={{ marginVertical: 18 }} />
-            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center',fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
               {passwordModalMessage}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={alertModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => { setAlertModalVisible(false); }}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+            <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableOpacity
+                onPress={() => { setAlertModalVisible(false); }}
+              >
+                <AntDesign name="close" size={24} color="#888" />
+              </TouchableOpacity>
+              <Text style={{ color: '#3a434a', fontSize: 20, fontFamily: CAIRO_FONT_FAMILY.bold, marginBottom: 12 }}>خطأ</Text>
+            </View>
+            <AntDesign name="exclamationcircle" size={56} color="#d84d48" style={{ marginVertical: 18 }} />
+            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+              {alertModalMessage}
             </Text>
           </View>
         </View>
@@ -995,7 +1054,7 @@ const styles = StyleSheet.create({
     color: '#222',
     fontFamily: CAIRO_FONT_FAMILY.regular,
     textAlign: 'right',
-    
+
   },
   row: {
     flexDirection: 'row',

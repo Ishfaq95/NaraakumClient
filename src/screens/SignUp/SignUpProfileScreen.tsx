@@ -50,6 +50,12 @@ const SignUpProfileScreen = ({ route }: any) => {
     const [emailValidationError, setEmailValidationError] = useState(false)
     const [alertModalVisible, setAlertModalVisible] = useState(false)
     const [alertModalMessage, setAlertModalMessage] = useState('')
+    
+    // Debug modal state changes
+    useEffect(() => {
+        console.log('Modal state changed - visible:', alertModalVisible, 'message:', alertModalMessage)
+    }, [alertModalVisible, alertModalMessage])
+    
     // Password validation function
     const validatePassword = (pwd: string) => {
         // At least 8 characters, at least one uppercase, one lowercase, one number, one special character
@@ -121,7 +127,9 @@ const SignUpProfileScreen = ({ route }: any) => {
         if (!validatePassword(password)) {
             setPasswordError(true);
             setAlertModalMessage("كلمة المرور يجب أن تحتوي على الأقل على 8 أحرف، حرف كبير واحد، حرف صغير واحد، رقم واحد، وحرف خاص واحد")
+            console.log('Setting modal visible to true, message:', "كلمة المرور يجب أن تحتوي على الأقل على 8 أحرف، حرف كبير واحد، حرف صغير واحد، رقم واحد، وحرف خاص واحد")
             setAlertModalVisible(true)
+            console.log('Modal visible state after set:', alertModalVisible)
             return;
         }
 
@@ -160,6 +168,7 @@ const SignUpProfileScreen = ({ route }: any) => {
             if (response?.ResponseStatus?.STATUSCODE == 200) {
                 if(response.StatusCode.STATUSCODE == 3002){
                     setAlertModalMessage("البريد الالكتروني موجود بالفعل")
+                    console.log('Setting email error modal visible to true')
                     setAlertModalVisible(true)
                     return;
                 }
@@ -350,24 +359,36 @@ const SignUpProfileScreen = ({ route }: any) => {
                 visible={alertModalVisible}
                 transparent={true}
                 animationType="fade"
-                onRequestClose={() => { setAlertModalVisible(false); }}
+                statusBarTranslucent={true}
+                onRequestClose={() => { 
+                    console.log('Modal onRequestClose triggered');
+                    setAlertModalVisible(false); 
+                }}
+                onShow={() => console.log('Modal onShow triggered, visible:', alertModalVisible)}
             >
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
-                        <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center',justifyContent: 'space-between' }}>
-                            <TouchableOpacity
-                                onPress={() => { setAlertModalVisible(false); }}
-                            >
-                                <AntDesign name="close" size={24} color="#888" />
-                            </TouchableOpacity>
-                            <Text style={{ color: '#3a434a', fontSize: 20, fontFamily: CAIRO_FONT_FAMILY.bold, }}>خطأ</Text>
-                        </View>
-                        <AntDesign name="exclamationcircle" size={56} color="#d84d48" style={{ marginVertical: 18 }} />
-                        <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
-                            {alertModalMessage}
-                        </Text>
+                <TouchableWithoutFeedback onPress={() => setAlertModalVisible(false)}>
+                    <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+                        <TouchableWithoutFeedback onPress={() => {}}>
+                            <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+                                <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center',justifyContent: 'space-between' }}>
+                                    <TouchableOpacity
+                                        onPress={() => { 
+                                            console.log('Close button pressed');
+                                            setAlertModalVisible(false); 
+                                        }}
+                                    >
+                                        <AntDesign name="close" size={24} color="#888" />
+                                    </TouchableOpacity>
+                                    <Text style={{ color: '#3a434a', fontSize: 20, fontFamily: CAIRO_FONT_FAMILY.bold, }}>خطأ</Text>
+                                </View>
+                                <AntDesign name="exclamationcircle" size={56} color="#d84d48" style={{ marginVertical: 18 }} />
+                                <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+                                    {alertModalMessage}
+                                </Text>
+                            </View>
+                        </TouchableWithoutFeedback>
                     </View>
-                </View>
+                </TouchableWithoutFeedback>
             </Modal>
 
             <FullScreenLoader visible={isUploading} />
