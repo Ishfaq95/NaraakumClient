@@ -76,6 +76,26 @@ export const getServiceProviderListByService = async (params: {
     }
 };
 
+export const getServiceProviderListByServiceByIds = async (params: {
+    CatcategoryId: string;
+    ServiceIds: string;
+    Search: string;
+    PatientLocation: any;
+    CatCityId: any;
+    CatSquareId: any;
+    Gender: number;
+    PageNumber: number;
+    PageSize: number;
+}): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('offeredServices/GetServiceProviderListByServiceByIds', params);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error fetching service provider list:', error);
+        throw error;
+    }
+};
+
 // New API: GetUpdatedWallet
 export const getUpdatedWallet = async (payload: { UserLoginInfoId: number }): Promise<any> => {
     try {
@@ -256,6 +276,7 @@ export const bookingService = {
     getAllSpecialties,
     getServiceProviderSchedulingAvailability,
     getServiceProviderListByService,
+    getServiceProviderListByServiceByIds,
     getUpdatedWallet,
     createOrderMainBeforePayment,
     updateOrderMainBeforePayment,

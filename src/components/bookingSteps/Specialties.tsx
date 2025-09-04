@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { globalTextStyles } from '../../styles/globalStyles';
 
-const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpecialty: (specialty: any) => void, onContinueWithService: (service: any) => void }) => {
+const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpecialty: (specialty: any, isSelected: boolean) => void, onContinueWithService: (service: any) => void }) => {
   const category = useSelector((state: any) => state.root.booking.category);
   const [search, setSearch] = useState('');
   const [offeredServices, setOfferedServices] = useState<any>(null);
@@ -22,7 +22,10 @@ const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpeci
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
+  const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const dispatch = useDispatch();
+  const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
+  const SelectedCardItem = CardArray.length > 0 ? CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId) : [];
 
   useEffect(() => {
     if (category) {
@@ -150,10 +153,12 @@ const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpeci
     // Clean the TitleSlang by removing all types of line breaks
     const cleanTitle = item.TitleSlang?.replace(/[\r\n]+/g, ' ').trim() || '';
 
+    const isSelected = SelectedCardItem[0]?.CatServiceId == "105" ?  SelectedCardItem[0]?.CatServiceId == item.Id : SelectedCardItem[0]?.CatSpecialtyId == item.Id;
+
     return (
-      <TouchableOpacity onPress={() => onPressSpecialty(item)} style={styles.cardSpecialty} activeOpacity={0.8}>
+      <TouchableOpacity onPress={() => onPressSpecialty(item,isSelected)} style={[styles.cardSpecialty, isSelected && styles.selectedCard]} activeOpacity={0.8}>
         <View style={styles.rowSpecialty}>
-          <Text style={styles.title} numberOfLines={2}>{cleanTitle}</Text>
+          <Text style={[styles.title, isSelected && styles.selectedTitle]} numberOfLines={2}>{cleanTitle}</Text>
           <View style={styles.imageContainer}>
             {item.ImagePath ? (
               isSvg ? (

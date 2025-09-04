@@ -389,6 +389,8 @@ const AppointmentListScreen = ({ navigation }: any) => {
     <AppointmentVisitCard appointment={item} onPressMapButton={onPressMapButton} />
   ), []);
 
+  console.log("patientReminderList",patientReminderList)
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -396,7 +398,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
       <View style={{ flex: 1, backgroundColor: '#e4f1ef', padding: 10 }}>
         <FlatList
           data={patientReminderList}
-          renderItem={({ item }) => item?.CatCategoryId == "42" ? renderItem({ item }) : rendervisitItem({ item })}
+          renderItem={({ item }) => item?.TaskDetail[0]?.CatServiceServeTypeId == "1" ? renderItem({ item }) : rendervisitItem({ item })}
           keyExtractor={(item) => item?.TaskId?.toString()}
           ListEmptyComponent={
             <View style={{ height: "100%", paddingTop:"50%", justifyContent: 'center', alignItems: 'center' }}>

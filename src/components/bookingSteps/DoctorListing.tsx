@@ -183,51 +183,51 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
   }
 
-  useEffect(() => {
-    const getUnPaidUserOrders = async () => {
-      try {
-        const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
+  // useEffect(() => {
+  //   const getUnPaidUserOrders = async () => {
+  //     try {
+  //       const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
 
-        if (response.Cart && response.Cart.length > 0) {
-          // Convert API response to cardItems format
-          const convertedCardItems = response.Cart;
-          // Check for existing items and replace duplicates instead of adding
-          const existingCardItems = CardArray;
-          const updatedCardItems = [...existingCardItems];
+  //       if (response.Cart && response.Cart.length > 0) {
+  //         // Convert API response to cardItems format
+  //         const convertedCardItems = response.Cart;
+  //         // Check for existing items and replace duplicates instead of adding
+  //         const existingCardItems = CardArray;
+  //         const updatedCardItems = [...existingCardItems];
 
-          convertedCardItems.forEach((newItem: any) => {
-            // Find if item already exists by OrderDetailId and OrderId
-            const existingIndex = updatedCardItems.findIndex((existingItem: any) =>
-              existingItem.OrderDetailId === newItem.OrderDetailId &&
-              existingItem.OrderId === newItem.OrderId
-            );
+  //         convertedCardItems.forEach((newItem: any) => {
+  //           // Find if item already exists by OrderDetailId and OrderId
+  //           const existingIndex = updatedCardItems.findIndex((existingItem: any) =>
+  //             existingItem.OrderDetailId === newItem.OrderDetailId &&
+  //             existingItem.OrderId === newItem.OrderId
+  //           );
 
-            if (existingIndex !== -1) {
-              // Replace existing item with new one
-              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
-              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
-              newItem.SchedulingTime = startTime.localTime;
-              newItem.SchedulingEndTime = endTime.localTime;
-              updatedCardItems[existingIndex] = newItem;
-            } else {
-              // Add new item if it doesn't exist
-              const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
-              const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
-              newItem.SchedulingTime = startTime.localTime;
-              newItem.SchedulingEndTime = endTime.localTime;
-              updatedCardItems.push(newItem);
-            }
-          });
+  //           if (existingIndex !== -1) {
+  //             // Replace existing item with new one
+  //             const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+  //             const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+  //             newItem.SchedulingTime = startTime.localTime;
+  //             newItem.SchedulingEndTime = endTime.localTime;
+  //             updatedCardItems[existingIndex] = newItem;
+  //           } else {
+  //             // Add new item if it doesn't exist
+  //             const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
+  //             const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
+  //             newItem.SchedulingTime = startTime.localTime;
+  //             newItem.SchedulingEndTime = endTime.localTime;
+  //             updatedCardItems.push(newItem);
+  //           }
+  //         });
 
-          // Dispatch the updated array
-          dispatch(addCardItem(updatedCardItems));
-        }
-      } catch (error) {
-        console.error('Error fetching unpaid orders:', error);
-      }
-    }
-    getUnPaidUserOrders();
-  }, [user]);
+  //         // Dispatch the updated array
+  //         dispatch(addCardItem(updatedCardItems));
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching unpaid orders:', error);
+  //     }
+  //   }
+  //   getUnPaidUserOrders();
+  // }, [user]);
 
   useEffect(() => {
     if (serviceProviders.length > 0 && availability.length > 0) {
@@ -488,7 +488,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         }
       }
 
-      const response = await bookingService.getServiceProviderListByService(requestBody);
+      const response = await bookingService.getServiceProviderListByServiceByIds(requestBody);
 
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
@@ -508,9 +508,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         serviceIds = getServiceIds();
       }
 
+      console.log("SelectedCardItem",SelectedCardItem)
+
       const requestBody = {
         CatServiceId: serviceIds,
-        CatSpecialtyId: 0,
+        CatSpecialtyId: SelectedCardItem[0]?.CatSpecialtyId || 0,
         StartDate: date ? moment(date).locale('en').format('YYYY-MM-DD') : moment().locale('en').format('YYYY-MM-DD'),
         PageNumber: 1,
         PageSize: 20
@@ -630,6 +632,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
+    console.log("SelectedCardItem",SelectedCardItem)
     const serviceId = SelectedCardItem[0]?.CatServiceId
     if (serviceId == 0 || serviceId == null || serviceId == "" || serviceId == undefined) {
       setShowServiceModal(true)
@@ -657,6 +660,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       });
     }
   }
+
+  console.log("availability", availability)
 
   // Memoize filtered providers to prevent unnecessary re-renders
   const filteredProviders = useMemo(() => {
@@ -738,7 +743,47 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     } else {
       return selectedSlotInfo ? false : true
     }
-  }, [selectedSlotInfo, CardArray])
+  }, [selectedSlotInfo, CardArray,SelectedCardItem])
+
+  const convertArabicTimeTo24Hour = (timeString: string): string => {
+    if (!timeString) return timeString;
+
+    // Remove any extra spaces and split by space
+    const parts = timeString.trim().split(' ');
+    if (parts.length < 2) {
+      return timeString; // If no AM/PM indicator, return as is
+    }
+
+    const timePart = parts[0]; // e.g., "2:30"
+    const periodPart = parts[1]; // e.g., "ص" (ص for AM) or "م" (م for PM)
+
+    // Split time into hours and minutes
+    const [hours, minutes] = timePart.split(':').map(Number);
+
+    let hour24 = hours;
+
+    // Convert based on Arabic period indicators
+    // ص = صباح (morning/AM)
+    // م = مساء (evening/PM)
+    if (periodPart === 'ص') {
+      // AM - keep as is, but handle 12 AM case
+      if (hours === 12) {
+        hour24 = 0;
+      }
+    } else if (periodPart === 'م') {
+      // PM - add 12 hours, but handle 12 PM case
+      if (hours !== 12) {
+        hour24 = hours + 12;
+      }
+    } else {
+    }
+
+    const result = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+    return result;
+  };
+
+  console.log("filteredProviders", filteredProviders)
 
   return (
     <View style={styles.mainContainer}>
@@ -792,9 +837,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           </TouchableOpacity>
         </View>
       </View>
+      <View style={{ flexDirection: 'row',  paddingHorizontal: 16, paddingTop: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ ...globalTextStyles.bodyLarge, fontWeight: '600', color: '#36454f' }}>
+          {`النتائج (${filteredProviders.length || organizationList.length || filteredHospitals.length})`}
+        </Text>
+      </View>
       {/* Service Providers List */}
       {/* {displayCategory?.Display == "CP" ? serviceProviders.length > 0 : hospitalList.length > 0 &&  */}
-      <View style={{ flex: 1, paddingBottom: 50, paddingTop: 10 }}>
+      <View style={{ flex: 1, paddingBottom: 50, }}>
         {
           displayCategory?.Display == "CP" ? <FlatList
             data={filteredProviders}
@@ -803,10 +853,51 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             maxToRenderPerBatch={5}
             windowSize={10}
             initialNumToRender={3}
+            ListEmptyComponent={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ ...globalTextStyles.bodyLarge, fontWeight: 'bold', color: '#dc3545' }}>
+                لا يوجد نتائج
+              </Text>
+            </View>}
             renderItem={({ item, index }) => {
               const providerAvailability = availability.flatMap(avail =>
                 avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
               );
+
+              const allAvailableSlots = item.slots?.filter((s: any) => {
+                // Check if slot is available
+                if (!s.available) return false;
+                
+                // Check if start time is not in the past
+                const currentDate = new Date();
+                const slotDate = new Date(s.date);
+                const slotTime = s.start_time;
+                
+                // Parse the time (assuming format like "12:00 ص" or "08:00 ص")
+                const timeMatch = slotTime.match(/(\d{1,2}):(\d{2})\s*(ص|م)/);
+                if (!timeMatch) return false;
+                
+                let hours = parseInt(timeMatch[1]);
+                const minutes = parseInt(timeMatch[2]);
+                const period = timeMatch[3];
+                
+                // Convert to 24-hour format
+                if (period === 'م' && hours !== 12) {
+                  hours += 12;
+                } else if (period === 'ص' && hours === 12) {
+                  hours = 0;
+                }
+                
+                // Create slot datetime
+                const slotDateTime = new Date(slotDate);
+                slotDateTime.setHours(hours, minutes, 0, 0);
+                
+                // Check if slot time is in the future
+                return slotDateTime > currentDate;
+              });
+
+              if(allAvailableSlots.length == 0) {
+                return null
+              }
 
               return <ServiceProviderCard
                 provider={item}

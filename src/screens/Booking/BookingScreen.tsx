@@ -26,12 +26,79 @@ const BookingScreen = ({ navigation, route }: any) => {
   const category = useSelector((state: any) => state.root.booking.category);
   const services = useSelector((state: any) => state.root.booking.services);
   const existingCardItems = useSelector((state: any) => state.root.booking.cardItems);
+  const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
   const [SuccessResponse, setSuccessResponse] = useState(null);
   const [showNurseModal, setShowNurseModal] = useState(false);
   const [withNurse, setWithNurse] = useState(false);
   const [selectedSpecialty, setSelectedSpecialty] = useState<any>(null);
+  const [onEditService, setOnEditService] = useState(false);
   const steps = [1, 2, 3, 4];
-  const onPressSpecialty = (specialty: any) => {
+  const onPressSpecialty = (specialty: any, isSelected: boolean) => {
+    if (onEditService) {
+      if (isSelected) {
+        const updatedCardArray = [...existingCardItems];
+
+        // Find the index of the item that matches the selectedUniqueId
+        const selectedIndex = updatedCardArray.findIndex(item => item.ItemUniqueId === selectedUniqueId);
+
+        if (selectedIndex !== -1) {
+          updatedCardArray[selectedIndex] = {
+            ...updatedCardArray[selectedIndex],
+            "CatLevelId": specialty.CatLevelId,
+          };
+        }
+        dispatch(addCardItem(updatedCardArray));
+        if (specialty.CatLevelId == 3) {
+          dispatch(setServices(null));
+        }else{
+          const servicesArray = services.filter((item: any) => item.CatLevelId != 3);
+        dispatch(setServices(servicesArray));
+        }
+
+        setCurrentStep(2);
+        setOnEditService(false);
+        return;
+      } else {
+        const updatedCardArray = [...existingCardItems];
+
+        // Find the index of the item that matches the selectedUniqueId
+        const selectedIndex = updatedCardArray.findIndex(item => item.ItemUniqueId === selectedUniqueId);
+        const selectedItem = updatedCardArray[selectedIndex];
+          console.log("selectedItem",selectedItem)
+        if (specialty.CatLevelId == 3) {
+          updatedCardArray[selectedIndex] = {
+            ...specialty,
+            "ItemUniqueId": selectedItem.ItemUniqueId,
+            "CatCategoryId": selectedItem.CatCategoryId,
+            "CatServiceId": specialty.Id,
+            "CatCategoryTypeId": selectedItem.CatCategoryTypeId,
+            "OrderID":selectedItem.OrderID,
+            "OrderDetailId":selectedItem.OrderDetailId,
+          }
+          dispatch(setServices(null));
+          dispatch(setSelectedUniqueId(selectedItem.ItemUniqueId));
+          dispatch(addCardItem(updatedCardArray));
+        } else {
+          updatedCardArray[selectedIndex] = {
+            ...specialty,
+            "ItemUniqueId": selectedItem.ItemUniqueId,
+            "CatCategoryId": selectedItem.CatCategoryId,
+            "CatSpecialtyId": specialty.Id,
+            "CatCategoryTypeId": selectedItem.CatCategoryTypeId,
+            "OrderID":selectedItem.OrderID,
+            "OrderDetailId":selectedItem.OrderDetailId,
+          }
+          const servicesArray = services.filter((item: any) => item.CatLevelId != 3);
+          dispatch(setServices(servicesArray));
+          dispatch(setSelectedUniqueId(selectedItem.ItemUniqueId));
+          dispatch(addCardItem(updatedCardArray));
+        }
+        setCurrentStep(2);
+        setOnEditService(false);
+        return;
+      }
+
+    }
     if (category.Id == "32") {
       setSelectedSpecialty(specialty);
       setShowNurseModal(true);
@@ -157,11 +224,18 @@ const BookingScreen = ({ navigation, route }: any) => {
     )
   }
 
+  const onPressEditService = (item: any) => {
+    setOnEditService(true);
+
+    setCurrentStep(1);
+    setShowNurseModal(false);
+  }
+
   const renderStep = () => {
     switch (currentStep) {
       case 1: return <Specialties onPressSpecialty={onPressSpecialty} onContinueWithService={onContinueWithService} />;
       case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
-      case 3: return <ReviewOrder onPressNext={() => setCurrentStep(4)} onPressBack={() => setCurrentStep(2)} />;
+      case 3: return <ReviewOrder onPressNext={() => setCurrentStep(4)} onPressEditService={(item: any) => { onPressEditService(item) }} onPressBack={() => setCurrentStep(2)} />;
       case 4: return <Payment onPressNext={onPressCheckoutOrder} onPressBack={() => setCurrentStep(3)} />;
       default: return null;
     }

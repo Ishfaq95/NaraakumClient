@@ -48,7 +48,7 @@ const nationalities = [
   { label: 'مقيم', value: 'resident' },
 ];
 
-const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
+const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const { t } = useTranslation();
   const navigation = useNavigation();
 
@@ -89,6 +89,8 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   const [addedBeneficiary, setAddedBeneficiary] = useState<any>(null);
   const [pendingUpdate, setPendingUpdate] = useState<{ uniqueId: string, value: string } | null>(null);
   const [needAPICall, setNeedAPICall] = useState(false);
+
+  console.log("CardArray",CardArray)
   
   const Relation = [
     { label: 'اختر من فضلك', value: '' },
@@ -1009,6 +1011,7 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
   //   }
   // }, [uploadedFileUrl]);
 
+
   return (
     <View style={styles.container}>
       <View style={{ height: 120, width: "100%", alignItems: "flex-start", backgroundColor: "#e4f1ef" }}>
@@ -1038,7 +1041,9 @@ const ReviewOrder = ({ onPressNext, onPressBack }: any) => {
               <View style={styles.detailsCard}>
                 <View style={styles.detailsHeader}>
                   <Text style={styles.detailsHeaderText}>الخدمات المختارة (1)</Text>
-                  <TouchableOpacity style={styles.editButton}>
+                  <TouchableOpacity onPress={()=>{
+                    dispatch(setSelectedUniqueId(item.ItemUniqueId));
+                    onPressEditService(item)}} style={styles.editButton}>
                     <Text style={styles.editButtonText}>✎</Text>
                   </TouchableOpacity>
                 </View>
