@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { removeCardItem, clearCardItems, addCardItem, setSelectedUniqueId } from "../../shared/redux/reducers/bookingReducer";
 import moment from "moment";
 import MinusIcon from "../../assets/icons/MinuesIcon";
-import { bookingService } from "../../services/api/BookingService";
+import { bookingService, categoriesList } from "../../services/api/BookingService";
 import { useEffect, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { ROUTES } from "../../shared/utils/routes";
@@ -119,7 +119,7 @@ const CartScreen = ({ navigation }: any) => {
       <View style={styles.cardItem}>
         <View style={styles.cardItemContent}>
           <Text style={styles.providerName}>{String(item?.ServiceProviderFullnameSlang || item?.orgTitleSlang || '')}</Text>
-          {item?.ServiceProviderUserloginInfoId && <View style={styles.slotInfoContainer}>
+          {(item?.ServiceProviderUserloginInfoId || item?.OrganizationId) && <View style={styles.slotInfoContainer}>
             <Text style={styles.slotInfo}>{displayTime || item?.SchedulingTime}</Text>
             <Text style={styles.dateInfo}>{displayDate || item?.SchedulingDate}</Text>
           </View>}
@@ -172,7 +172,8 @@ const CartScreen = ({ navigation }: any) => {
   }
 
   const handleCheckout = () => {
-    let selectedItem: any = CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId);
+    const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
+    let selectedItem: any = displayCategory?.Display == "CP" ? CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId) : CardArray.find((item: any) => !item.OrganizationId);
     let isAPICallNeeded = CardArray.find((item: any) => !item.OrderID && !item.OrderDetailId);
     const selectedUniqueId = selectedItem?.ItemUniqueId;
 

@@ -50,9 +50,9 @@ const BookingScreen = ({ navigation, route }: any) => {
         dispatch(addCardItem(updatedCardArray));
         if (specialty.CatLevelId == 3) {
           dispatch(setServices(null));
-        }else{
+        } else {
           const servicesArray = services.filter((item: any) => item.CatLevelId != 3);
-        dispatch(setServices(servicesArray));
+          dispatch(setServices(servicesArray));
         }
 
         setCurrentStep(2);
@@ -64,7 +64,7 @@ const BookingScreen = ({ navigation, route }: any) => {
         // Find the index of the item that matches the selectedUniqueId
         const selectedIndex = updatedCardArray.findIndex(item => item.ItemUniqueId === selectedUniqueId);
         const selectedItem = updatedCardArray[selectedIndex];
-          console.log("selectedItem",selectedItem)
+        console.log("selectedItem", selectedItem)
         if (specialty.CatLevelId == 3) {
           updatedCardArray[selectedIndex] = {
             ...specialty,
@@ -72,8 +72,8 @@ const BookingScreen = ({ navigation, route }: any) => {
             "CatCategoryId": selectedItem.CatCategoryId,
             "CatServiceId": specialty.Id,
             "CatCategoryTypeId": selectedItem.CatCategoryTypeId,
-            "OrderID":selectedItem.OrderID,
-            "OrderDetailId":selectedItem.OrderDetailId,
+            "OrderID": selectedItem.OrderID,
+            "OrderDetailId": selectedItem.OrderDetailId,
           }
           dispatch(setServices(null));
           dispatch(setSelectedUniqueId(selectedItem.ItemUniqueId));
@@ -85,8 +85,8 @@ const BookingScreen = ({ navigation, route }: any) => {
             "CatCategoryId": selectedItem.CatCategoryId,
             "CatSpecialtyId": specialty.Id,
             "CatCategoryTypeId": selectedItem.CatCategoryTypeId,
-            "OrderID":selectedItem.OrderID,
-            "OrderDetailId":selectedItem.OrderDetailId,
+            "OrderID": selectedItem.OrderID,
+            "OrderDetailId": selectedItem.OrderDetailId,
           }
           const servicesArray = services.filter((item: any) => item.CatLevelId != 3);
           dispatch(setServices(servicesArray));
@@ -144,6 +144,10 @@ const BookingScreen = ({ navigation, route }: any) => {
       setSelectedSpecialty(services)
       setShowNurseModal(true);
     } else {
+      if(onEditService){
+        console.log("services",services);
+
+      }
       const uniqueId = generateUniqueId();
       let servicesArray: any[] = [];
       services.forEach((service: any) => {
@@ -247,7 +251,10 @@ const BookingScreen = ({ navigation, route }: any) => {
         <Text style={styles.headerTitle}>{t('booking')}</Text>
       }
       leftComponent={
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.bookButton}>
+        <TouchableOpacity onPress={() => {
+          dispatch(setSelectedUniqueId(null));
+          navigation.goBack()
+        }} style={styles.bookButton}>
           <ArrowRightIcon />
         </TouchableOpacity>
       }
@@ -301,6 +308,7 @@ const BookingScreen = ({ navigation, route }: any) => {
                   </TouchableOpacity>
                 </View>
               </View>
+              <View style={{ height: 1, backgroundColor: 'lightgray', width: '100%', marginVertical: 10 }} />
               <TouchableOpacity
                 onPress={() => goWithNurse()}
                 style={styles.modalButton}
@@ -366,27 +374,27 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
   },
   modalTitle: {
+    ...globalTextStyles.h4,
     fontWeight: 'bold',
-    fontSize: 18,
-    color: '#2d3a3a',
+    color: '#000',
   },
   closeIcon: {
     fontSize: 22,
     color: '#888',
   },
   modalContent: {
-    padding: 24,
+    padding: 16,
   },
   modalMessage: {
-    fontSize: 16,
-    color: '#2d3a3a',
+    ...globalTextStyles.h5,
+    color: '#000',
     marginBottom: 24,
     textAlign: 'left',
   },
   modalButton: {
     backgroundColor: '#27a6a1',
     borderRadius: 8,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 36,
     alignItems: 'center',
     alignSelf: 'center',
@@ -396,8 +404,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   modalButtonText: {
+    ...globalTextStyles.h5,
     color: '#fff',
-    fontSize: 16,
     fontWeight: 'bold',
   },
   modalMessageContainer: {
@@ -433,8 +441,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#008080',
   },
   rememberText: {
-    fontSize: 12,
-    color: '#666',
+    ...globalTextStyles.h5,
+    color: '#000',
   },
 });
 

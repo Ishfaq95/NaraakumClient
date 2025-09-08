@@ -402,6 +402,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }
 
   const fetchHospitalListByServices = async () => {
+    try {
+      setLoading(true);
     const payload = {
       CatcategoryId: category.Id,
       ServiceIds: SelectedCardItem?.map((service: any) => service.CatServiceId).join(','),
@@ -416,19 +418,32 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     const response = await bookingService.getHospitalListByServices(payload);
 
     setHospitalList(response?.HospitalList || []);
+    } catch (error) {
+      console.error('Error fetching hospital list by services:', error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const fetchOrganizationSchedulingAvailability = async (date?: any) => {
-    const payload = {
-      CatCategoryId: category.Id,
-      StartDate: moment().locale('en').format('YYYY-MM-DD'),
-      PageNumber: 1,
-      PageSize: 15
+    try {
+      setLoader2(true);
+      const payload = {
+        CatCategoryId: category.Id,
+        StartDate: moment().locale('en').format('YYYY-MM-DD'),
+        PageNumber: 1,
+        PageSize: 15
+      }
+      const response = await bookingService.getOrganizationSchedulingAvailability(payload);
+      setAllAvailabilityData(response?.SchedulingAvailability || []);
+      // Set initial availability for selected date
+      filterAvailabilityForDate(date ? moment(date) : moment(), response?.SchedulingAvailability || []);
+    } catch (error) {
+      console.error('Error fetching organization scheduling availability:', error);
+    } finally {
+      setLoader2(false);
     }
-    const response = await bookingService.getOrganizationSchedulingAvailability(payload);
-    setAllAvailabilityData(response?.SchedulingAvailability || []);
-    // Set initial availability for selected date
-    filterAvailabilityForDate(date ? moment(date) : moment(), response?.SchedulingAvailability || []);
+   
   }
 
   const getServiceIdsFromCardArray = () => {

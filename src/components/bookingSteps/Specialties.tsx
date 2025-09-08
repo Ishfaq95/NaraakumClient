@@ -27,6 +27,8 @@ const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpeci
   const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
   const SelectedCardItem = CardArray.length > 0 ? CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId) : [];
 
+  console.log("SelectedCardItem",SelectedCardItem)
+
   useEffect(() => {
     if (category) {
       if (category.Id == "42" || category.Id == "32") {
@@ -115,7 +117,14 @@ const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpeci
   const renderSelectableItem = ({ item }: { item: any }) => {
     const uri = getSanitizedImageUrl(item.ImagePath);
     const isSvg = uri.endsWith('.svg');
-    const isSelected = selectedServices.some(service => service.Id === item.Id);
+    let isSelected = selectedServices.some(service => service.Id === item.Id);
+
+    const currentService=SelectedCardItem.filter((service: any) => service.CatServiceId == item.Id);
+
+    console.log("currentService",currentService?.length);
+    if(currentService?.length > 0){
+      isSelected = true;
+    }
 
     // Clean the TitleSlang by removing all types of line breaks
     const cleanTitle = item.TitleSlang?.replace(/[\r\n]+/g, ' ').trim() || '';
@@ -153,7 +162,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpeci
     // Clean the TitleSlang by removing all types of line breaks
     const cleanTitle = item.TitleSlang?.replace(/[\r\n]+/g, ' ').trim() || '';
 
-    const isSelected = SelectedCardItem[0]?.CatServiceId == "105" ?  SelectedCardItem[0]?.CatServiceId == item.Id : SelectedCardItem[0]?.CatSpecialtyId == item.Id;
+    const isSelected = (SelectedCardItem[0]?.CatServiceId == "105" || SelectedCardItem[0]?.CatServiceId == "96") ?  SelectedCardItem[0]?.CatServiceId == item.Id : SelectedCardItem[0]?.CatSpecialtyId == item.Id;
 
     return (
       <TouchableOpacity onPress={() => onPressSpecialty(item,isSelected)} style={[styles.cardSpecialty, isSelected && styles.selectedCard]} activeOpacity={0.8}>
@@ -370,9 +379,8 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: '#ccc',
   },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    continueButtonText: {
+      ...globalTextStyles.h5,
     color: '#fff',
   },
   modalOverlay: {
@@ -396,26 +404,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#e8f3f2',
-    padding: 16,
+    paddingVertical: 5,
+    paddingHorizontal: 16,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
   },
   modalTitle: {
+    ...globalTextStyles.h4,
     fontWeight: 'bold',
-    fontSize: 18,
-    color: '#2d3a3a',
+    color: '#000',
   },
   closeIcon: {
     fontSize: 22,
     color: '#888',
   },
   modalContent: {
-    padding: 24,
+    padding: 16,
   },
   modalMessage: {
-    fontSize: 16,
-    color: '#2d3a3a',
-    marginBottom: 24,
+    ...globalTextStyles.h5,
+    color: '#000',
     textAlign: 'left',
   },
   modalButton: {

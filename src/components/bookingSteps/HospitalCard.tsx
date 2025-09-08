@@ -375,6 +375,10 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
               const isPast = isPastTime(slot);
               const isDisabled = !slot.available || isPast;
 
+              if(isDisabled){
+                return null;
+              }
+
               return (
                 <TouchableOpacity
                   key={`time-${slot.start_time}-${index}`}

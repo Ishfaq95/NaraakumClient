@@ -389,8 +389,6 @@ const AppointmentListScreen = ({ navigation }: any) => {
     <AppointmentVisitCard appointment={item} onPressMapButton={onPressMapButton} />
   ), []);
 
-  console.log("patientReminderList",patientReminderList)
-
 
   return (
     <SafeAreaView style={styles.container}>

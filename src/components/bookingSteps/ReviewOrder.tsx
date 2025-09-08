@@ -578,6 +578,38 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     }
   };
 
+
+// Alternative implementation using Map for better performance with large datasets
+const filterAndGroupItemsOptimized = (data:any) => {
+  // Extract all items from the main array
+  const allItems:any[] = [];
+  
+  data.forEach((entry:any) => {
+    if (entry.items && Array.isArray(entry.items)) {
+      allItems.push(...entry.items);
+    }
+  });
+  
+  // Use Map to group items efficiently
+  const groupMap = new Map();
+  
+  allItems.forEach((item:any) => {
+    const { Address, SchedulingDate, SchedulingEndTime } = item;
+    
+    // Create a unique key for grouping
+    const groupKey = `${Address}|${SchedulingDate}|${SchedulingEndTime}`;
+    
+    if (groupMap.has(groupKey)) {
+      groupMap.get(groupKey).push(item);
+    } else {
+      groupMap.set(groupKey, [item]);
+    }
+  });
+  
+  // Convert Map values to array
+  return Array.from(groupMap.values());
+}
+
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
       try {
@@ -631,7 +663,24 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
             }
           });
 
+          
+
+          // Ensure same ItemUniqueId for items matching Address, SchedulingDate, and SchedulingEndTime
+          const keyToUniqueIdMap: Map<string, string> = new Map();
+          updatedCardItems.forEach((item: any, index: number) => {
+            const key = `${item.Address}|${item.SchedulingDate}|${item.SchedulingEndTime}`;
+            let uid = keyToUniqueIdMap.get(key);
+            if (!uid) {
+              uid = item.ItemUniqueId ? item.ItemUniqueId : generateUniqueId();
+              keyToUniqueIdMap.set(key, uid);
+            }
+            if (item.ItemUniqueId !== uid) {
+              updatedCardItems[index] = { ...item, ItemUniqueId: uid };
+            }
+          });
+
           const groupedArray: any = groupArrayByUniqueIdAsArray(updatedCardItems);
+         
           setShowGroupedArray(groupedArray);
 
           dispatch(addCardItem(updatedCardItems));
@@ -1011,6 +1060,11 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   //   }
   // }, [uploadedFileUrl]);
 
+  const getSameServicesWithSameDate = ()=>{
+    const sameServices = CardArray.filter((item: any) => item.SchedulingDate == selectedDoctor.items[0].SchedulingDate);
+    return sameServices;
+  }
+
 
   return (
     <View style={styles.container}>
@@ -1028,7 +1082,9 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
 
       {selectedDoctor?.uniqueId && <ScrollView style={{ flex: 1, marginBottom: 60 }}>
         {
-          selectedDoctor?.items?.map((item: any, index: number) => {
+          [...new Set(selectedDoctor?.items?.map((item: any) => item.ItemUniqueId))].map((itemUniqueId: any, index: number) => {
+            const filteredItems = selectedDoctor?.items?.filter((item: any) => item.ItemUniqueId == itemUniqueId);
+            const item = filteredItems[0];
             let displayDate = '';
             let displayTime = '';
 
@@ -1047,13 +1103,17 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                     <Text style={styles.editButtonText}>✎</Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.selectedServiceRow}>
-                  {item?.CatCategoryId == "42"
-                    ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
-                    : <Text style={styles.selectedServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
-                  }
-                  <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>1</Text></View>
-                </View>
+                {filteredItems.map((item: any, index: number) => {
+                  return (
+                    <View style={styles.selectedServiceRow}>
+                    {item?.CatCategoryId == "42"
+                      ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
+                      : <Text style={styles.selectedServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
+                    }
+                    <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>{item.Quantity}</Text></View>
+                  </View>
+                  )
+                })}
                 <View style={styles.sessionInfoDetailsContainer}>
                   <View style={styles.sessionInfoDetailItem}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -1558,7 +1618,8 @@ const styles = StyleSheet.create({
     ...globalTextStyles.bodyMedium,
   },
   nextButtonText: {
-    ...globalTextStyles.bodyMedium,
+    ...globalTextStyles.h4,
+    color: '#fff',
   },
   BottomContainer: {
     flexDirection: 'row',
