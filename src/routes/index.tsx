@@ -38,6 +38,7 @@ import ConfirmPassword from '../screens/ForgotPassword/ConfirmPassword';
 import SignUpScreen from '../screens/SignUp/SignUpScreen';
 import SignUpProfileScreen from '../screens/SignUp/SignUpProfileScreen';
 import PrivacyPolicy from '../screens/SignUp/PrivicyPolicy';
+import OrderNotCompleted from '../components/bookingSteps/OrderNotCompleted';
 
 const Stack = createNativeStackNavigator();
 
@@ -74,6 +75,7 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.Meeting} component={meeting} />
 
       <Stack.Screen name={ROUTES.OrderSuccess} component={OrderSuccess} />
+      <Stack.Screen name={ROUTES.OrderNotCompleted} component={OrderNotCompleted} />
 
       {/* Profile section */}
       <Stack.Screen name={ROUTES.updateProfile} component={UpdateProfileScreen} />

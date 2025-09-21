@@ -6,6 +6,7 @@ import ArrowRightIcon from '../../assets/icons/RightArrow';
 import { useTranslation } from 'react-i18next';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Dropdown from '../../components/common/Dropdown';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../shared/redux/store';
@@ -98,6 +99,8 @@ const UpdateProfileScreen = () => {
   const [nameInputError, setNameInputError] = useState(false);
   const [idNumberInputError, setIdNumberInputError] = useState(false);
   const [resentCode, setResentCode] = useState(false)
+  const [successModalVisible, setSuccessModalVisible] = useState(false)
+  const [successModalMessage, setSuccessModalMessage] = useState('')
   // Password validation function
   const [alertModalVisible, setAlertModalVisible] = useState(false)
   const [alertModalMessage, setAlertModalMessage] = useState('')
@@ -338,7 +341,10 @@ const UpdateProfileScreen = () => {
         setConfirmPassword('')
         getLatestUser()
 
-        Alert.alert('تم تحديث معلومات المستخدم بنجاح');
+        setTimeout(() => {
+          setSuccessModalVisible(true)
+          setSuccessModalMessage("تم تحديث معلومات المستخدم بنجاح")
+        }, 500)
       }
     } catch (error: any) {
     } finally {
@@ -993,6 +999,30 @@ const UpdateProfileScreen = () => {
             <AntDesign name="exclamationcircle" size={56} color="#d84d48" style={{ marginVertical: 18 }} />
             <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
               {alertModalMessage}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={successModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => { setSuccessModalVisible(false); }}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+            <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableOpacity
+                onPress={() => { setSuccessModalVisible(false); }}
+              >
+                <AntDesign name="close" size={24} color="#888" />
+              </TouchableOpacity>
+              <Text style={{ color: '#3a434a', fontSize: 20, fontFamily: CAIRO_FONT_FAMILY.bold, marginBottom: 12 }}>تم التحديث</Text>
+            </View>
+            <Ionicons name="checkmark-circle" size={56} color="#23a2a4" style={{ marginVertical: 18 }} />
+            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+              {successModalMessage}
             </Text>
           </View>
         </View>

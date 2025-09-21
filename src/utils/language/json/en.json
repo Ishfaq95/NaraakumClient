@@ -68,5 +68,6 @@
   "order_detail":"Order detail",
   "notifications":"Notifications",
   "no_notifications":"No notifications",
-  "loading_more_notifications":"Loading more notifications..."
+  "loading_more_notifications":"Loading more notifications...",
+  "booking_failed":"Booking failed"
 }

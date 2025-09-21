@@ -72,5 +72,6 @@
   "order_detail":"تفاصيل الطلب",
   "notifications":"الإشعارات",
   "no_notifications":"لا يوجد إشعارات",
-  "loading_more_notifications":"جاري تحميل الإشعارات الأخرى..."
+  "loading_more_notifications":"جاري تحميل الإشعارات الأخرى...",
+  "booking_failed":"لم يكتمل الحجز"
 }

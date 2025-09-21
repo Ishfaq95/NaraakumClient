@@ -275,8 +275,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     textAlign: 'left',
     paddingTop: 10,
-    fontWeight: 'bold',
-    ...globalTextStyles.bodyMedium,
+    ...globalTextStyles.buttonMedium,
     marginBottom: 8,
     color: '#333',
   },
@@ -287,8 +286,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   city: {
-    fontWeight: 'bold',
-    ...globalTextStyles.bodyMedium,
+    ...globalTextStyles.buttonMedium,
     color: '#2d3a4b',
     textAlign: 'left',
   },
@@ -301,13 +299,12 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: '#36a6ad',
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 8,
     alignItems: 'center',
     marginTop: 4,
   },
-  confirmButtonText: {
-    fontWeight: 'bold',
-    ...globalTextStyles.bodyMedium,
+    confirmButtonText: {
+    ...globalTextStyles.buttonLarge,
     color: '#fff',
   },
 });

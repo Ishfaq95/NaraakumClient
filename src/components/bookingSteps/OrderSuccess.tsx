@@ -126,25 +126,25 @@ const OrderSuccess = ({ navigation, route }: any) => {
           <Text style={globalTextStyles.h3}>{t('booking_successful')}</Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_status')}</Text>
+          <Text style={[globalTextStyles.buttonMedium, { color: "#23a2a4" }]}>{t('transaction_status')}</Text>
           <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>{t('تمت العملية بنجاح')}</Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_number')}</Text>
+          <Text style={[globalTextStyles.buttonMedium, { color: "#23a2a4" }]}>{t('transaction_number')}</Text>
           <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
             {OrderDetail[0].OrderID ? `NAR-${OrderDetail[0].OrderID}` : 'N/A'}
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_date')}</Text>
+          <Text style={[globalTextStyles.buttonMedium, {  color: "#23a2a4" }]}>{t('transaction_date')}</Text>
           <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
             {OrderDetail[0].OrderDate ? moment(OrderDetail[0].OrderDate).locale('en').format('DD/MM/YYYY') : moment().locale('en').format('DD/MM/YYYY')}
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8 }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: "#23a2a4" }]}>{t('transaction_amount')}</Text>
+          <Text style={[globalTextStyles.buttonMedium, {  color: "#23a2a4" }]}>{t('transaction_amount')}</Text>
           <Text style={[globalTextStyles.bodySmall, { fontWeight: "600", color: "#23a2a4" }]}>
-            {`${OrderDetail.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0)} SAR` }
+            {`${ OrderDetail.length > 0 ? OrderDetail.reduce((acc: number, item: any) => acc + Number(item.ServiceCharges), 0) : 0} SAR` }
           </Text>
         </View>
         <View style={{width:'100%', flexDirection:'row', alignItems: "center", justifyContent: 'space-between',paddingBottom:8,paddingTop:30 }}>

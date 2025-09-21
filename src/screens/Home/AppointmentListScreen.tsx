@@ -33,6 +33,7 @@ import CustomBottomSheet from '../../components/common/CustomBottomSheet';
 import { globalTextStyles } from '../../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AppointmentTrackingMap from '../../components/AppointmentTrackingMap';
+import { setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
 
 export interface Appointment {
   CardNumber: string | null;
@@ -336,7 +337,9 @@ const AppointmentListScreen = ({ navigation }: any) => {
         <Text style={styles.headerTitle}>{t('appointments')}</Text>
       }
       rightComponent={
-        <TouchableOpacity onPress={() => navigation.navigate(ROUTES.Services)} style={styles.bookButton}>
+        <TouchableOpacity onPress={() => {
+          dispatch(setSelectedUniqueId(null));
+          navigation.navigate(ROUTES.Services)}} style={styles.bookButton}>
           <Text style={styles.bookButtonText}>{t('book_order')}</Text>
         </TouchableOpacity>
       }

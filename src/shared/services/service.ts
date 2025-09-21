@@ -244,7 +244,7 @@ export const getDuration = (appointment: any) => {
     return `${durationInMinutes} ${i18next.t('دقيقة')}`;
   }
 
-  return `${durationInMinutes} ${i18next.t('1 ساعة')}`;
+  return `${i18next.t('1 ساعة')}`;
 }
 
 export const convertArabicTimeTo24Hour = (timeString: string): string => {

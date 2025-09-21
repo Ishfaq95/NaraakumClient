@@ -30,6 +30,7 @@ export const ROUTES = {
     Services: "Services",
     BookingScreen: "BookingScreen",
     OrderSuccess: "OrderSuccess",
+    OrderNotCompleted: "OrderNotCompleted",
     LocationScreen: "LocationScreen",
 
     // Profile section

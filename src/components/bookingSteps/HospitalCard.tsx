@@ -223,11 +223,22 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
     }
   }, [timeSlots]);
 
+  const checkSelectedSlotInfo=()=>{
+    let returnVal=false
+    if(selectedSlotInfo){
+      returnVal= selectedSlotInfo?.OrganizationId == hospital?.OrganizationId
+    }else{
+      returnVal= selectedCard[0]?.OrganizationId == hospital?.OrganizationId
+    }
+    
+    return returnVal;
+  }
+
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
     <>
-      <View style={[{ flexDirection: 'row', width: '100%' }, selectedSlotInfo?.OrganizationId === hospital?.OrganizationId && styles.selectedProviderCard]}>
-        {selectedSlotInfo?.OrganizationId === hospital?.OrganizationId && <View style={{ position: 'absolute', right: 10, bottom: 10, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={[{ flexDirection: 'row', width: '100%' }, checkSelectedSlotInfo() && styles.selectedProviderCard]}>
+        {checkSelectedSlotInfo() && <View style={{ position: 'absolute', right: 10, bottom: 10, alignItems: 'center', justifyContent: 'center' }}>
           <CheckIcon width={40} height={40} color="#fff" />
         </View>}
         <View style={{ width: '30%' }}>
@@ -370,10 +381,14 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
         >
           <View style={styles.specialtiesRow}>
             {hospital?.slots && hospital?.slots.map((slot: any, index: any) => {
-              const isSelected = selectedSlotInfo?.OrganizationId === hospital?.OrganizationId &&
+              let isSelected = selectedSlotInfo?.OrganizationId === hospital?.OrganizationId &&
                 selectedSlotInfo?.slotTime === slot.start_time;
               const isPast = isPastTime(slot);
               const isDisabled = !slot.available || isPast;
+
+              if(selectedCard[0]?.OrganizationId == hospital?.OrganizationId && slot.fullTime == selectedCard[0]?.SchedulingTime){
+                isSelected=true;
+              }
 
               if(isDisabled){
                 return null;
@@ -411,7 +426,7 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
         </TouchableOpacity>
       </View>
     );
-  }, [hospital?.slots, selectedSlotInfo, hospital?.OrganizationId, isPastTime, handleSlotSelect, scrollTimeSlots]);
+  }, [hospital?.slots, selectedSlotInfo, hospital?.OrganizationId, isPastTime, handleSlotSelect, scrollTimeSlots, selectedCard]);
 
   return (
     <View style={[styles.providerCard]}>

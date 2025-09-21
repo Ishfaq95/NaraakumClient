@@ -1143,7 +1143,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
         }
 
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>معلومات المستفيد (المريض)</Text>
+          <Text style={[globalTextStyles.bodyMedium, {  color: '#333' }]}>معلومات المستفيد (المريض)</Text>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', }}>
           <CommonRadioButton
@@ -1259,7 +1259,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
                   }} placeholder="رقم الهوية" keyboardType="numeric" />
                 </View>}
                 <TouchableOpacity onPress={handleSaveBeneficiary} style={{ width: "100%", backgroundColor: "#23a2a4", paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
-                  <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>يحفظ</Text>
+                  <Text style={{  ...globalTextStyles.bodyMedium, fontSize: 16 }}>يحفظ</Text>
                 </TouchableOpacity>
               </View>}
 
@@ -1267,14 +1267,14 @@ const filterAndGroupItemsOptimized = (data:any) => {
           </View>
         )}
         <View style={{ width: "100%", alignItems: "flex-start" }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }]}>اسمك</Text>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#333', textAlign: 'center', paddingVertical: 16 }]}>اسمك</Text>
           <TextInput
-            style={{ width: "100%", color: "#000", height: 50, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, paddingHorizontal: 10, textAlign: "right" }}
+            style={{ width: "100%",  ...globalTextStyles.bodyMedium,color: "#000", height: 50, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, paddingHorizontal: 10, textAlign: "right" }}
             placeholder="اسمك"
             value={user?.FullnameSlang}
             editable={false}
           />
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333', textAlign: 'center', paddingVertical: 16 }]}>رقم الجوال</Text>
+          <Text style={[globalTextStyles.bodyMedium, {  color: '#333', textAlign: 'center', paddingVertical: 16 }]}>رقم الجوال</Text>
           <CustomPhoneInput
             value={phoneNumber}
             onChangeText={handlePhoneNumberChange}
@@ -1287,7 +1287,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
         </View>
 
         <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#333' }]}>وصف الشكوى المرضية (إختياري)</Text>
+          <Text style={[globalTextStyles.bodyMedium, {  color: '#333' }]}>وصف الشكوى المرضية (إختياري)</Text>
         </View>
         <View style={{ width: "100%", alignItems: "flex-start", marginBottom: 24 }}>
           <Text style={[globalTextStyles.bodyMedium, {  color: '#333' }]}>صف شكواك كتابة (إختياري)</Text>
@@ -1384,8 +1384,9 @@ const filterAndGroupItemsOptimized = (data:any) => {
               {isRecording ? "⏹️" : "🎤"}
             </Text>
             <Text style={{
+              
+              ...globalTextStyles.bodyMedium,
               color: isRecording ? "#fff" : "#23a2a4",
-              fontWeight: "bold",
               fontSize: 16
             }}>
               {isRecording ? `إيقاف التسجيل (${formatRecordingTime(recordingTime)})` : "بدء التسجيل"}
@@ -1403,7 +1404,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
               marginTop: 8
             }}>
               <Text style={{ fontSize: 16, color: "#856404", marginLeft: 6 }}>📤</Text>
-              <Text style={{ color: "#856404", fontWeight: "bold", fontSize: 14 }}>
+              <Text style={{  ...globalTextStyles.bodyMedium, color: "#856404", fontSize: 14 }}>
                 جاري رفع الملف... {uploadProgress}%
               </Text>
             </View>
@@ -1440,8 +1441,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    ...globalTextStyles.h4,
     color: '#333',
     textAlign: 'center',
     marginBottom: 8,
@@ -1493,7 +1493,6 @@ const styles = StyleSheet.create({
   },
   doctorName: {
     ...globalTextStyles.bodyMedium,
-    fontWeight: 'bold',
     marginBottom: 2,
     textAlign: 'left',
   },
@@ -1522,7 +1521,7 @@ const styles = StyleSheet.create({
   },
   detailsHeaderText: {
     ...globalTextStyles.bodyMedium,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
   },
   editButton: {
     backgroundColor: '#e0e0e0',
@@ -1554,18 +1553,19 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   selectedServiceCircleText: {
+    // fontWeight: 'bold',
+    ...globalTextStyles.bodyMedium,
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
   },
   selectedServiceText: {
     ...globalTextStyles.bodyMedium,
     color: '#23a2a4',
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
   },
   sessionInfoTitle: {
     ...globalTextStyles.bodyMedium,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'right',
@@ -1587,7 +1587,7 @@ const styles = StyleSheet.create({
   },
   sessionInfoValue: {
     ...globalTextStyles.bodyMedium,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     marginTop: 2,
   },
   buttonContainer: {
@@ -1656,7 +1656,7 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -6,
+    marginTop: Platform.OS == 'ios' ? -6 : -12,
   },
   fieldGroup: {
     marginBottom: 12,

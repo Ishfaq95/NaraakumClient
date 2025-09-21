@@ -10,8 +10,8 @@ import { useSelector } from 'react-redux';
 import { globalTextStyles } from '../styles/globalStyles';
 
 const TABS = [
-    { key: 'map', label: 'الخريطة' },
-    { key: 'list', label: 'تأكيد الموقع' },
+    { key: 'map', label: 'حدد موقع الزيارة' },
+    { key: 'list', label: 'عناويني المسجلة' },
 ];
 
 const LocationScreen = ({ navigation }: any) => {

@@ -196,7 +196,7 @@ const SettingsScreen = () => {
         {item.key == 'reminderSetting' ? (
           <>
             ذكرني قبل الموعد بـ{' '}
-            <Text style={{ fontFamily: globalTextStyles.h5.fontFamily, color: '#000', fontWeight: 'bold' }}>
+            <Text style={{ fontFamily: globalTextStyles.h2.fontFamily, color: '#000', }}>
               {reminderMinutesAndHours} {getReminderTimeUnitLabel()}
             </Text>
           </>
@@ -290,8 +290,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   headerTitle: {
-    ...globalTextStyles.h3,
-    color: '#239EA0',
+    ...globalTextStyles.h4,
   },
   row: {
     flexDirection: 'row-reverse',

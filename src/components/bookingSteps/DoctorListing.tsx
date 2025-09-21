@@ -756,7 +756,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     if (displayCategory?.Display == "CP") {
       return SelectedCardItem[0]?.CatServiceId == 0 || SelectedCardItem[0]?.CatServiceId == null || SelectedCardItem[0]?.CatServiceId == "" || SelectedCardItem[0]?.CatServiceId == undefined || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == null || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == "" || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == undefined
     } else {
-      return selectedSlotInfo ? false : true
+      console.log("SelectedCardItem[0]", SelectedCardItem[0])
+      return SelectedCardItem[0].OrganizationId == null || SelectedCardItem[0].OrganizationId == "" || SelectedCardItem[0].OrganizationId == undefined
     }
   }, [selectedSlotInfo, CardArray,SelectedCardItem])
 
@@ -798,8 +799,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     return result;
   };
 
-  console.log("filteredProviders", filteredProviders)
-
   return (
     <View style={styles.mainContainer}>
       <View style={styles.container}>
@@ -826,10 +825,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 </View>
               ) : (
                 <>
-                  <Text style={[styles.date, item.fullDate && selectedDate.isSame(item.fullDate, 'day') && { color: '#fff' }]}>
+                  <Text style={[styles.date, item.fullDate && selectedDate.isSame(item.fullDate, 'day') ? { color: '#fff' } : { color: '#000' }]}>
                     {item.hijriDate}
                   </Text>
-                  <Text style={[styles.day, item.fullDate && selectedDate.isSame(item.fullDate, 'day') && { color: '#fff' }]}>
+                  <Text style={[styles.day, item.fullDate && selectedDate.isSame(item.fullDate, 'day') ? { color: '#fff' } : { color: '#000' }]}>
                     {item.day}
                   </Text>
                 </>
@@ -869,7 +868,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             windowSize={10}
             initialNumToRender={3}
             ListEmptyComponent={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ ...globalTextStyles.bodyLarge, fontWeight: 'bold', color: '#dc3545' }}>
+              <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
                 لا يوجد نتائج
               </Text>
             </View>}

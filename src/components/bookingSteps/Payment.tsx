@@ -125,12 +125,12 @@ const onNavigationStateChange = (url: any) => {
       dispatch(clearCardItems());
       
       // Use any type to bypass TypeScript navigation issues
-      (navigation as any).navigate("OrderSuccess", { SuccessResponse: tempCard });
+      (navigation as any).navigate(ROUTES.OrderSuccess, { SuccessResponse: tempCard });
     }
     else if(url.url.includes("PaymentError") && !isPaymentProcessed){
       setIsPaymentProcessed(true);
       // Use any type to bypass TypeScript navigation issues
-      (navigation as any).navigate("OrderSuccess", { SuccessResponse: "Error in payment" });
+      (navigation as any).navigate(ROUTES.OrderNotCompleted);
     }
   };
 

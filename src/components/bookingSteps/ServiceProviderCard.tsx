@@ -287,8 +287,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     return returnVal;
   }
 
-  console.log("Provider",provider,selectedService,selectedCard)
-
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
     <>
@@ -329,7 +327,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         : selectedCard[0].CatLevelId == 3 ?
           <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
             <Text style={[styles.priceText, { textAlign: 'left' }]}>
-              {isRTL ? `سعر ${Number(provider.ServiceServe[0].Price).toFixed(0)}` : `Price ${Number(provider.ServiceServe[0].Price).toFixed(0)}`}
+              {isRTL ? `السعر ${Number(provider.ServiceServe[0].Price).toFixed(0)}` : `Price ${Number(provider.ServiceServe[0].Price).toFixed(0)}`}
             </Text>
           </View> :
           <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>

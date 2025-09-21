@@ -22,17 +22,30 @@ import { globalTextStyles } from '../../styles/globalStyles';
 const BookingScreen = ({ navigation, route }: any) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(route.params?.currentStep || 1);
+  const user = useSelector((state: any) => state.root.user.user);
   const dispatch = useDispatch();
   const category = useSelector((state: any) => state.root.booking.category);
   const services = useSelector((state: any) => state.root.booking.services);
   const existingCardItems = useSelector((state: any) => state.root.booking.cardItems);
   const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
+  const SelectedCardItem = existingCardItems.length > 0 ? existingCardItems.filter((item: any) => item.ItemUniqueId === selectedUniqueId) : [];
   const [SuccessResponse, setSuccessResponse] = useState(null);
   const [showNurseModal, setShowNurseModal] = useState(false);
   const [withNurse, setWithNurse] = useState(false);
   const [selectedSpecialty, setSelectedSpecialty] = useState<any>(null);
   const [onEditService, setOnEditService] = useState(false);
   const steps = [1, 2, 3, 4];
+  const [currentUniqueId, setCurrentUniqueId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedUniqueId == null) {
+      const uniqueId = generateUniqueId();
+      setCurrentUniqueId(uniqueId);
+    } else {
+      setCurrentUniqueId(selectedUniqueId);
+    }
+  }, [selectedUniqueId]);
+
   const onPressSpecialty = (specialty: any, isSelected: boolean) => {
     if (onEditService) {
       if (isSelected) {
@@ -144,30 +157,66 @@ const BookingScreen = ({ navigation, route }: any) => {
       setSelectedSpecialty(services)
       setShowNurseModal(true);
     } else {
-      if(onEditService){
-        console.log("services",services);
+      // if(onEditService){
+      //   console.log("services",services);
 
-      }
-      const uniqueId = generateUniqueId();
-      let servicesArray: any[] = [];
-      services.forEach((service: any) => {
-        const cardItem = {
-          "ItemUniqueId": uniqueId,
-          "CatCategoryId": category.Id,
-          "CatServiceId": service.Id,
-          "CatCategoryTypeId": category.CatCategoryTypeId,
-          "ServiceTitleSlang": service.TitleSlang,
-        }
-        servicesArray.push(cardItem);
-      });
+      // }
+      // const uniqueId = generateUniqueId();
+      // let servicesArray: any[] = [];
+      // services.forEach((service: any) => {
+      //   const cardItem = {
+      //     "ItemUniqueId": uniqueId,
+      //     "CatCategoryId": category.Id,
+      //     "CatServiceId": service.Id,
+      //     "CatCategoryTypeId": category.CatCategoryTypeId,
+      //     "ServiceTitleSlang": service.TitleSlang,
+      //   }
+      //   servicesArray.push(cardItem);
+      // });
 
-      const tempCardItems = [...existingCardItems, ...servicesArray];
+      // const tempCardItems = [...existingCardItems, ...servicesArray];
       dispatch(setServices(null));
-      dispatch(setSelectedUniqueId(uniqueId));
-      dispatch(addCardItem(tempCardItems));
+      dispatch(setSelectedUniqueId(currentUniqueId));
+      // dispatch(addCardItem(tempCardItems));
       setCurrentStep(2);
     }
 
+  }
+
+  const handleRemoveItem = async (item: any) => {
+
+    if (item.OrderID && item.OrderDetailId) {
+      const payload = {
+        "UserLoginInfoId": user.Id,
+        "OrderId": item.OrderID,
+        "OrderDetailId": item.OrderDetailId,
+      }
+      const response = await bookingService.deleteOrderMainBeforePayment(payload);
+    }
+  };
+
+  const onSelectService = (service: any) => {
+    dispatch(setSelectedUniqueId(currentUniqueId));
+    const isExist = SelectedCardItem.find((item: any) => item.CatServiceId == service.Id);
+
+    if (isExist) {
+      handleRemoveItem(isExist);
+      const updatedCardItems = SelectedCardItem.filter((item: any) => item.CatServiceId != service.Id);
+
+      const otherItems = existingCardItems.length > 0 ? existingCardItems.filter((item: any) => item.ItemUniqueId != selectedUniqueId) : [];
+      const tempCardItems = [...otherItems, ...updatedCardItems];
+      dispatch(addCardItem(tempCardItems));
+    } else {
+      const cardItem = {
+        "ItemUniqueId": currentUniqueId,
+        "CatCategoryId": category.Id,
+        "CatServiceId": service.Id,
+        "CatCategoryTypeId": category.CatCategoryTypeId,
+        "ServiceTitleSlang": service.TitleSlang,
+      }
+      const tempCardItems = [...existingCardItems, cardItem];
+      dispatch(addCardItem(tempCardItems));
+    }
   }
 
   const goWithNurse = () => {
@@ -237,7 +286,7 @@ const BookingScreen = ({ navigation, route }: any) => {
 
   const renderStep = () => {
     switch (currentStep) {
-      case 1: return <Specialties onPressSpecialty={onPressSpecialty} onContinueWithService={onContinueWithService} />;
+      case 1: return <Specialties onPressSpecialty={onPressSpecialty} onContinueWithService={onContinueWithService} onSelectIndividualService={onSelectService} />;
       case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
       case 3: return <ReviewOrder onPressNext={() => setCurrentStep(4)} onPressEditService={(item: any) => { onPressEditService(item) }} onPressBack={() => setCurrentStep(2)} />;
       case 4: return <Payment onPressNext={onPressCheckoutOrder} onPressBack={() => setCurrentStep(3)} />;

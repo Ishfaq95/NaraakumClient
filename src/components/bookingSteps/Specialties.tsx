@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { globalTextStyles } from '../../styles/globalStyles';
 
-const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpecialty: (specialty: any, isSelected: boolean) => void, onContinueWithService: (service: any) => void }) => {
+const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividualService }: { onPressSpecialty: (specialty: any, isSelected: boolean) => void, onContinueWithService: (service: any) => void, onSelectIndividualService: (service: any) => void }) => {
   const category = useSelector((state: any) => state.root.booking.category);
   const [search, setSearch] = useState('');
   const [offeredServices, setOfferedServices] = useState<any>(null);
@@ -96,35 +96,36 @@ const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpeci
   };
 
   const toggleServiceSelection = (service: any) => {
-    setSelectedServices(prev => {
-      const isSelected = prev.some(item => item.Id === service.Id);
-      if (isSelected) {
-        return prev.filter(item => item.Id !== service.Id);
-      } else {
-        return [...prev, service];
-      }
-    });
+    onSelectIndividualService(service);
+    // setSelectedServices(prev => {
+    //   const isSelected = prev.some(item => item.Id === service.Id);
+    //   if (isSelected) {
+    //     return prev.filter(item => item.Id !== service.Id);
+    //   } else {
+    //     return [...prev, service];
+    //   }
+    // });
   };
 
   const handleContinuePress = () => {
-    if (selectedServices.length > 0) {
+    if (SelectedCardItem.length > 0) {
       // For now, just pass the first selected service to maintain compatibility
       // You can modify this logic based on your requirements
-      onContinueWithService(selectedServices);
+      onContinueWithService(SelectedCardItem);
     }
   };
 
   const renderSelectableItem = ({ item }: { item: any }) => {
     const uri = getSanitizedImageUrl(item.ImagePath);
     const isSvg = uri.endsWith('.svg');
-    let isSelected = selectedServices.some(service => service.Id === item.Id);
+    // let isSelected = selectedServices.some(service => service.Id === item.Id);
 
-    const currentService=SelectedCardItem.filter((service: any) => service.CatServiceId == item.Id);
+    const isSelected=SelectedCardItem.some((service: any) => service.CatServiceId == item.Id);
 
-    console.log("currentService",currentService?.length);
-    if(currentService?.length > 0){
-      isSelected = true;
-    }
+    // console.log("currentService",currentService?.length);
+    // if(currentService?.length > 0){
+    //   isSelected = true;
+    // }
 
     // Clean the TitleSlang by removing all types of line breaks
     const cleanTitle = item.TitleSlang?.replace(/[\r\n]+/g, ' ').trim() || '';
@@ -219,14 +220,14 @@ const Specialties = ({ onPressSpecialty, onContinueWithService }: { onPressSpeci
       {!(category.Id == "42" || category.Id == "32") && (
         <View style={styles.bottomButtonContainer}>
           <TouchableOpacity
-            style={[styles.continueButton, selectedServices.length === 0 && styles.disabledButton]}
+            style={[styles.continueButton, SelectedCardItem.length === 0 && styles.disabledButton]}
             onPress={handleContinuePress}
-            disabled={selectedServices.length === 0}
+            disabled={SelectedCardItem.length === 0}
             activeOpacity={0.8}
           >
             <Text style={styles.continueButtonText}>
-              {selectedServices.length > 0
-                ? `متابعة (${selectedServices.length} خدمة مختارة)`
+              {SelectedCardItem.length > 0
+                ? `متابعة (${SelectedCardItem.length} خدمة مختارة)`
                 : 'اختر خدمة واحدة على الأقل'
               }
             </Text>
