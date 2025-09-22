@@ -104,14 +104,14 @@ const RemoteOrderListScreen = () => {
             </Text>
           ),
         },
-        previous: {
+        upcoming: {
           label: ({ focused, color }: { focused: boolean; color: string }) => (
             <Text style={[styles.tabLabel, { color, fontFamily: CAIRO_FONT_FAMILY.medium }]}>
               القادمة
             </Text>
           ),
         },
-        cancelled: {
+        previous: {
           label: ({ focused, color }: { focused: boolean; color: string }) => (
             <Text style={[styles.tabLabel, { color, fontFamily: CAIRO_FONT_FAMILY.medium }]}>
               السابقة

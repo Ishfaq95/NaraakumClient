@@ -5,6 +5,7 @@ import { CAIRO_FONT_FAMILY } from "../styles/globalStyles";
 import PhoneNumberInput from "./PhoneNumberInput";
 import { t } from "i18next";
 import Dropdown from "./common/Dropdown";
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 interface EmailUpdateProps {
   value: string;
@@ -125,9 +126,10 @@ interface smsProps {
   otpError?: boolean
   otpApiError?: boolean
   isLoading?: boolean
+  OTPFrom: string
 }
 
-export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText, headerText = "", onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode, otpError = false, otpApiError = false, isLoading = false }) => {
+export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText, headerText = "", onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode, otpError = false, otpApiError = false, isLoading = false, OTPFrom }) => {
   console.log("OTPFor",OTPFor)
   return (
     <View style={[styles.mainContainer]}>
@@ -144,7 +146,7 @@ export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTP
 
       </View>
       <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
-        <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />
+        {OTPFrom == 'email' ? <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 10 }}><MaterialIcons name="email" size={53} color="#23a2a4" /></View> : <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />}
         <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
           <Text style={[styles.optHeaderText,{fontFamily: CAIRO_FONT_FAMILY.bold}]}>{OTPFor.replace(/^\+/, '')}</Text>
@@ -804,7 +806,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontFamily: CAIRO_FONT_FAMILY.regular,
-    // color: '#000'
+    color: '#000'
   },
   inputHeaderText: {
     fontSize: 14,

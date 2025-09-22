@@ -941,6 +941,7 @@ const UpdateProfileScreen = () => {
               onClosePress={HandleCloseVerifyModal}
               OTPFor={OTPForText}
               OTPForText={OTPFrom == 'email' ? "تغيير البريد الإلكتروني" : "تغيير الرقم"}
+              OTPFrom={OTPFrom}
               onChangeText={(text) => {
                 setOtpValue(text)
                 setOtpValueError(false)

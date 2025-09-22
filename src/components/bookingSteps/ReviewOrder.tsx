@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, Alert, PermissionsAndroid, Platform } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, Alert, PermissionsAndroid, Platform, Modal } from 'react-native';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
 import SettingIconSelected from '../../assets/icons/SettingIconSelected';
@@ -24,6 +24,7 @@ import { useNavigation } from '@react-navigation/native';
 import CustomPhoneInput, { COUNTRIES } from '../../components/common/CustomPhoneInput';
 import Dropdown from "../../components/common/Dropdown";
 import { profileService } from '../../services/api/ProfileService';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 // Conditionally import TrackPlayerService only for Android
 const TrackPlayerService = Platform.OS === 'android' 
@@ -89,6 +90,8 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const [addedBeneficiary, setAddedBeneficiary] = useState<any>(null);
   const [pendingUpdate, setPendingUpdate] = useState<{ uniqueId: string, value: string } | null>(null);
   const [needAPICall, setNeedAPICall] = useState(false);
+  const [apiError, setApiError] = useState(false);
+  const [apiErrorMessage, setApiErrorMessage] = useState('');
 
   console.log("CardArray",CardArray)
   
@@ -103,6 +106,8 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   ];
   const selectedDoctor: any = showGroupedArray[selectedIndex];
   const dispatch = useDispatch();
+
+  console.log("selectedDoctor", selectedDoctor);
 
   useEffect(() => {
     getBeneficiaries();
@@ -839,6 +844,12 @@ const filterAndGroupItemsOptimized = (data:any) => {
 
     const response = await bookingService.updateOrderMainBeforePayment(payload);
 
+    if(response.StatusCode.STATUSCODE == 10025){
+      setApiError(true);
+      setApiErrorMessage("لديه معايير لا يحققها المريض");
+      return;
+    }
+
     console.log('response', response);
     if (response == "") {
       Alert.alert("خطأ في الخادم الداخلي");
@@ -1425,6 +1436,33 @@ const filterAndGroupItemsOptimized = (data:any) => {
           <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={apiError}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => { setApiError(false); }}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+            <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between',paddingBottom: 30 }}>
+              <TouchableOpacity
+                onPress={() => { setApiError(false); }}
+              >
+                <AntDesign name="close" size={24} color="#888" />
+              </TouchableOpacity>
+              <Text style={{ color: '#3a434a', fontSize: 20, fontFamily: CAIRO_FONT_FAMILY.bold, marginBottom: 12 }}>المعايير غير مستوفاة</Text>
+            </View>
+            {/* <AntDesign name="exclamationcircle" size={56} color="#d84d48" style={{ marginVertical: 18 }} /> */}
+            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+              {'مقدم الخدمة'} <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold }}>{selectedDoctor?.items[0]?.ServiceProviderFullnameSlang}</Text>
+            </Text>
+            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+              {apiErrorMessage} <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold }}>{user.FullnameSlang}</Text>
+            </Text>
+          </View>
+        </View>
+      </Modal>
 
       <FullScreenLoader visible={isLoading || isUploading} />
     </View>

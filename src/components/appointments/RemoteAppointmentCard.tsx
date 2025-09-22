@@ -48,6 +48,17 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
     const scrollViewRef = useRef<ScrollView>(null);
     const [scrollPosition, setScrollPosition] = React.useState(0);
 
+    const getSpecialtiesArray = () => {
+        const specialties = [
+            ...(appointment?.Specialties),
+            {
+                TitleSlang: appointment?.OrganizationSlang,
+                TitlePlang: appointment?.OrganizationPlang,
+            }
+        ]
+        return specialties || [];
+    }
+
     const scrollByAmount = (direction: 'left' | 'right') => {
         const scrollAmount = 120; // Width of approximately 2 tags
 
@@ -82,12 +93,12 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
                         </TouchableOpacity>
                     </View>
                     <View style={styles.specialtiesContainer}>
-                        <TouchableOpacity
+                        {getSpecialtiesArray().length > 2 && <TouchableOpacity
                             onPress={() => scrollByAmount('left')}
                             style={styles.scrollButton}
                         >
                             {isRTL ? <RightArrow /> : <LeftArrow />}
-                        </TouchableOpacity>
+                        </TouchableOpacity>}
 
                         <ScrollView
                             ref={scrollViewRef}
@@ -100,7 +111,7 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
                             scrollEventThrottle={16}
                         >
                             <View style={styles.specialtiesRow}>
-                                {(appointment?.Specialties || []).map((spec: any, idx: number) => (
+                                {(getSpecialtiesArray() || []).map((spec: any, idx: number) => (
                                     <View key={idx} style={styles.specialtyPill}>
                                         <Text style={styles.specialtyText}>
                                             {isRTL ? spec.TitleSlang : spec.TitlePlang}
@@ -109,13 +120,12 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
                                 ))}
                             </View>
                         </ScrollView>
-
-                        <TouchableOpacity
+                        {getSpecialtiesArray().length > 2 && <TouchableOpacity
                             onPress={() => scrollByAmount('right')}
                             style={styles.scrollButton}
                         >
                             {isRTL ? <LeftArrow /> : <RightArrow />}
-                        </TouchableOpacity>
+                        </TouchableOpacity>}
                     </View>
                 </View>
             </View>
@@ -218,39 +228,39 @@ const RemoteAppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
 
 
             {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}> */}
-                {/* Call Button */}
-                <TouchableOpacity
-                    style={[
-                        styles.callBtn,
-                        { backgroundColor: '#fff', borderWidth: 1, borderColor: '#23a2a4', width: '100%' }
-                    ]}
-                    disabled={false}
-                    onPress={() => onNewAppointment(appointment)}
-                >
-                    <Text numberOfLines={1} style={[
-                        styles.callBtnText,
-                        { color: '#23a2a4' }
-                    ]}>
-                        {'حجز موعد جديد'}
-                    </Text>
-                </TouchableOpacity>
+            {/* Call Button */}
+            <TouchableOpacity
+                style={[
+                    styles.callBtn,
+                    { backgroundColor: '#fff', borderWidth: 1, borderColor: '#23a2a4', width: '100%' }
+                ]}
+                disabled={false}
+                onPress={() => onNewAppointment(appointment)}
+            >
+                <Text numberOfLines={1} style={[
+                    styles.callBtnText,
+                    { color: '#23a2a4' }
+                ]}>
+                    {'حجز موعد جديد'}
+                </Text>
+            </TouchableOpacity>
 
-                {/* Call Button */}
-                <TouchableOpacity
-                    style={[
-                        styles.callBtn,
-                        { backgroundColor: '#fff', borderWidth: 1, borderColor: '#23a2a4', width: '100%' }
-                    ]}
-                    onPress={() => onRating(appointment)}
-                >
-                    <Entypo name="star" size={24} color="#f8c733" />
-                    <Text numberOfLines={1} style={[
-                        styles.callBtnText,
-                        { color: '#23a2a4' }
-                    ]}>
-                        {'تقييم مقدم الخدمة'}
-                    </Text>
-                </TouchableOpacity>
+            {/* Call Button */}
+            <TouchableOpacity
+                style={[
+                    styles.callBtn,
+                    { backgroundColor: '#fff', borderWidth: 1, borderColor: '#23a2a4', width: '100%' }
+                ]}
+                onPress={() => onRating(appointment)}
+            >
+                <Entypo name="star" size={24} color="#f8c733" />
+                <Text numberOfLines={1} style={[
+                    styles.callBtnText,
+                    { color: '#23a2a4' }
+                ]}>
+                    {'تقييم مقدم الخدمة'}
+                </Text>
+            </TouchableOpacity>
             {/* </View> */}
         </View>
     );
