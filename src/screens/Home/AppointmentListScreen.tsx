@@ -349,8 +349,8 @@ const AppointmentListScreen = ({ navigation }: any) => {
           <View style={{ position: 'relative' }}>
             <Ionicons name="notifications" size={24} color="black" />
             {notificationList > 0 && (
-              <View style={{ position: 'absolute', top: -20, right: -10, backgroundColor: 'red', padding: 5, width: 30, height: 30, borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: 'white', fontSize: 10, }}>{notificationList > 100 ? '99+' : notificationList}</Text>
+              <View style={{ position: 'absolute', top: -10, right: 10, backgroundColor: '#008080', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: 'white', fontSize: 10, padding: 3 }}>{notificationList > 100 ? '99+' : notificationList}</Text>
               </View>
             )}
           </View>
@@ -359,7 +359,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
           <View style={{ position: 'relative' }}>
             <Ionicons name="chatbox" size={24} color="black" />
             {unreadMessages > 0 && (
-              <View style={{ position: 'absolute', top: -15, right: -10, backgroundColor: 'red', padding: 5, width: 22, height: 22, borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ position: 'absolute', top: -15, right: -10, backgroundColor: '#008080', padding: 5, width: 22, height: 22, borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: 'white', fontSize: 10, }}>{unreadMessages > 100 ? '99+' : unreadMessages}</Text>
               </View>
             )}

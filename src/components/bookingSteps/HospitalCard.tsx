@@ -234,6 +234,8 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
     return returnVal;
   }
 
+  console.log("hospital",hospital)
+
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
     <>
@@ -242,9 +244,9 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
           <CheckIcon width={40} height={40} color="#fff" />
         </View>}
         <View style={{ width: '30%' }}>
-          {hospital?.ImagePath ? (
+          {hospital?.LogoImagePath ? (
             <Image
-              source={{ uri: `${MediaBaseURL}/${hospital?.ImagePath}` }}
+              source={{ uri: `${MediaBaseURL}/${hospital?.LogoImagePath}` }}
               style={styles.providerImage}
               resizeMode="cover"
             />
@@ -255,16 +257,17 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
         <View style={{ width: '70%' }}>
           <Text style={styles.providerName}>{hospital?.TitleSlang}</Text>
           <View style={{ flexDirection: 'row',alignItems: 'center', marginVertical: 2 }}>
+          <Text style={{ color: '#FFD700', fontSize: 18, marginRight: 2 }}>★</Text>
             <Text style={styles.ratingText}>{hospital?.AccumulativeRatingAvg.toFixed(1)}</Text>
             <Text style={[globalTextStyles.caption, { color: '#888' }]}> ({hospital?.AccumulativeRatingNum} تقييم)</Text>
-            <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
+
           </View>
         </View>
       </View>
    
         <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
           <Text style={[styles.priceText, { textAlign: 'left' }]}>
-            {isRTL ? `سعر ${calculateTotalPrice(hospital?.Prices).toFixed(0)}` : `Price ${calculateTotalPrice(hospital?.Prices).toFixed(0)}`}
+            {isRTL ? `السعر ${calculateTotalPrice(hospital?.Prices).toFixed(0)}` : `Price ${calculateTotalPrice(hospital?.Prices).toFixed(0)}`}
           </Text>
         </View> 
     </>
@@ -470,22 +473,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   providerName: {
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     fontSize: 16,
     marginTop: 4,
     marginBottom: 2,
     color: '#222',
     flexWrap: 'wrap',
     alignSelf: 'flex-start',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   ratingText: {
     color: '#222',
-    fontWeight: 'bold',
+    fontFamily: globalTextStyles.h5.fontFamily,
     fontSize: 14,
   },
   priceText: {
     color: '#179c8e',
-    fontWeight: '600',
+    fontFamily: globalTextStyles.h5.fontFamily,
     fontSize: 16,
     marginVertical: 4,
   },
@@ -528,6 +532,7 @@ const styles = StyleSheet.create({
   specialtyText: {
     color: '#222',
     fontSize: 12,
+    fontFamily: globalTextStyles.bodySmall.fontFamily,
   },
   videoInfo: {
     color: '#888',
@@ -544,6 +549,7 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 13,
     marginBottom: 4,
+    fontFamily: globalTextStyles.bodySmall.fontFamily,
   },
   timeButton: {
     borderWidth: 1,
@@ -561,7 +567,7 @@ const styles = StyleSheet.create({
   },
   timeButtonText: {
     color: '#179c8e',
-    fontWeight: 'bold',
+    fontFamily: globalTextStyles.h5.fontFamily,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -581,6 +587,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     color: '#179c8e',
     fontSize: 14,
+    fontFamily: globalTextStyles.bodySmall.fontFamily,
   },
   errorContainer: {
     alignItems: 'center',
@@ -592,6 +599,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 8,
+    fontFamily: globalTextStyles.bodySmall.fontFamily,
   },
   retryButton: {
     backgroundColor: '#179c8e',
@@ -602,7 +610,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: globalTextStyles.h5.fontFamily,
   },
   noSlotsContainer: {
     alignItems: 'center',
@@ -613,6 +621,7 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     textAlign: 'center',
+    fontFamily: globalTextStyles.bodySmall.fontFamily,
   },
   checkbox: {
     width: 18,
@@ -641,7 +650,7 @@ const styles = StyleSheet.create({
   selectedIndicatorText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: globalTextStyles.h5.fontFamily,
     marginLeft: 8,
   },
   selectedTimeButton: {

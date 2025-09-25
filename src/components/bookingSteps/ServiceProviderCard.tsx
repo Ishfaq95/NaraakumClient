@@ -258,10 +258,10 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     dispatch(addCardItem(updatedCardArray));
   }
 
-  const calculateTotalPrice = (pricesString: string): number => {
-    if (!pricesString) return 0;
-    const prices = pricesString.split(',').map(price => parseFloat(price.trim()) || 0);
-    return prices.reduce((sum, price) => sum + price, 0);
+  const calculateTotalPrice = (serviceServe: any[]): number => {
+    if (serviceServe.length==0) return 0;
+    // const prices = serviceServe.map(price => parseFloat(price.Price) || 0);
+    return serviceServe.reduce((sum, price) => sum + price.Price, 0);
   };
 
   const checkSelectedSlotInfo=()=>{
@@ -286,6 +286,8 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     }
     return returnVal;
   }
+
+  console.log("provider",provider)
 
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
@@ -320,7 +322,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         <>
           <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
             <Text style={[styles.priceText, { textAlign: 'left' }]}>
-              {/* {isRTL ? `سعر ${calculateTotalPrice(provider?.Prices).toFixed(0)}` : `Price ${calculateTotalPrice(provider?.Prices).toFixed(0)}`} */}
+              {isRTL ? `السعر ${calculateTotalPrice(provider?.ServiceServe).toFixed(0)}` : `Price ${calculateTotalPrice(provider?.ServiceServe).toFixed(0)}`}
             </Text>
           </View>
         </>
@@ -727,7 +729,7 @@ const styles = StyleSheet.create({
   },
   providerName: {
     ...globalTextStyles.bodyMedium,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     marginTop: 4,
     marginBottom: 2,
     color: '#222',
