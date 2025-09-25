@@ -1,16 +1,63 @@
 import Header from "../../components/common/Header";
 import { useTranslation } from "react-i18next";
-import { View, Text, StyleSheet, FlatList,SafeAreaView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList,SafeAreaView, TouchableOpacity, ActivityIndicator } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import CustomBottomSheet from "../../components/common/CustomBottomSheet";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Dropdown from "../../components/common/Dropdown";
 import { globalTextStyles } from "../../styles/globalStyles";
 import { settingService } from "../../services/api/settingService";
 import { useIsFocused } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
+import { Animated, Easing } from "react-native";
+
+// Lightweight shimmer placeholder for inline text/value
+const ShimmerPlaceholder = ({ width = 120, height = 14, borderRadius = 6 }: { width?: number; height?: number; borderRadius?: number; }) => {
+  const translateX = useRef(new Animated.Value(-width)).current;
+
+  useEffect(() => {
+    const loopAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateX, {
+          toValue: width,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateX, {
+          toValue: -width,
+          duration: 0,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loopAnimation.start();
+    return () => {
+      loopAnimation.stop();
+    };
+  }, [translateX, width]);
+
+  return (
+    <View style={{ width, height, borderRadius, overflow: 'hidden', backgroundColor: '#E6E6E6', marginLeft: 6 }}>
+      <Animated.View style={{
+        width: '40%',
+        height: '100%',
+        transform: [{ translateX }],
+      }}>
+        <LinearGradient
+          colors={["#E6E6E6", "#F5F5F5", "#E6E6E6"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </Animated.View>
+    </View>
+  );
+};
 
 const menuItems = [
   { label: 'إعداد التذكير', icon: <Ionicons name="alarm" size={20} color="#239EA0" />, key: 'reminderSetting' },
@@ -58,7 +105,7 @@ const SettingsScreen = () => {
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false); // Track if API data is loaded
   const user = useSelector((state: any) => state.root.user.user);
   const isFocused = useIsFocused();
-
+  const [loading, setLoading] = useState(false);
   const updateReminderSettingApi = async () => {
     try {
       const payload = {
@@ -97,6 +144,7 @@ const SettingsScreen = () => {
 
   const getReminderSettingApi = async () => {
     try {
+      setLoading(true);
       const payload = {
         "UserloginInfoId": user.Id,
       }
@@ -118,6 +166,8 @@ const SettingsScreen = () => {
       // API failed, use defaults
       setDefaultValues();
       setIsDataLoaded(true);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -192,18 +242,20 @@ const SettingsScreen = () => {
       settingItemsClick(item);
     }}>
       <Icon name="chevron-left" size={22} color="#239EA0" style={styles.leftArrow} />
-      <Text style={styles.label}>
-        {item.key == 'reminderSetting' ? (
-          <>
-            ذكرني قبل الموعد بـ{' '}
-            <Text style={{ fontFamily: globalTextStyles.h2.fontFamily, color: '#000', }}>
+      {item.key == 'reminderSetting' ? (
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.label}>ذكرني قبل الموعد بـ </Text>
+          {loading ? (
+            <ShimmerPlaceholder width={50} height={16} borderRadius={4} />
+          ) : (
+            <Text style={{ fontFamily: globalTextStyles.h2.fontFamily, color: '#000' }}>
               {reminderMinutesAndHours} {getReminderTimeUnitLabel()}
             </Text>
-          </>
-        ) : (
-          item.label
-        )}
-      </Text>
+          )}
+        </View>
+      ) : (
+        <Text style={styles.label}>{item.label}</Text>
+      )}
       <View style={styles.iconBox}>{item.icon}</View>
     </TouchableOpacity>
   );
@@ -308,7 +360,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   label: {
-    flex: 1,
+    // flex: 1,
     ...globalTextStyles.bodyMedium,
     color: '#666',
     textAlign: 'left',

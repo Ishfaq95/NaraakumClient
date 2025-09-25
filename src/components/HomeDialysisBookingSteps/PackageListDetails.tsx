@@ -26,9 +26,9 @@ const PackageListDetails = ({ selectedOrganization, onPressNext, onPressBack }: 
 
   return (
     <View style={{ flex: 1 }}>
-      <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>التعليمات</Text>
+      <Text style={[globalTextStyles.bodyMedium, { color: '#000', textAlign: 'left', fontFamily: globalTextStyles.h5.fontFamily }]}>التعليمات</Text>
       <View style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, marginTop: 8 }}>
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#fff', textAlign: 'left' }]}>خطوات حجز خدمة غسيل الكلى المنزلي</Text>
+        <Text style={[globalTextStyles.bodyMedium, { color: '#fff', textAlign: 'left', fontFamily: globalTextStyles.h5.fontFamily }]}>خطوات حجز خدمة غسيل الكلى المنزلي</Text>
       </View>
       <ScrollView style={{ flex: 1, marginTop: 10 }}>
         {packageListArray.map((item) => (
@@ -36,12 +36,12 @@ const PackageListDetails = ({ selectedOrganization, onPressNext, onPressBack }: 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ alignItems: 'flex-start', justifyContent: 'flex-start', width: '10%', height: '100%', paddingTop: 10 }}>
                 <View style={{ height: 20, width: 20, backgroundColor: '#eceff4', borderRadius: 10,alignItems:'center',justifyContent:'center' }}>
-                  <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>{item.id}</Text>
+                  <Text style={[globalTextStyles.bodyMedium, { color: '#000', textAlign: 'left', fontFamily: globalTextStyles.h5.fontFamily }]}>{item.id}</Text>
                 </View>
 
               </View>
               <View style={{ width: '90%' }}>
-                <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#239ea0', textAlign: 'left' }]}>{item.title}</Text>
+                <Text style={[globalTextStyles.bodyMedium, { color: '#239ea0', textAlign: 'left', fontFamily: globalTextStyles.h5.fontFamily }]}>{item.title}</Text>
                 <Text style={[globalTextStyles.bodySmall, { color: '#000', textAlign: 'left' }]}>{item.description}</Text>
               </View>
             </View>

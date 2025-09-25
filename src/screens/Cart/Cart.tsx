@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...globalTextStyles.h3,
-    color: '#239EA0',
+    color: '#000',
   },
   headerActions: {
     flexDirection: 'row',

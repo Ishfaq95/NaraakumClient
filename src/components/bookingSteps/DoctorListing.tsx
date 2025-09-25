@@ -27,6 +27,7 @@ import Dropdown from '../common/Dropdown';
 import RadioButton from './RadioButton';
 import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
@@ -1058,13 +1059,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 backgroundColor: '#fff',
                 zIndex: 2,
               }}>
+                {/* <View style={{ width: 28 }} /> */}
+                <Text style={{ fontSize: 18, color: '#222', textAlign: 'center', fontFamily: globalTextStyles.h5.fontFamily }}>
+                  باقات غسيل الكلى المنزلي
+                </Text>
                 <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
                   <Text style={{ fontSize: 24, color: '#222' }}>×</Text>
                 </TouchableOpacity>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#222', textAlign: 'center', flex: 1 }}>
-                  باقات غسيل الكلى المنزلي
-                </Text>
-                <View style={{ width: 28 }} />
+                
               </View>
 
               {/* Sub-header */}
@@ -1079,11 +1081,12 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 margin: 12,
                 marginBottom: 0,
               }}>
-                <Text style={{ fontSize: 16, color: '#222', fontWeight: 'bold' }}>مركز عبر الطبي</Text>
-                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#e6f7f7', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
+                <Text style={{ fontSize: 16, color: '#222', fontFamily: globalTextStyles.h5.fontFamily }}>مركز عبر الطبي</Text>
+                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
                   {/* Replace with your WhatsApp icon if available */}
-                  <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 18, marginRight: 4 }}></Text>
-                  <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 14 }}>للاستفسارات</Text>
+                  {/* <Text style={{ color: '#239ea0', fontSize: 18, marginRight: 4, fontFamily: globalTextStyles.h5.fontFamily }}></Text> */}
+                  <Ionicons name="logo-whatsapp" size={20} color="green" />
+                  <Text style={{ color: '#000', fontSize: 14,paddingRight: 4, fontFamily: globalTextStyles.h5.fontFamily }}>للاستفسارات</Text>
                 </TouchableOpacity>
               </View>
 
@@ -1103,10 +1106,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                     shadowOffset: { width: 0, height: 2 },
                     elevation: 1,
                   }}>
-                    <Text style={{ color: '#239ea0', fontWeight: 'bold', fontSize: 16, marginBottom: 8, textAlign: 'left' }}>{pkg.TitleSlang}</Text>
+                    <Text style={{ color: '#239ea0', fontSize: 16, marginBottom: 8, textAlign: 'left', fontFamily: globalTextStyles.h5.fontFamily }}>{pkg.TitleSlang}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
-                      <Text style={{ color: '#888', fontSize: 14, marginLeft: 4 }}>سعر الجلسة /</Text>
-                      <Text style={{ color: '#ff6b57', fontWeight: 'bold', fontSize: 16 }}>{pkg.SessionPrice} ريال</Text>
+                      <Text style={{ color: '#888', fontSize: 14, marginLeft: 4, fontFamily: globalTextStyles.bodySmall.fontFamily }}>سعر الجلسة /</Text>
+                      <Text style={{ color: '#ff6b57', fontSize: 16, fontFamily: globalTextStyles.h5.fontFamily }}>{pkg.SessionPrice} ريال</Text>
                     </View>
                   </View>
                 ))}
@@ -1115,11 +1118,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               {/* Sticky Bottom Button */}
               <View style={{ backgroundColor: '#fff', padding: 16, borderTopWidth: 1, borderColor: '#f0f0f0' }}>
                 <TouchableOpacity onPress={() => setShowPackageList(false)} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>حجز موعد</Text>
+                  <Text style={{ color: '#fff', fontSize: 16, fontFamily: globalTextStyles.h5.fontFamily }}>حجز موعد</Text>
                 </TouchableOpacity>
               </View>
             </SafeAreaView> :
-            isHomeDialysisBooking ? null : <HomeDialysisBookingScreen onPressContinue={continueFromHomeDialysisBooking} onPressBack={closeBottomSheetHomeDialysisBooking} selectedOrganization={selectedOrganization} SetInitialStep={handleStepsForHomeDialysisBooking} />
+            isHomeDialysisBooking ? null : <HomeDialysisBookingScreen onPressContinue={continueFromHomeDialysisBooking} onPressBack={closeBottomSheetHomeDialysisBooking} selectedOrganization={selectedOrganization} SetInitialStep={handleStepsForHomeDialysisBooking} onCloseBottomSheet={() => setIsBottomSheetVisible(false)} />
         }
 
       </CustomBottomSheet>

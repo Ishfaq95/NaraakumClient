@@ -15,8 +15,9 @@ import { addHomeDialysisCardItem, setHomeDialysisFilePaths, setServices } from '
 import moment, { Moment } from 'moment';
 import { generateSlotsForDate } from '../../utils/timeUtils';
 import { generatePayloadforOrderMainBeforePayment, generatePayloadForUploadMedicalhistoryReports } from '../../shared/services/service';
+import { globalTextStyles } from '../../styles/globalStyles';
 
-const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrganization, SetInitialStep }: any) => {
+const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrganization, SetInitialStep, onCloseBottomSheet }: any) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const category = useSelector((state: any) => state.root.booking.category);
@@ -269,7 +270,7 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
         style={styles.container}
       >
         <View style={{ paddingHorizontal: 16, alignItems: 'center', paddingTop: 16 }}>
-          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>{"غسيل الكلى المنزلي"}</Text>
+          <Text style={{ fontSize: 20, color: '#000', fontFamily: globalTextStyles.h5.fontFamily }}>{"غسيل الكلى المنزلي"}</Text>
         </View>
         <Stepper currentStep={currentStep} steps={steps} />
         <View style={styles.content}>
@@ -277,19 +278,19 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
         </View>
         {/* Sticky Bottom Button */}
         {currentStep != 4 && <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', backgroundColor: '#fff', padding: 16, borderTopWidth: 1, borderColor: '#f0f0f0' }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '48%' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '60%' }}>
             {currentStep > 1 && <TouchableOpacity onPress={() => currentStep != 2 ? setCurrentStep(currentStep - 1) : SetInitialStep()} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '48%' }}>
-              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>السابق</Text>
+              <Text numberOfLines={1} style={{ color: '#fff', fontSize: 16, fontFamily: globalTextStyles.h5.fontFamily }}>السابق</Text>
             </TouchableOpacity>}
-            <TouchableOpacity style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '48%' }}>
-              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}> الغاء الامر</Text>
+            <TouchableOpacity onPress={() => { onCloseBottomSheet()}} style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '48%' }}>
+              <Text numberOfLines={1} style={{ color: '#fff', fontSize: 16, fontFamily: globalTextStyles.h5.fontFamily }}> الغاء الامر</Text>
             </TouchableOpacity>
 
           </View>
 
           {/* <TouchableOpacity onPress={() => { handleNextStep()}} disabled={(currentStep == 2 && CardArray.length == 0) || (currentStep == 3 && homeDialysisFilePaths.length == 0)} style={{ backgroundColor: (currentStep == 2 && CardArray.length == 0) || (currentStep == 3 && homeDialysisFilePaths.length == 0) ? '#ccc' : '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '30%' }}> */}
           <TouchableOpacity onPress={() => { handleNextStep()}} disabled={(currentStep == 2 && CardArray.length == 0)} style={{ backgroundColor: (currentStep == 2 && CardArray.length == 0) ? '#ccc' : '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', width: '30%' }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>التالي</Text>
+            <Text numberOfLines={1} style={{ color: '#fff', fontSize: 16, fontFamily: globalTextStyles.h5.fontFamily }}>التالي</Text>
           </TouchableOpacity>
         </View>}
       </LinearGradient>

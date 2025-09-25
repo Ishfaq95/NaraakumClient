@@ -89,7 +89,9 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
 
   const formatSlang = (text?: string) => {
     if (!text) return '';
-    return text.replace(/<br\s*\/?\s*>/gi, '');
+    return text
+      .replace(/<br\s*\/?\s*>/gi, '')
+      .replace(/<\/?p[^>]*>/gi, '');
   };
 
   const getSanitizedImageUrl = (path: string) => {
@@ -257,7 +259,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
           <View style={styles.modalContainer}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedService?.TitleSlang}</Text>
+              <Text numberOfLines={1} style={styles.modalTitle}>{selectedService?.TitleSlang}</Text>
               <TouchableOpacity onPress={() => setShowServiceModal(false)}>
                 <Ionicons name="close" size={22} color="#333" />
               </TouchableOpacity>
@@ -347,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#23a2a4',
   },
   selectedTitle: {
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     color: '#fff',
   },
   selectedImageContainer: {
@@ -424,7 +426,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     ...globalTextStyles.h4,
-    fontWeight: 'bold',
     color: '#000',
   },
   closeIcon: {

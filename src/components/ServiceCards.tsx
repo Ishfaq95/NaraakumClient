@@ -23,7 +23,11 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ item, style, onPress }) => {
           <Text style={{ ...globalTextStyles.bodyMedium, alignSelf:'flex-start', fontFamily: globalTextStyles.h5.fontFamily, color: '#209092' }}>خدمات</Text>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.subtitle}>{item.description}</Text>
-          <Text style={styles.price}>{`تبدأ من ${item.Price} ريال`}</Text>
+          <Text style={styles.price}>
+            تبدأ من 
+            <Text style={{ ...globalTextStyles.buttonLarge,color: '#179c8e' }}> {String(item.Price)} </Text>
+            ريال
+          </Text>
         </View>
         <View style={{ alignItems: 'flex-end', justifyContent: 'center', height: '50%' }}>
           {item.Image}
@@ -74,8 +78,9 @@ const styles = StyleSheet.create({
   },
   price: {
     alignSelf:'flex-start',
-    ...globalTextStyles.h4,
-    color: '#179c8e',
+    ...globalTextStyles.bodySmall,
+    // color: '#179c8e',
+    color: '#444',
   },
 });
 

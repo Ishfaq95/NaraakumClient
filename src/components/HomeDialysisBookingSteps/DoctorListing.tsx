@@ -8,6 +8,7 @@ const DoctorListing = ({ filteredProviders, selectedDate, availability, onPressN
 
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<any>(null);
   const CardArray = useSelector((state: any) => state.root.booking.homeDialysisCardItems);
+  console.log("filteredProviders",filteredProviders)
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
 
