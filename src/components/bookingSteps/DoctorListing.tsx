@@ -163,6 +163,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [selectServiceFilter, setSelectServiceFilter] = useState('All');
   const [selectSpecialtyFilter, setSelectSpecialtyFilter] = useState('AllType');
   const [sortByValue, setSortByValue] = useState('All');
+  const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
 
   const createOrderMainBeforePayment = async () => {
@@ -370,6 +371,12 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
   useEffect(() => {
 
+    fetchData();
+    generateDays();
+  }, [category, services]);
+
+  const fetchData = async () => {
+    setRefreshing(true);
     const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
     setDisplayCategory(displayCategory);
     // Call both APIs when component mounts
@@ -384,8 +391,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         fetchOrganizationSchedulingAvailability();
       }
     }
-    generateDays();
-  }, [category, services]);
+    setRefreshing(false);
+  }
 
   const getOrganizationByPackage = async () => {
     const payload = {
@@ -756,8 +763,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     if (displayCategory?.Display == "CP") {
       return SelectedCardItem[0]?.CatServiceId == 0 || SelectedCardItem[0]?.CatServiceId == null || SelectedCardItem[0]?.CatServiceId == "" || SelectedCardItem[0]?.CatServiceId == undefined || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == null || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == "" || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == undefined
     } else {
-      console.log("SelectedCardItem[0]", SelectedCardItem[0])
-      return SelectedCardItem[0].OrganizationId == null || SelectedCardItem[0].OrganizationId == "" || SelectedCardItem[0].OrganizationId == undefined
+      return SelectedCardItem[0]?.OrganizationId == null || SelectedCardItem[0]?.OrganizationId == "" || SelectedCardItem[0]?.OrganizationId == undefined
     }
   }, [selectedSlotInfo, CardArray,SelectedCardItem])
 
@@ -860,7 +866,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       {/* {displayCategory?.Display == "CP" ? serviceProviders.length > 0 : hospitalList.length > 0 &&  */}
       <View style={{ flex: 1, paddingBottom: 50, }}>
         {
-          displayCategory?.Display == "CP" ? <FlatList
+          displayCategory?.Display == "CP" ? 
+          <FlatList
             data={filteredProviders}
             keyExtractor={(item) => item.RowId}
             removeClippedSubviews={true}
@@ -872,6 +879,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 لا يوجد نتائج
               </Text>
             </View>}
+            onRefresh={fetchData}
+            refreshing={refreshing}
             renderItem={({ item, index }) => {
               const providerAvailability = availability.flatMap(avail =>
                 avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
@@ -926,13 +935,16 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             contentContainerStyle={{ padding: 16 }}
             showsVerticalScrollIndicator={false}
           />
-            : category.Id == "41" ? <FlatList
+            : category.Id == "41" ? 
+            <FlatList
               data={organizationList}
               keyExtractor={(item) => item.OrganizationId}
               removeClippedSubviews={true}
               maxToRenderPerBatch={5}
               windowSize={10}
               initialNumToRender={3}
+              onRefresh={fetchData}
+              refreshing={refreshing}
               renderItem={({ item, index }) => {
                 return <HomeDialysis hospital={item} onPressContinue={() => handleSelectOrganization(item)} onPressPackageList={() => {
                   setShowPackageList(true)
@@ -947,6 +959,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 keyExtractor={(item) => item.UserId}
                 removeClippedSubviews={true}
                 maxToRenderPerBatch={5}
+                onRefresh={fetchData}
+                refreshing={refreshing}
                 windowSize={10}
                 initialNumToRender={3}
                 renderItem={({ item, index }) => {

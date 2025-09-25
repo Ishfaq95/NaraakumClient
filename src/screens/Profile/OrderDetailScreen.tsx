@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity,SafeAreaView, ScrollView, TextInput, Alert, PermissionsAndroid, Platform, TouchableWithoutFeedback, Keyboard, Share } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Alert, PermissionsAndroid, Platform, TouchableWithoutFeedback, Keyboard, Share } from 'react-native';
 import * as DocumentPicker from '@react-native-documents/picker';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
@@ -92,6 +92,8 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     idNumber: '',
   })
 
+  console.log("completeOrderDetail", completeOrderDetail)
+
   // Medical report form states
   const [medicalReportType, setMedicalReportType] = useState('others');
   const [medicalReportFile, setMedicalReportFile] = useState<any>(null);
@@ -99,15 +101,15 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const [medicalReportDescription, setMedicalReportDescription] = useState('');
 
   // Error states for validation
-  const [medicalComplaintError, setMedicalComplaintError] = useState('');
-  const [sufferingDurationError, setSufferingDurationError] = useState('');
-  const [isRecurringError, setIsRecurringError] = useState('');
-  const [allergiesError, setAllergiesError] = useState('');
-  const [medicalReportTypeError, setMedicalReportTypeError] = useState('');
-  const [medicalReportFileError, setMedicalReportFileError] = useState('');
-  const [medicalReportFileNameError, setMedicalReportFileNameError] = useState('');
-  const [isSmokingError, setIsSmokingError] = useState('');
-  const [familyMedicalProblemsError, setFamilyMedicalProblemsError] = useState('');
+  const [medicalComplaintError, setMedicalComplaintError] = useState(false);
+  const [sufferingDurationError, setSufferingDurationError] = useState(false);
+  const [isRecurringError, setIsRecurringError] = useState(false);
+  const [allergiesError, setAllergiesError] = useState(false);
+  const [medicalReportTypeError, setMedicalReportTypeError] = useState(false);
+  const [medicalReportFileError, setMedicalReportFileError] = useState(false);
+  const [medicalReportFileNameError, setMedicalReportFileNameError] = useState(false);
+  const [isSmokingError, setIsSmokingError] = useState(false);
+  const [familyMedicalProblemsError, setFamilyMedicalProblemsError] = useState(false);
   const [isRatingVisible, setIsRatingVisible] = useState(false);
   const ratingScrollViewRef = useRef<ScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -182,7 +184,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
             TreatmentPlan: response?.TreatmentPlan || [],
             PatientName: item?.PatientFullNameSLang || 'مريض'
           };
-          
+
           await generatePrescriptionPDF(prescriptionData);
         } else {
           setVisitHistoryData({
@@ -637,6 +639,28 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     }
   };
 
+  const calculateTotalWithTex = () => {
+    let subTotal = 0;
+    let tax = 0;
+    let total = 0;
+
+    completeOrderDetail?.OrderDetail?.forEach((item: any) => {
+      if (item.CatNationalityId == "213") {
+        subTotal += Number(item.ServiceCharges) || 0;
+      } else {
+        subTotal += (Number(item.PriceBySP) || 0);
+        tax += (Number(item.PriceBySP) || 0) * 0.15;
+      }
+    });
+
+    total = subTotal + tax;
+    return {
+      subTotal: Number(subTotal.toFixed(2)),
+      tax: Number(tax.toFixed(2)),
+      total: Number(total.toFixed(2))
+    };
+  }
+
   // Audio playback using react-native-track-player
   const playAudioWithTrackPlayer = async (audioUrl: string) => {
     try {
@@ -830,12 +854,12 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const closeMedicalHistoryBottomSheet = () => {
     setMedicalHistoryBottomSheet(false);
     // Clear all form errors when closing
-    setMedicalComplaintError('');
-    setSufferingDurationError('');
-    setIsRecurringError('');
-    setAllergiesError('');
-    setIsSmokingError('');
-    setFamilyMedicalProblemsError('');
+    setMedicalComplaintError(false);
+    setSufferingDurationError(false);
+    setIsRecurringError(false);
+    setAllergiesError(false);
+    setIsSmokingError(false);
+    setFamilyMedicalProblemsError(false);
     // Clear all form data when closing
     setMedicalComplaint('');
     setSufferingDuration('');
@@ -848,48 +872,48 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   // Form validation function
   const validateAndSaveForm = () => {
     // Clear previous errors
-    setMedicalComplaintError('');
-    setSufferingDurationError('');
-    setIsRecurringError('');
-    setAllergiesError('');
-    setIsSmokingError('');
-    setFamilyMedicalProblemsError('');
+    setMedicalComplaintError(false);
+    setSufferingDurationError(false);
+    setIsRecurringError(false);
+    setAllergiesError(false);
+    setIsSmokingError(false);
+    setFamilyMedicalProblemsError(false);
 
     let isValid = true;
 
     // Validate Medical Complaint
     if (!medicalComplaint.trim()) {
-      setMedicalComplaintError('يرجى إدخال الشكوى الطبية');
+      setMedicalComplaintError(true);
       isValid = false;
     }
 
     // Validate Duration of Suffering
     if (!sufferingDuration.trim()) {
-      setSufferingDurationError('يرجى إدخال مدة المعاناة');
+      setSufferingDurationError(true);
       isValid = false;
     }
 
     // Validate Is Recurring
     if (!isRecurring) {
-      setIsRecurringError('يرجى اختيار ما إذا كانت المشكلة متكررة');
+      setIsRecurringError(true);
       isValid = false;
     }
 
     // Validate Allergies
     if (!allergies.trim()) {
-      setAllergiesError('يرجى إدخال معلومات الحساسية');
+      setAllergiesError(true);
       isValid = false;
     }
 
     // Validate Smoking Status
     if (!isSmoking) {
-      setIsSmokingError('يرجى اختيار حالة التدخين');
+      setIsSmokingError(true);
       isValid = false;
     }
 
     // Validate Family Medical Problems
     if (!familyMedicalProblems.trim()) {
-      setFamilyMedicalProblemsError('يرجى إدخال المشاكل الطبية العائلية');
+      setFamilyMedicalProblemsError(true);
       isValid = false;
     }
 
@@ -997,6 +1021,30 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   }
 
   const updateMedicalHistory = async () => {
+    if (medicalComplaint == '') {
+      setMedicalComplaintError(true);
+      return;
+    }
+    if (sufferingDuration == '') {
+      setSufferingDurationError(true);
+      return;
+    }
+    if (isRecurring == '') {
+      setIsRecurringError(true);
+      return;
+    }
+    if (allergies == '') {
+      setAllergiesError(true);
+      return;
+    }
+    if (isSmoking == '') {
+      setIsSmokingError(true);
+      return;
+    }
+    if (familyMedicalProblems == '') {
+      setFamilyMedicalProblemsError(true);
+      return;
+    }
     const Payload = {
       "PatientId": selectedDoctor?.items[0]?.PatientUserProfileInfoId,
       "OrderId": selectedDoctor?.items[0]?.OrderId,
@@ -1007,7 +1055,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       "Allergies": allergies,
       "FamilyMedicalHistory": familyMedicalProblems,
     }
-    
+
     const response = await profileService.updateMedicalHistory(Payload)
     if (response?.ResponseStatus?.STATUSCODE == 200) {
       setMedicalHistoryBottomSheet(false);
@@ -1401,6 +1449,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       }
 
       const responseData = await response.json();
+      setMedicalReportFileError(false);
 
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
         setMedicalReportFile(responseData.Data.Path)
@@ -1456,9 +1505,9 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     setMedicalReportFile(null);
     setMedicalReportFileName('');
     setMedicalReportDescription('');
-    setMedicalReportTypeError('');
-    setMedicalReportFileError('');
-    setMedicalReportFileNameError('');
+    setMedicalReportTypeError(false);
+    setMedicalReportFileError(false);
+    setMedicalReportFileNameError(false);
   };
 
   const getFileName = (url: string) => {
@@ -1467,6 +1516,20 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   };
 
   const addMedicalReport = async () => {
+    if (medicalReportType == '') {
+      setMedicalReportTypeError(true);
+      return;
+    }
+    if (medicalReportFileName == '') {
+      setMedicalReportFileNameError(true);
+      return;
+    }
+    if (medicalReportFile == null) {
+      setMedicalReportFileError(true);
+      return;
+    }
+
+
     const payload = {
       "UserProfileInfoId": selectedDoctor?.items[0]?.PatientUserProfileInfoId,
       "OrderId": selectedDoctor?.items[0]?.OrderId,
@@ -1482,9 +1545,9 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       setMedicalReportFile(null);
       setMedicalReportFileName('');
       setMedicalReportDescription('');
-      setMedicalReportTypeError('');
-      setMedicalReportFileError('');
-      setMedicalReportFileNameError('');
+      setMedicalReportTypeError(false);
+      setMedicalReportFileError(false);
+      setMedicalReportFileNameError(false);
       setAddmedicalReportBottomSheet(false);
     }
   }
@@ -1616,8 +1679,8 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <View style={{ flex: 1, backgroundColor: '#F5F5F5', paddingHorizontal: 16 }}>
-        <View style={{ height: 120, width: "100%", alignItems: "flex-start" }}>
+      <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16 }}>
+        <View style={{ height: 120, width: "100%", backgroundColor: "#fff", alignItems: "flex-start" }}>
           {/* Doctor tags */}
           <FlatList
             data={showGroupedArray}
@@ -1652,7 +1715,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               }
 
               return (
-                <>
+                <View style={{ backgroundColor: '#fff' }}>
                   {/* Order Information */}
                   <View style={{ paddingBottom: 10, width: '100%', backgroundColor: '#fff', borderRadius: 10, marginBottom: 10 }}>
                     <View style={{ height: 45, width: '100%', backgroundColor: '#e4f1ef', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 10 }}>
@@ -1838,7 +1901,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                     <TouchableOpacity onPress={() => getMedicalReportList()} style={{ width: '94%', marginHorizontal: 10, height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
                       <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>التقارير الطبية</Text>
                     </TouchableOpacity>
-                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.medium, color: 'red', textAlign: 'left', paddingHorizontal: 10,marginTop:10 }]}>اكمل معلومات المستفيد ( اختيارى)</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.medium, color: 'red', textAlign: 'left', paddingHorizontal: 10, marginTop: 10 }]}>اكمل معلومات المستفيد ( اختيارى)</Text>
                   </View>
                   {/* payment Information */}
                   <View style={{ paddingBottom: 10, width: '100%', backgroundColor: '#fff', borderRadius: 10, marginBottom: 10 }}>
@@ -1904,7 +1967,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                                     <SettingIconSelected width={18} height={18} />
                                     <Text style={styles.sessionInfoLabel}>تاريخ الزيارة</Text>
                                   </View>
-                                  <View style={{ }}>
+                                  <View style={{}}>
                                     <Text style={styles.sessionInfoValue}>{moment(item.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
                                   </View>
                                 </View>
@@ -1945,17 +2008,58 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       </TouchableOpacity>
                     </View>
                   </View>
-                </>
+
+
+                </View>
               )
             })
           }
+          <View style={{ paddingVertical: 10, width: '100%', borderRadius: 10 }}>
+            <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', }}>الفاتورة الاجمالية</Text>
+            <View style={{ backgroundColor: '#fff', padding: 10, width: "100%", marginTop: 10, borderRadius: 10 }}>
+              <View style={{ paddingTop: 5, width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
+                <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>اجمالى الخدمات</Text>
+                <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.medium, color: '#333' }]}>{`SAR ${calculateTotalWithTex().subTotal.toFixed(2)}`}</Text>
+              </View>
+              <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
+                <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>الضريبة (15%)</Text>
+                <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.medium, color: '#333' }]}>{`SAR ${calculateTotalWithTex().tax.toFixed(2)}`}</Text>
+              </View>
+              <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
+                <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>المجموع</Text>
+                <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#23a2a4' }]}>{`SAR ${calculateTotalWithTex().total.toFixed(2)}`}</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity style={{ width: '100%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
+              <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>تحميل الفاتورة</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ height: 1, width: '100%', marginVertical: 10, backgroundColor: "rgba(0,0,0,0.1)" }} />
+
+          <View style={{ width: '100%', borderRadius: 10,paddingBottom:50 }}>
+            <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', }}>سياسة الالغاء</Text>
+            <Text style={{ fontFamily: CAIRO_FONT_FAMILY.medium, color: '#333', }}>
+              نحن في مركز د بسام الطبي نولي أهمية كبيرة لتقديم خدمات عالية
+              الجودة لمرضانا الكرام في مجال الغسيل الكلوي المنزلي. تفضلوا
+              بالإطلاع على سياسة الإلغاء والتي تتلخص بالنقاط التالية .
+              في حالة إلغاء الخدمة بدون وجود سبب ورغبة العميل بالالغاء واسترداد المبلغ يتم خصم رسوم ادارية بقيمة 25 بالمية من قيمة الطلب شرط أن يكون الالغاء قبل بدء الخدمة.
+
+            </Text>
+
+            <TouchableOpacity style={{paddingVertical:10}}>
+              <Text style={{textDecorationLine:'underline',fontFamily: CAIRO_FONT_FAMILY.medium, color: '#179c8e',}}> إقراء المزيد</Text>
+            </TouchableOpacity>
+          </View>
+
         </ScrollView>}
 
         <CustomBottomSheet
           visible={medicalHistoryBottomSheet}
           onClose={() => setMedicalHistoryBottomSheet(false)}
           showHandle={false}
-          height="65%"
+          height="60%"
         >
           <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
             <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -1992,7 +2096,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                           value={medicalComplaint}
                           onChangeText={(text) => {
                             setMedicalComplaint(text);
-                            if (medicalComplaintError) setMedicalComplaintError('');
+                            if (medicalComplaintError) setMedicalComplaintError(false);
                           }}
                         />
                         {medicalComplaintError && <Text style={styles.errorText}>{medicalComplaintError}</Text>}
@@ -2012,7 +2116,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                           value={sufferingDuration}
                           onChangeText={(text) => {
                             setSufferingDuration(text);
-                            if (sufferingDurationError) setSufferingDurationError('');
+                            if (sufferingDurationError) setSufferingDurationError(false);
                           }}
                         />
                         {sufferingDurationError && <Text style={styles.errorText}>{sufferingDurationError}</Text>}
@@ -2033,7 +2137,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                           value={isRecurring}
                           onChange={(value) => {
                             setIsRecurring(value.toString());
-                            if (isRecurringError) setIsRecurringError('');
+                            if (isRecurringError) setIsRecurringError(false);
                           }}
                           placeholder="اختر الإجابة"
                           containerStyle={[styles.dropdownContainer, isRecurringError && styles.inputError]}
@@ -2055,7 +2159,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                           value={allergies}
                           onChangeText={(text) => {
                             setAllergies(text);
-                            if (allergiesError) setAllergiesError('');
+                            if (allergiesError) setAllergiesError(false);
                           }}
                         />
                         {allergiesError && <Text style={styles.errorText}>{allergiesError}</Text>}
@@ -2076,7 +2180,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                           value={isSmoking}
                           onChange={(value) => {
                             setIsSmoking(value.toString());
-                            if (isSmokingError) setIsSmokingError('');
+                            if (isSmokingError) setIsSmokingError(false);
                           }}
                           placeholder="اختر الإجابة"
                           containerStyle={[styles.dropdownContainer, isSmokingError && styles.inputError]}
@@ -2101,7 +2205,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                           value={familyMedicalProblems}
                           onChangeText={(text) => {
                             setFamilyMedicalProblems(text);
-                            if (familyMedicalProblemsError) setFamilyMedicalProblemsError('');
+                            if (familyMedicalProblemsError) setFamilyMedicalProblemsError(false);
                           }}
                         />
                         {familyMedicalProblemsError && <Text style={styles.errorText}>{familyMedicalProblemsError}</Text>}
@@ -2177,7 +2281,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
           visible={addmedicalReportBottomSheet}
           onClose={() => setAddmedicalReportBottomSheet(false)}
           showHandle={false}
-          height="65%"
+          height="60%"
         >
           <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
             <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -2212,9 +2316,10 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                             { label: 'أحرون', value: '8' }
                           ]}
                           value={medicalReportType}
+                          error={medicalReportTypeError}
                           onChange={(value) => {
                             setMedicalReportType(value.toString());
-                            if (medicalReportTypeError) setMedicalReportTypeError('');
+                            if (medicalReportTypeError) setMedicalReportTypeError(false);
                           }}
                           placeholder="اختر نوع الملف"
                           containerStyle={[styles.dropdownContainer, medicalReportTypeError && styles.inputError]}
@@ -2236,7 +2341,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                           value={medicalReportFileName}
                           onChangeText={(text) => {
                             setMedicalReportFileName(text);
-                            if (medicalReportFileNameError) setMedicalReportFileNameError('');
+                            if (medicalReportFileNameError) setMedicalReportFileNameError(false);
                           }}
                         />
                         {medicalReportFileNameError && <Text style={styles.errorText}>{medicalReportFileNameError}</Text>}
@@ -2281,7 +2386,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
           visible={medicalReportListBottomSheet}
           onClose={() => setMedicalReportListBottomSheet(false)}
           showHandle={false}
-          height="65%"
+          height="60%"
         >
           <View style={{ backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
             <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -2304,572 +2409,572 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               )}
             />
           </View>
-          <TouchableOpacity onPress={() => handleAddPress()} style={{ height: 40, width: '96%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center',  marginBottom: 16, alignSelf: 'center' }}>
+          <TouchableOpacity onPress={() => handleAddPress()} style={{ height: 40, width: '96%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 16, alignSelf: 'center' }}>
             <Text style={[globalTextStyles.bodyMedium, { color: '#fff' }]}>{'إضافة ملف جديد'}</Text>
           </TouchableOpacity>
         </CustomBottomSheet>
 
         <CustomBottomSheet
-        visible={isRatingVisible}
-        onClose={() => setIsRatingVisible(false)}
-        height="80%"
-        showHandle={false}
-      >
-        <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
-          {/* Header */}
-          <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', borderTopLeftRadius: 10, borderTopRightRadius: 10, paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
-              {'إستبيان مدى رضاك عن الخدمة'}
-            </Text>
-            <TouchableOpacity onPress={() => setIsRatingVisible(false)}>
-              <AntDesign name="close" size={24} color="#979e9eff" />
-            </TouchableOpacity>
-          </View>
+          visible={isRatingVisible}
+          onClose={() => setIsRatingVisible(false)}
+          height="80%"
+          showHandle={false}
+        >
+          <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+            {/* Header */}
+            <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', borderTopLeftRadius: 10, borderTopRightRadius: 10, paddingHorizontal: 16 }}>
+              <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
+                {'إستبيان مدى رضاك عن الخدمة'}
+              </Text>
+              <TouchableOpacity onPress={() => setIsRatingVisible(false)}>
+                <AntDesign name="close" size={24} color="#979e9eff" />
+              </TouchableOpacity>
+            </View>
 
-          <ScrollView
-            ref={ratingScrollViewRef}
-            style={{ flexGrow: 1, flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingBottom: keyboardHeight }}
-          >
-            <View style={{ flex: 1, paddingHorizontal: 16 }}>
-              <View style={{ flex: 1 }}>
-                <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم المركز الطبي</Text>
-                </View>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>بشكل عام ما مدى رضاكم عن الخدمة ؟</Text>
-
-                {/* Star Rating */}
-                <View style={{ alignItems: 'center', marginTop: 20 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                    {[0, 1, 2, 3, 4].map((starIndex) => (
-                      <TouchableOpacity
-                        key={starIndex}
-                        onPress={() => handleMedicalCenterStarPress(starIndex)}
-                        style={{ marginHorizontal: 5 }}
-                      >
-                        <AntDesign
-                          name={starIndex < medicalCenterRating ? "star" : "staro"}
-                          size={40}
-                          color={starIndex < medicalCenterRating ? "#23a2a4" : "#D3D3D3"}
-                        />
-                      </TouchableOpacity>
-                    ))}
+            <ScrollView
+              ref={ratingScrollViewRef}
+              style={{ flexGrow: 1, flex: 1 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: keyboardHeight }}
+            >
+              <View style={{ flex: 1, paddingHorizontal: 16 }}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم المركز الطبي</Text>
                   </View>
-                  <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
-                </View>
-              </View>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>بشكل عام ما مدى رضاكم عن الخدمة ؟</Text>
 
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>كيف كان التوقيت المتعلق بتقديم الخدمة ووصولها اليكم ؟</Text>
-
-                {/* Star Rating */}
-                <View style={{ alignItems: 'center', marginTop: 20 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                    {[0, 1, 2, 3, 4].map((starIndex) => (
-                      <TouchableOpacity
-                        key={starIndex}
-                        onPress={() => handleTimingStarPress(starIndex)}
-                        style={{ marginHorizontal: 5 }}
-                      >
-                        <AntDesign
-                          name={starIndex < timingRating ? "star" : "staro"}
-                          size={40}
-                          color={starIndex < timingRating ? "#23a2a4" : "#D3D3D3"}
-                        />
-                      </TouchableOpacity>
-                    ))}
+                  {/* Star Rating */}
+                  <View style={{ alignItems: 'center', marginTop: 20 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                      {[0, 1, 2, 3, 4].map((starIndex) => (
+                        <TouchableOpacity
+                          key={starIndex}
+                          onPress={() => handleMedicalCenterStarPress(starIndex)}
+                          style={{ marginHorizontal: 5 }}
+                        >
+                          <AntDesign
+                            name={starIndex < medicalCenterRating ? "star" : "staro"}
+                            size={40}
+                            color={starIndex < medicalCenterRating ? "#23a2a4" : "#D3D3D3"}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
                   </View>
-                  <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
                 </View>
-              </View>
 
-              <View style={{ flex: 1 }}>
-                <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم الطبيب المعالج / الطاقم الطبي</Text>
-                </View>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>ما مدى راحتك مع الطاقم الطبي/الأخصائي/التمريض ؟</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>كيف كان التوقيت المتعلق بتقديم الخدمة ووصولها اليكم ؟</Text>
 
-                {/* Star Rating */}
-                <View style={{ alignItems: 'center', marginTop: 20 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                    {[0, 1, 2, 3, 4].map((starIndex) => (
-                      <TouchableOpacity
-                        key={starIndex}
-                        onPress={() => handleStaffStarPress(starIndex)}
-                        style={{ marginHorizontal: 5 }}
-                      >
-                        <AntDesign
-                          name={starIndex < staffRating ? "star" : "staro"}
-                          size={40}
-                          color={starIndex < staffRating ? "#23a2a4" : "#D3D3D3"}
-                        />
-                      </TouchableOpacity>
-                    ))}
+                  {/* Star Rating */}
+                  <View style={{ alignItems: 'center', marginTop: 20 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                      {[0, 1, 2, 3, 4].map((starIndex) => (
+                        <TouchableOpacity
+                          key={starIndex}
+                          onPress={() => handleTimingStarPress(starIndex)}
+                          style={{ marginHorizontal: 5 }}
+                        >
+                          <AntDesign
+                            name={starIndex < timingRating ? "star" : "staro"}
+                            size={40}
+                            color={starIndex < timingRating ? "#23a2a4" : "#D3D3D3"}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
                   </View>
-                  <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
                 </View>
-              </View>
 
-              {/* Comment Section */}
-              <View style={{ marginTop: 20, paddingHorizontal: 16 }}>
-                <Text style={{
-                  fontSize: 16,
-                  fontWeight: '600',
-                  color: '#000',
-                  textAlign: 'center',
-                  marginBottom: 10,
-                  fontFamily: CAIRO_FONT_FAMILY.bold
-                }}>
-                  تعليقات إضافية (اختياري)
-                </Text>
-                <TextInput
-                  style={{
-                    borderWidth: 1,
-                    borderColor: '#ddd',
-                    borderRadius: 8,
-                    padding: 12,
-                    textAlignVertical: 'top',
-                    minHeight: 100,
-                    fontFamily: CAIRO_FONT_FAMILY.regular,
-                    fontSize: 14,
-                    color: '#333',
-                    textAlign: 'right'
-                  }}
-                  placeholder="اكتب تعليقك هنا..."
-                  placeholderTextColor="#999"
-                  multiline={true}
-                  numberOfLines={4}
-                  value={comment}
-                  onChangeText={setComment}
-                  onFocus={handleCommentFocus}
-                />
-              </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم الطبيب المعالج / الطاقم الطبي</Text>
+                  </View>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>ما مدى راحتك مع الطاقم الطبي/الأخصائي/التمريض ؟</Text>
 
-              {/* Submit Button */}
-              <View style={{ marginTop: 30, paddingHorizontal: 20, marginBottom: 20 }}>
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: (medicalCenterRating > 0 || timingRating > 0 || staffRating > 0) ? '#23a2a4' : '#D3D3D3',
-                    paddingVertical: 12,
-                    borderRadius: 8,
-                    alignItems: 'center',
-                    opacity: (medicalCenterRating > 0 || timingRating > 0 || staffRating > 0) ? 1 : 0.6
-                  }}
-                  onPress={handleSubmitRating}
-                  disabled={(medicalCenterRating === 0 && timingRating === 0 && staffRating === 0)}
-                >
+                  {/* Star Rating */}
+                  <View style={{ alignItems: 'center', marginTop: 20 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                      {[0, 1, 2, 3, 4].map((starIndex) => (
+                        <TouchableOpacity
+                          key={starIndex}
+                          onPress={() => handleStaffStarPress(starIndex)}
+                          style={{ marginHorizontal: 5 }}
+                        >
+                          <AntDesign
+                            name={starIndex < staffRating ? "star" : "staro"}
+                            size={40}
+                            color={starIndex < staffRating ? "#23a2a4" : "#D3D3D3"}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <View style={{ height: 1, width: '100%', backgroundColor: '#ddd', marginTop: 30 }} />
+                  </View>
+                </View>
+
+                {/* Comment Section */}
+                <View style={{ marginTop: 20, paddingHorizontal: 16 }}>
                   <Text style={{
-                    color: '#fff',
                     fontSize: 16,
-                    fontWeight: 'bold',
+                    fontWeight: '600',
+                    color: '#000',
+                    textAlign: 'center',
+                    marginBottom: 10,
                     fontFamily: CAIRO_FONT_FAMILY.bold
                   }}>
-                    إرسال التقييم
+                    تعليقات إضافية (اختياري)
                   </Text>
-                </TouchableOpacity>
+                  <TextInput
+                    style={{
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      borderRadius: 8,
+                      padding: 12,
+                      textAlignVertical: 'top',
+                      minHeight: 100,
+                      fontFamily: CAIRO_FONT_FAMILY.regular,
+                      fontSize: 14,
+                      color: '#333',
+                      textAlign: 'right'
+                    }}
+                    placeholder="اكتب تعليقك هنا..."
+                    placeholderTextColor="#999"
+                    multiline={true}
+                    numberOfLines={4}
+                    value={comment}
+                    onChangeText={setComment}
+                    onFocus={handleCommentFocus}
+                  />
+                </View>
+
+                {/* Submit Button */}
+                <View style={{ marginTop: 30, paddingHorizontal: 20, marginBottom: 20 }}>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: (medicalCenterRating > 0 || timingRating > 0 || staffRating > 0) ? '#23a2a4' : '#D3D3D3',
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      opacity: (medicalCenterRating > 0 || timingRating > 0 || staffRating > 0) ? 1 : 0.6
+                    }}
+                    onPress={handleSubmitRating}
+                    disabled={(medicalCenterRating === 0 && timingRating === 0 && staffRating === 0)}
+                  >
+                    <Text style={{
+                      color: '#fff',
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      fontFamily: CAIRO_FONT_FAMILY.bold
+                    }}>
+                      إرسال التقييم
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          </ScrollView>
-        </View>
-      </CustomBottomSheet>
-
-      <CustomBottomSheet
-        visible={isBottomSheetVisible}
-        onClose={() => setIsBottomSheetVisible(false)}
-        height="90%"
-        showHandle={false}
-      >
-        <View style={{ flex: 1, backgroundColor: '#eff5f5',borderTopLeftRadius: 10,borderTopRightRadius: 10 }}>
-          {/* Header */}
-          <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row',borderTopLeftRadius: 10,borderTopRightRadius: 10, paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyLarge, {fontSize:16, color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
-              {visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId === 42 ? 'سجل الجلسة' : 'سجل الزيارة'}
-            </Text>
-            <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
-              <AntDesign name="close" size={24} color="#979e9eff" />
-            </TouchableOpacity>
+            </ScrollView>
           </View>
+        </CustomBottomSheet>
 
-          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-            <View style={{flex:1,paddingHorizontal:16}}>
-            {/* Patient Name */}
-            {/* <View style={{ paddingVertical: 10, alignItems: 'flex-start' }}>
+        <CustomBottomSheet
+          visible={isBottomSheetVisible}
+          onClose={() => setIsBottomSheetVisible(false)}
+          height="90%"
+          showHandle={false}
+        >
+          <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+            {/* Header */}
+            <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', borderTopLeftRadius: 10, borderTopRightRadius: 10, paddingHorizontal: 16 }}>
+              <Text style={[globalTextStyles.bodyLarge, { fontSize: 16, color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
+                {visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId === 42 ? 'سجل الجلسة' : 'سجل الزيارة'}
+              </Text>
+              <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
+                <AntDesign name="close" size={24} color="#979e9eff" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+              <View style={{ flex: 1, paddingHorizontal: 16 }}>
+                {/* Patient Name */}
+                {/* <View style={{ paddingVertical: 10, alignItems: 'flex-start' }}>
               <Text style={[globalTextStyles.h3, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
                 {visitHistoryData?.patientName || 'مريض'}
               </Text>
             </View> */}
 
-            {/* Hospital Information */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>المستشفى</Text>
-              </View>
-              <View style={styles.sectionBody}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>المستشفى</Text>
-                  <Text style={styles.infoValue}>{visitHistoryData?.data?.HospitalInfo?.[0]?.TitleSlang || ''}</Text>
-                </View>
-                <View style={[styles.infoRow, { backgroundColor: '#f4fdfe' }]}>
-                  <Text style={styles.infoLabel}>مقدم الرعاية</Text>
-                  <Text style={styles.infoValue}>{visitHistoryData?.data?.HospitalInfo?.[0]?.FullnameSlang || ''}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>رقم الطلب</Text>
-                  <Text style={styles.infoValue}>{visitHistoryData?.data?.HospitalInfo?.[0]?.OrderId || ''}</Text>
-                </View>
-                <View style={[styles.infoRow, { backgroundColor: '#f4fdfe' }]}>
-                  <Text style={styles.infoLabel}>
-                    {visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId === 42 ? 'تاريخ الجلسة' : 'تاريخ الزيارة'}
-                  </Text>
-                  <Text style={styles.infoValue}>
-                    {visitHistoryData?.data?.HospitalInfo?.[0]?.VisitDate ? 
-                      moment(visitHistoryData.data.HospitalInfo[0].VisitDate).locale('en').format('DD/MM/YYYY') : ''}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Patient Complaint */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>شكوى المريض</Text>
-              </View>
-              <View style={styles.sectionBody}>
-                <View style={[styles.articleContainer, { backgroundColor: '#f4fdfe' }]}>
-                  <Text style={styles.articleTitle}>الشكوى الرئيسية "CC"</Text>
-                  <Text style={styles.articleContent}>
-                    {visitHistoryData?.data?.PatientComplaint?.[0]?.ChiefComplaint || ''}
-                  </Text>
-                </View>
-                <View style={styles.articleContainer}>
-                  <Text style={styles.articleTitle}>وصف الشكاوى</Text>
-                  <Text style={styles.articleContent}>
-                    {visitHistoryData?.data?.PatientComplaint?.[0]?.PresentIllness || ''}
-                  </Text>
-                </View>
-                <View style={[styles.articleContainer, { backgroundColor: '#f4fdfe' }]}>
-                  <Text style={styles.articleTitle}>مدة الشكاوى</Text>
-                  <Text style={styles.articleContent}>
-                    {visitHistoryData?.data?.PatientComplaint?.[0]?.DurationOfComplaint > 0 ? 
-                      `${visitHistoryData.data.PatientComplaint[0].DurationOfComplaint} يوم` : ''}
-                  </Text>
-                </View>
-                <View style={styles.articleContainer}>
-                  <Text style={styles.articleTitle}>الشكاوى الأخرى</Text>
-                  <Text style={styles.articleContent}>
-                    {visitHistoryData?.data?.PatientComplaint?.[0]?.OtherComplaint || ''}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Patient History */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>سجل المريض</Text>
-              </View>
-              <View style={styles.sectionBody}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>السجل الطبي الماضي</Text>
-                  <Text style={styles.infoValue}>
-                    {visitHistoryData?.data?.PatientHistory?.[0]?.PMH?.replace(/#/g, ', ') || ''}
-                  </Text>
-                </View>
-                <View style={[styles.infoRow, { backgroundColor: '#f4fdfe' }]}>
-                  <Text style={styles.infoLabel}>السجل الجراحي الماضي</Text>
-                  <Text style={styles.infoValue}>
-                    {visitHistoryData?.data?.PatientHistory?.[0]?.PSH?.replace(/#/g, ', ') || ''}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>حساسية</Text>
-                  <Text style={styles.infoValue}>
-                    {visitHistoryData?.data?.PatientHistory?.[0]?.Allergy?.replace(/#/g, ', ') || ''}
-                  </Text>
-                </View>
-                <View style={[styles.infoRow, { backgroundColor: '#f4fdfe' }]}>
-                  <Text style={styles.infoLabel}>الأدوية الحالية</Text>
-                  <Text style={styles.infoValue}>
-                    {visitHistoryData?.data?.PatientHistory?.[0]?.CurrentMeds?.replace(/#/g, ', ') || ''}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Patient Assessment */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>تقييم المريض</Text>
-              </View>
-              <View style={styles.sectionBody}>
-                {/* Vital Signs */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>العلامات الحيوية</Text>
-                  <View style={styles.vitalSignsContainer}>
-                    <View style={styles.vitalSignItem}>
-                      <Text style={styles.vitalSignLabel}>Tem</Text>
-                      <Text style={styles.vitalSignValue}>
-                        {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.Tem || ''}
-                      </Text>
+                {/* Hospital Information */}
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>المستشفى</Text>
+                  </View>
+                  <View style={styles.sectionBody}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>المستشفى</Text>
+                      <Text style={styles.infoValue}>{visitHistoryData?.data?.HospitalInfo?.[0]?.TitleSlang || ''}</Text>
                     </View>
-                    <View style={styles.vitalSignItem}>
-                      <Text style={styles.vitalSignLabel}>H/R</Text>
-                      <Text style={styles.vitalSignValue}>
-                        {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.HR || ''}
-                      </Text>
+                    <View style={[styles.infoRow, { backgroundColor: '#f4fdfe' }]}>
+                      <Text style={styles.infoLabel}>مقدم الرعاية</Text>
+                      <Text style={styles.infoValue}>{visitHistoryData?.data?.HospitalInfo?.[0]?.FullnameSlang || ''}</Text>
                     </View>
-                    <View style={styles.vitalSignItem}>
-                      <Text style={styles.vitalSignLabel}>P4 02</Text>
-                      <Text style={styles.vitalSignValue}>
-                        {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.P4O2 || ''}
-                      </Text>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>رقم الطلب</Text>
+                      <Text style={styles.infoValue}>{visitHistoryData?.data?.HospitalInfo?.[0]?.OrderId || ''}</Text>
                     </View>
-                    <View style={styles.vitalSignItem}>
-                      <Text style={styles.vitalSignLabel}>R/R</Text>
-                      <Text style={styles.vitalSignValue}>
-                        {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.RR || ''}
+                    <View style={[styles.infoRow, { backgroundColor: '#f4fdfe' }]}>
+                      <Text style={styles.infoLabel}>
+                        {visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId === 42 ? 'تاريخ الجلسة' : 'تاريخ الزيارة'}
                       </Text>
-                    </View>
-                    <View style={styles.vitalSignItem}>
-                      <Text style={styles.vitalSignLabel}>BP</Text>
-                      <Text style={styles.vitalSignValue}>
-                        {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.Bp || ''}
+                      <Text style={styles.infoValue}>
+                        {visitHistoryData?.data?.HospitalInfo?.[0]?.VisitDate ?
+                          moment(visitHistoryData.data.HospitalInfo[0].VisitDate).locale('en').format('DD/MM/YYYY') : ''}
                       </Text>
                     </View>
                   </View>
                 </View>
 
-                {/* O/E */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>O/E</Text>
-                  <View style={styles.oeContainer}>
-                    {visitHistoryData?.data?.PatientAssessment?.[0]?.OE?.length > 0 ? (
-                      visitHistoryData.data.PatientAssessment[0].OE
-                        .sort((a: any, b: any) => a.Title.localeCompare(b.Title))
-                        .map((oe: any, index: number) => (
-                          <View key={index} style={styles.oeItem}>
-                            <Text style={styles.oeTitle}>{oe.Title}</Text>
-                            <Text style={styles.oeContent}>
-                              {oe.BodyAnatomyTitle}: {oe.InputValue}
+                {/* Patient Complaint */}
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>شكوى المريض</Text>
+                  </View>
+                  <View style={styles.sectionBody}>
+                    <View style={[styles.articleContainer, { backgroundColor: '#f4fdfe' }]}>
+                      <Text style={styles.articleTitle}>الشكوى الرئيسية "CC"</Text>
+                      <Text style={styles.articleContent}>
+                        {visitHistoryData?.data?.PatientComplaint?.[0]?.ChiefComplaint || ''}
+                      </Text>
+                    </View>
+                    <View style={styles.articleContainer}>
+                      <Text style={styles.articleTitle}>وصف الشكاوى</Text>
+                      <Text style={styles.articleContent}>
+                        {visitHistoryData?.data?.PatientComplaint?.[0]?.PresentIllness || ''}
+                      </Text>
+                    </View>
+                    <View style={[styles.articleContainer, { backgroundColor: '#f4fdfe' }]}>
+                      <Text style={styles.articleTitle}>مدة الشكاوى</Text>
+                      <Text style={styles.articleContent}>
+                        {visitHistoryData?.data?.PatientComplaint?.[0]?.DurationOfComplaint > 0 ?
+                          `${visitHistoryData.data.PatientComplaint[0].DurationOfComplaint} يوم` : ''}
+                      </Text>
+                    </View>
+                    <View style={styles.articleContainer}>
+                      <Text style={styles.articleTitle}>الشكاوى الأخرى</Text>
+                      <Text style={styles.articleContent}>
+                        {visitHistoryData?.data?.PatientComplaint?.[0]?.OtherComplaint || ''}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Patient History */}
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>سجل المريض</Text>
+                  </View>
+                  <View style={styles.sectionBody}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>السجل الطبي الماضي</Text>
+                      <Text style={styles.infoValue}>
+                        {visitHistoryData?.data?.PatientHistory?.[0]?.PMH?.replace(/#/g, ', ') || ''}
+                      </Text>
+                    </View>
+                    <View style={[styles.infoRow, { backgroundColor: '#f4fdfe' }]}>
+                      <Text style={styles.infoLabel}>السجل الجراحي الماضي</Text>
+                      <Text style={styles.infoValue}>
+                        {visitHistoryData?.data?.PatientHistory?.[0]?.PSH?.replace(/#/g, ', ') || ''}
+                      </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>حساسية</Text>
+                      <Text style={styles.infoValue}>
+                        {visitHistoryData?.data?.PatientHistory?.[0]?.Allergy?.replace(/#/g, ', ') || ''}
+                      </Text>
+                    </View>
+                    <View style={[styles.infoRow, { backgroundColor: '#f4fdfe' }]}>
+                      <Text style={styles.infoLabel}>الأدوية الحالية</Text>
+                      <Text style={styles.infoValue}>
+                        {visitHistoryData?.data?.PatientHistory?.[0]?.CurrentMeds?.replace(/#/g, ', ') || ''}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Patient Assessment */}
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>تقييم المريض</Text>
+                  </View>
+                  <View style={styles.sectionBody}>
+                    {/* Vital Signs */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>العلامات الحيوية</Text>
+                      <View style={styles.vitalSignsContainer}>
+                        <View style={styles.vitalSignItem}>
+                          <Text style={styles.vitalSignLabel}>Tem</Text>
+                          <Text style={styles.vitalSignValue}>
+                            {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.Tem || ''}
+                          </Text>
+                        </View>
+                        <View style={styles.vitalSignItem}>
+                          <Text style={styles.vitalSignLabel}>H/R</Text>
+                          <Text style={styles.vitalSignValue}>
+                            {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.HR || ''}
+                          </Text>
+                        </View>
+                        <View style={styles.vitalSignItem}>
+                          <Text style={styles.vitalSignLabel}>P4 02</Text>
+                          <Text style={styles.vitalSignValue}>
+                            {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.P4O2 || ''}
+                          </Text>
+                        </View>
+                        <View style={styles.vitalSignItem}>
+                          <Text style={styles.vitalSignLabel}>R/R</Text>
+                          <Text style={styles.vitalSignValue}>
+                            {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.RR || ''}
+                          </Text>
+                        </View>
+                        <View style={styles.vitalSignItem}>
+                          <Text style={styles.vitalSignLabel}>BP</Text>
+                          <Text style={styles.vitalSignValue}>
+                            {visitHistoryData?.data?.PatientAssessment?.[0]?.VitalSigns?.[0]?.Bp || ''}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* O/E */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>O/E</Text>
+                      <View style={styles.oeContainer}>
+                        {visitHistoryData?.data?.PatientAssessment?.[0]?.OE?.length > 0 ? (
+                          visitHistoryData.data.PatientAssessment[0].OE
+                            .sort((a: any, b: any) => a.Title.localeCompare(b.Title))
+                            .map((oe: any, index: number) => (
+                              <View key={index} style={styles.oeItem}>
+                                <Text style={styles.oeTitle}>{oe.Title}</Text>
+                                <Text style={styles.oeContent}>
+                                  {oe.BodyAnatomyTitle}: {oe.InputValue}
+                                </Text>
+                              </View>
+                            ))
+                        ) : (
+                          <Text style={styles.noDataText}>لا توجد بيانات</Text>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Diagnosis */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>DX</Text>
+                      <View style={styles.diagnosisContainer}>
+                        {visitHistoryData?.data?.PatientAssessment?.[0]?.Diagnosis?.length > 0 ? (
+                          visitHistoryData.data.PatientAssessment[0].Diagnosis.map((dx: any, index: number) => (
+                            <View key={index} style={styles.diagnosisItem}>
+                              <Text style={styles.diagnosisType}>
+                                {dx.CatDxType === 1 ? 'Provisional Dx' : 'Differential Dx'}
+                              </Text>
+                              <Text style={styles.diagnosisSpecialty}>{dx.DiagnosisSpecialtyTitle}</Text>
+                              {dx.Detail?.map((detail: any, detailIndex: number) => (
+                                <View key={detailIndex} style={styles.diagnosisDetail}>
+                                  <Text style={styles.diagnosisCode}>{detail.Code}:</Text>
+                                  <Text style={styles.diagnosisText}>{detail.Diagnosis}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={styles.noDataText}>لا توجد تشخيصات</Text>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Lab/X-Ray */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>المختبر والأشعة</Text>
+                      <View style={styles.labContainer}>
+                        {visitHistoryData?.data?.PatientAssessment?.[0]?.LabXRays?.length > 0 ? (
+                          visitHistoryData.data.PatientAssessment[0].LabXRays.map((lab: any, index: number) => (
+                            <View key={index} style={styles.labItem}>
+                              <Text style={styles.labTitle}>{lab.FileTypeTitleSlang}</Text>
+                              <Text style={styles.labType}>File Type: {lab.FileTypeTitleSlang}</Text>
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={styles.noDataText}>لا توجد ملفات</Text>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Treatment Plan */}
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>الخطة العلاجية</Text>
+                  </View>
+                  <View style={styles.sectionBody}>
+                    {/* Procedures */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>الإجراءات</Text>
+                      <View style={styles.procedureContainer}>
+                        <View style={styles.procedureRow}>
+                          <View style={styles.procedureColumn}>
+                            <Text style={styles.procedureLabel}>الإجراء</Text>
+                            <Text style={styles.procedureValue}>
+                              {visitHistoryData?.data?.TreatmentPlan?.[0]?.Procedure?.[0]?.Procedurees || ''}
                             </Text>
                           </View>
-                        ))
-                    ) : (
-                      <Text style={styles.noDataText}>لا توجد بيانات</Text>
-                    )}
-                  </View>
-                </View>
+                          <View style={styles.procedureColumn}>
+                            <Text style={styles.procedureLabel}>التعليق</Text>
+                            <Text style={styles.procedureValue}>
+                              {visitHistoryData?.data?.TreatmentPlan?.[0]?.Procedure?.[0]?.Comments || ''}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
 
-                {/* Diagnosis */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>DX</Text>
-                  <View style={styles.diagnosisContainer}>
-                    {visitHistoryData?.data?.PatientAssessment?.[0]?.Diagnosis?.length > 0 ? (
-                      visitHistoryData.data.PatientAssessment[0].Diagnosis.map((dx: any, index: number) => (
-                        <View key={index} style={styles.diagnosisItem}>
-                          <Text style={styles.diagnosisType}>
-                            {dx.CatDxType === 1 ? 'Provisional Dx' : 'Differential Dx'}
+                    {/* Medicines */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>وصفة طبية</Text>
+                      <View style={styles.medicineContainer}>
+                        {visitHistoryData?.data?.TreatmentPlan?.[0]?.Medicines?.length > 0 ? (
+                          visitHistoryData.data.TreatmentPlan[0].Medicines.map((medicine: any, index: number) => (
+                            <View key={index} style={styles.medicineItem}>
+                              <View style={styles.medicineRow}>
+                                <Text style={styles.medicineLabel}>اسم الدواء:</Text>
+                                <Text style={styles.medicineValue}>{medicine.MedicineName}</Text>
+                                <Text style={styles.medicineLabel}>نوع الدواء:</Text>
+                                <Text style={styles.medicineValue}>{medicine.Title}</Text>
+                              </View>
+                              <View style={styles.medicineRow}>
+                                <Text style={styles.medicineLabel}>المدة:</Text>
+                                <Text style={styles.medicineValue}>{medicine.Duration} {medicine.TimeUnitSlang}</Text>
+                                <Text style={styles.medicineLabel}>الجرعة:</Text>
+                                <Text style={styles.medicineValue}>{medicine.Dose} {medicine.Unit}</Text>
+                              </View>
+                              <View style={styles.medicineRow}>
+                                <Text style={styles.medicineLabel}>التكرار:</Text>
+                                <Text style={styles.medicineValue}>{medicine.Frequency}</Text>
+                                <Text style={styles.medicineLabel}>الكمية:</Text>
+                                <Text style={styles.medicineValue}>{medicine.Quantity}</Text>
+                              </View>
+                              {medicine.Description && (
+                                <View style={styles.medicineRow}>
+                                  <Text style={styles.medicineLabel}>الوصف:</Text>
+                                  <Text style={styles.medicineValue}>{medicine.Description}</Text>
+                                </View>
+                              )}
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={styles.noDataText}>لا توجد أدوية</Text>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Patient Instructions */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>تعليمات المريض</Text>
+                      <Text style={styles.instructionText}>
+                        {visitHistoryData?.data?.TreatmentPlan?.[0]?.Notes?.[0]?.Instructions || ''}
+                      </Text>
+                    </View>
+
+                    {/* Added Services */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>خدمة جديدة</Text>
+                      <View style={styles.serviceContainer}>
+                        {visitHistoryData?.data?.AddedService?.length > 0 ? (
+                          visitHistoryData.data.AddedService.map((service: any, index: number) => {
+                            let serviceName = service.TitleSlang;
+                            if (service.CatcategoryId === '42' || service.CatcategoryId === '41') {
+                              const consultationType = service.CatcategoryId === '42' ? 'استشارة عن بعد' : 'استشارة فيديو';
+                              serviceName = `${consultationType} / ${serviceName}`;
+                            }
+                            if (service.SpecialtyTitleSlang) {
+                              serviceName += ` (${service.SpecialtyTitleSlang})`;
+                            }
+                            return (
+                              <View key={index} style={styles.serviceItem}>
+                                <Text style={styles.serviceName}>{serviceName}</Text>
+                                <Text style={styles.serviceQuantity}>الكمية: {service.Quantity}</Text>
+                              </View>
+                            );
+                          })
+                        ) : (
+                          <Text style={styles.noDataText}>لا توجد خدمات إضافية</Text>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Referral */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>التحويل/ الاستشارة</Text>
+                      <View style={styles.referralContainer}>
+                        <View style={styles.referralItem}>
+                          <Text style={styles.referralLabel}>التخصص</Text>
+                          <Text style={styles.referralValue}>
+                            {visitHistoryData?.data?.TreatmentPlan?.[0]?.Refer?.[0]?.Title || ''}
                           </Text>
-                          <Text style={styles.diagnosisSpecialty}>{dx.DiagnosisSpecialtyTitle}</Text>
-                          {dx.Detail?.map((detail: any, detailIndex: number) => (
-                            <View key={detailIndex} style={styles.diagnosisDetail}>
-                              <Text style={styles.diagnosisCode}>{detail.Code}:</Text>
-                              <Text style={styles.diagnosisText}>{detail.Diagnosis}</Text>
-                            </View>
-                          ))}
                         </View>
-                      ))
-                    ) : (
-                      <Text style={styles.noDataText}>لا توجد تشخيصات</Text>
-                    )}
-                  </View>
-                </View>
-
-                {/* Lab/X-Ray */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>المختبر والأشعة</Text>
-                  <View style={styles.labContainer}>
-                    {visitHistoryData?.data?.PatientAssessment?.[0]?.LabXRays?.length > 0 ? (
-                      visitHistoryData.data.PatientAssessment[0].LabXRays.map((lab: any, index: number) => (
-                        <View key={index} style={styles.labItem}>
-                          <Text style={styles.labTitle}>{lab.FileTypeTitleSlang}</Text>
-                          <Text style={styles.labType}>File Type: {lab.FileTypeTitleSlang}</Text>
+                        <View style={styles.referralItem}>
+                          <Text style={styles.referralLabel}>المنظمة</Text>
+                          <Text style={styles.referralValue}>
+                            {visitHistoryData?.data?.TreatmentPlan?.[0]?.Refer?.[0]?.Organization || ''}
+                          </Text>
                         </View>
-                      ))
-                    ) : (
-                      <Text style={styles.noDataText}>لا توجد ملفات</Text>
-                    )}
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* Treatment Plan */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>الخطة العلاجية</Text>
-              </View>
-              <View style={styles.sectionBody}>
-                {/* Procedures */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>الإجراءات</Text>
-                  <View style={styles.procedureContainer}>
-                    <View style={styles.procedureRow}>
-                      <View style={styles.procedureColumn}>
-                        <Text style={styles.procedureLabel}>الإجراء</Text>
-                        <Text style={styles.procedureValue}>
-                          {visitHistoryData?.data?.TreatmentPlan?.[0]?.Procedure?.[0]?.Procedurees || ''}
-                        </Text>
-                      </View>
-                      <View style={styles.procedureColumn}>
-                        <Text style={styles.procedureLabel}>التعليق</Text>
-                        <Text style={styles.procedureValue}>
-                          {visitHistoryData?.data?.TreatmentPlan?.[0]?.Procedure?.[0]?.Comments || ''}
-                        </Text>
+                        <View style={styles.referralItem}>
+                          <Text style={styles.referralLabel}>سبب الإحالة</Text>
+                          <Text style={styles.referralValue}>
+                            {visitHistoryData?.data?.TreatmentPlan?.[0]?.Refer?.[0]?.ReferTo || ''}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </View>
 
-                {/* Medicines */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>وصفة طبية</Text>
-                  <View style={styles.medicineContainer}>
-                    {visitHistoryData?.data?.TreatmentPlan?.[0]?.Medicines?.length > 0 ? (
-                      visitHistoryData.data.TreatmentPlan[0].Medicines.map((medicine: any, index: number) => (
-                        <View key={index} style={styles.medicineItem}>
-                          <View style={styles.medicineRow}>
-                            <Text style={styles.medicineLabel}>اسم الدواء:</Text>
-                            <Text style={styles.medicineValue}>{medicine.MedicineName}</Text>
-                            <Text style={styles.medicineLabel}>نوع الدواء:</Text>
-                            <Text style={styles.medicineValue}>{medicine.Title}</Text>
-                          </View>
-                          <View style={styles.medicineRow}>
-                            <Text style={styles.medicineLabel}>المدة:</Text>
-                            <Text style={styles.medicineValue}>{medicine.Duration} {medicine.TimeUnitSlang}</Text>
-                            <Text style={styles.medicineLabel}>الجرعة:</Text>
-                            <Text style={styles.medicineValue}>{medicine.Dose} {medicine.Unit}</Text>
-                          </View>
-                          <View style={styles.medicineRow}>
-                            <Text style={styles.medicineLabel}>التكرار:</Text>
-                            <Text style={styles.medicineValue}>{medicine.Frequency}</Text>
-                            <Text style={styles.medicineLabel}>الكمية:</Text>
-                            <Text style={styles.medicineValue}>{medicine.Quantity}</Text>
-                          </View>
-                          {medicine.Description && (
-                            <View style={styles.medicineRow}>
-                              <Text style={styles.medicineLabel}>الوصف:</Text>
-                              <Text style={styles.medicineValue}>{medicine.Description}</Text>
-                            </View>
-                          )}
-                        </View>
-                      ))
-                    ) : (
-                      <Text style={styles.noDataText}>لا توجد أدوية</Text>
-                    )}
-                  </View>
-                </View>
-
-                {/* Patient Instructions */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>تعليمات المريض</Text>
-                  <Text style={styles.instructionText}>
-                    {visitHistoryData?.data?.TreatmentPlan?.[0]?.Notes?.[0]?.Instructions || ''}
-                  </Text>
-                </View>
-
-                {/* Added Services */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>خدمة جديدة</Text>
-                  <View style={styles.serviceContainer}>
-                    {visitHistoryData?.data?.AddedService?.length > 0 ? (
-                      visitHistoryData.data.AddedService.map((service: any, index: number) => {
-                        let serviceName = service.TitleSlang;
-                        if (service.CatcategoryId === '42' || service.CatcategoryId === '41') {
-                          const consultationType = service.CatcategoryId === '42' ? 'استشارة عن بعد' : 'استشارة فيديو';
-                          serviceName = `${consultationType} / ${serviceName}`;
-                        }
-                        if (service.SpecialtyTitleSlang) {
-                          serviceName += ` (${service.SpecialtyTitleSlang})`;
-                        }
-                        return (
-                          <View key={index} style={styles.serviceItem}>
-                            <Text style={styles.serviceName}>{serviceName}</Text>
-                            <Text style={styles.serviceQuantity}>الكمية: {service.Quantity}</Text>
-                          </View>
-                        );
-                      })
-                    ) : (
-                      <Text style={styles.noDataText}>لا توجد خدمات إضافية</Text>
-                    )}
-                  </View>
-                </View>
-
-                {/* Referral */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>التحويل/ الاستشارة</Text>
-                  <View style={styles.referralContainer}>
-                    <View style={styles.referralItem}>
-                      <Text style={styles.referralLabel}>التخصص</Text>
-                      <Text style={styles.referralValue}>
-                        {visitHistoryData?.data?.TreatmentPlan?.[0]?.Refer?.[0]?.Title || ''}
-                      </Text>
-                    </View>
-                    <View style={styles.referralItem}>
-                      <Text style={styles.referralLabel}>المنظمة</Text>
-                      <Text style={styles.referralValue}>
-                        {visitHistoryData?.data?.TreatmentPlan?.[0]?.Refer?.[0]?.Organization || ''}
-                      </Text>
-                    </View>
-                    <View style={styles.referralItem}>
-                      <Text style={styles.referralLabel}>سبب الإحالة</Text>
-                      <Text style={styles.referralValue}>
-                        {visitHistoryData?.data?.TreatmentPlan?.[0]?.Refer?.[0]?.ReferTo || ''}
+                    {/* Notes */}
+                    <View style={styles.subSection}>
+                      <Text style={styles.subSectionTitle}>ملاحظات</Text>
+                      <Text style={styles.notesText}>
+                        {visitHistoryData?.data?.TreatmentPlan?.[0]?.Notes?.[0]?.Notes || ''}
                       </Text>
                     </View>
                   </View>
                 </View>
 
-                {/* Notes */}
-                <View style={styles.subSection}>
-                  <Text style={styles.subSectionTitle}>ملاحظات</Text>
-                  <Text style={styles.notesText}>
-                    {visitHistoryData?.data?.TreatmentPlan?.[0]?.Notes?.[0]?.Notes || ''}
-                  </Text>
+                {/* Download Button */}
+                <View style={{ marginBottom: 20 }}>
+                  <TouchableOpacity
+                    style={styles.downloadButton}
+                    onPress={async () => {
+                      if (visitHistoryData) {
+                        const visitHistoryDataForPDF = {
+                          HospitalInfo: visitHistoryData.data?.HospitalInfo || [],
+                          PatientComplaint: visitHistoryData.data?.PatientComplaint || [],
+                          PatientHistory: visitHistoryData.data?.PatientHistory || [],
+                          PatientAssessment: visitHistoryData.data?.PatientAssessment || [],
+                          TreatmentPlan: visitHistoryData.data?.TreatmentPlan || [],
+                          AddedService: visitHistoryData.data?.AddedService || [],
+                          PatientName: visitHistoryData.patientName
+                        };
+                        await generateVisitHistoryPDF(visitHistoryDataForPDF);
+                      }
+                    }}
+                  >
+                    <Text style={styles.downloadButtonText}>تحميل السجل PDF</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-            </View>
+            </ScrollView>
+          </View>
+        </CustomBottomSheet>
 
-            {/* Download Button */}
-            <View style={{ marginBottom: 20 }}>
-              <TouchableOpacity 
-                style={styles.downloadButton}
-                onPress={async () => {
-                  if (visitHistoryData) {
-                    const visitHistoryDataForPDF = {
-                      HospitalInfo: visitHistoryData.data?.HospitalInfo || [],
-                      PatientComplaint: visitHistoryData.data?.PatientComplaint || [],
-                      PatientHistory: visitHistoryData.data?.PatientHistory || [],
-                      PatientAssessment: visitHistoryData.data?.PatientAssessment || [],
-                      TreatmentPlan: visitHistoryData.data?.TreatmentPlan || [],
-                      AddedService: visitHistoryData.data?.AddedService || [],
-                      PatientName: visitHistoryData.patientName
-                    };
-                    await generateVisitHistoryPDF(visitHistoryDataForPDF);
-                  }
-                }}
-              >
-                <Text style={styles.downloadButtonText}>تحميل السجل PDF</Text>
-              </TouchableOpacity>
-            </View>
-            </View>
-          </ScrollView>
-        </View>
-      </CustomBottomSheet>
-
-      <FullScreenLoader visible={isLoading} />
+        <FullScreenLoader visible={isLoading} />
 
       </View>
     </SafeAreaView>
@@ -2879,6 +2984,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#e4f1ef'
   },
   header: {
     marginBottom: 20,

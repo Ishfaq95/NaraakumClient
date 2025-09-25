@@ -88,7 +88,7 @@ const LoginScreen = () => {
   const handlePhoneNumberChange = (text: string) => {
     setPhoneNumber(text);
     setError(false); // Clear error when user types
-    if(apiError) setAPIError(false);
+    if (apiError) setAPIError(false);
   };
 
   const handleCountryChange = (country: any) => {
@@ -149,7 +149,7 @@ const LoginScreen = () => {
       const response = await authService.login(data);
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
-        if(response.StatusCode.STATUSCODE == 200){
+        if (response.StatusCode.STATUSCODE == 200) {
           setIsLoading(false);
           dispatch(setUser(response.Userinfo));
           if (rememberMe) {
@@ -162,10 +162,10 @@ const LoginScreen = () => {
           } else {
             dispatch(setRememberMeRedux(null));
           }
-        }else{
+        } else {
           setAPIError(true);
         }
-        
+
       } else {
         Alert.alert(
           "Error",
@@ -184,13 +184,13 @@ const LoginScreen = () => {
   const handleEmailChange = (text: string) => {
     setEmailOrUsername(text);
     if (emailError) setEmailError(false);
-    if(apiError) setAPIError(false);
+    if (apiError) setAPIError(false);
   };
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
     if (passwordError) setPasswordError(false);
-    if(apiError) setAPIError(false);
+    if (apiError) setAPIError(false);
   };
 
   const handleGoogleLogin = async () => {
@@ -198,7 +198,7 @@ const LoginScreen = () => {
       setIsLoading(true);
       const googleUser = await signInWithGoogle();
 
-      if(googleUser){
+      if (googleUser) {
 
         const data = {
           "FullName": googleUser.name,
@@ -214,10 +214,10 @@ const LoginScreen = () => {
           "DeviceId": "DDRT56789",
           "DateofBirth": "1984-09-09"
         }
-  
+
         // // Call your API to save the Google user data
         const response = await authService.loginWithSocialMedia(data);
-  
+
         if (response?.ResponseStatus?.STATUSCODE === 200) {
           setIsLoading(false);
           dispatch(setUser(response.Userinfo));
@@ -228,7 +228,7 @@ const LoginScreen = () => {
             [{ text: "OK" }]
           );
         }
-      }else{
+      } else {
         Alert.alert(
           "Error",
           "Google login failed",
@@ -327,7 +327,7 @@ const LoginScreen = () => {
             style={[styles.socialButton, styles.appleButton]}
             onPress={handleAppleLogin}
           >
-            <AntDesign name="apple1" size={20} color="#FFFFFF" style={{marginRight: 3}} />
+            <AntDesign name="apple1" size={20} color="#FFFFFF" style={{ marginRight: 3 }} />
             <Text numberOfLines={1} style={[styles.socialButtonText, { color: '#FFFFFF' }]}>
               {t('continue_with_apple')}
             </Text>
@@ -359,9 +359,17 @@ const LoginScreen = () => {
     );
   };
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate(ROUTES.AuthWelcome as never)
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <AuthHeader />
+      <AuthHeader onBack={handleBack} />
       <FullScreenLoader visible={isLoading} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -462,8 +470,8 @@ const LoginScreen = () => {
                   </TouchableOpacity>
                 </View>
 
-                {apiError && 
-                <Text style={{color: 'red', fontSize: 16, marginTop: 10, textAlign: 'center',fontFamily: globalTextStyles.h5.fontFamily}}>{'رقم الجوال أو كلمة المرور غير صالحة'}</Text>
+                {apiError &&
+                  <Text style={{ color: 'red', fontSize: 16, marginTop: 10, textAlign: 'center', fontFamily: globalTextStyles.h5.fontFamily }}>{'رقم الجوال أو كلمة المرور غير صالحة'}</Text>
                 }
 
                 {/* Login Button */}
@@ -495,7 +503,7 @@ const LoginScreen = () => {
                       styles.signUpText,
                       isLargeScreen && { fontSize: 14 }
                     ]}>{t('dont_have_an_account')}</Text>
-                    <TouchableOpacity style={{paddingLeft: 5}} onPress={() => navigation.navigate(ROUTES.SignUp)}>
+                    <TouchableOpacity style={{ paddingLeft: 5 }} onPress={() => navigation.navigate(ROUTES.SignUp)}>
                       <Text style={[
                         styles.signUpLink,
                         isLargeScreen && { fontSize: 14 }
@@ -738,7 +746,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     ...globalTextStyles.label,
     color: '#000',
-},
+  },
   signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',

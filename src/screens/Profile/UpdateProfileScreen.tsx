@@ -486,10 +486,12 @@ const UpdateProfileScreen = () => {
   }
 
   const HandleOpenEmailBottomSheet = () => {
+    setUpdatedEmail("")
     setOpenEmailBottomSheet(true)
   }
 
   const HandleOpenPhoneBottomSheet = () => {
+    setUpdatedPhoneNumber("")
     setOpenPhoneBottomSheet(true)
   }
 

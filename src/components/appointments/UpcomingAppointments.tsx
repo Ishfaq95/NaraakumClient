@@ -289,6 +289,7 @@ useEffect(() => {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
+        showsVerticalScrollIndicator={true}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}

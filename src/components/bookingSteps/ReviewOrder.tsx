@@ -25,6 +25,7 @@ import CustomPhoneInput, { COUNTRIES } from '../../components/common/CustomPhone
 import Dropdown from "../../components/common/Dropdown";
 import { profileService } from '../../services/api/ProfileService';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Conditionally import TrackPlayerService only for Android
 const TrackPlayerService = Platform.OS === 'android' 
@@ -733,9 +734,8 @@ const filterAndGroupItemsOptimized = (data:any) => {
   const renderDoctorTag = ({ item, index }: { item: any; index: number }) => {
     const selectedItem = item.items[0];
 
-    const imagePath = selectedItem.ServiceProviderImagePath ? `${MediaBaseURL}${selectedItem.ServiceProviderImagePath}` : `${MediaBaseURL}${selectedItem.LogoImagePath}`;
+    const imagePath = selectedItem.ServiceProviderImagePath ? `${MediaBaseURL}${selectedItem.ServiceProviderImagePath}` : selectedItem.LogoImagePath ? `${MediaBaseURL}${selectedItem.LogoImagePath}` : null;
     const name = selectedItem.ServiceProviderFullnameSlang ? selectedItem.ServiceProviderFullnameSlang : selectedItem.orgTitleSlang;
-
 
     return (
       <View style={styles.doctorTagContainer}>
@@ -744,7 +744,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
           onPress={() => setSelectedIndex(index)}
           activeOpacity={0.8}
         >
-          <Image source={{ uri: imagePath }} style={styles.doctorImage} />
+          {imagePath ? <Image source={{ uri: imagePath }} style={styles.doctorImage} /> : <View style={{...styles.doctorImage, justifyContent: 'center', alignItems: 'center',backgroundColor: '#e4f1ef'}}><Ionicons name="person-sharp" size={28} color="#23a2a4" /></View>}
           <View style={styles.doctorInfoCol}>
             <Text style={[styles.doctorName, selectedIndex === index && { color: '#fff' }]}>{t('service_provider')}</Text>
             <Text style={[styles.serviceName, selectedIndex === index && { color: '#fff' }]}>{name}</Text>

@@ -56,6 +56,7 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
             value={value}
             onChangeText={onChangeText}
             placeholder="البريد الالكترونى"
+            placeholderTextColor="#d9d9d9"
             style={styles.inputText}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -776,6 +777,7 @@ const styles = StyleSheet.create({
   },
   inputText: {
     textAlign: 'right',
+    width: '100%',
     marginLeft: 10,
     fontFamily: CAIRO_FONT_FAMILY.regular,
     fontSize: 16,

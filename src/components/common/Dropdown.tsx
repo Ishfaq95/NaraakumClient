@@ -30,6 +30,7 @@ interface DropdownProps {
   selectedItemStyle?: any;
   selectedItemTextStyle?: any;
   disabled?: boolean;
+  error?: boolean;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -45,6 +46,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   selectedItemStyle,
   selectedItemTextStyle,
   disabled,
+  error,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value);
@@ -76,7 +78,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   return (
     <View style={[styles.container, containerStyle]}>
       <TouchableOpacity
-        style={[styles.dropdownButton, dropdownStyle]}
+        style={[styles.dropdownButton, dropdownStyle, error && styles.inputError]}
         onPress={() => {
           setIsOpen(!isOpen);
         }}
@@ -137,6 +139,10 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: 44,
+  },
+  inputError: {
+    borderColor: '#FF0000',
+    borderWidth: 1,
   },
   dropdownButton: {
     flexDirection: 'row',

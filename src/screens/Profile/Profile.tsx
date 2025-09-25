@@ -17,6 +17,7 @@ import { bookingService } from '../../services/api/BookingService';
 import { RootState } from '../../shared/redux/store';
 import { globalTextStyles } from '../../styles/globalStyles';
 import { profileService } from '../../services/api/ProfileService';
+import messaging from '@react-native-firebase/messaging';
 
 const menuItems = [
   { label: 'حسابي', icon: <Icon name="person" size={20} color="#239EA0" />, key: 'account', route: ROUTES.updateProfile },
@@ -41,9 +42,17 @@ const ProfileScreen = () => {
   const [walletBalance, setWalletBalance] = useState(0);
   const user = useSelector((state: RootState) => state.root.user.user);
   const [cpAddedOrdersCount, setCpAddedOrdersCount] = useState(0);
+  const topic = useSelector((state: RootState) => state.root.user.topic);
   const isFocused = useIsFocused();
 
+  console.log("user", topic)
+
   const onLogout = () => {
+    if(topic){
+      messaging()
+        .unsubscribeFromTopic(topic)
+        .then(() => { });
+    }
     dispatch(setTopic(null));
     webSocketService.disconnect();
     dispatch(setUser(null));

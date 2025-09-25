@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, FlatList, Text, Image, TouchableOpacity, StyleSheet, I18nManager, ActivityIndicator, Modal } from 'react-native';
+import { View, FlatList, Text, Image, TouchableOpacity, StyleSheet, I18nManager, ActivityIndicator, Modal, ScrollView } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import SearchInput from '../common/SearchInput';
 import { bookingService } from '../../services/api/BookingService';
@@ -26,8 +26,6 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
   const dispatch = useDispatch();
   const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
   const SelectedCardItem = CardArray.length > 0 ? CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId) : [];
-
-  console.log("SelectedCardItem",SelectedCardItem)
 
   useEffect(() => {
     if (category) {
@@ -88,6 +86,11 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
       (item.TitleSlang || '').toLowerCase().includes(search.toLowerCase())
     );
   }, [search, offeredServicesData]);
+
+  const formatSlang = (text?: string) => {
+    if (!text) return '';
+    return text.replace(/<br\s*\/?\s*>/gi, '');
+  };
 
   const getSanitizedImageUrl = (path: string) => {
     if (!path) return '';
@@ -188,33 +191,42 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
   };
 
   return (
-    <View style={{ flex: 1, paddingHorizontal: 16, }}>
-      <SearchInput
-        placeholder="بحث عن التخصص"
-        value={search}
-        onChangeText={setSearch}
-      />
-      <View style={{ flex: 1, paddingTop: 12 }}>
-
-        {(category.Id == "42" || category.Id == "32") ?
-          <FlatList
-            data={filteredSpecialties}
-            renderItem={renderItem}
-            keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
-            numColumns={2}
-            columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12, columnGap: 8 }}
-            contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
-            showsVerticalScrollIndicator={false}
-          /> :
-          <FlatList
-            data={filteredOfferedServices}
-            renderItem={renderSelectableItem}
-            keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
-            numColumns={1}
-            contentContainerStyle={{ paddingTop: 16, paddingBottom: 80 }}
-            showsVerticalScrollIndicator={false}
-          />}
-      </View>
+    <View style={[{ flex: 1, paddingHorizontal: 16,},(category.Id != "42" && category.Id != "32" )&& { backgroundColor: "#fff" }]}>
+      {(category.Id == "42" || category.Id == "32") ? (
+        <FlatList
+          data={filteredSpecialties}
+          renderItem={renderItem}
+          keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12, columnGap: 8 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={{ paddingHorizontal: 16,paddingBottom: 12 }}>
+            <SearchInput
+              placeholder="بحث عن التخصص"
+              value={search}
+              onChangeText={setSearch}
+            />
+            </View>
+          }
+        />
+      ) : (
+        <FlatList
+          data={filteredOfferedServices}
+          renderItem={renderSelectableItem}
+          keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
+          numColumns={1}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 80 }}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={{ paddingHorizontal: 16,paddingBottom: 12 }}>
+              <Text style={{ ...globalTextStyles.buttonLarge, color: '#000' }}>وصف الخدمة</Text>
+              <Text style={{ ...globalTextStyles.bodyMedium, color: '#000' }}>{formatSlang(category?.DescriptionSlang)}</Text>
+            </View>
+          }
+        />
+      )}
 
       {/* Bottom Button for Multiple Selection */}
       {!(category.Id == "42" || category.Id == "32") && (
@@ -252,7 +264,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
             </View>
             {/* Message and Button */}
             <View style={styles.modalContent}>
-              <Text style={styles.modalMessage}>{selectedService?.DescriptionSlang}</Text>
+              <Text style={styles.modalMessage}>{formatSlang(selectedService?.DescriptionSlang)}</Text>
               {/* <TouchableOpacity
                 onPress={() => setShowServiceModal(false)}
                 style={styles.modalButton}

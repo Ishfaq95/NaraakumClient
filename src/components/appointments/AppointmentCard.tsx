@@ -55,6 +55,14 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
       scrollViewRef.current?.scrollTo({ x: newOffset, animated: true });
     }
   };
+  console.log("appointment",appointment)
+  const getSpecialtiesArray = () => {
+    
+    const specialties = [
+        ...(appointment?.ServiceProviderSpecialties),
+    ]
+    return specialties || [];
+}
 
   return (
     <View style={styles.card}>
@@ -68,12 +76,12 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
             {appointment?.FullnameSlang }
           </Text>
           <View style={styles.specialtiesContainer}>
-            <TouchableOpacity 
+            {getSpecialtiesArray().length > 2 && <TouchableOpacity 
               onPress={() => scrollByAmount('left')} 
               style={styles.scrollButton}
             >
               {isRTL ? <RightArrow /> : <LeftArrow />}
-            </TouchableOpacity>
+            </TouchableOpacity>}
             
             <ScrollView
               ref={scrollViewRef}
@@ -86,7 +94,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
               scrollEventThrottle={16}
             >
               <View style={styles.specialtiesRow}>
-                {(appointment?.ServiceProviderSpecialties || []).map((spec: any, idx: number) => (
+                {(getSpecialtiesArray() || []).map((spec: any, idx: number) => (
                   <View key={idx} style={styles.specialtyPill}>
                     <Text style={styles.specialtyText}>
                       {isRTL ? spec.TitleSlang : spec.TitlePlang}
@@ -96,12 +104,12 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
               </View>
             </ScrollView>
 
-            <TouchableOpacity 
+            {getSpecialtiesArray().length > 2 && <TouchableOpacity 
               onPress={() => scrollByAmount('right')} 
               style={styles.scrollButton}
             >
               {isRTL ? <LeftArrow /> : <RightArrow />}
-            </TouchableOpacity>
+            </TouchableOpacity>}
           </View>
         </View>
       </View>

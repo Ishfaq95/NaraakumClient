@@ -268,8 +268,18 @@ const CartScreen = ({ navigation }: any) => {
         <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton, CardArray.length == 0 && { backgroundColor: '#ccc' }]} onPress={() => {
           handleCheckout();
         }}>
-          <Text style={styles.checkoutButtonText}>{"تأكيد الخدمات"}</Text>
+          <Text style={styles.checkoutButtonText}>{"إتمام الدفع"}</Text>
         </TouchableOpacity>
+        {CardArray.length == 0 && <TouchableOpacity style={[styles.checkoutButton]} onPress={() => {
+          navigation.navigate(ROUTES.AppNavigator, {
+            screen: ROUTES.HomeStack,
+            params: {
+              screen: ROUTES.Services
+            }
+          });
+        }}>
+          <Text style={styles.checkoutButtonText}>{"إضافة مزيد من الخدمات"}</Text>
+        </TouchableOpacity>}
       </View>
 
       <FullScreenLoader visible={isLoading} />

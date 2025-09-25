@@ -36,7 +36,10 @@ const ConfirmPassword = ({ route }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const isRTL = I18nManager.isRTL;
   const handleBack = () => {
-    navigation.goBack();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: ROUTES.Login }],
+    });
   }
 
   const renderHeader = () => (
@@ -46,7 +49,7 @@ const ConfirmPassword = ({ route }: any) => {
       }
       leftComponent={
         <TouchableOpacity onPress={handleBack} style={styles.bookButton}>
-          <ArrowRightIcon />
+         <Text style={{fontFamily: CAIRO_FONT_FAMILY.medium, color: '#179c8e',fontSize:12}}>الرئيسية</Text>
         </TouchableOpacity>
       }
       containerStyle={styles.headerContainer}
@@ -223,9 +226,12 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   bookButton: {
-    padding: 5,
+    paddingHorizontal: 3,
+    paddingVertical: 2,
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#179c8e',
   },
   content: {
     alignItems: 'center',

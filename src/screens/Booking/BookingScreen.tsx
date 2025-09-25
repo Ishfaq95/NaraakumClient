@@ -18,6 +18,7 @@ import CheckIcon from '../../assets/icons/CheckIcon';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { bookingService } from '../../services/api/BookingService';
 import { globalTextStyles } from '../../styles/globalStyles';
+import { ROUTES } from '../../shared/utils/routes';
 
 const BookingScreen = ({ navigation, route }: any) => {
   const { t } = useTranslation();
@@ -302,7 +303,12 @@ const BookingScreen = ({ navigation, route }: any) => {
       leftComponent={
         <TouchableOpacity onPress={() => {
           dispatch(setSelectedUniqueId(null));
-          navigation.goBack()
+          navigation.navigate(ROUTES.AppNavigator, {
+            screen: ROUTES.HomeStack,
+            params: {
+              screen: ROUTES.Services,
+            }
+          });
         }} style={styles.bookButton}>
           <ArrowRightIcon />
         </TouchableOpacity>

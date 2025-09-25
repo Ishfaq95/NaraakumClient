@@ -60,6 +60,8 @@ const PreViewScreen = ({navigation, route}: any) => {
   const sessionStartTime = route?.params?.Data?.sessionStartTime;
   const sessionEndTime = route?.params?.Data?.sessionEndTime;
 
+  console.log("route?.params", route?.params)
+
   const [recording, setRecording] = useState(false);
   const [volume, setVolume] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');

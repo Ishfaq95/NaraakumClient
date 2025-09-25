@@ -62,8 +62,8 @@ const SavedAddresses = ({ onPressLocation }: { onPressLocation: () => void }) =>
         <View style={styles.row}>
           <LocationMarkerIcon selected={isSelected} size={22} />
           <View style={styles.textContainer}>
-            <Text style={[styles.title, isSelected && styles.selectedText]}>{item.TitleSlang}</Text>
-            <Text style={[styles.square, isSelected && styles.selectedText]}>{item.SquareTitle}</Text>
+            <Text style={[styles.title, isSelected && styles.selectedText]}>{item.AreaTitle}</Text>
+            <Text style={[styles.square, isSelected && styles.selectedText]}>{item.Address}</Text>
             <Text style={[styles.description, isSelected && styles.selectedText]}>{item.Description}</Text>
           </View>
         </View>
@@ -83,6 +83,9 @@ const SavedAddresses = ({ onPressLocation }: { onPressLocation: () => void }) =>
             keyExtractor={item => item.Id}
             renderItem={renderItem}
             extraData={selectedId}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 80 }}
+            ListFooterComponent={<View style={{ height: 80 }} />}
           />
         </View>
       </View>
@@ -107,6 +110,7 @@ const styles = StyleSheet.create({
   },
   savedAddressesListContainer: {
     padding: 8,
+    // paddingBottom: 120,
   },
   savedAddressItem: {
     borderRadius: 12,

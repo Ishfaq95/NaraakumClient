@@ -290,6 +290,7 @@ const PreviousAppointments: React.FC<PreviousAppointmentsProps> = ({ userId, onJ
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
+        showsVerticalScrollIndicator={true}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
