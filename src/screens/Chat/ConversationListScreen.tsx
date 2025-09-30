@@ -12,6 +12,7 @@ import { MediaBaseURL } from '../../shared/utils/constants';
 import { ROUTES } from '../../shared/utils/routes';
 import WebSocketService from '../../components/WebSocketService';
 import { setUnreadMessages } from '../../shared/redux/reducers/userReducer';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ConversationListScreen = () => {
     const { t } = useTranslation();
@@ -71,12 +72,12 @@ const ConversationListScreen = () => {
                 }}
             >
                 <View style={styles.avatarContainer}>
-                    <Image
+                    {item?.careproviderDetails?.profilePictureUrl ? <Image
                         source={{
                             uri: `${MediaBaseURL}${item?.careproviderDetails?.profilePictureUrl}`
                         }}
                         style={styles.avatar}
-                    />
+                    /> : <View style={[styles.avatar,{alignItems:'center',justifyContent:'center',backgroundColor:'gray'}]}> <Ionicons name="person" size={36} color="#fff" /></View>}
                 </View>
 
                 <View style={styles.contentContainer}>
@@ -202,13 +203,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 4,
+        width:'100%'
     },
     userName: {
         ...globalTextStyles.bodyLarge,
+        width:'70%',
         fontWeight: '600',
         color: '#000',
     },
     timestamp: {
+        width:'30%',
+        textAlign:'right',
         ...globalTextStyles.bodySmall,
         color: '#666',
         fontSize: 12,

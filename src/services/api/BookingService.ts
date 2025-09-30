@@ -270,6 +270,26 @@ export const getPatientReminderList = async (payload: any): Promise<any> => {
     }
 };
 
+export const getUserFavorites = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('user/GetUserFavorites', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting user favorites:', error);
+        throw error;
+    }
+};
+
+export const addToFavorites = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('user/AddUserFavorites', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error adding to favorites:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
@@ -292,5 +312,7 @@ export const bookingService = {
     updateBeneficiaryData,
     deleteBeneficiaryData,
     AddUserLocation,
-    getPatientReminderList
+    getPatientReminderList,
+    getUserFavorites,
+    addToFavorites,
 }; 

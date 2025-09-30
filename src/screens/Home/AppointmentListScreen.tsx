@@ -349,8 +349,8 @@ const AppointmentListScreen = ({ navigation }: any) => {
           <View style={{ position: 'relative' }}>
             <Ionicons name="notifications" size={24} color="black" />
             {notificationList > 0 && (
-              <View style={{ position: 'absolute', top: -10, right: 10, backgroundColor: '#008080', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: 'white', fontSize: 10, padding: 3 }}>{notificationList > 100 ? '99+' : notificationList}</Text>
+              <View style={{ position: 'absolute', top: -10, right: 10,width: 25, height: 20, backgroundColor: '#008080', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: 'white', fontSize: 10,  }}>{notificationList > 100 ? '99+' : notificationList}</Text>
               </View>
             )}
           </View>

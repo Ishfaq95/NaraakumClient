@@ -10,6 +10,7 @@ import { store } from "../redux/store";
 import CryptoJS from 'crypto-js';
 import { encode as btoa } from 'base-64';
 import { convertLocalToUTCDateTime } from "../../utils/timeUtils";
+import { categoriesList } from "../../services/api/BookingService";
 
 export const isTokenExpired = (expiresAt: any) => {
   return new Date() > new Date(expiresAt);
@@ -116,7 +117,7 @@ export const requestAndroidPermissions = async () => {
   try {
     // For Android 11+ (API 30+), WRITE_EXTERNAL_STORAGE is deprecated
     const androidVersion = Number(Platform.Version);
-    
+
     let permissions = [
       PermissionsAndroid.PERMISSIONS.CAMERA,
       PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
@@ -249,23 +250,23 @@ export const getDuration = (appointment: any) => {
 
 export const convertArabicTimeTo24Hour = (timeString: string): string => {
   if (!timeString) return timeString;
-  
-  
+
+
   // Remove any extra spaces and split by space
   const parts = timeString.trim().split(' ');
   if (parts.length < 2) {
     return timeString; // If no AM/PM indicator, return as is
   }
-  
+
   const timePart = parts[0]; // e.g., "2:30"
   const periodPart = parts[1]; // e.g., "ص" (ص for AM) or "م" (م for PM)
-  
-  
+
+
   // Split time into hours and minutes
   const [hours, minutes] = timePart.split(':').map(Number);
-  
+
   let hour24 = hours;
-  
+
   // Convert based on Arabic period indicators
   // ص = صباح (morning/AM)
   // م = مساء (evening/PM)
@@ -281,9 +282,9 @@ export const convertArabicTimeTo24Hour = (timeString: string): string => {
     }
   } else {
   }
-  
-  const result = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;    
-  
+
+  const result = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
   return result;
 };
 
@@ -324,63 +325,77 @@ export const formatTime = (timeString: string) => {
 };
 
 export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
-  
-  const selectedLocation = store.getState().root.booking.selectedLocation;
-  const payload = CardArray.map((item: any) => {
-    let schedulingDate = item.SchedulingDate;
-    let schedulingTime = item.SchedulingTime;
-    if(schedulingDate.includes("T")){
-      schedulingDate = schedulingDate.split("T")[0];
-    }
-    if(schedulingTime.includes("T")){
-      schedulingTime = schedulingTime.split("T")[1];
-    }
-    // Convert SchedulingDate and SchedulingTime to UTC
-    const { utcDate, utcTime } = convertLocalToUTCDateTime(schedulingDate, schedulingTime);
-    let schedulingDateUTC =  utcDate;
-    let schedulingTimeUTC = utcTime;
 
-    return ({
-      "OrderDetailId": item.OrderDetailId || 0,
-      "OrganizationId": item.OrganizationId,
-      "CatCategoryId": item.CatCategoryId,
-      "CatServiceId": item.CatServiceId,
-      "CatCategoryTypeId": item.CatCategoryTypeId,
-      "OrganizationServiceId": item.OrganizationServiceId,
-      "ServiceCharges": item.CatNationalityId == "213" ? item.ServiceCharges : item.PriceswithTax ? item.PriceswithTax : item.ServiceCharges,
-      "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId || item.ServiceProviderloginInfoId,
-      "CatSpecialtyId": item.CatSpecialtyId || 0,
-      "OrganizationSpecialtiesId": 0,
-      "OrganizationPackageId": 0,
-      "Quantity": 1,
-      "SchedulingDate": schedulingDateUTC,
-      "SchedulingTime": schedulingTimeUTC,
-      "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId,
-      "AvailabilityId": item.AvailabilityId,
-      "OrderAddress": selectedLocation?.address || "",
-      "OrderAddressGoogleLocation": selectedLocation?.latitude + "," + selectedLocation?.longitude || "",
-      "saveinAddress": false
+  const selectedLocation = store.getState().root.booking.selectedLocation;
+  const category = store.getState().root.booking.category;
+  const payload = CardArray
+    .map((item: any) => {
+
+      const displayCategory = categoriesList.find((citem: any) => citem.Id == category.Id);
+      const shouldSkipThisItem = displayCategory?.Display == "CP"
+        ? !item.ServiceProviderUserloginInfoId
+        : !item.OrganizationId;
+
+      if (shouldSkipThisItem) {
+        // skip only the invalid item, include others
+        return undefined;
+      }
+
+      let schedulingDate = item.SchedulingDate;
+      let schedulingTime = item.SchedulingTime;
+      if (schedulingDate.includes("T")) {
+        schedulingDate = schedulingDate.split("T")[0];
+      }
+      if (schedulingTime.includes("T")) {
+        schedulingTime = schedulingTime.split("T")[1];
+      }
+      // Convert SchedulingDate and SchedulingTime to UTC
+      const { utcDate, utcTime } = convertLocalToUTCDateTime(schedulingDate, schedulingTime);
+      let schedulingDateUTC = utcDate;
+      let schedulingTimeUTC = utcTime;
+
+      return ({
+        "OrderDetailId": item.OrderDetailId || 0,
+        "OrganizationId": item.OrganizationId,
+        "CatCategoryId": item.CatCategoryId,
+        "CatServiceId": item.CatServiceId,
+        "CatCategoryTypeId": item.CatCategoryTypeId,
+        "OrganizationServiceId": item.OrganizationServiceId,
+        "ServiceCharges": item.CatNationalityId == "213" ? item.ServiceCharges : item.PriceswithTax ? item.PriceswithTax : item.ServiceCharges,
+        "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId || item.ServiceProviderloginInfoId,
+        "CatSpecialtyId": item.CatSpecialtyId || 0,
+        "OrganizationSpecialtiesId": 0,
+        "OrganizationPackageId": 0,
+        "Quantity": 1,
+        "SchedulingDate": schedulingDateUTC,
+        "SchedulingTime": schedulingTimeUTC,
+        "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId,
+        "AvailabilityId": item.AvailabilityId,
+        "OrderAddress": selectedLocation?.address || "",
+        "OrderAddressGoogleLocation": selectedLocation?.latitude + "," + selectedLocation?.longitude || "",
+        "saveinAddress": false
+      })
     })
-  })
+    .filter(Boolean);
 
   return payload
 }
 
 export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) => {
-  
+
 
   const payload = CardArray.map((item: any) => {
     console.log('item', item);
     let schedulingDate = item.SchedulingDate;
     let schedulingTime = item.SchedulingTime;
-    if(schedulingDate.includes("T")){
+    if (schedulingDate.includes("T")) {
       schedulingDate = schedulingDate.split("T")[0];
     }
-    if(schedulingTime.includes("T")){
+    if (schedulingTime.includes("T")) {
       schedulingTime = schedulingTime.split("T")[1];
     }
     const { utcDate, utcTime } = convertLocalToUTCDateTime(schedulingDate, schedulingTime);
-    let schedulingDateUTC =  utcDate;
+    let schedulingDateUTC = utcDate;
     let schedulingTimeUTC = utcTime;
     return ({
       "OrderDetailId": item.OrderDetailId,
@@ -389,7 +404,7 @@ export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) =
       "CatServiceId": item.CatServiceId,
       "CatCategoryTypeId": item.CatCategoryTypeId,
       "OrganizationServiceId": item.OrganizationServiceId,
-      "ServiceCharges":item.CatNationalityId == "213" ? item.ServicePrice : item.ServiceCharges,
+      "ServiceCharges": item.CatNationalityId == "213" ? item.ServicePrice : item.ServiceCharges,
       "ServiceProviderloginInfoId": item.ServiceProviderUserloginInfoId,
       "CatSpecialtyId": item.CatSpecialtyId,
       "OrganizationSpecialtiesId": item.OrganizationSpecialtiesId || 0,
@@ -413,7 +428,7 @@ export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) =
 }
 
 export const generatePayloadForCheckOut = (CardArray: any) => {
-  
+
   const payload = CardArray.map((item: any) => {
     return ({
       "OrderDetailId": item.OrderDetailId,
@@ -455,7 +470,7 @@ export const generateUniqueId = () => {
   return id;
 };
 
-export function encryptText(text:any, key:any) {
+export function encryptText(text: any, key: any) {
   const encrypted = CryptoJS.AES.encrypt(text, key).toString();
   return btoa(encrypted);
 }
@@ -464,18 +479,18 @@ export const generatePayloadForUploadMedicalhistoryReports = (homeDialysisFilePa
   const payload = homeDialysisFilePaths.map((item: any) => {
     let ResourceCategoryId = '2';
     let fileType = item.split('.').pop();
-      if (fileType == 'pdf' || fileType == 'PDF') ResourceCategoryId = '4';
-      else if (
-        fileType == 'jpg' ||
-        fileType == 'jpeg' ||
-        fileType == 'gif' ||
-        fileType == 'png' ||
-        fileType == 'JPG' ||
-        fileType == 'JPEG' ||
-        fileType == 'GIF' ||
-        fileType == 'PNG'
-      )
-        ResourceCategoryId = '1';
+    if (fileType == 'pdf' || fileType == 'PDF') ResourceCategoryId = '4';
+    else if (
+      fileType == 'jpg' ||
+      fileType == 'jpeg' ||
+      fileType == 'gif' ||
+      fileType == 'png' ||
+      fileType == 'JPG' ||
+      fileType == 'JPEG' ||
+      fileType == 'GIF' ||
+      fileType == 'PNG'
+    )
+      ResourceCategoryId = '1';
 
 
     return ({

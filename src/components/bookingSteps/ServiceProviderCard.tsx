@@ -7,9 +7,12 @@ import RightArrow from '../../assets/icons/RightArrow';
 import { generateSlotsForDate } from '../../utils/timeUtils';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
-import { addCardItem, manageTempSlotDetail, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, manageTempSlotDetail } from '../../shared/redux/reducers/bookingReducer';
 import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import { convert24HourToArabicTime } from '../../shared/services/service';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { bookingService } from '../../services/api/BookingService';
+import { profileService } from '../../services/api/ProfileService';
 
 interface Specialty {
   CatSpecialtyId: string;
@@ -119,6 +122,8 @@ interface ServiceProviderCardProps {
   onSelectSlot: (provider: any, slot: any) => void;
   onSelectService?: (providerId: string, service: string) => void;
   selectedService?: any;
+  userFavorites?: any[];
+  getUserFavorites?: () => void;
 }
 
 const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
@@ -129,7 +134,9 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   selectedSlotInfo,
   onSelectSlot,
   onSelectService,
-  selectedService
+  selectedService,
+  userFavorites,
+  getUserFavorites
 }) => {
   const dispatch = useDispatch();
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
@@ -287,6 +294,28 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     return returnVal;
   }
 
+  const handleAddToFavorites = async (id: string) => {
+    const payload = {
+      "UserLogininfoId": user.Id,
+      "ServiceProviderLogininfoId": id,
+    }
+    const response = await bookingService.addToFavorites(payload);
+    if(response.ResponseStatus.STATUSCODE == 200){
+      getUserFavorites && getUserFavorites();
+    }
+  }
+
+  const handleRemoveFromFavorites = async (id: string) => {
+    const payload = {
+      "UserFavoritesId": id,
+    }
+    const response = await profileService.removeFromFavorites(payload);
+    if(response.ResponseStatus.STATUSCODE == 200){
+      getUserFavorites && getUserFavorites();
+    }
+  }
+  
+
   console.log("provider",provider)
 
   // Memoize static content to prevent unnecessary re-renders
@@ -307,7 +336,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             <UserPlaceholder width={80} height={80} />
           )}
         </View>
-        <View style={{ width: '70%' }}>
+        <View style={{ width: '60%' }}>
           <Text style={styles.providerName}>{provider.FullnameSlang}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
             <Text style={{ color: '#FFD700', fontSize: 18, marginRight: 2 }}>★</Text>
@@ -315,6 +344,18 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             <Text style={[globalTextStyles.caption, { color: '#888' }]}> ({provider.AccumulativeRatingNum} تقييم)</Text>
 
           </View>
+        </View>
+        <View style={{ width: '10%',alignItems:'flex-end' }}>
+          <TouchableOpacity onPress={() => {
+            const isFavorite = userFavorites?.find((item: any) => item.ServiceProviderLoginInfoId == provider.UserId);
+            if(isFavorite){
+              handleRemoveFromFavorites(isFavorite.Id);
+            }else{
+              handleAddToFavorites(provider.UserId);
+            }
+          }}>
+            {userFavorites?.find((item: any) => item.ServiceProviderLoginInfoId == provider.UserId) ? <Ionicons name="heart" size={30} color="#23a2a4" /> : <Ionicons name="heart-outline" size={30} color="#888" />}
+          </TouchableOpacity>
         </View>
       </View>
       {category.Id != "42" && category.Id != "32" ?
@@ -353,7 +394,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
           </View>}
     </>
-  ), [provider, isProviderSelected, selectedSlotInfo, selectedService]);
+  ), [provider, isProviderSelected, selectedSlotInfo, selectedService, userFavorites]);
 
   const specialtiesSection = useMemo(() => (
     <View style={styles.specialtyContainer}>

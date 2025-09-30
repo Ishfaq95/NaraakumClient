@@ -28,6 +28,8 @@ import RadioButton from './RadioButton';
 import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
+import { ROUTES } from '../../shared/utils/routes';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
@@ -165,10 +167,37 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [selectSpecialtyFilter, setSelectSpecialtyFilter] = useState('AllType');
   const [sortByValue, setSortByValue] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
+  const [alertModalVisible, setAlertModalVisible] = useState(false);
+  const [alertModalMessage, setAlertModalMessage] = useState('');
+  const [userFavorites, setUserFavorites] = useState<any[]>([]);
   const dispatch = useDispatch();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    if(user){
+      getUserFavorites();
+    }
+  }, [user])
+
+  const getUserFavorites = async () => {
+    const response = await bookingService.getUserFavorites({ UserLogininfoId: user.Id });
+    if(response.ResponseStatus.STATUSCODE == 200){
+      setUserFavorites(response.Result);
+    }else{
+      setUserFavorites([]);
+    }
+  }
 
   const createOrderMainBeforePayment = async () => {
-
+    const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
+    let selectedItem: any = displayCategory?.Display == "CP" ? CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId) : CardArray.find((item: any) => !item.OrganizationId);
+    
+    if(selectedItem){
+      setAlertModalVisible(true);
+      setAlertModalMessage('لم يتم تحديد الجدول الزمني للخدمة');
+      return;
+    }
+    
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
@@ -931,6 +960,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 onSelectSlot={handleSelectSlot}
                 onSelectService={handleSelectService}
                 selectedService={selectedService}
+                userFavorites={userFavorites}
+                getUserFavorites={getUserFavorites} 
               />
             }}
             contentContainerStyle={{ padding: 16 }}
@@ -1202,6 +1233,41 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           </TouchableOpacity>
         </View>
       </CustomBottomSheet>
+
+      <Modal
+                visible={alertModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => { setAlertModalVisible(false); }}
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+                        <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <TouchableOpacity
+                                onPress={() => { setAlertModalVisible(false); }}
+                            >
+                                <AntDesign name="close" size={28} color="#888" />
+                            </TouchableOpacity>
+                            <Text style={{ color: '#3a434a', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>خطأ</Text>
+                        </View>
+                        <AntDesign name="exclamationcircle" size={64} color="#d84d48" style={{ marginVertical: 18 }} />
+                        <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+                            {alertModalMessage}
+                        </Text>
+
+                        <TouchableOpacity
+                            onPress={() => { setAlertModalVisible(false);
+                              navigation.navigate(ROUTES.CartStack, {
+                                screen: ROUTES.CartScreen,
+                              })
+                             }}
+                            style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, width:'100%', alignItems: 'center', marginTop: 10 }}
+                        >
+                            <Text style={{ fontFamily: globalTextStyles.h5.fontFamily, color: '#fff', fontWeight: 'bold', fontSize: 16 }}> خدمة الجدول الزمني</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
     </View>
   );
 };

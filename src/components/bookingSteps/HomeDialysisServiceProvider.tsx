@@ -7,7 +7,7 @@ import RightArrow from '../../assets/icons/RightArrow';
 import { generateSlotsForDate } from '../../utils/timeUtils';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
-import { addCardItem, addHomeDialysisCardItem, manageTempSlotDetail, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, addHomeDialysisCardItem, manageTempSlotDetail } from '../../shared/redux/reducers/bookingReducer';
 
 const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
     provider,

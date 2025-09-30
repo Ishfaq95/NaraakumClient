@@ -7,7 +7,7 @@ import RightArrow from '../../assets/icons/RightArrow';
 import { generateSlotsForDate } from '../../utils/timeUtils';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
-import { addCardItem, manageTempSlotDetail, removeCardItem } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, manageTempSlotDetail } from '../../shared/redux/reducers/bookingReducer';
 import { globalTextStyles } from '../../styles/globalStyles';
 import { convertArabicTimeTo24Hour } from '../../shared/services/service';
 

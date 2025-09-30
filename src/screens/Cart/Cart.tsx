@@ -96,9 +96,10 @@ const CartScreen = ({ navigation }: any) => {
         "OrderDetailId": item.OrderDetailId,
       }
       const response = await bookingService.deleteOrderMainBeforePayment(payload);
-      dispatch(removeCardItem(item.ItemUniqueId));
+      dispatch(removeCardItem(item));
     } else {
-      dispatch(removeCardItem(item.ItemUniqueId));
+      console.log('item', item);
+      dispatch(removeCardItem(item));
     }
   };
 
@@ -117,13 +118,13 @@ const CartScreen = ({ navigation }: any) => {
 
     return (
       <View style={styles.cardItem}>
-        <View style={styles.cardItemContent}>
+       {(item?.ServiceProviderUserloginInfoId || item?.OrganizationId) && <View style={styles.cardItemContent}>
           <Text style={styles.providerName}>{String(item?.ServiceProviderFullnameSlang || item?.orgTitleSlang || '')}</Text>
           {(item?.ServiceProviderUserloginInfoId || item?.OrganizationId) && <View style={styles.slotInfoContainer}>
             <Text style={styles.slotInfo}>{displayTime || item?.SchedulingTime}</Text>
             <Text style={styles.dateInfo}>{displayDate || item?.SchedulingDate}</Text>
           </View>}
-        </View>
+        </View>}
         <View style={styles.removeButtonContainer}>
           <TouchableOpacity
             style={styles.removeButton}
@@ -216,7 +217,7 @@ const CartScreen = ({ navigation }: any) => {
 
     CardArray.forEach((item: any) => {
       if(item.CatNationalityId == "213"){
-        subTotal += Number(item.ServiceCharges) || 0;
+        subTotal += Number(item.ServicePrice) || 0;
       }else{
         subTotal += (Number(item.ServicePrice) || 0);
         tax += (Number(item.ServicePrice) || 0) * 0.15;
@@ -265,12 +266,8 @@ const CartScreen = ({ navigation }: any) => {
           </View>
 
         </View>
-        <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton, CardArray.length == 0 && { backgroundColor: '#ccc' }]} onPress={() => {
-          handleCheckout();
-        }}>
-          <Text style={styles.checkoutButtonText}>{"إتمام الدفع"}</Text>
-        </TouchableOpacity>
-        {CardArray.length == 0 && <TouchableOpacity style={[styles.checkoutButton]} onPress={() => {
+        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+       <TouchableOpacity style={[styles.checkoutButton]} onPress={() => {
           navigation.navigate(ROUTES.AppNavigator, {
             screen: ROUTES.HomeStack,
             params: {
@@ -279,7 +276,14 @@ const CartScreen = ({ navigation }: any) => {
           });
         }}>
           <Text style={styles.checkoutButtonText}>{"إضافة مزيد من الخدمات"}</Text>
-        </TouchableOpacity>}
+        </TouchableOpacity>
+        <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton, CardArray.length == 0 && { backgroundColor: '#ccc' }]} onPress={() => {
+          handleCheckout();
+        }}>
+          <Text style={styles.checkoutButtonText}>{"إتمام الدفع"}</Text>
+        </TouchableOpacity>
+        
+        </View>
       </View>
 
       <FullScreenLoader visible={isLoading} />
@@ -384,8 +388,8 @@ const styles = StyleSheet.create({
   removeButton: {
     backgroundColor: 'red',
     borderRadius: 100,
-    height: 25,
-    width: 25,
+    height: 22,
+    width: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -438,6 +442,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginTop: 10,
+    width: '48%',
   },
   checkoutButtonText: {
     ...globalTextStyles.buttonMedium,

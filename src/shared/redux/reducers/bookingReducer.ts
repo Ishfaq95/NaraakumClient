@@ -55,7 +55,14 @@ export const bookingReducer = createSlice({
       state.homeDialysisCardItems = action.payload;
     },
     removeCardItem: (state, action) => {
-      state.cardItems = state.cardItems.filter((item: any) => item.ItemUniqueId !== action.payload);
+      state.cardItems = state.cardItems.filter((item: any) => {
+        if(action.payload.CatServiceId){
+          return !(item.CatServiceId == action.payload.CatServiceId && item.ItemUniqueId == action.payload.ItemUniqueId);
+        }else{
+          return item.ItemUniqueId !== action.payload.ItemUniqueId;
+        }
+      });
+      
     },
     clearCardItems: (state) => {
       state.cardItems = [];
