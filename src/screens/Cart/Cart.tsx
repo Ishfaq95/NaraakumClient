@@ -267,7 +267,7 @@ const CartScreen = ({ navigation }: any) => {
 
         </View>
         <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-       <TouchableOpacity style={[styles.checkoutButton]} onPress={() => {
+       <TouchableOpacity style={[styles.checkoutButton,{width: '56%'}]} onPress={() => {
           navigation.navigate(ROUTES.AppNavigator, {
             screen: ROUTES.HomeStack,
             params: {
@@ -275,9 +275,9 @@ const CartScreen = ({ navigation }: any) => {
             }
           });
         }}>
-          <Text style={styles.checkoutButtonText}>{"إضافة مزيد من الخدمات"}</Text>
+          <Text numberOfLines={1} style={styles.checkoutButtonText}>{"إضافة مزيد من الخدمات"}</Text>
         </TouchableOpacity>
-        <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton, CardArray.length == 0 && { backgroundColor: '#ccc' }]} onPress={() => {
+        <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton,{width: '40%'}, CardArray.length == 0 && { backgroundColor: '#ccc' }]} onPress={() => {
           handleCheckout();
         }}>
           <Text style={styles.checkoutButtonText}>{"إتمام الدفع"}</Text>

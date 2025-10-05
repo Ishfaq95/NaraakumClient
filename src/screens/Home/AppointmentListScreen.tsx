@@ -340,7 +340,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
         <TouchableOpacity onPress={() => {
           dispatch(setSelectedUniqueId(null));
           navigation.navigate(ROUTES.Services)}} style={styles.bookButton}>
-          <Text style={styles.bookButtonText}>{t('book_order')}</Text>
+          <Text numberOfLines={1} style={styles.bookButtonText}>{t('book_order')}</Text>
         </TouchableOpacity>
       }
       leftComponent={

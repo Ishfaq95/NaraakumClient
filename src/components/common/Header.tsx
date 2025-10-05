@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   headerCenter: {
-    width: '70%',
+    width: '65%',
     alignItems: 'center',
   },
   headerRight: {

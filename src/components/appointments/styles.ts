@@ -67,7 +67,7 @@ export const styles = StyleSheet.create({
   },
   bookButton: {
     backgroundColor: '#008080',
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
     paddingVertical: 8,
     borderRadius: 8,
     width: 80,

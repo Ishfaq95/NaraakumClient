@@ -90,7 +90,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
   const formatSlang = (text?: string) => {
     if (!text) return '';
     return text
-      .replace(/<br\s*\/?\s*>/gi, '')
+      .replace(/<br\s*\/?\s*>/gi, '\n')
       .replace(/<\/?p[^>]*>/gi, '');
   };
 
@@ -225,6 +225,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
             <View style={{ paddingHorizontal: 16,paddingBottom: 12 }}>
               <Text style={{ ...globalTextStyles.buttonLarge, color: '#000' }}>وصف الخدمة</Text>
               <Text style={{ ...globalTextStyles.bodyMedium, color: '#000' }}>{formatSlang(category?.DescriptionSlang)}</Text>
+              <Text style={{ ...globalTextStyles.buttonMedium, color: '#000' }}>اختر خدمة او اكثر</Text>
             </View>
           }
         />
@@ -266,7 +267,9 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
             </View>
             {/* Message and Button */}
             <View style={styles.modalContent}>
+              <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.modalMessage}>{formatSlang(selectedService?.DescriptionSlang)}</Text>
+              </ScrollView>
               {/* <TouchableOpacity
                 onPress={() => setShowServiceModal(false)}
                 style={styles.modalButton}
@@ -406,6 +409,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: 320,
+    maxHeight: '80%',
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
@@ -434,6 +438,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     padding: 16,
+    maxHeight: '100%',
   },
   modalMessage: {
     ...globalTextStyles.h5,
