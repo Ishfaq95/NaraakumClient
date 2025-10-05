@@ -37,7 +37,7 @@ import {changeLanguage} from '../../utils/language/i18nextConfig';
 import {LangCode} from '../../utils/language/LanguageUtils';
 import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
 import Svg, {Path} from 'react-native-svg';
-import AudioRecord from 'react-native-audio-record';
+// import AudioRecord from 'react-native-audio-record';
 import RightArrowIcon from '../../assets/icons/RightArrow';
 
 const width = 200;
@@ -91,19 +91,19 @@ const PreViewScreen = ({navigation, route}: any) => {
 
   const prepareRecording = () => {
     // Initialize audio record settings
-    AudioRecord.init({
-      sampleRate: 16000, // default 44100
-      channels: 1, // 1 or 2, default 1
-      bitsPerSample: 16, // 8 or 16, default 16
-      audioSource: 6, // android only (see below)
-      wavFile: 'test.wav', // default 'audio.wav'
-    });
+    // AudioRecord.init({
+    //   sampleRate: 16000, // default 44100
+    //   channels: 1, // 1 or 2, default 1
+    //   bitsPerSample: 16, // 8 or 16, default 16
+    //   audioSource: 6, // android only (see below)
+    //   wavFile: 'test.wav', // default 'audio.wav'
+    // });
   };
 
   const startRecording = async () => {
     try {
       setRecording(true);
-      AudioRecord.start();
+      // AudioRecord.start();
     } catch (error) {
       console.error('Recording error: ', error);
     }
@@ -112,7 +112,7 @@ const PreViewScreen = ({navigation, route}: any) => {
   const stopRecording = async () => {
     try {
       setRecording(false);
-      AudioRecord.stop();
+      // AudioRecord.stop();
     } catch (error) {
       console.error('Stop recording error: ', error);
     }

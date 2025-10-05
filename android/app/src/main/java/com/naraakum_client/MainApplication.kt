@@ -4,12 +4,11 @@ import android.app.Application
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
+import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
-import com.facebook.soloader.SoLoader
 import org.devio.rn.splashscreen.SplashScreenReactPackage
 import live.videosdk.rnwebrtc.WebRTCModulePackage
 import com.facebook.react.modules.i18nmanager.I18nUtil
@@ -37,11 +36,7 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
-    SoLoader.init(this, false)
-    if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
-      // Load native entry point for new architecture
-      load()
-    }
+    loadReactNative(this)
     
     // Force RTL layout direction
     val i18nUtil = I18nUtil.getInstance()

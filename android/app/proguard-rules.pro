@@ -60,3 +60,79 @@
     java.lang.Object writeReplace();
     java.lang.Object readResolve();
 }
+
+# Keep Coil image loading library classes
+-keep class coil3.** { *; }
+-keep class coil.** { *; }
+-keep interface coil3.** { *; }
+-keep interface coil.** { *; }
+-dontwarn coil3.**
+-dontwarn coil.**
+
+# Keep Coil PlatformContext specifically
+-keep class coil3.PlatformContext { *; }
+-keep class coil3.network.** { *; }
+-dontwarn coil3.PlatformContext
+
+# Keep Lottie classes
+-keep class com.airbnb.lottie.** { *; }
+
+# Keep React Native SVG classes
+-keep class com.horcrux.svg.** { *; }
+
+# Keep Notifee classes
+-keep class io.invertase.notifee.** { *; }
+
+# Keep Async Storage classes
+-keep class com.reactnativecommunity.asyncstorage.** { *; }
+
+# Keep Network Info classes
+-keep class com.reactnativecommunity.netinfo.** { *; }
+
+# Keep Document Picker classes
+-keep class com.reactnativedocumentpicker.** { *; }
+
+# Keep Image Picker classes
+-keep class com.imagepicker.** { *; }
+
+# Keep In-App Browser classes
+-keep class com.proyecto26.inappbrowser.** { *; }
+
+# Keep Loader Kit classes
+-keep class com.reactnativeloaderkit.** { *; }
+
+# Keep Permissions classes
+-keep class com.zoontek.rnpermissions.** { *; }
+
+# Keep Push Notification classes
+-keep class com.dieam.reactnativepushnotification.** { *; }
+
+# Keep Restart classes
+-keep class com.reactnativerestart.** { *; }
+
+# Keep Sound classes
+-keep class com.zmxv.RNSound.** { *; }
+
+# Keep Splash Screen classes
+-keep class org.devio.rn.splashscreen.** { *; }
+
+# Keep WebView classes
+-keep class com.reactnativecommunity.webview.** { *; }
+
+# Keep Fetch Blob classes
+-keep class com.RNFetchBlob.** { *; }
+
+# Keep File System classes
+-keep class com.rnfs.** { *; }
+
+# Keep File Viewer classes
+-keep class com.vinzscam.reactnativefileviewer.** { *; }
+
+# Keep File Picker classes
+-keep class com.filepicker.** { *; }
+
+# Keep Device Info classes
+-keep class com.learnium.RNDeviceInfo.** { *; }
+
+# Keep Android Open Settings classes
+-keep class com.levelasquez.androidopensettings.** { *; }

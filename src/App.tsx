@@ -9,7 +9,7 @@ import {PersistGate} from 'redux-persist/integration/react';
 import messaging from '@react-native-firebase/messaging';
 import Routes from './routes/index';
 import NotificationsCenter from './components/NotificationConfig';
-import SplashScreen from 'react-native-splash-screen';
+import { NativeModules } from 'react-native';
 import {Platform, Text, TouchableOpacity, View} from 'react-native';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import {Connectivity} from './components/NetwordConnectivity';
@@ -53,7 +53,10 @@ const App = () => {
 
   useEffect(() => {
     setTimeout(() => {
-      SplashScreen.hide();
+      const SplashScreen = NativeModules.SplashScreen;
+      if (SplashScreen && SplashScreen.hide) {
+        SplashScreen.hide();
+      } 
     }, 1000);
 
     requestUserPermission();

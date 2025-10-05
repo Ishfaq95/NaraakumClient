@@ -30,7 +30,7 @@ import {
   VoiceNoteIcon,
 } from '../../assets/icons';
 import {launchImageLibrary} from 'react-native-image-picker';
-import DocumentPicker from 'react-native-document-picker';
+import DocumentPicker from '@react-native-documents/picker';
 import FilePicker from 'react-native-file-picker';
 import Sound from 'react-native-sound';
 import RNFS from 'react-native-fs';
@@ -625,8 +625,6 @@ const ChatScreen = ({
       const pickresult = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
       });
-
-      console.log('pickresult', pickresult);
 
       let pickerResult = null;
       if (Platform.OS === 'ios') {
