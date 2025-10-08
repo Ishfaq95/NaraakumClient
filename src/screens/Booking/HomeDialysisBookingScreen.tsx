@@ -50,7 +50,7 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
       );
 
       if (providerAvailability.length > 0) {
-        const dayOfWeek = new Date(selectedDate.format('YYYY-MM-DD')).toLocaleString("en-US", {
+        const dayOfWeek = new Date(selectedDate.locale('en').format('YYYY-MM-DD')).toLocaleString("en-US", {
           weekday: "long",
         });
 
@@ -160,6 +160,7 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
         Gender: 2,
         PageNumber: 0,
         PageSize: 100,
+        SpecialtyIds:"43"
       }
 
       const response = await bookingService.getServiceProviderListByService(requestBody);
@@ -179,7 +180,7 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
       const requestBody = {
         CatServiceId: serviceIds,
         CatSpecialtyId: 0,
-        StartDate: date ? moment(date).format('YYYY-MM-DD') : moment().format('YYYY-MM-DD'),
+        StartDate: date ? moment(date).locale('en').format('YYYY-MM-DD') : moment().locale('en').format('YYYY-MM-DD'),
         PageNumber: 1,
         PageSize: 20
       }
@@ -196,7 +197,7 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
   };
 
   const filterAvailabilityForDate = (date: Moment, data: any[]) => {
-    const formattedDate = date.format('YYYY-MM-DD');
+    const formattedDate = date.locale('en').format('YYYY-MM-DD');
     const filteredData = data.filter(item => item.Date === formattedDate);
     setAvailability(filteredData);
   };

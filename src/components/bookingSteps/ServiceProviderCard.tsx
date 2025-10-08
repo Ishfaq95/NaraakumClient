@@ -316,7 +316,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }
   
 
-  console.log("provider",provider)
+  // console.log("provider",provider)
 
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
@@ -398,13 +398,13 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
   const specialtiesSection = useMemo(() => (
     <View style={styles.specialtyContainer}>
-      <TouchableOpacity
+      {provider?.Specialties?.length > 2 && <TouchableOpacity
         onPress={() => scrollSpecialties('left')}
         style={[styles.scrollButton, styles.leftScrollButton]}
         activeOpacity={0.7}
       >
         {isRTL ? <RightArrow /> : <LeftArrow />}
-      </TouchableOpacity>
+      </TouchableOpacity>}
 
       <ScrollView
         ref={specialtiesScrollViewRef}
@@ -427,13 +427,13 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         </View>
       </ScrollView>
 
-      <TouchableOpacity
+      {provider?.Specialties?.length > 2 && <TouchableOpacity
         onPress={() => scrollSpecialties('right')}
         style={[styles.scrollButton, styles.rightScrollButton]}
         activeOpacity={0.7}
       >
         {isRTL ? <LeftArrow /> : <RightArrow />}
-      </TouchableOpacity>
+      </TouchableOpacity>}
     </View>
   ), [provider.Specialties]);
 
@@ -720,6 +720,8 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       </View>
     );
   }, [provider.slots, selectedSlotInfo, provider.UserId, isPastTime, handleSlotSelect, scrollTimeSlots]);
+
+  console.log("provider", provider)
 
   return (
     <View style={[styles.providerCard]}>

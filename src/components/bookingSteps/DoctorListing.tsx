@@ -30,6 +30,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { ROUTES } from '../../shared/utils/routes';
+import CheckIcon from '../../assets/icons/CheckIcon';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
@@ -140,6 +141,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const services = useSelector((state: any) => state.root.booking.services);
   const category = useSelector((state: any) => state.root.booking.category);
   const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
+  const selectedLocation = useSelector((state: any) => state.root.booking.selectedLocation);
   const scrollViewRef = useRef<ScrollView>(null);
   const { i18n } = useTranslation();
   const [isCalendarVisible, setCalendarVisible] = useState(false);
@@ -163,27 +165,173 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [showPackageList, setShowPackageList] = useState(false);
   const [isHomeDialysisBooking, setIsHomeDialysisBooking] = useState(false);
   const [filterBottomSheetVisible, setFilterBottomSheetVisible] = useState(false);
-  const [selectServiceFilter, setSelectServiceFilter] = useState('All');
-  const [selectSpecialtyFilter, setSelectSpecialtyFilter] = useState('AllType');
+  const [selectServiceFilter, setSelectServiceFilter] = useState(0);
+  const [selectSpecialtyFilter, setSelectSpecialtyFilter] = useState(0);
   const [sortByValue, setSortByValue] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
   const [alertModalVisible, setAlertModalVisible] = useState(false);
   const [alertModalMessage, setAlertModalMessage] = useState('');
   const [userFavorites, setUserFavorites] = useState<any[]>([]);
+  const [searchNearMe, setSearchNearMe] = useState(true);
+  const [allCities, setAllCities] = useState<any[]>([]);
+  const [allSquares, setAllSquares] = useState<any[]>([{
+    label: "الجميع",
+    value: "0"
+  }]);
+  const [selectedCity, setSelectedCity] = useState<any>('0');
+  const [selectedSquare, setSelectedSquare] = useState<any>('0');
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
+  // Refs to store previous filter values
+  const prevFiltersRef = useRef({
+    selectServiceFilter: 0,
+    searchNearMe: true,
+    selectedCity: '0',
+    selectedSquare: '0',
+  });
+
   useEffect(() => {
-    if(user){
+    if (user) {
       getUserFavorites();
     }
   }, [user])
 
+  const applyFilter = () => {
+    setFilterBottomSheetVisible(false);
+    if (displayCategory?.Display == "CP") {
+      // Get previous values
+      const prevFilters = prevFiltersRef.current;
+
+      // Check what changed
+      const serviceFilterChanged = prevFilters.selectServiceFilter !== selectServiceFilter;
+      const searchNearMeChanged = prevFilters.searchNearMe !== searchNearMe;
+      const cityChanged = prevFilters.selectedCity !== selectedCity;
+      const squareChanged = prevFilters.selectedSquare !== selectedSquare;
+
+      // Check if any filter changed
+      const anyFilterChanged = serviceFilterChanged || searchNearMeChanged || cityChanged || squareChanged;
+
+      if (!anyFilterChanged) {
+        // No changes detected, just close the sheet
+        return;
+      }
+
+      // If selectServiceFilter changed, call both APIs
+      if (serviceFilterChanged && selectServiceFilter != 0) {
+        const filterServiceIds = services.filter((service: any) => service.CatLevelId == selectServiceFilter).map((service: any) => service.Id);
+        fetchServiceProviders(filterServiceIds[0]);
+        fetchInitialAvailability(null, filterServiceIds[0]);
+      }
+      // If other filters changed (searchNearMe, selectedCity, selectedSquare), call only fetchServiceProviders
+      else if (searchNearMeChanged || cityChanged || squareChanged) {
+        fetchServiceProviders(
+          undefined,
+          selectedCity != "0" ? selectedCity : null,
+          selectedSquare != "0" ? selectedSquare : null,
+          searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null
+        );
+      }
+
+      // Update previous filter values
+      prevFiltersRef.current = {
+        selectServiceFilter,
+        searchNearMe,
+        selectedCity,
+        selectedSquare,
+      };
+
+    } else {
+      if (category.Id == "41") {
+
+      } else {
+        // Get previous values
+        const prevFilters = prevFiltersRef.current;
+
+        // Check what changed
+        const serviceFilterChanged = prevFilters.selectServiceFilter !== selectServiceFilter;
+        const searchNearMeChanged = prevFilters.searchNearMe !== searchNearMe;
+        const cityChanged = prevFilters.selectedCity !== selectedCity;
+        const squareChanged = prevFilters.selectedSquare !== selectedSquare;
+
+        // Check if any filter changed
+        const anyFilterChanged = serviceFilterChanged || searchNearMeChanged || cityChanged || squareChanged;
+
+        if (!anyFilterChanged) {
+          // No changes detected, just close the sheet
+          return;
+        }
+
+        if (searchNearMeChanged || cityChanged || squareChanged) {
+          fetchHospitalListByServices(
+            selectedCity != "0" ? selectedCity : null,
+            selectedSquare != "0" ? selectedSquare : null,
+            searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null
+          )
+        }
+
+        // Update previous filter values
+      prevFiltersRef.current = {
+        selectServiceFilter,
+        searchNearMe,
+        selectedCity,
+        selectedSquare,
+      };
+
+      }
+
+    }
+  }
+
+  useEffect(() => {
+    getAllCities();
+  }, []);
+
+  const getAllCities = async () => {
+    const response = await bookingService.getAllCities();
+    if (response.ResponseStatus.STATUSCODE == 200) {
+      const mappedCities = response.list.map((item: any) => ({
+        label: item.TitleSlang,
+        value: item.Id.toString()
+      }));
+
+      const citiesWithAll = [
+        {
+          label: "الجميع",
+          value: "0"
+        },
+        ...mappedCities
+      ];
+
+      setAllCities(citiesWithAll);
+    }
+  }
+
+  const getAllSquares = async (cityId: string) => {
+    const response = await bookingService.getAllSquares({ CatCityId: cityId });
+    if (response.ResponseStatus.STATUSCODE == 200) {
+      const mappedSquares = response.list.map((item: any) => ({
+        label: item.Title,
+        value: item.ID.toString()
+      }));
+
+      const squaresWithAll = [
+        {
+          label: "الجميع",
+          value: "0"
+        },
+        ...mappedSquares
+      ];
+
+      setAllSquares(squaresWithAll);
+    }
+  }
+
   const getUserFavorites = async () => {
     const response = await bookingService.getUserFavorites({ UserLogininfoId: user.Id });
-    if(response.ResponseStatus.STATUSCODE == 200){
+    if (response.ResponseStatus.STATUSCODE == 200) {
       setUserFavorites(response.Result);
-    }else{
+    } else {
       setUserFavorites([]);
     }
   }
@@ -191,13 +339,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const createOrderMainBeforePayment = async () => {
     const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
     let selectedItem: any = displayCategory?.Display == "CP" ? CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId) : CardArray.find((item: any) => !item.OrganizationId);
-    
-    if(selectedItem){
+
+    if (selectedItem) {
       setAlertModalVisible(true);
       setAlertModalMessage('لم يتم تحديد الجدول الزمني للخدمة');
       return;
     }
-    
+
     const payload = {
       "UserLoginInfoId": user.Id,
       "CatPlatformId": 1,
@@ -213,52 +361,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       Alert.alert(response.ResponseStatus.MESSAGE)
     }
   }
-
-  // useEffect(() => {
-  //   const getUnPaidUserOrders = async () => {
-  //     try {
-  //       const response = await bookingService.getUnPaidUserOrders({ UserLoginInfoId: user.Id });
-
-  //       if (response.Cart && response.Cart.length > 0) {
-  //         // Convert API response to cardItems format
-  //         const convertedCardItems = response.Cart;
-  //         // Check for existing items and replace duplicates instead of adding
-  //         const existingCardItems = CardArray;
-  //         const updatedCardItems = [...existingCardItems];
-
-  //         convertedCardItems.forEach((newItem: any) => {
-  //           // Find if item already exists by OrderDetailId and OrderId
-  //           const existingIndex = updatedCardItems.findIndex((existingItem: any) =>
-  //             existingItem.OrderDetailId === newItem.OrderDetailId &&
-  //             existingItem.OrderId === newItem.OrderId
-  //           );
-
-  //           if (existingIndex !== -1) {
-  //             // Replace existing item with new one
-  //             const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
-  //             const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
-  //             newItem.SchedulingTime = startTime.localTime;
-  //             newItem.SchedulingEndTime = endTime.localTime;
-  //             updatedCardItems[existingIndex] = newItem;
-  //           } else {
-  //             // Add new item if it doesn't exist
-  //             const startTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingTime);
-  //             const endTime = convertUTCToLocalDateTime(newItem.SchedulingDate, newItem.SchedulingEndTime);
-  //             newItem.SchedulingTime = startTime.localTime;
-  //             newItem.SchedulingEndTime = endTime.localTime;
-  //             updatedCardItems.push(newItem);
-  //           }
-  //         });
-
-  //         // Dispatch the updated array
-  //         dispatch(addCardItem(updatedCardItems));
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching unpaid orders:', error);
-  //     }
-  //   }
-  //   getUnPaidUserOrders();
-  // }, [user]);
 
   useEffect(() => {
     if (serviceProviders.length > 0 && availability.length > 0) {
@@ -411,13 +513,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setDisplayCategory(displayCategory);
     // Call both APIs when component mounts
     if (displayCategory?.Display == "CP") {
-      fetchServiceProviders();
+      fetchServiceProviders(undefined, null, null,category.Id != "42"? `${selectedLocation.latitude},${selectedLocation.longitude}` : null);
       fetchInitialAvailability();
     } else {
       if (category.Id == "41") {
         getOrganizationByPackage();
       } else {
-        fetchHospitalListByServices();
+        fetchHospitalListByServices(null, null, `${selectedLocation.latitude},${selectedLocation.longitude}`);
         fetchOrganizationSchedulingAvailability();
       }
     }
@@ -438,23 +540,23 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setOrganizationList(response?.OrganizationList || []);
   }
 
-  const fetchHospitalListByServices = async () => {
+  const fetchHospitalListByServices = async (cityId?: any, squareId?: any, patientLocation?: any) => {
     try {
       setLoading(true);
-    const payload = {
-      CatcategoryId: category.Id,
-      ServiceIds: SelectedCardItem?.map((service: any) => service.CatServiceId).join(','),
-      Search: "",
-      PatientLocation: null,
-      CatCityId: null,
-      CatSquareId: null,
-      PageNumber: 0,
-      PageSize: 100
-    }
+      const payload = {
+        CatcategoryId: category.Id,
+        ServiceIds: SelectedCardItem?.map((service: any) => service.CatServiceId).join(','),
+        Search: "",
+        PatientLocation: patientLocation || null,
+        CatCityId: cityId || null,
+        CatSquareId: squareId || null,
+        PageNumber: 0,
+        PageSize: 100
+      }
 
-    const response = await bookingService.getHospitalListByServices(payload);
+      const response = await bookingService.getHospitalListByServices(payload);
 
-    setHospitalList(response?.HospitalList || []);
+      setHospitalList(response?.HospitalList || []);
     } catch (error) {
       console.error('Error fetching hospital list by services:', error);
     } finally {
@@ -480,7 +582,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     } finally {
       setLoader2(false);
     }
-   
+
   }
 
   const getServiceIdsFromCardArray = () => {
@@ -488,15 +590,20 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     return serviceIds.join(',');
   }
 
-  const fetchServiceProviders = async () => {
+  const fetchServiceProviders = async (serviceID?: string, cityId?: any, squareId?: any, patientLocation?: any) => {
     try {
       setLoading(true);
       let serviceIds = "";
-      if (services == null) {
-        serviceIds = getServiceIdsFromCardArray();
+      if (serviceID) {
+        serviceIds = serviceID;
       } else {
-        serviceIds = getServiceIds();
+        if (services == null) {
+          serviceIds = getServiceIdsFromCardArray();
+        } else {
+          serviceIds = getServiceIds();
+        }
       }
+
 
       let requestBody: any = {};
       if (category.Id == "42" || category.Id == "32") {
@@ -505,9 +612,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             CatcategoryId: category.Id,
             ServiceIds: serviceIds,
             Search: searchQuery,
-            PatientLocation: null,
-            CatCityId: null,
-            CatSquareId: null,
+            PatientLocation: patientLocation || null,
+            CatCityId: cityId || null,
+            CatSquareId: squareId || null,
             Gender: 2,
             PageNumber: 0,
             PageSize: 100,
@@ -517,9 +624,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             CatcategoryId: category.Id,
             ServiceIds: serviceIds,
             Search: searchQuery,
-            PatientLocation: null,
-            CatCityId: null,
-            CatSquareId: null,
+            PatientLocation: patientLocation || null,
+            CatCityId: cityId || null,
+            CatSquareId: squareId || null,
             Gender: 2,
             PageNumber: 0,
             PageSize: 100,
@@ -531,9 +638,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           CatcategoryId: category.Id,
           ServiceIds: serviceIds,
           Search: searchQuery,
-          PatientLocation: null,
-          CatCityId: null,
-          CatSquareId: null,
+          PatientLocation: patientLocation || null,
+          CatCityId: cityId || null,
+          CatSquareId: squareId || null,
           Gender: 2,
           PageNumber: 0,
           PageSize: 100,
@@ -550,17 +657,21 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
   };
 
-  const fetchInitialAvailability = async (date?: any) => {
+  const fetchInitialAvailability = async (date?: any, serviceID?: string) => {
     try {
       setLoader2(true);
       let serviceIds = "";
-      if (services == null) {
-        serviceIds = getServiceIdsFromCardArray();
+      if (serviceID) {
+        serviceIds = serviceID;
       } else {
-        serviceIds = getServiceIds();
+        if (services == null) {
+          serviceIds = getServiceIdsFromCardArray();
+        } else {
+          serviceIds = getServiceIds();
+        }
       }
 
-      console.log("SelectedCardItem",SelectedCardItem)
+      console.log("SelectedCardItem", SelectedCardItem)
 
       const requestBody = {
         CatServiceId: serviceIds,
@@ -684,7 +795,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
-    console.log("SelectedCardItem",SelectedCardItem)
+    console.log("SelectedCardItem", SelectedCardItem)
     const serviceId = SelectedCardItem[0]?.CatServiceId
     if (serviceId == 0 || serviceId == null || serviceId == "" || serviceId == undefined) {
       setShowServiceModal(true)
@@ -713,11 +824,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     }
   }
 
-  console.log("availability", availability)
-
   // Memoize filtered providers to prevent unnecessary re-renders
   const filteredProviders = useMemo(() => {
-    return ProviderWithSlots.filter((item: any) => {
+    const filtered = ProviderWithSlots.filter((item: any) => {
       const providerAvailability = availability.flatMap(avail =>
         avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
       );
@@ -728,11 +837,35 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         });
 
         const holidays = providerAvailability[0]?.ServiceProviderHolidays?.split(',');
-        return !holidays?.includes(dayOfWeek);
+        const holidayCheck = !holidays?.includes(dayOfWeek);
+
+        // Apply specialty filter if selectSpecialtyFilter is not 0
+        if (selectSpecialtyFilter != 0) {
+          return holidayCheck && item.CatOrganizationModeId == selectSpecialtyFilter;
+        }
+
+        return holidayCheck;
       }
       return false;
     });
-  }, [ProviderWithSlots, availability, selectedDate]);
+
+    // Apply sorting if sortByValue is not 'All'
+    if (sortByValue !== 'All') {
+      return filtered.sort((a: any, b: any) => {
+        const priceA = parseFloat(a.ServiceServe?.[0]?.Price) || 0;
+        const priceB = parseFloat(b.ServiceServe?.[0]?.Price) || 0;
+
+        if (sortByValue === 'Asc') {
+          return priceA - priceB; // Ascending order
+        } else if (sortByValue === 'Desc') {
+          return priceB - priceA; // Descending order
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [ProviderWithSlots, availability, selectedDate, selectSpecialtyFilter, sortByValue]);
 
   // Memoize filtered providers to prevent unnecessary re-renders
   const filteredHospitals = useMemo(() => {
@@ -787,6 +920,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }
 
   const handleApplyFilterPress = () => {
+    if (displayCategory?.Display == "CP") {
+      filteredProviders
+    } else {
+
+    }
   }
 
   const getNextButtonEnabled = useCallback(() => {
@@ -795,7 +933,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     } else {
       return SelectedCardItem[0]?.OrganizationId == null || SelectedCardItem[0]?.OrganizationId == "" || SelectedCardItem[0]?.OrganizationId == undefined
     }
-  }, [selectedSlotInfo, CardArray,SelectedCardItem])
+  }, [selectedSlotInfo, CardArray, SelectedCardItem])
 
   const convertArabicTimeTo24Hour = (timeString: string): string => {
     if (!timeString) return timeString;
@@ -887,7 +1025,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           </TouchableOpacity>
         </View>
       </View>
-      <View style={{ flexDirection: 'row',  paddingHorizontal: 16, paddingTop: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={{ ...globalTextStyles.bodyLarge, fontWeight: '600', color: '#36454f' }}>
           {`النتائج (${filteredProviders.length || organizationList.length || filteredHospitals.length})`}
         </Text>
@@ -896,96 +1034,96 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       {/* {displayCategory?.Display == "CP" ? serviceProviders.length > 0 : hospitalList.length > 0 &&  */}
       <View style={{ flex: 1, paddingBottom: 50, }}>
         {
-          displayCategory?.Display == "CP" ? 
-          <FlatList
-            data={filteredProviders}
-            keyExtractor={(item) => item.RowId}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={5}
-            windowSize={10}
-            initialNumToRender={3}
-            ListEmptyComponent={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
-                لا يوجد نتائج
-              </Text>
-            </View>}
-            onRefresh={fetchData}
-            refreshing={refreshing}
-            renderItem={({ item, index }) => {
-              const providerAvailability = availability.flatMap(avail =>
-                avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
-              );
-
-              const allAvailableSlots = item.slots?.filter((s: any) => {
-                // Check if slot is available
-                if (!s.available) return false;
-                
-                // Check if start time is not in the past
-                const currentDate = new Date();
-                const slotDate = new Date(s.date);
-                const slotTime = s.start_time;
-                
-                // Parse the time (assuming format like "12:00 ص" or "08:00 ص")
-                const timeMatch = slotTime.match(/(\d{1,2}):(\d{2})\s*(ص|م)/);
-                if (!timeMatch) return false;
-                
-                let hours = parseInt(timeMatch[1]);
-                const minutes = parseInt(timeMatch[2]);
-                const period = timeMatch[3];
-                
-                // Convert to 24-hour format
-                if (period === 'م' && hours !== 12) {
-                  hours += 12;
-                } else if (period === 'ص' && hours === 12) {
-                  hours = 0;
-                }
-                
-                // Create slot datetime
-                const slotDateTime = new Date(slotDate);
-                slotDateTime.setHours(hours, minutes, 0, 0);
-                
-                // Check if slot time is in the future
-                return slotDateTime > currentDate;
-              });
-
-              if(allAvailableSlots.length == 0) {
-                return null
-              }
-
-              return <ServiceProviderCard
-                provider={item}
-                selectedDate={selectedDate}
-                availability={providerAvailability[0]}
-                selectedSlotInfo={selectedSlotInfo}
-                onSelectSlot={handleSelectSlot}
-                onSelectService={handleSelectService}
-                selectedService={selectedService}
-                userFavorites={userFavorites}
-                getUserFavorites={getUserFavorites} 
-              />
-            }}
-            contentContainerStyle={{ padding: 16 }}
-            showsVerticalScrollIndicator={false}
-          />
-            : category.Id == "41" ? 
+          displayCategory?.Display == "CP" ?
             <FlatList
-              data={organizationList}
-              keyExtractor={(item) => item.OrganizationId}
+              data={filteredProviders}
+              keyExtractor={(item) => item.RowId}
               removeClippedSubviews={true}
               maxToRenderPerBatch={5}
               windowSize={10}
               initialNumToRender={3}
+              ListEmptyComponent={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
+                  لا يوجد نتائج
+                </Text>
+              </View>}
               onRefresh={fetchData}
               refreshing={refreshing}
               renderItem={({ item, index }) => {
-                return <HomeDialysis hospital={item} onPressContinue={() => handleSelectOrganization(item)} onPressPackageList={() => {
-                  setShowPackageList(true)
-                  handleSelectOrganization(item)
-                }} />
+                const providerAvailability = availability.flatMap(avail =>
+                  avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
+                );
+
+                const allAvailableSlots = item.slots?.filter((s: any) => {
+                  // Check if slot is available
+                  if (!s.available) return false;
+
+                  // Check if start time is not in the past
+                  const currentDate = new Date();
+                  const slotDate = new Date(s.date);
+                  const slotTime = s.start_time;
+
+                  // Parse the time (assuming format like "12:00 ص" or "08:00 ص")
+                  const timeMatch = slotTime.match(/(\d{1,2}):(\d{2})\s*(ص|م)/);
+                  if (!timeMatch) return false;
+
+                  let hours = parseInt(timeMatch[1]);
+                  const minutes = parseInt(timeMatch[2]);
+                  const period = timeMatch[3];
+
+                  // Convert to 24-hour format
+                  if (period === 'م' && hours !== 12) {
+                    hours += 12;
+                  } else if (period === 'ص' && hours === 12) {
+                    hours = 0;
+                  }
+
+                  // Create slot datetime
+                  const slotDateTime = new Date(slotDate);
+                  slotDateTime.setHours(hours, minutes, 0, 0);
+
+                  // Check if slot time is in the future
+                  return slotDateTime > currentDate;
+                });
+
+                if (allAvailableSlots.length == 0) {
+                  return null
+                }
+
+                return <ServiceProviderCard
+                  provider={item}
+                  selectedDate={selectedDate}
+                  availability={providerAvailability[0]}
+                  selectedSlotInfo={selectedSlotInfo}
+                  onSelectSlot={handleSelectSlot}
+                  onSelectService={handleSelectService}
+                  selectedService={selectedService}
+                  userFavorites={userFavorites}
+                  getUserFavorites={getUserFavorites}
+                />
               }}
               contentContainerStyle={{ padding: 16 }}
               showsVerticalScrollIndicator={false}
-            /> :
+            />
+            : category.Id == "41" ?
+              <FlatList
+                data={organizationList}
+                keyExtractor={(item) => item.OrganizationId}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={5}
+                windowSize={10}
+                initialNumToRender={3}
+                onRefresh={fetchData}
+                refreshing={refreshing}
+                renderItem={({ item, index }) => {
+                  return <HomeDialysis hospital={item} onPressContinue={() => handleSelectOrganization(item)} onPressPackageList={() => {
+                    setShowPackageList(true)
+                    handleSelectOrganization(item)
+                  }} />
+                }}
+                contentContainerStyle={{ padding: 16 }}
+                showsVerticalScrollIndicator={false}
+              /> :
               <FlatList
                 data={filteredHospitals}
                 keyExtractor={(item) => item.UserId}
@@ -1011,6 +1149,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 }}
                 contentContainerStyle={{ padding: 16 }}
                 showsVerticalScrollIndicator={false}
+                ListEmptyComponent={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
+                    لا يوجد نتائج
+                  </Text>
+                </View>}
               />
         }
       </View>
@@ -1097,7 +1240,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
                   <Text style={{ fontSize: 24, color: '#222' }}>×</Text>
                 </TouchableOpacity>
-                
+
               </View>
 
               {/* Sub-header */}
@@ -1117,7 +1260,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                   {/* Replace with your WhatsApp icon if available */}
                   {/* <Text style={{ color: '#239ea0', fontSize: 18, marginRight: 4, fontFamily: globalTextStyles.h5.fontFamily }}></Text> */}
                   <Ionicons name="logo-whatsapp" size={20} color="green" />
-                  <Text style={{ color: '#000', fontSize: 14,paddingRight: 4, fontFamily: globalTextStyles.h5.fontFamily }}>للاستفسارات</Text>
+                  <Text style={{ color: '#000', fontSize: 14, paddingRight: 4, fontFamily: globalTextStyles.h5.fontFamily }}>للاستفسارات</Text>
                 </TouchableOpacity>
               </View>
 
@@ -1163,7 +1306,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         onClose={() => setFilterBottomSheetVisible(false)}
 
         showHandle={false}
-        height="50%"
+        height={category.Id == "42" ? "42%" : category.Id == "32" ? "60%" : "50%"}
       >
         <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
           <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000' }]}>فلتر</Text>
@@ -1172,6 +1315,50 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 10 }}>
+
+          {category.Id != "42" && <>
+            <View style={{ paddingVertical: 10 }}>
+              <Dropdown
+                data={allCities}
+                containerStyle={{ height: 50 }}
+                dropdownStyle={[{ height: 50 }]}
+                value={selectedCity}
+                onChange={(value: string | number) => {
+                  setSelectedCity(value.toString());
+                  if (value.toString() != "0") {
+                    getAllSquares(value.toString());
+                  }
+
+                }}
+                placeholder=""
+              />
+            </View>
+            <View style={{ paddingBottom: 10 }}>
+              <Dropdown
+                data={allSquares}
+                containerStyle={{ height: 50 }}
+                dropdownStyle={[{ height: 50 }]}
+                value={selectedSquare}
+                onChange={(value: string | number) => {
+                  setSelectedSquare(value.toString());
+
+                }}
+                placeholder=""
+              />
+            </View>
+            <View style={{ paddingBottom: 10 }}>
+              <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '48%', justifyContent: 'flex-end' }}>
+                <Text style={[styles.priceText, { textAlign: 'left' }]}>
+                  {`بحث الأطباء بالقرب مني`}
+                </Text>
+                <TouchableOpacity onPress={() => { setSearchNearMe(!searchNearMe) }} style={[styles.checkbox, searchNearMe && styles.checkedBox]}>
+                  {searchNearMe && <CheckIcon width={12} height={12} />}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>}
+
+
 
           <Dropdown
             data={SortBy}
@@ -1183,91 +1370,93 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             }}
             placeholder=""
           />
-          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-            <RadioButton
-              selected={selectServiceFilter === 'All'}
-              onPress={() => setSelectServiceFilter('All')}
-              label="طبيب عام"
-              style={{ width: "30%", }}
-            />
-            <RadioButton
-              selected={selectServiceFilter === 'remote'}
-              onPress={() => setSelectServiceFilter('remote')}
-              label="استشاري"
-              style={{ width: "30%", }}
-            />
-            <RadioButton
-              selected={selectServiceFilter === 'onsite'}
-              onPress={() => setSelectServiceFilter('onsite')}
-              label="أخصائي"
-              style={{ width: "30%", }}
-            />
-          </View>
+          {(category.Id == "42" || category.Id == "32") && <>
+            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+              <RadioButton
+                selected={selectServiceFilter === 0}
+                onPress={() => setSelectServiceFilter(0)}
+                label={services == null ? "طبيب عام" : "الكل"}
+                style={{ width: "30%", }}
+              />
+              <RadioButton
+                selected={selectServiceFilter === 1}
+                onPress={() => setSelectServiceFilter(1)}
+                disabled={services == null}
+                label="استشاري"
+                style={{ width: "30%", }}
+              />
+              <RadioButton
+                selected={selectServiceFilter === 2}
+                onPress={() => setSelectServiceFilter(2)}
+                disabled={services == null}
+                label="أخصائي"
+                style={{ width: "30%", }}
+              />
+            </View>
 
-          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-            <RadioButton
-              selected={selectSpecialtyFilter === 'AllType'}
-              onPress={() => setSelectSpecialtyFilter('AllType')}
-              label="الكل"
-              style={{ width: "30%", }}
-            />
-            <RadioButton
-              selected={selectSpecialtyFilter === 'withHospital'}
-              onPress={() => setSelectSpecialtyFilter('withHospital')}
-              label="تابع لمستشفى"
-              style={{ width: "35%", }}
-            />
-            <RadioButton
-              selected={selectSpecialtyFilter === 'individual'}
-              onPress={() => setSelectSpecialtyFilter('individual')}
-              label="طبيب مستقل"
-              style={{ width: "30%", }}
-            />
-          </View>
+            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+              <RadioButton
+                selected={selectSpecialtyFilter === 0}
+                onPress={() => setSelectSpecialtyFilter(0)}
+                label="الكل"
+                style={{ width: "30%", }}
+              />
+              <RadioButton
+                selected={selectSpecialtyFilter === 1}
+                onPress={() => setSelectSpecialtyFilter(1)}
+                label="تابع لمستشفى"
+                style={{ width: "35%", }}
+              />
+              <RadioButton
+                selected={selectSpecialtyFilter === 2}
+                onPress={() => setSelectSpecialtyFilter(2)}
+                label="طبيب مستقل"
+                style={{ width: "30%", }}
+              />
+            </View>
+          </>}
 
-          <TouchableOpacity style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 10 }} onPress={() => {
-            setFilterBottomSheetVisible(false)
-            handleApplyFilterPress()
-          }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>تطبيق الفلتر</Text>
+          <TouchableOpacity style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 10 }} onPress={() => applyFilter()}>
+            <Text style={{ ...globalTextStyles.buttonMedium, color: '#fff' }}>تطبيق الفلتر</Text>
           </TouchableOpacity>
         </View>
       </CustomBottomSheet>
 
       <Modal
-                visible={alertModalVisible}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => { setAlertModalVisible(false); }}
-            >
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
-                    <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
-                        <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <TouchableOpacity
-                                onPress={() => { setAlertModalVisible(false); }}
-                            >
-                                <AntDesign name="close" size={28} color="#888" />
-                            </TouchableOpacity>
-                            <Text style={{ color: '#3a434a', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>خطأ</Text>
-                        </View>
-                        <AntDesign name="exclamationcircle" size={64} color="#d84d48" style={{ marginVertical: 18 }} />
-                        <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
-                            {alertModalMessage}
-                        </Text>
+        visible={alertModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => { setAlertModalVisible(false); }}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+            <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableOpacity
+                onPress={() => { setAlertModalVisible(false); }}
+              >
+                <AntDesign name="close" size={28} color="#888" />
+              </TouchableOpacity>
+              <Text style={{ color: '#3a434a', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>خطأ</Text>
+            </View>
+            <AntDesign name="exclamationcircle" size={64} color="#d84d48" style={{ marginVertical: 18 }} />
+            <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
+              {alertModalMessage}
+            </Text>
 
-                        <TouchableOpacity
-                            onPress={() => { setAlertModalVisible(false);
-                              navigation.navigate(ROUTES.CartStack, {
-                                screen: ROUTES.CartScreen,
-                              })
-                             }}
-                            style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, width:'100%', alignItems: 'center', marginTop: 10 }}
-                        >
-                            <Text style={{ fontFamily: globalTextStyles.h5.fontFamily, color: '#fff', fontWeight: 'bold', fontSize: 16 }}> خدمة الجدول الزمني</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+            <TouchableOpacity
+              onPress={() => {
+                setAlertModalVisible(false);
+                navigation.navigate(ROUTES.CartStack, {
+                  screen: ROUTES.CartScreen,
+                })
+              }}
+              style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, width: '100%', alignItems: 'center', marginTop: 10 }}
+            >
+              <Text style={{ fontFamily: globalTextStyles.h5.fontFamily, color: '#fff', fontWeight: 'bold', fontSize: 16 }}> خدمة الجدول الزمني</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -1452,9 +1641,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   priceText: {
-    color: '#179c8e',
-    fontWeight: 'bold',
-    fontSize: 18,
+    color: '#666',
+    fontFamily: globalTextStyles.buttonLarge.fontFamily,
+    fontSize: 14,
     marginVertical: 4,
   },
   specialtyContainer: {
@@ -1581,6 +1770,19 @@ const styles = StyleSheet.create({
   modalButtonText: {
     ...globalTextStyles.bodyMedium,
     color: '#fff',
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#008080',
+    // marginRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkedBox: {
+    backgroundColor: '#008080',
   },
 });
 

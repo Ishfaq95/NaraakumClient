@@ -94,7 +94,7 @@ class WebSocketService {
       };
 
       this.socket.onerror = error => {
-        console.error('WebSocket error:', error.message);
+        console.log('WebSocket error:', error.message);
       };
     }
   }

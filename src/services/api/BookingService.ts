@@ -290,6 +290,26 @@ export const addToFavorites = async (payload: any): Promise<any> => {
     }
 };
 
+export const getAllCities = async (): Promise<any> => {
+    try {
+        const response = await axiosInstance.get('catalogue/GetAllCities');
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting all cities:', error);
+        throw error;
+    }
+};
+
+export const getAllSquares = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('catalogue/GetSquareByCity', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error getting all squares:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
@@ -315,4 +335,6 @@ export const bookingService = {
     getPatientReminderList,
     getUserFavorites,
     addToFavorites,
+    getAllCities,
+    getAllSquares,
 }; 

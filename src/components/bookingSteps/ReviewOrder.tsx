@@ -92,6 +92,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const [pendingUpdate, setPendingUpdate] = useState<{ uniqueId: string, value: string } | null>(null);
   const [needAPICall, setNeedAPICall] = useState(false);
   const [apiError, setApiError] = useState(false);
+  const [apiErrorDoctor, setApiErrorDoctor] = useState('');
   const [apiErrorMessage, setApiErrorMessage] = useState('');
 
   console.log("CardArray",CardArray)
@@ -846,6 +847,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
 
     if(response.StatusCode.STATUSCODE == 10025){
       setApiError(true);
+      setApiErrorDoctor(response.Data[0].ServiceProviderNameSlang);
       setApiErrorMessage("لديه معايير لا يحققها المريض");
       return;
     }
@@ -1455,7 +1457,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
             </View>
             {/* <AntDesign name="exclamationcircle" size={56} color="#d84d48" style={{ marginVertical: 18 }} /> */}
             <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
-              {'مقدم الخدمة'} <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold }}>{selectedDoctor?.items[0]?.ServiceProviderFullnameSlang}</Text>
+              {'مقدم الخدمة'} <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold }}>{apiErrorDoctor}</Text>
             </Text>
             <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
               {apiErrorMessage} <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold }}>{user.FullnameSlang}</Text>
