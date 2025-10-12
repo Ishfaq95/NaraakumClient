@@ -30,7 +30,7 @@ import {
   VoiceNoteIcon,
 } from '../../assets/icons';
 import {launchImageLibrary} from 'react-native-image-picker';
-import DocumentPicker from '@react-native-documents/picker';
+import { pick as pickDocument, types } from '@react-native-documents/picker';
 import FilePicker from 'react-native-file-picker';
 import Sound from 'react-native-sound';
 import RNFS from 'react-native-fs';
@@ -622,16 +622,13 @@ const ChatScreen = ({
 
   const handleFileSelection = async () => {
     try {
-      const pickresult = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+      // pick() returns a NonEmptyArray, so we access the first element
+      const result = await pickDocument({
+        type: [types.allFiles],
+        allowMultiSelection: false,
       });
 
-      let pickerResult = null;
-      if (Platform.OS === 'ios') {
-        pickerResult = pickresult;
-      } else {
-        pickerResult = pickresult;
-      }
+      const pickerResult = result[0];
 
       if (!pickerResult) {
         return;
@@ -645,10 +642,11 @@ const ChatScreen = ({
       };
 
       await uploadFile(file, pickerResult);
-    } catch (err) {
+    } catch (err: any) {
       console.error('File selection error:', err);
 
-      if (DocumentPicker.isCancel(err)) {
+      // Handle user cancellation - check if user cancelled the picker
+      if (err?.message?.includes('cancel') || err?.message?.includes('User canceled')) {
         return;
       }
 
