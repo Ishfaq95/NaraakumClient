@@ -25,6 +25,7 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
     const location = useSelector((state: any) => state.root.booking.selectedLocation);
     const tempSlotDetail = useSelector((state: any) => state.root.booking.tempSlotDetail);
     const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
+    const selectedCard = CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId);
     const category = useSelector((state: any) => state.root.booking.category);
 
 
@@ -35,6 +36,45 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
     const specialtiesScrollViewRef = useRef<ScrollView>(null);
     const timeSlotsScrollViewRef = useRef<ScrollView>(null);
     const isRTL = true;
+
+    // Function to convert Arabic 12-hour time to 24-hour format
+    const convertArabicTimeTo24Hour = (timeString: string): string => {
+        if (!timeString) return timeString;
+
+        // Remove any extra spaces and split by space
+        const parts = timeString.trim().split(' ');
+        if (parts.length < 2) {
+            return timeString; // If no AM/PM indicator, return as is
+        }
+
+        const timePart = parts[0]; // e.g., "2:30"
+        const periodPart = parts[1]; // e.g., "ص" (ص for AM) or "م" (م for PM)
+
+        // Split time into hours and minutes
+        const [hours, minutes] = timePart.split(':').map(Number);
+
+        let hour24 = hours;
+
+        // Convert based on Arabic period indicators
+        // ص = صباح (morning/AM)
+        // م = مساء (evening/PM)
+        if (periodPart === 'ص') {
+            // AM - keep as is, but handle 12 AM case
+            if (hours === 12) {
+                hour24 = 0;
+            }
+        } else if (periodPart === 'م') {
+            // PM - add 12 hours, but handle 12 PM case
+            if (hours !== 12) {
+                hour24 = hours + 12;
+            }
+        } else {
+        }
+
+        const result = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+        return result;
+    };
 
     const isPastTime = useCallback((slot: any) => {
         // Only check past times if the selected date is today
@@ -207,34 +247,61 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
     const handleSlotSelect = useCallback((time: any) => {
         onSelectSlot(provider, time);
 
-        const tempCardArray = [...CardArray];
+        const tempCardArray = [];
 
-        provider.ServiceServe.map((item: any) => {
+        const isRemoteExist = provider.ServiceServe.find((item: any) => item.CatServiceServeTypeId == "1");
+
+        if (isRemoteExist) {
             const Obj = {
-                "OrderDetailId":0,
-                "OrganizationId":provider.OrganizationId,
-                "CatCategoryId":category.Id,
-                "CatServiceId":item.Id,
-                "CatCategoryTypeId":item.CatServiceServeTypeId,
-                "OrganizationServiceId":provider.OrganizationServiceIds.split(',')[0],
-                "ServiceCharges":item.Price,
-                "ServiceProviderloginInfoId":provider.UserId,
-                "CatSpecialtyId":0,
-                "OrganizationSpecialtiesId":0,
-                "OrganizationPackageId":0,
-                "Quantity":1,
-                "SchedulingDate":selectedDate.format('YYYY-MM-DD'),
-                "SchedulingTime":time.start_time,
-                "CatSchedulingAvailabilityTypeId":availability[0].CatAvailabilityTypeId,
-                "OrderAddress":location.address,
-                "OrderAddressGoogleLocation":location.latitude + "," + location.longitude,
-                "saveinAddress":false,
+                "OrderDetailId": 0,
+                "OrganizationId": provider.OrganizationId,
+                "CatCategoryId": category.Id,
+                "CatServiceId": isRemoteExist.Id,
+                "CatCategoryTypeId": isRemoteExist.CatServiceServeTypeId,
+                "OrganizationServiceId": provider.OrganizationServiceIds.split(',')[0],
+                "ServiceCharges": isRemoteExist.Price,
+                "ServiceProviderloginInfoId": provider.UserId,
+                "CatSpecialtyId": 0,
+                "OrganizationSpecialtiesId": 0,
+                "OrganizationPackageId": 0,
+                "Quantity": 1,
+                "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+                "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
+                "CatSchedulingAvailabilityTypeId": availability[0].CatAvailabilityTypeId,
+                "OrderAddress": location.address,
+                "OrderAddressGoogleLocation": location.latitude + "," + location.longitude,
+                "saveinAddress": false,
                 "AvailabilityId": availability[0].Id,
             }
 
             tempCardArray.push(Obj);
-        })
-        
+        } else {
+            const Obj = {
+                "OrderDetailId": 0,
+                "OrganizationId": provider.OrganizationId,
+                "CatCategoryId": category.Id,
+                "CatServiceId": provider.ServiceServe[0].Id,
+                "CatCategoryTypeId": provider.ServiceServe[0].CatServiceServeTypeId,
+                "OrganizationServiceId": provider.OrganizationServiceIds.split(',')[0],
+                "ServiceCharges": provider.ServiceServe[0].Price,
+                "ServiceProviderloginInfoId": provider.UserId,
+                "CatSpecialtyId": 0,
+                "OrganizationSpecialtiesId": 0,
+                "OrganizationPackageId": 0,
+                "Quantity": 1,
+                "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
+                "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
+                "CatSchedulingAvailabilityTypeId": availability[0].CatAvailabilityTypeId,
+                "OrderAddress": location.address,
+                "OrderAddressGoogleLocation": location.latitude + "," + location.longitude,
+                "saveinAddress": false,
+                "AvailabilityId": availability[0].Id,
+            }
+
+            tempCardArray.push(Obj);
+        }
+
+
         dispatch(addHomeDialysisCardItem(tempCardArray));
 
     }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);

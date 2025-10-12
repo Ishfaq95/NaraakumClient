@@ -562,10 +562,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           // Get the specific price for this service
           const serviceId = selectedItem.CatServiceId;
           const selectedServiceValues = provider.ServiceServe.find((item: any) => item.Id == serviceId);
-          console.log("selectedServiceValues",selectedServiceValues);
-          // const servicePriceIndex = serviceIds.findIndex((id: string) => id === serviceId);
-          // const servicePrice = servicePriceIndex !== -1 ? prices[servicePriceIndex] : "0";
-          // const serviceOrgId = provider?.OrganizationServiceIds.split(',')[servicePriceIndex];
 
           updatedCardArray[itemIndex] = {
             ...updatedCardArray[itemIndex],
@@ -720,8 +716,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       </View>
     );
   }, [provider.slots, selectedSlotInfo, provider.UserId, isPastTime, handleSlotSelect, scrollTimeSlots]);
-
-  console.log("provider", provider)
 
   return (
     <View style={[styles.providerCard]}>

@@ -8,7 +8,6 @@ const DoctorListing = ({ filteredProviders, selectedDate, availability, onPressN
 
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<any>(null);
   const CardArray = useSelector((state: any) => state.root.booking.homeDialysisCardItems);
-  console.log("filteredProviders",filteredProviders)
 
   const handleSelectSlot = useCallback((provider: any, slot: any) => {
 
@@ -20,7 +19,7 @@ const DoctorListing = ({ filteredProviders, selectedDate, availability, onPressN
   
   return (
     <View style={{ flex: 1 }}>
-      <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>حجز موعد </Text>
+      <Text style={[globalTextStyles.buttonLarge, { color: '#000', textAlign: 'left' }]}>حجز موعد </Text>
       {/* <View style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, marginTop: 8 }}>
         <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#fff', textAlign: 'left' }]}>حدد موعد الاستشارة الطبية عن بعد</Text>
       </View> */}

@@ -1,9 +1,30 @@
-import { View, Text, TouchableOpacity } from 'react-native'
-import React from 'react'
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { globalTextStyles } from '../../styles/globalStyles'
 
 const AddMoreService = ({onPressNext,onPressBack}:any) => {
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    handleAddMoreService()
+  }, [])
+
+  const handleAddMoreService = () => {
+    setIsLoading(true)
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 100)
+  }
+
+  if(isLoading){
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    )
+  }
+  
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <View style={{ height: 100, width: 100, backgroundColor: '#f0f0f0', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>

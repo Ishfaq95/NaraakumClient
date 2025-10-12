@@ -1,26 +1,44 @@
-import { View, Text, TouchableOpacity, Platform, Alert } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, TouchableOpacity, Platform, Alert, ActivityIndicator, FlatList } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import Feather from 'react-native-vector-icons/Feather'
-import DocumentPicker from '@react-native-documents/picker';
+import * as DocumentPicker from '@react-native-documents/picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { store } from '../../shared/redux/store';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { setHomeDialysisFilePaths } from '../../shared/redux/reducers/bookingReducer';
 import { globalTextStyles } from '../../styles/globalStyles';
+import { profileService } from '../../services/api/ProfileService';
 
-const UploadFileStep = ( ) => {
+const UploadFileStep = ( {OrderId}: any ) => {
   const user = useSelector((state: any) => state.root.user.user);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [filePaths, setFilePaths] = useState<any[]>([]);
+  const [medicalData, setMedicalData] = useState<any[]>([]);
   const mediaToken = useSelector((state: any) => state.root.user.mediaToken);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    getMedicalReport()
+  }, [OrderId]);
+
+  const getMedicalReport = async () => {
+    const payload = {
+      "PatientId": user.Id,
+      "OrderId": OrderId,
+    }
+    const response = await profileService.getMedicalReport(payload)
+    if (response?.ResponseStatus?.STATUSCODE == 200) {
+      setMedicalData(response.PatientFiles)
+    }
+  }
 
   const handleFileSelection = async () => {
     try {
       const pickresult = await DocumentPicker.pick({
         type: [DocumentPicker.types.allFiles],
+        allowMultiSelection: false,
       });
 
       let pickerResult = null;
@@ -146,6 +164,8 @@ const UploadFileStep = ( ) => {
     }
   };
 
+  console.log('filePaths', filePaths)
+
   return (
     <View style={{ flex: 1 }}>
       <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>التقارير الطبية</Text>
@@ -160,9 +180,10 @@ const UploadFileStep = ( ) => {
         </View>
       </View>
       <View style={{ flex:1, marginTop: 10 }}>
-        {filePaths.map((filePath, index) => (
-
-          <View style={{ flexDirection: 'row',width:'100%',marginBottom:8,paddingHorizontal:16, height:30,borderWidth:1,borderColor:'#fff', alignItems: 'center', justifyContent: 'space-between' }} key={index}>
+        <FlatList
+          data={filePaths}
+          renderItem={({ item, index }) => (
+            <View style={{ flexDirection: 'row',width:'100%',marginBottom:8,paddingHorizontal:16, height:30,borderWidth:1,borderColor:'#fff', alignItems: 'center', justifyContent: 'space-between' }} key={index}>
             <Text style={[globalTextStyles.caption, { color: '#000' }]}>HemoDiyalsis Report</Text>
            
             <TouchableOpacity  onPress={() => {
@@ -173,7 +194,9 @@ const UploadFileStep = ( ) => {
               <Feather name='trash' size={20} color='#239ea0' />
             </TouchableOpacity>
           </View>
-        ))}
+          )}
+          keyExtractor={(item, index) => index.toString()}
+        />
       </View>
 
       <FullScreenLoader visible={isUploading} />

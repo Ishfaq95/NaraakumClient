@@ -70,7 +70,7 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
       );
 
       const slotDuration = provider.SlotDuration || 30;
-      const formattedDate = selectedDate.format('YYYY-MM-DD');
+      const formattedDate = selectedDate.locale('en').format('YYYY-MM-DD');
 
       if (providerAvailability.length > 0) {
         const DoctorAvailable: any = generateSlotsForDate(
@@ -85,7 +85,7 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
           
           // Only check past times if the selected date is today
           const today = new Date();
-          const selectedDateObj = new Date(selectedDate.format('YYYY-MM-DD'));
+          const selectedDateObj = new Date(selectedDate.locale('en').format('YYYY-MM-DD'));
           
           // If selected date is not today, all available slots are valid
           if (selectedDateObj.toDateString() !== today.toDateString()) {
@@ -244,8 +244,8 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
         setCurrentStep(currentStep + 1)
       }
     }else if(currentStep == 3){
-      // uploadMedicalhistoryReports()
-      setCurrentStep(currentStep + 1)
+      uploadMedicalhistoryReports()
+      // setCurrentStep(currentStep + 1)
     }else{
       setCurrentStep(currentStep + 1)
     }
@@ -256,7 +256,7 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
     switch (currentStep) {
       case 1: return <PackageListDetails selectedOrganization={selectedOrganization} onPressNext={() => setCurrentStep(2)} onPressBack={() => setCurrentStep(1)} />;
       case 2: return <DoctorListing filteredProviders={filteredProviders} selectedDate={selectedDate} availability={availability} onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
-      case 3: return <UploadFileStep  />;
+      case 3: return <UploadFileStep OrderId={orderId} />;
       case 4: return <AddMoreService onPressNext={onPressContinue} onPressBack={onPressBack} />;
       default: return null;
     }
