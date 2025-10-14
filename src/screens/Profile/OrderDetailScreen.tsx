@@ -92,8 +92,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     idNumber: '',
   })
 
-  console.log("completeOrderDetail", completeOrderDetail)
-
   // Medical report form states
   const [medicalReportType, setMedicalReportType] = useState('others');
   const [medicalReportFile, setMedicalReportFile] = useState<any>(null);
@@ -2386,7 +2384,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
           visible={medicalReportListBottomSheet}
           onClose={() => setMedicalReportListBottomSheet(false)}
           showHandle={false}
-          height="60%"
+          height={medicalReportList.length > 0 ? "60%" : "25%"}
         >
           <View style={{ backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
             <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>

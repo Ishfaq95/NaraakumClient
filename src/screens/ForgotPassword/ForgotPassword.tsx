@@ -231,7 +231,6 @@ const styles = StyleSheet.create({
         color: '#008080', // Teal color as shown in the image
         textAlign: 'center',
         marginBottom: 15,
-        fontWeight: 'bold',
     },
     subText: {
         ...globalTextStyles.bodyMedium,

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Alert, Platform } from 'react-native'
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native'
 import LottieAnimation from '../common/LottieAnimation'
 import { LOTTIE_ANIMATIONS } from '../../assets/animation'
 import { generateAndDownloadInvoice } from '../../services/InvoiceService'
@@ -12,11 +12,13 @@ import { globalTextStyles } from '../../styles/globalStyles';
 import { scheduleNotificationAndroid, scheduleNotificationIOS } from '../../shared/services/service'
 import { notificationService } from '../../services/api/NotificationService'
 import { useSelector } from 'react-redux';
+import { useAlert } from '../../contexts/AlertContext';
 
 const OrderSuccess = ({ navigation, route }: any) => {
   const OrderDetail = route?.params?.SuccessResponse;
   const user = useSelector((state: any) => state.root.user.user);
   const { t } = useTranslation();
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     setUpNotification();
@@ -50,32 +52,39 @@ const OrderSuccess = ({ navigation, route }: any) => {
          }else{
           
         // // Show success message
-        Alert.alert(
-          'تم التحميل بنجاح',
-          'تم حفظ الفاتورة في مجلد المستندات',
-          [
-            {
-              text: 'حسناً',
-              onPress: () => {
-                navigation.navigate(ROUTES.AppNavigator, {
-                  screen: ROUTES.HomeStack,
-                  params: {
-                    screen: ROUTES.AppointmentListScreen,
-                  }
-                });
+        showAlert({
+          title: 'تم التحميل بنجاح',
+          message: 'تم حفظ الفاتورة في مجلد المستندات',
+          type: 'success',
+          confirmText: 'حسناً',
+          onConfirm: () => {
+            navigation.navigate(ROUTES.AppNavigator, {
+              screen: ROUTES.HomeStack,
+              params: {
+                screen: ROUTES.AppointmentListScreen,
               }
-            }
-          ]
-        );
+            });
+          }
+        });
          }
         
         
       } else {
-        Alert.alert('خطأ', 'لا توجد بيانات الفاتورة متاحة');
+        showAlert({
+          title: 'خطأ',
+          message: 'لا توجد بيانات الفاتورة متاحة',
+          type: 'error',
+          confirmText: 'حسناً',
+        });
       }
     } catch (error) {
       console.error('Error generating invoice:', error);
-      Alert.alert('خطأ', 'حدث خطأ أثناء إنشاء الفاتورة');
+      showAlert({
+        title: 'خطأ',
+        message: 'حدث خطأ أثناء إنشاء الفاتورة',
+        type: 'error',
+        confirmText: 'حسناً',
+      });
     }
   };
 

@@ -24,26 +24,26 @@ const VisitConsultantLogItemRender = memo(({ item, getMedicine, getVisitMainReco
 
             {/* Info Rows */}
             <View style={styles.infoRow}>
-                <View style={{ flexDirection: "row", alignItems: "center",gap:5 }}>
+                <View style={{ flexDirection: "row",width: '40%', alignItems: "center",gap:5 }}>
                     <MaterialIcons name="local-hospital" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>المركز الطبى</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.TitleSlang}</Text>
+                <Text numberOfLines={1} style={[styles.infoText, {width: '60%', fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.TitleSlang}</Text>
             </View>
             <View style={styles.infoRow}>
-                <View style={{ flexDirection: "row", alignItems: "center",gap:5 }}>
+                <View style={{ flexDirection: "row",width: '40%', alignItems: "center",gap:5 }}>
                     <FontAwesome5 name="user-md" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>مقدم الرعاية</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.FullnameSlang}</Text>
+                <Text numberOfLines={1} style={[styles.infoText, {width: '60%', fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.FullnameSlang}</Text>
 
             </View>
             <View style={styles.infoRow}>
-            <View style={{ flexDirection: "row", alignItems: "center",gap:5 }}>
+            <View style={{ flexDirection: "row",width: '40%', alignItems: "center",gap:5 }}>
             <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
                     <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>تاريخ الجلسة</Text>
                 </View>
-                <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{moment(item?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
+                <Text numberOfLines={1} style={[styles.infoText, {width: '60%', fontFamily: CAIRO_FONT_FAMILY.bold }]}>{moment(item?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
             </View>
 
             {/* Buttons */}
@@ -96,7 +96,6 @@ const styles = StyleSheet.create({
     },
     beneficiaryName: {
         fontSize: 16,
-        fontWeight: 'bold',
         color: '#222',
         textAlign: 'left',
         fontFamily: CAIRO_FONT_FAMILY.bold,
@@ -105,6 +104,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        width: '100%',
         marginBottom: 2,
     },
     icon: {
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 14,
         color: '#222',
-        textAlign: 'left',
+        textAlign: 'right',
         fontFamily: CAIRO_FONT_FAMILY.regular,
     },
     buttonRow: {

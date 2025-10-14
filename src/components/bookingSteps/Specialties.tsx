@@ -102,20 +102,10 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
 
   const toggleServiceSelection = (service: any) => {
     onSelectIndividualService(service);
-    // setSelectedServices(prev => {
-    //   const isSelected = prev.some(item => item.Id === service.Id);
-    //   if (isSelected) {
-    //     return prev.filter(item => item.Id !== service.Id);
-    //   } else {
-    //     return [...prev, service];
-    //   }
-    // });
   };
 
   const handleContinuePress = () => {
     if (SelectedCardItem.length > 0) {
-      // For now, just pass the first selected service to maintain compatibility
-      // You can modify this logic based on your requirements
       onContinueWithService(SelectedCardItem);
     }
   };
@@ -123,16 +113,9 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
   const renderSelectableItem = ({ item }: { item: any }) => {
     const uri = getSanitizedImageUrl(item.ImagePath);
     const isSvg = uri.endsWith('.svg');
-    // let isSelected = selectedServices.some(service => service.Id === item.Id);
 
-    const isSelected=SelectedCardItem.some((service: any) => service.CatServiceId == item.Id);
+    const isSelected = SelectedCardItem.some((service: any) => service.CatServiceId == item.Id);
 
-    // console.log("currentService",currentService?.length);
-    // if(currentService?.length > 0){
-    //   isSelected = true;
-    // }
-
-    // Clean the TitleSlang by removing all types of line breaks
     const cleanTitle = item.TitleSlang?.replace(/[\r\n]+/g, ' ').trim() || '';
 
     return (
@@ -168,48 +151,55 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
     // Clean the TitleSlang by removing all types of line breaks
     const cleanTitle = item.TitleSlang?.replace(/[\r\n]+/g, ' ').trim() || '';
 
-    const isSelected = (SelectedCardItem[0]?.CatServiceId == "105" || SelectedCardItem[0]?.CatServiceId == "96") ?  SelectedCardItem[0]?.CatServiceId == item.Id : SelectedCardItem[0]?.CatSpecialtyId == item.Id;
+    const isSelected = (SelectedCardItem[0]?.CatServiceId == "105" || SelectedCardItem[0]?.CatServiceId == "96") ? SelectedCardItem[0]?.CatServiceId == item.Id : SelectedCardItem[0]?.CatSpecialtyId == item.Id;
 
     return (
-      <TouchableOpacity onPress={() => onPressSpecialty(item,isSelected)} style={[styles.cardSpecialty, isSelected && styles.selectedCard]} activeOpacity={0.8}>
+      <TouchableOpacity onPress={() => onPressSpecialty(item, isSelected)} style={[styles.cardSpecialty, isSelected && styles.selectedCard]} activeOpacity={0.8}>
         <View style={styles.rowSpecialty}>
-          <Text style={[styles.title, isSelected && styles.selectedTitle]} numberOfLines={2}>{cleanTitle}</Text>
-          <View style={styles.imageContainer}>
-            {item.ImagePath ? (
-              isSvg ? (
-                <SvgUri
-                  width="90%"
-                  height="90%"
-                  uri={uri}
-                />
-              ) : (
-                <Image source={{ uri }} style={styles.image} resizeMode="contain" />
-              )
-            ) : null}
+          <View style={{ width: '30%', height: '100%', borderTopLeftRadius: 12, borderBottomLeftRadius: 12, backgroundColor: '#e9f5f6',alignItems: 'center',justifyContent: 'center' }}>
+            <View style={styles.imageContainer}>
+              {item.ImagePath ? (
+                isSvg ? (
+                  <SvgUri
+                    width="80%"
+                    height="80%"
+                    uri={uri}
+                  />
+                ) : (
+                  <Image source={{ uri }} style={styles.image} resizeMode="contain" />
+                )
+              ) : null}
+            </View>
           </View>
+          <View style={{ width: '70%', height: '100%',alignItems: 'flex-start',justifyContent: 'center' }}>
+            <Text style={[styles.title, isSelected && styles.selectedTitle]} numberOfLines={2}>{cleanTitle}</Text>
+          </View>
+
+
+
         </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={[{ flex: 1, paddingHorizontal: 16,},(category.Id != "42" && category.Id != "32" )&& { backgroundColor: "#fff" }]}>
+    <View style={[{ flex: 1, paddingHorizontal: 16, }, (category.Id != "42" && category.Id != "32") && { backgroundColor: "#fff" }]}>
       {(category.Id == "42" || category.Id == "32") ? (
         <FlatList
           data={filteredSpecialties}
           renderItem={renderItem}
           keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
           numColumns={2}
-          columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 12, columnGap: 8 }}
+          columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 8, columnGap: 8 }}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            <View style={{ paddingHorizontal: 16,paddingBottom: 12 }}>
-            <SearchInput
-              placeholder="بحث عن التخصص"
-              value={search}
-              onChangeText={setSearch}
-            />
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+              <SearchInput
+                placeholder="بحث عن التخصص"
+                value={search}
+                onChangeText={setSearch}
+              />
             </View>
           }
         />
@@ -222,7 +212,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            <View style={{ paddingHorizontal: 16,paddingBottom: 12 }}>
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
               <Text style={{ ...globalTextStyles.buttonLarge, color: '#000' }}>وصف الخدمة</Text>
               <Text style={{ ...globalTextStyles.bodyMedium, color: '#000' }}>{formatSlang(category?.DescriptionSlang)}</Text>
               <Text style={{ ...globalTextStyles.buttonMedium, color: '#000' }}>اختر خدمة او اكثر</Text>
@@ -268,7 +258,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
             {/* Message and Button */}
             <View style={styles.modalContent}>
               <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.modalMessage}>{formatSlang(selectedService?.DescriptionSlang)}</Text>
+                <Text style={styles.modalMessage}>{formatSlang(selectedService?.DescriptionSlang)}</Text>
               </ScrollView>
               {/* <TouchableOpacity
                 onPress={() => setShowServiceModal(false)}
@@ -308,40 +298,39 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#2BA6A6',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
     minHeight: 54,
     maxHeight: 70,
 
   },
   rowSpecialty: {
-    flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row',
+    flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    height: '100%',
+    width: '100%',
     justifyContent: 'space-between',
   },
   title: {
     ...globalTextStyles.bodyMedium,
     color: '#2B3034',
-    flex: 1,
-    textAlign: 'left',
-    marginHorizontal: 6,
+    lineHeight: 22,
+    // textAlign: 'left',
+    marginHorizontal: 10,
   },
   imageContainer: {
     width: 40,
     height: 40,
-    backgroundColor: '#F6F8F9',
-    borderTopRightRadius: I18nManager.isRTL ? 0 : 16,
-    borderBottomRightRadius: I18nManager.isRTL ? 0 : 16,
-    borderTopLeftRadius: I18nManager.isRTL ? 16 : 0,
-    borderBottomLeftRadius: I18nManager.isRTL ? 16 : 0,
+    backgroundColor: '#e9f5f6',
+    // borderTopRightRadius: I18nManager.isRTL ? 0 : 16,
+    // borderBottomRightRadius: I18nManager.isRTL ? 0 : 16,
+    // borderTopLeftRadius: I18nManager.isRTL ? 16 : 0,
+    // borderBottomLeftRadius: I18nManager.isRTL ? 16 : 0,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
   image: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
   },
   webview: {
     width: 60,
@@ -397,8 +386,8 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: '#ccc',
   },
-    continueButtonText: {
-      ...globalTextStyles.h5,
+  continueButtonText: {
+    ...globalTextStyles.h5,
     color: '#fff',
   },
   modalOverlay: {

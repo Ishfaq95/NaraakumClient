@@ -360,6 +360,7 @@ const SignUpScreen = () => {
         setOtpBottomSheet(false)
         setOTPApiError(false)
         setOTPError(false)
+        setResentCode(false)
         setOtpValue('')
     }
 

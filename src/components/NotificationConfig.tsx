@@ -1,4 +1,4 @@
-import {Alert, AppRegistry, PermissionsAndroid, Platform} from 'react-native';
+import {AppRegistry, PermissionsAndroid, Platform} from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import {useEffect} from 'react';
 import PushNotification from 'react-native-push-notification';
@@ -12,6 +12,7 @@ import notifee, {
   TriggerType,
 } from '@notifee/react-native';
 import {getCurrentScreen} from '../utils/navigationUtils';
+import {useAlert} from '../contexts/AlertContext';
 
 const createChannel = () => {
   PushNotification.createChannel(
@@ -39,6 +40,7 @@ const createNotificationChannel = async () => {
 
 const NotificationsCenter = () => {
   const navigation = useNavigation();
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -166,44 +168,17 @@ const NotificationsCenter = () => {
             Data: parsedData?.data,
           });
       } else {
-        Alert.alert(title, body);
+        showAlert({
+          title: title || 'إشعار',
+          message: body || '',
+          type: 'info',
+          confirmText: 'موافق',
+        });
       }
-
-      // if (Platform.OS === 'ios') {
-      //   // This is the critical part that will show the notification banner
-      //   PushNotificationIOS.addNotificationRequest({
-      //     title: remoteMessage?.notification?.title,
-      //     subtitle: '',
-      //     body: remoteMessage?.notification?.body,
-      //     userInfo: remoteMessage.data,
-      //     repeats: false,
-      //     threadId: 'thread-id',
-      //     sound: 'default',
-      //     badge: 1,
-      //     repeatsComponent: {
-      //       hour: false,
-      //       minute: false,
-      //       day: false,
-      //       weekday: false,
-      //       month: false,
-      //       year: false,
-      //     },
-      //   });
-      // } else {
-      //   // Your existing Android code
-      //   PushNotification.localNotification({
-      //     channelId: 'com.naraakm.naraakumPatient',
-      //     title: remoteMessage.notification?.title,
-      //     message: remoteMessage.notification?.body,
-      //     playSound: true,
-      //     soundName: 'default',
-      //     data: remoteMessage.data,
-      //   });
-      // }
     });
 
     return unsubscribe;
-  }, []);
+  }, [showAlert]);
 
   useEffect(() => {
     // Check if app was launched from a notification (when app was killed)

@@ -298,7 +298,7 @@ const BookingScreen = ({ navigation, route }: any) => {
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{t('booking')}</Text>
+        <Text style={styles.headerTitle}>{category.Id == "42"? "استشارة عن بعد" : t('booking')}</Text>
       }
       leftComponent={
         <TouchableOpacity onPress={() => {

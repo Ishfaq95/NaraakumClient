@@ -180,6 +180,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }]);
   const [selectedCity, setSelectedCity] = useState<any>('0');
   const [selectedSquare, setSelectedSquare] = useState<any>('0');
+  const [isProcessing, setIsProcessing] = useState(false);
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
@@ -271,12 +272,12 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         }
 
         // Update previous filter values
-      prevFiltersRef.current = {
-        selectServiceFilter,
-        searchNearMe,
-        selectedCity,
-        selectedSquare,
-      };
+        prevFiltersRef.current = {
+          selectServiceFilter,
+          searchNearMe,
+          selectedCity,
+          selectedSquare,
+        };
 
       }
 
@@ -337,28 +338,35 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }
 
   const createOrderMainBeforePayment = async () => {
-    const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
-    let selectedItem: any = displayCategory?.Display == "CP" ? CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId) : CardArray.find((item: any) => !item.OrganizationId);
+    if (isProcessing) return; // Prevent multiple calls
+    
+    setIsProcessing(true);
+    try {
+      const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
+      let selectedItem: any = displayCategory?.Display == "CP" ? CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId) : CardArray.find((item: any) => !item.OrganizationId);
 
-    if (selectedItem) {
-      setAlertModalVisible(true);
-      setAlertModalMessage('لم يتم تحديد الجدول الزمني للخدمة');
-      return;
-    }
+      if (selectedItem) {
+        setAlertModalVisible(true);
+        setAlertModalMessage('لم يتم تحديد الجدول الزمني للخدمة');
+        return;
+      }
 
-    const payload = {
-      "UserLoginInfoId": user.Id,
-      "CatPlatformId": 1,
-      "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray)
-    }
+      const payload = {
+        "UserLoginInfoId": user.Id,
+        "CatPlatformId": 1,
+        "OrderDetail": generatePayloadforOrderMainBeforePayment(CardArray)
+      }
 
-    const response = await bookingService.createOrderMainBeforePayment(payload);
+      const response = await bookingService.createOrderMainBeforePayment(payload);
 
-    if (response.ResponseStatus.STATUSCODE == 200) {
-      dispatch(setApiResponse(response.Data))
-      onPressNext();
-    } else {
-      Alert.alert(response.ResponseStatus.MESSAGE)
+      if (response.ResponseStatus.STATUSCODE == 200) {
+        dispatch(setApiResponse(response.Data))
+        onPressNext();
+      } else {
+        Alert.alert(response.ResponseStatus.MESSAGE)
+      }
+    } finally {
+      setIsProcessing(false);
     }
   }
 
@@ -513,7 +521,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setDisplayCategory(displayCategory);
     // Call both APIs when component mounts
     if (displayCategory?.Display == "CP") {
-      fetchServiceProviders(undefined, null, null,category.Id != "42"? `${selectedLocation.latitude},${selectedLocation.longitude}` : null);
+      fetchServiceProviders(undefined, null, null, category.Id != "42" ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null);
       fetchInitialAvailability();
     } else {
       if (category.Id == "41") {
@@ -768,6 +776,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   };
 
   const handleNext = useCallback(() => {
+    if (isProcessing) return; // Prevent multiple clicks
+    
     if (displayCategory?.Display == "CP") {
       const serviceId = SelectedCardItem[0]?.CatServiceId;
       if (!serviceId) {
@@ -779,7 +789,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       createOrderMainBeforePayment();
     }
 
-  }, [CardArray, createOrderMainBeforePayment]);
+  }, [CardArray, createOrderMainBeforePayment, isProcessing]);
 
   const handleBack = () => {
     onPressBack();
@@ -928,12 +938,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }
 
   const getNextButtonEnabled = useCallback(() => {
+    if (isProcessing) return true; // Disable button while processing
+    
     if (displayCategory?.Display == "CP") {
       return SelectedCardItem[0]?.CatServiceId == 0 || SelectedCardItem[0]?.CatServiceId == null || SelectedCardItem[0]?.CatServiceId == "" || SelectedCardItem[0]?.CatServiceId == undefined || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == null || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == "" || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == undefined
     } else {
       return SelectedCardItem[0]?.OrganizationId == null || SelectedCardItem[0]?.OrganizationId == "" || SelectedCardItem[0]?.OrganizationId == undefined
     }
-  }, [selectedSlotInfo, CardArray, SelectedCardItem])
+  }, [selectedSlotInfo, CardArray, SelectedCardItem, isProcessing])
 
   const convertArabicTimeTo24Hour = (timeString: string): string => {
     if (!timeString) return timeString;
@@ -1167,7 +1179,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           onPress={handleNext}
           disabled={getNextButtonEnabled()}
         >
-          <Text style={styles.nextButtonText}>{t('next')}</Text>
+          <Text style={styles.nextButtonText}>
+            {isProcessing ? 'جاري المعالجة...' : t('next')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -1315,110 +1329,109 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 10 }}>
+          <ScrollView style={{ paddingBottom: 100 }}>
+            {category.Id != "42" && <>
+              <View style={{ paddingVertical: 10 }}>
+                <Dropdown
+                  data={allCities}
+                  containerStyle={{ height: 50 }}
+                  dropdownStyle={[{ height: 50 }]}
+                  value={selectedCity}
+                  onChange={(value: string | number) => {
+                    setSelectedCity(value.toString());
+                    if (value.toString() != "0") {
+                      getAllSquares(value.toString());
+                    }
 
-          {category.Id != "42" && <>
-            <View style={{ paddingVertical: 10 }}>
-              <Dropdown
-                data={allCities}
-                containerStyle={{ height: 50 }}
-                dropdownStyle={[{ height: 50 }]}
-                value={selectedCity}
-                onChange={(value: string | number) => {
-                  setSelectedCity(value.toString());
-                  if (value.toString() != "0") {
-                    getAllSquares(value.toString());
-                  }
-
-                }}
-                placeholder=""
-              />
-            </View>
-            <View style={{ paddingBottom: 10 }}>
-              <Dropdown
-                data={allSquares}
-                containerStyle={{ height: 50 }}
-                dropdownStyle={[{ height: 50 }]}
-                value={selectedSquare}
-                onChange={(value: string | number) => {
-                  setSelectedSquare(value.toString());
-
-                }}
-                placeholder=""
-              />
-            </View>
-            <View style={{ paddingBottom: 10 }}>
-              <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '48%', justifyContent: 'flex-end' }}>
-                <Text style={[styles.priceText, { textAlign: 'left' }]}>
-                  {`بحث الأطباء بالقرب مني`}
-                </Text>
-                <TouchableOpacity onPress={() => { setSearchNearMe(!searchNearMe) }} style={[styles.checkbox, searchNearMe && styles.checkedBox]}>
-                  {searchNearMe && <CheckIcon width={12} height={12} />}
-                </TouchableOpacity>
+                  }}
+                  placeholder=""
+                />
               </View>
-            </View>
-          </>}
+              <View style={{ paddingBottom: 10 }}>
+                <Dropdown
+                  data={allSquares}
+                  containerStyle={{ height: 50 }}
+                  dropdownStyle={[{ height: 50 }]}
+                  value={selectedSquare}
+                  onChange={(value: string | number) => {
+                    setSelectedSquare(value.toString());
 
+                  }}
+                  placeholder=""
+                />
+              </View>
+              <View style={{ paddingBottom: 10 }}>
+                <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '48%', justifyContent: 'flex-end' }}>
+                  <Text style={[styles.priceText, { textAlign: 'left' }]}>
+                    {`بحث الأطباء بالقرب مني`}
+                  </Text>
+                  <TouchableOpacity onPress={() => { setSearchNearMe(!searchNearMe) }} style={[styles.checkbox, searchNearMe && styles.checkedBox]}>
+                    {searchNearMe && <CheckIcon width={12} height={12} />}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>}
 
+            <Dropdown
+              data={SortBy}
+              containerStyle={{ height: 50 }}
+              dropdownStyle={[{ height: 50 }]}
+              value={sortByValue}
+              onChange={(value: string | number) => {
+                setSortByValue(value.toString());
+              }}
+              placeholder=""
+            />
+            {(category.Id == "42" || category.Id == "32") && <>
+              <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                <RadioButton
+                  selected={selectServiceFilter === 0}
+                  onPress={() => setSelectServiceFilter(0)}
+                  label={services == null ? "طبيب عام" : "الكل"}
+                  style={{ width: "30%", }}
+                />
+                <RadioButton
+                  selected={selectServiceFilter === 1}
+                  onPress={() => setSelectServiceFilter(1)}
+                  disabled={services == null}
+                  label="استشاري"
+                  style={{ width: "30%", }}
+                />
+                <RadioButton
+                  selected={selectServiceFilter === 2}
+                  onPress={() => setSelectServiceFilter(2)}
+                  disabled={services == null}
+                  label="أخصائي"
+                  style={{ width: "30%", }}
+                />
+              </View>
 
-          <Dropdown
-            data={SortBy}
-            containerStyle={{ height: 50 }}
-            dropdownStyle={[{ height: 50 }]}
-            value={sortByValue}
-            onChange={(value: string | number) => {
-              setSortByValue(value.toString());
-            }}
-            placeholder=""
-          />
-          {(category.Id == "42" || category.Id == "32") && <>
-            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-              <RadioButton
-                selected={selectServiceFilter === 0}
-                onPress={() => setSelectServiceFilter(0)}
-                label={services == null ? "طبيب عام" : "الكل"}
-                style={{ width: "30%", }}
-              />
-              <RadioButton
-                selected={selectServiceFilter === 1}
-                onPress={() => setSelectServiceFilter(1)}
-                disabled={services == null}
-                label="استشاري"
-                style={{ width: "30%", }}
-              />
-              <RadioButton
-                selected={selectServiceFilter === 2}
-                onPress={() => setSelectServiceFilter(2)}
-                disabled={services == null}
-                label="أخصائي"
-                style={{ width: "30%", }}
-              />
-            </View>
+              <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                <RadioButton
+                  selected={selectSpecialtyFilter === 0}
+                  onPress={() => setSelectSpecialtyFilter(0)}
+                  label="الكل"
+                  style={{ width: "30%", }}
+                />
+                <RadioButton
+                  selected={selectSpecialtyFilter === 1}
+                  onPress={() => setSelectSpecialtyFilter(1)}
+                  label="تابع لمستشفى"
+                  style={{ width: "35%", }}
+                />
+                <RadioButton
+                  selected={selectSpecialtyFilter === 2}
+                  onPress={() => setSelectSpecialtyFilter(2)}
+                  label="طبيب مستقل"
+                  style={{ width: "30%", }}
+                />
+              </View>
+            </>}
 
-            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-              <RadioButton
-                selected={selectSpecialtyFilter === 0}
-                onPress={() => setSelectSpecialtyFilter(0)}
-                label="الكل"
-                style={{ width: "30%", }}
-              />
-              <RadioButton
-                selected={selectSpecialtyFilter === 1}
-                onPress={() => setSelectSpecialtyFilter(1)}
-                label="تابع لمستشفى"
-                style={{ width: "35%", }}
-              />
-              <RadioButton
-                selected={selectSpecialtyFilter === 2}
-                onPress={() => setSelectSpecialtyFilter(2)}
-                label="طبيب مستقل"
-                style={{ width: "30%", }}
-              />
-            </View>
-          </>}
-
-          <TouchableOpacity style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 10 }} onPress={() => applyFilter()}>
-            <Text style={{ ...globalTextStyles.buttonMedium, color: '#fff' }}>تطبيق الفلتر</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={{ backgroundColor: '#239ea0', borderRadius: 10, marginBottom: 20, paddingVertical: 12, alignItems: 'center', marginTop: 10 }} onPress={() => applyFilter()}>
+              <Text style={{ ...globalTextStyles.buttonMedium, color: '#fff' }}>تطبيق الفلتر</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </CustomBottomSheet>
 

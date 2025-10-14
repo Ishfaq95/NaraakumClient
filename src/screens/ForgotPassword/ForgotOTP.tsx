@@ -64,6 +64,8 @@ const ForgotOTP = ({ route }: any) => {
       if (response.ResponseStatus.STATUSCODE == 200) {
         if (response.StatusCode.STATUSCODE == 3007) {
           navigation.navigate(ROUTES.ConfirmPassword, { UserId: UserId });
+        }else{
+          setAPIError(true);
         }
       } else {
         setAPIError(true);
@@ -102,9 +104,13 @@ const ForgotOTP = ({ route }: any) => {
               </Text>
 
               {/* Sub Text */}
-              <Text style={styles.subText}>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={[styles.optHeaderText,{fontFamily: CAIRO_FONT_FAMILY.bold}]}>{OTPSend.replace(/^\+/, '')}</Text>
+          {OTPSend.includes('+') && <Text style={[styles.optHeaderText,{fontFamily: CAIRO_FONT_FAMILY.bold}]}>+</Text>}
+        </View>
+              {/* <Text style={styles.subText}>
                 {OTPSend}
-              </Text>
+              </Text> */}
             </View>
             <View style={styles.formContainer}>
               <View style={styles.inputGroup}>
@@ -113,17 +119,22 @@ const ForgotOTP = ({ route }: any) => {
                   <Text style={styles.requiredAsterisk}> *</Text>
                 </View>
                 <TextInput
-                  style={[styles.textInput, otpError && {borderColor: '#FF0000', borderWidth: 1}]}
+                  style={[styles.textInput, (otpError || APIError) && {borderColor: '#FF0000', borderWidth: 1}]}
                   placeholder="رمز التحقق"
                   placeholderTextColor="#999"
                   textAlign="right"
                   value={otp}
                   keyboardType="numeric"
                   onChangeText={(text) => {
+                    if (text.length > 10) {
+                      return;
+                    }
                     setOtp(text);
                     if (otpError) setOtpError(false);
+                    if (APIError) setAPIError(false);
                   }}
                 />
+                {APIError && <Text style={styles.errorText}>{'خطأ في التحقق'}</Text>}
               </View>
 
               <View style={styles.buttonContainer}>
@@ -135,7 +146,7 @@ const ForgotOTP = ({ route }: any) => {
                 </TouchableOpacity>
               </View>
             </View>
-            {APIError && <Text style={styles.errorText}>{'خطأ في التحقق'}</Text>}
+            
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -176,11 +187,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   mainHeading: {
-    ...globalTextStyles.h2,
+    ...globalTextStyles.h3,
     color: '#008080', // Teal color as shown in the image
     textAlign: 'center',
     marginBottom: 15,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
   },
   subText: {
     ...globalTextStyles.bodyLarge,
@@ -241,7 +252,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
-    marginTop: 20,
+    marginTop: 0,
     alignItems: 'center',
   },
   button: {
@@ -273,11 +284,16 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#FF0000',
-    fontSize: 16,
-    fontFamily: CAIRO_FONT_FAMILY.bold,
-    textAlign: 'center',
-    marginTop: 10,
+    fontSize: 14,
+    fontFamily: CAIRO_FONT_FAMILY.medium,
+    textAlign: 'left',
   },
+  optHeaderText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    color: '#000'
+  }
 })
 
 export default ForgotOTP

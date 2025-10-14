@@ -21,6 +21,7 @@ import {initializeI18Next} from './utils/language/i18nextConfig';
 import {CrashlyticsProvider} from './components/CrashlyticsProvider';
 import AppInitializer from './components/AppInitializer';
 import "react-native-get-random-values"
+import {AlertProvider} from './contexts/AlertContext';
 
 const App = () => {
   useEffect(() => {
@@ -82,15 +83,16 @@ const App = () => {
                     appVersion: '1.0.3',
                     environment: 'production',
                   }}>
-                
-                  <NavigationContainer ref={navigationRef}>
+                  <AlertProvider>
+                    <NavigationContainer ref={navigationRef}>
 
-                    <AppInitializer />
-                    <Routes />
-                    <NotificationsCenter />
-                    <Connectivity />
-                    
-                  </NavigationContainer>
+                      <AppInitializer />
+                      <Routes />
+                      <NotificationsCenter />
+                      <Connectivity />
+                      
+                    </NavigationContainer>
+                  </AlertProvider>
                 </CrashlyticsProvider>
               </CrashlyticsErrorBoundary>
             </QueryClientProvider>

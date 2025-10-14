@@ -12,7 +12,8 @@ const HomeVisitCard = ({ item,index,onPress }: { item: any,index:number,onPress:
     <View style={styles.contentContainer}>
       <Text style={styles.title}>{item.TitleSlang}</Text>
       <Text style={styles.price}>
-        تبدأ من <Text style={{ ...globalTextStyles.bodySmall, color: '#179c8e', fontFamily: globalTextStyles.h5.fontFamily }}>{item.Price} ريال</Text>
+        تبدأ من <Text style={{ ...globalTextStyles.bodyLarge, color: '#179c8e', fontFamily: globalTextStyles.h5.fontFamily }}>{item.Price}</Text>
+        ريال
       </Text>
     </View>
   </TouchableOpacity>
@@ -48,13 +49,13 @@ const styles = StyleSheet.create({
     ...globalTextStyles.bodyMedium,
     fontFamily: globalTextStyles.h5.fontFamily,
     marginBottom: 8,
-    color: '#222',
+    color: '#000',
     textAlign: I18nManager.isRTL ? 'left' : 'right',
     writingDirection: I18nManager.isRTL ? 'ltr' : 'rtl',
   },
   price: {
     ...globalTextStyles.bodySmall,
-    color: '#222',
+    color: '#444',
     textAlign: I18nManager.isRTL ? 'left' : 'right',
     writingDirection: I18nManager.isRTL ? 'ltr' : 'rtl',
   },

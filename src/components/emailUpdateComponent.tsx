@@ -660,8 +660,19 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
               placeholder="0"
               placeholderTextColor="#1e2525ff"
               keyboardType="numeric"
+            maxLength={2}
               value={ageValue}
-              onChangeText={onChangeTextAge}
+            onChangeText={text => {
+              // Keep only digits
+              const digitsOnly = text.replace(/[^0-9]/g, '');
+              if (digitsOnly === '') {
+                onChangeTextAge('');
+                return;
+              }
+              // Clamp to range 0..99
+              const n = Math.min(99, Math.max(0, parseInt(digitsOnly, 10)));
+              onChangeTextAge(String(n));
+            }}
               onFocus={() => setFocusedField('age')}
               onBlur={() => setFocusedField('')}
             />

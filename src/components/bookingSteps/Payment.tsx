@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,12 +10,12 @@ import {
   Text,
 } from 'react-native';
 import LoaderKit from 'react-native-loader-kit';
-import {WebView} from 'react-native-webview';
+import { WebView } from 'react-native-webview';
 
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
-import {ROUTES} from '../../shared/utils/routes';
-import {useNavigation} from '@react-navigation/native';
+import { ROUTES } from '../../shared/utils/routes';
+import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearCardItems } from '../../shared/redux/reducers/bookingReducer';
 import { encryptText } from '../../shared/services/service';
@@ -67,7 +67,7 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const generatePaymentUrl = async () => {
-    const dataUser = {Id:user.Id,FullNameSlang:user.FullnameSlang}
+    const dataUser = { Id: user.Id, FullNameSlang: user.FullnameSlang }
     const paramsJson = JSON.stringify(dataUser);
     const encryptedVisitData = encryptText(paramsJson, '!naarakum@789');
     return `${WEBSITE_URL}service/payment?mudfp=${encryptedVisitData}`
@@ -76,7 +76,7 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   useEffect(() => {
     const getPaymentUrl = async () => {
       setLoading(true);
-      const paymentUrl:any = await generatePaymentUrl()
+      const paymentUrl: any = await generatePaymentUrl()
       setCurrentUrl(paymentUrl);
       setLoading(false);
     }
@@ -112,32 +112,46 @@ const Payment = ({ onPressNext, onPressBack }: any) => {
   const [isPaymentProcessed, setIsPaymentProcessed] = useState(false);
   const cardDataRef = useRef<any>(null);
 
-const onNavigationStateChange = (url: any) => {
-    if(url.url.includes("PaymentSuccess") && !isPaymentProcessed){
+  const onNavigationStateChange = (url: any) => {
+    if (url.url.includes("PaymentSuccess") && !isPaymentProcessed) {
       setIsPaymentProcessed(true);
-      
+
       // Store card data in ref if not already stored
       if (!cardDataRef.current) {
         cardDataRef.current = [...CardArray];
       }
-      
+
       const tempCard = cardDataRef.current;
       dispatch(clearCardItems());
-      
+
       // Use any type to bypass TypeScript navigation issues
-      (navigation as any).navigate(ROUTES.OrderSuccess, { SuccessResponse: tempCard });
+      // if (!reloadWebView) {
+      //   (navigation as any).navigate(ROUTES.OrderSuccess, { SuccessResponse: tempCard });
+      // } else {
+      setCurrentUrl(null);
+        setTimeout(() => {
+          (navigation as any).navigate(ROUTES.OrderSuccess, { SuccessResponse: tempCard });
+        }, 300);
+      // }
+
     }
-    else if(url.url.includes("PaymentError") && !isPaymentProcessed){
+    else if (url.url.includes("PaymentError") && !isPaymentProcessed) {
       setIsPaymentProcessed(true);
       // Use any type to bypass TypeScript navigation issues
       (navigation as any).navigate(ROUTES.OrderNotCompleted);
     }
   };
 
-  if(currentUrl == null){
+  if (currentUrl == null) {
     return (
       <View style={styles.container}>
-        <Text style={{ ...globalTextStyles.bodyMedium }}>Loading...</Text>
+       <View style={styles.loader}>
+            <LoaderKit
+              style={{ width: 100, height: 100 }}
+              name={'BallSpinFadeLoader'}
+              color={'green'}
+            />
+          </View>
       </View>
     )
   }
@@ -148,7 +162,7 @@ const onNavigationStateChange = (url: any) => {
         {reloadWebView ? (
           <View style={styles.loader}>
             <LoaderKit
-              style={{width: 100, height: 100}}
+              style={{ width: 100, height: 100 }}
               name={'BallSpinFadeLoader'}
               color={'green'}
             />
@@ -156,7 +170,7 @@ const onNavigationStateChange = (url: any) => {
         ) : Platform.OS === 'ios' ? (
           <WebView
             ref={webViewRef}
-            source={{uri: currentUrl}}
+            source={{ uri: currentUrl }}
             useWebKit={true}
             javaScriptEnabled={true}
             domStorageEnabled={true}
@@ -185,7 +199,7 @@ const onNavigationStateChange = (url: any) => {
         ) : (
           <WebView
             ref={webViewRef}
-            source={{uri: currentUrl}}
+            source={{ uri: currentUrl }}
             useWebKit={true}
             javaScriptEnabled={true}
             domStorageEnabled={true}
@@ -224,6 +238,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: 'relative',
+    backgroundColor: 'white',
   },
   webviewContainer: {
     flex: 1,

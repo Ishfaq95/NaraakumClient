@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, FlatList,SafeAreaView, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid, ScrollView } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -39,7 +39,7 @@ const BeneficiariesScreen = () => {
   const [reportType, setReportType] = useState<any>('')
   const [medicalData, setMedicalData] = useState<any>({})
   const [isDownloading, setIsDownloading] = useState(false);
-   const [sheetHeight, setSheetHeight] = useState("65%");
+  const [sheetHeight, setSheetHeight] = useState("60%");
   const [beneficiaryForm, setBeneficiaryForm] = useState({
     name: '',
     relation: '',
@@ -51,25 +51,25 @@ const BeneficiariesScreen = () => {
   })
 
 
- useEffect(() => {
-  const showEvent = Platform.OS === 'ios' ? 'keyboardDidShow' : 'keyboardDidShow';
-  const hideEvent = Platform.OS === 'ios' ? 'keyboardDidHide' : 'keyboardDidHide';
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardDidShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardDidHide' : 'keyboardDidHide';
 
-  const keyboardShowListener = Keyboard.addListener(showEvent, () => {
-    if (focusedField === 'age') {
-      setSheetHeight('80%');
-    } else if (focusedField === 'idNumber' && beneficiaryForm.nationality === 'citizen') {
-      setSheetHeight('100%');
-    }
-  });
+    const keyboardShowListener = Keyboard.addListener(showEvent, () => {
+      if (focusedField === 'age' && Platform.OS === 'ios') {
+        setSheetHeight('80%');
+      } else if (focusedField === 'idNumber' && beneficiaryForm.nationality === 'citizen' && Platform.OS === 'ios') {
+        setSheetHeight('98%');
+      }
+    });
 
-  const keyboardHideListener = Keyboard.addListener(hideEvent, () => setSheetHeight('65%'));
+    const keyboardHideListener = Keyboard.addListener(hideEvent, () => setSheetHeight('60%'));
 
-  return () => {
-    keyboardShowListener.remove();
-    keyboardHideListener.remove();
-  };
-}, [focusedField, beneficiaryForm.nationality]);
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
+  }, [focusedField, beneficiaryForm.nationality]);
 
 
 
@@ -346,7 +346,7 @@ const BeneficiariesScreen = () => {
       // For Android 11+ (API 30+), WRITE_EXTERNAL_STORAGE is deprecated
       // and not needed for accessing Downloads folder
       const androidVersion = Number(Platform.Version);
-      
+
       if (androidVersion >= 30) {
         // Android 11+ - no permission needed for Downloads folder
         return true;
@@ -381,7 +381,7 @@ const BeneficiariesScreen = () => {
         // Check if we need permission (Android 10 and below)
         const androidVersion = Number(Platform.Version);
         const needsPermission = androidVersion < 30;
-        
+
         if (needsPermission) {
           const hasPermission = await requestStoragePermission();
           if (!hasPermission) {
@@ -617,7 +617,7 @@ const BeneficiariesScreen = () => {
         </View>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 20 }}>
           <TouchableOpacity onPress={() => HandleReportPress(item, 'report')} style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={[globalTextStyles.buttonSmall, { color: '#fff',  }]}>التقارير الطبية</Text>
+            <Text style={[globalTextStyles.buttonSmall, { color: '#fff', }]}>التقارير الطبية</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => HandleReportPress(item, 'history')} style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={[globalTextStyles.buttonSmall, { color: '#fff', }]}>التاريخ المرضي</Text>
@@ -790,49 +790,49 @@ const BeneficiariesScreen = () => {
       >
         <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
           <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
-          <Text style={styles.bottomSheetHeaderText}>بيانات المستفيد</Text>
+            <Text style={styles.bottomSheetHeaderText}>بيانات المستفيد</Text>
             <TouchableOpacity onPress={() => setOpenBottomSheet(false)}>
               <AntDesign name="close" size={24} color="#979e9eff" />
             </TouchableOpacity>
-            
+
           </View>
           <ScrollView
             style={{ flex: 1 }}
-            // contentContainerStyle={{ paddingBottom: 20 }}
+            contentContainerStyle={{ paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            >
+            // keyboardShouldPersistTaps="handled"
+          >
             <KeyboardAvoidingView
-            style={{ flex: 1 }}
-  behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-  keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+              // style={{ flex: 1 }}
+              // behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              // keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
             >
-            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-              <View style={styles.modalBackground}>
-                <View style={styles.modalContainer}>
-                  <AddBeneficiaryComponent
-                    onChangeTextName={(text) => updateBeneficiaryField('name', text)}
-                    nameValue={beneficiaryForm.name}
-                    onChangeTextRelation={(text) => updateBeneficiaryField('relation', text)}
-                    relationValue={beneficiaryForm.relation}
-                    onChangeTextAge={(text) => updateBeneficiaryField('age', text)}
-                    ageValue={beneficiaryForm.age}
-                    onChangeTextGender={(text) => updateBeneficiaryField('gender', text)}
-                    genderValue={beneficiaryForm.gender}
-                    onChangeTextInsurance={(text) => updateBeneficiaryField('insurance', text)}
-                    insuranceValue={beneficiaryForm.insurance}
-                    PressNationality={(value) => updateBeneficiaryField('nationality', value)}
-                    nationality={beneficiaryForm.nationality}
-                    SubmitButton={HandleSubmitFormData}
-                    idNumberValue={beneficiaryForm.idNumber}
-                    onChangeTextIdNumber={(text) => updateBeneficiaryField('idNumber', text)}
-                    setFocusedField={setFocusedField}
-                    isLoading={isLoading}
-                  />
+              <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+                <View style={styles.modalBackground}>
+                  <View style={styles.modalContainer}>
+                    <AddBeneficiaryComponent
+                      onChangeTextName={(text) => updateBeneficiaryField('name', text)}
+                      nameValue={beneficiaryForm.name}
+                      onChangeTextRelation={(text) => updateBeneficiaryField('relation', text)}
+                      relationValue={beneficiaryForm.relation}
+                      onChangeTextAge={(text) => updateBeneficiaryField('age', text)}
+                      ageValue={beneficiaryForm.age}
+                      onChangeTextGender={(text) => updateBeneficiaryField('gender', text)}
+                      genderValue={beneficiaryForm.gender}
+                      onChangeTextInsurance={(text) => updateBeneficiaryField('insurance', text)}
+                      insuranceValue={beneficiaryForm.insurance}
+                      PressNationality={(value) => updateBeneficiaryField('nationality', value)}
+                      nationality={beneficiaryForm.nationality}
+                      SubmitButton={HandleSubmitFormData}
+                      idNumberValue={beneficiaryForm.idNumber}
+                      onChangeTextIdNumber={(text) => updateBeneficiaryField('idNumber', text)}
+                      setFocusedField={setFocusedField}
+                      isLoading={isLoading}
+                    />
+                  </View>
                 </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
           </ScrollView>
         </View>
       </CustomBottomSheet>

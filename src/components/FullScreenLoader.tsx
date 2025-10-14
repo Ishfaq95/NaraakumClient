@@ -7,6 +7,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import LoaderKit from 'react-native-loader-kit';
 
 interface FullScreenLoaderProps {
   visible: boolean;
@@ -34,7 +35,12 @@ const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({ visible }) => {
     >
       <View style={styles.container}>
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#008080" />
+          {/* <ActivityIndicator size="large" color="#008080" /> */}
+          <LoaderKit
+              style={{ width: 100, height: 100 }}
+              name={'BallSpinFadeLoader'}
+              color={'green'}
+            />
         </View>
       </View>
     </Modal>
@@ -44,15 +50,15 @@ const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({ visible }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   loaderContainer: {
-    backgroundColor: 'white',
+    // backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
-    elevation: 3,
+    // elevation: 3,
     // Removed complex shadows that cause performance issues
   },
 });
