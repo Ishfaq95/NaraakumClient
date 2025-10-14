@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     fontFamily: CAIRO_FONT_FAMILY.bold,
     color: '#333',
     textAlign: 'center',
-    marginBottom: 12,
+    // marginBottom: 12,
   },
   message: {
     fontSize: 16,

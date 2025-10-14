@@ -252,7 +252,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       } else {
         updatedCardArray[selectedIndex] = {
           ...updatedCardArray[selectedIndex],
-          "CatNationalityId": user?.CatNationalityId, 
+          "CatNationalityId": user?.CatNationalityId,
           "CatServiceId": service.Id,
           "ServiceCharges": service.Price,
           "OrganizationServiceId": service.OrganizationServiceId,
@@ -266,30 +266,30 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }
 
   const calculateTotalPrice = (serviceServe: any[]): number => {
-    if (serviceServe.length==0) return 0;
+    if (serviceServe.length == 0) return 0;
     // const prices = serviceServe.map(price => parseFloat(price.Price) || 0);
     return serviceServe.reduce((sum, price) => sum + price.Price, 0);
   };
 
-  const checkSelectedSlotInfo=()=>{
-    let returnVal=false
-    if(selectedSlotInfo){
-      returnVal= selectedSlotInfo?.providerId === provider.UserId
-    }else {
-      returnVal= selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId
+  const checkSelectedSlotInfo = () => {
+    let returnVal = false
+    if (selectedSlotInfo) {
+      returnVal = selectedSlotInfo?.providerId === provider.UserId
+    } else {
+      returnVal = selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId
     }
-    
+
     return returnVal;
   }
 
-  const checkSelectedService=(item:any)=>{
-    let returnVal=false
-    if(selectedSlotInfo){
-      returnVal= selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
-    }else if(selectedService) {
-      returnVal= selectedService?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
-    }else{
-      returnVal= selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId && selectedCard[0]?.CatServiceId == item.Id
+  const checkSelectedService = (item: any) => {
+    let returnVal = false
+    if (selectedSlotInfo) {
+      returnVal = selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
+    } else if (selectedService) {
+      returnVal = selectedService?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
+    } else {
+      returnVal = selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId && selectedCard[0]?.CatServiceId == item.Id
     }
     return returnVal;
   }
@@ -300,7 +300,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       "ServiceProviderLogininfoId": id,
     }
     const response = await bookingService.addToFavorites(payload);
-    if(response.ResponseStatus.STATUSCODE == 200){
+    if (response.ResponseStatus.STATUSCODE == 200) {
       getUserFavorites && getUserFavorites();
     }
   }
@@ -310,13 +310,13 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       "UserFavoritesId": id,
     }
     const response = await profileService.removeFromFavorites(payload);
-    if(response.ResponseStatus.STATUSCODE == 200){
+    if (response.ResponseStatus.STATUSCODE == 200) {
       getUserFavorites && getUserFavorites();
     }
   }
-  
 
-  // console.log("provider",provider)
+
+  console.log("provider", provider)
 
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
@@ -325,7 +325,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         {checkSelectedSlotInfo() && <View style={{ position: 'absolute', right: 10, bottom: 10, alignItems: 'center', justifyContent: 'center' }}>
           <CheckIcon width={40} height={40} color="#fff" />
         </View>}
-        <View style={{ width: '30%' }}>
+        <View style={{ width: '30%', borderRadius: 8, overflow: 'hidden' }}>
           {provider.ImagePath ? (
             <Image
               source={{ uri: `${MediaBaseURL}/${provider.ImagePath}` }}
@@ -335,6 +335,13 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           ) : (
             <UserPlaceholder width={80} height={80} />
           )}
+          <View style={{ position: 'absolute', left: 0, bottom: 0, width: 40, height: 35, borderRadius: 8 }}>
+            {provider.OrgImagePath && <Image
+              source={{ uri: `${MediaBaseURL}/${provider.OrgImagePath}` }}
+              style={{ height: 35, width: 40 }}
+              resizeMode="cover"
+            />}
+          </View>
         </View>
         <View style={{ width: '60%' }}>
           <Text style={styles.providerName}>{provider.FullnameSlang}</Text>
@@ -345,12 +352,12 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
           </View>
         </View>
-        <View style={{ width: '10%',alignItems:'flex-end' }}>
+        <View style={{ width: '10%', alignItems: 'flex-end' }}>
           <TouchableOpacity onPress={() => {
             const isFavorite = userFavorites?.find((item: any) => item.ServiceProviderLoginInfoId == provider.UserId);
-            if(isFavorite){
+            if (isFavorite) {
               handleRemoveFromFavorites(isFavorite.Id);
-            }else{
+            } else {
               handleAddToFavorites(provider.UserId);
             }
           }}>
@@ -367,7 +374,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             </Text>
           </View>
         </>
-        : selectedCard[0].CatLevelId == 3 ?
+        : selectedCard[0]?.CatLevelId == 3 ?
           <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
             <Text style={[styles.priceText, { textAlign: 'left' }]}>
               {isRTL ? `السعر ${Number(provider.ServiceServe[0].Price).toFixed(0)}` : `Price ${Number(provider.ServiceServe[0].Price).toFixed(0)}`}
@@ -396,9 +403,28 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     </>
   ), [provider, isProviderSelected, selectedSlotInfo, selectedService, userFavorites]);
 
+  const getSpecialtiesArray = () => {
+    const serviceServe = provider?.ServiceServe.map((item: any) => {
+      return {
+        TitleSlang: item.ServiceTitleSlang
+      }
+    });
+
+    const specialties = [
+      ...serviceServe,
+      ...provider?.Specialties,
+      {
+        TitleSlang: provider?.OrganizationTitleSlang
+      }
+    ]
+
+
+    return specialties || [];
+  }
+
   const specialtiesSection = useMemo(() => (
     <View style={styles.specialtyContainer}>
-      {provider?.Specialties?.length > 2 && <TouchableOpacity
+      {getSpecialtiesArray()?.length > 2 && <TouchableOpacity
         onPress={() => scrollSpecialties('left')}
         style={[styles.scrollButton, styles.leftScrollButton]}
         activeOpacity={0.7}
@@ -417,17 +443,17 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         contentContainerStyle={styles.specialtiesContent}
       >
         <View style={styles.specialtiesRow}>
-          {provider?.Specialties?.map((spec, index) => (
-            <View key={`${spec.CatSpecialtyId}-${spec.UserloginInfoId}-${index}`} style={styles.specialtyPill}>
+          {getSpecialtiesArray()?.map((spec, index) => (
+            <View key={`${spec.TitleSlang}-${index}`} style={styles.specialtyPill}>
               <Text style={styles.specialtyText}>
-                {isRTL ? spec.TitleSlang : spec.TitlePlang}
+                {spec.TitleSlang}
               </Text>
             </View>
           ))}
         </View>
       </ScrollView>
 
-      {provider?.Specialties?.length > 2 && <TouchableOpacity
+      {getSpecialtiesArray()?.length > 2 && <TouchableOpacity
         onPress={() => scrollSpecialties('right')}
         style={[styles.scrollButton, styles.rightScrollButton]}
         activeOpacity={0.7}
@@ -536,7 +562,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
             "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
             "AvailabilityId": availability.Id,
-            "CatServiceId": selectedService? getServiceId?.Id : updatedCardArray[selectedIndex].CatServiceId,
+            "CatServiceId": selectedServiceValues?.Id,
             "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
             "ServiceProviderFullnameSlang": provider.FullnameSlang,
           };
@@ -674,8 +700,8 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
               const isReserved = getLocalReservedSlots(provider.UserId, slot);
               const isBooked = slot.is_booked;
 
-              if(selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId && slot.fullTime == selectedCard[0]?.SchedulingTime){
-                isSelected=true;
+              if (selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId && slot.fullTime == selectedCard[0]?.SchedulingTime) {
+                isSelected = true;
               }
 
               if (isDisabled) {
@@ -760,9 +786,9 @@ const styles = StyleSheet.create({
   providerImage: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: 8,
     backgroundColor: '#e0e0e0',
-    marginBottom: 8,
+    // marginBottom: 8,
   },
   providerName: {
     ...globalTextStyles.bodyMedium,
@@ -853,7 +879,7 @@ const styles = StyleSheet.create({
   },
   timeButtonText: {
     color: '#179c8e',
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
     fontSize: 14,
     textAlign: 'center',
   },

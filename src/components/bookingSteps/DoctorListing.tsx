@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView, Dimensions, I18nManager, Alert, Modal, SafeAreaView } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text, Image, ScrollView, Dimensions, I18nManager, Alert, Modal, SafeAreaView, Animated, Easing } from 'react-native';
 import moment, { Moment } from 'moment';
 import 'moment-hijri';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
@@ -17,7 +17,7 @@ import FullScreenLoader from "../FullScreenLoader";
 import { useTranslation } from 'react-i18next';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { generatePayloadforOrderMainBeforePayment } from '../../shared/services/service';
-import { setApiResponse, prependCardItems, addCardItem } from '../../shared/redux/reducers/bookingReducer';
+import { setApiResponse, prependCardItems, addCardItem, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
 import { store } from '../../shared/redux/store';
 import HospitalCard from './HospitalCard';
 import HomeDialysis from './HomeDialysis';
@@ -31,6 +31,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { ROUTES } from '../../shared/utils/routes';
 import CheckIcon from '../../assets/icons/CheckIcon';
+import LinearGradient from 'react-native-linear-gradient';
 // import BottomSheet from '@gorhom/bottom-sheet';
 
 const CARD_MARGIN = 2;
@@ -124,6 +125,138 @@ const TIME_SLOTS = [
   { label: '03:00 م', value: '15:00' },
   { label: '04:00 م', value: '16:00' },
 ];
+
+// Shimmer placeholder component
+const ShimmerPlaceholder = ({ width = 120, height = 14, borderRadius = 6 }: { width?: number | string; height?: number; borderRadius?: number; }) => {
+  const shimmerWidth = typeof width === 'string' ? 200 : width;
+  const translateX = useRef(new Animated.Value(-shimmerWidth)).current;
+
+  useEffect(() => {
+    const loopAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateX, {
+          toValue: shimmerWidth,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateX, {
+          toValue: -shimmerWidth,
+          duration: 0,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loopAnimation.start();
+    return () => {
+      loopAnimation.stop();
+    };
+  }, [translateX, shimmerWidth]);
+
+  return (
+    <View style={{ width: width as any, height, borderRadius, overflow: 'hidden', backgroundColor: '#E6E6E6' }}>
+      <Animated.View style={{
+        width: '40%',
+        height: '100%',
+        transform: [{ translateX }],
+      }}>
+        <LinearGradient
+          colors={["#E6E6E6", "#F5F5F5", "#E6E6E6"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </Animated.View>
+    </View>
+  );
+};
+
+// Card shimmer for service providers and hospitals
+const CardShimmer = () => {
+  return (
+    <View style={{
+      backgroundColor: '#fff',
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    }}>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        {/* Avatar shimmer */}
+        <ShimmerPlaceholder width={80} height={80} borderRadius={40} />
+
+        {/* Content shimmer */}
+        <View style={{ flex: 1, gap: 8 }}>
+          <ShimmerPlaceholder width="70%" height={18} borderRadius={4} />
+          <ShimmerPlaceholder width="50%" height={14} borderRadius={4} />
+          <ShimmerPlaceholder width="40%" height={14} borderRadius={4} />
+        </View>
+      </View>
+
+      {/* Slots shimmer */}
+      <View style={{ marginTop: 12, gap: 8 }}>
+        <ShimmerPlaceholder width="30%" height={14} borderRadius={4} />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <ShimmerPlaceholder width={80} height={36} borderRadius={8} />
+          <ShimmerPlaceholder width={80} height={36} borderRadius={8} />
+          <ShimmerPlaceholder width={80} height={36} borderRadius={8} />
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// Home Dialysis Card Shimmer
+const HomeDialysisCardShimmer = () => {
+  return (
+    <View style={{
+      backgroundColor: '#fff',
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    }}>
+      <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+        {/* Avatar shimmer */}
+        <ShimmerPlaceholder width={60} height={60} borderRadius={30} />
+
+        {/* Content shimmer */}
+        <View style={{ flex: 1, gap: 8 }}>
+          <ShimmerPlaceholder width="60%" height={18} borderRadius={4} />
+          <ShimmerPlaceholder width="40%" height={14} borderRadius={4} />
+        </View>
+      </View>
+
+      {/* Buttons shimmer */}
+      <View style={{ marginTop: 12, gap: 8 }}>
+        <ShimmerPlaceholder width="100%" height={44} borderRadius={8} />
+        <ShimmerPlaceholder width="100%" height={44} borderRadius={8} />
+      </View>
+    </View>
+  );
+};
+
+// List shimmer loader
+const ListShimmerLoader = ({ cardType = 'default' }: { cardType?: 'default' | 'homeDialysis' }) => {
+  const ShimmerCard = cardType === 'homeDialysis' ? HomeDialysisCardShimmer : CardShimmer;
+
+  return (
+    <View style={{ padding: 16 }}>
+      <ShimmerCard />
+      <ShimmerCard />
+      <ShimmerCard />
+    </View>
+  );
+};
 
 const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [selectedDate, setSelectedDate] = useState<Moment>(moment());
@@ -339,7 +472,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
   const createOrderMainBeforePayment = async () => {
     if (isProcessing) return; // Prevent multiple calls
-    
+
     setIsProcessing(true);
     try {
       const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
@@ -777,7 +910,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
   const handleNext = useCallback(() => {
     if (isProcessing) return; // Prevent multiple clicks
-    
+
     if (displayCategory?.Display == "CP") {
       const serviceId = SelectedCardItem[0]?.CatServiceId;
       if (!serviceId) {
@@ -792,11 +925,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   }, [CardArray, createOrderMainBeforePayment, isProcessing]);
 
   const handleBack = () => {
+    setSelectedUniqueId(selectedUniqueId);
     onPressBack();
   };
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
+  const handleSearch = () => {
     fetchServiceProviders(); // Refetch with new search query
   };
 
@@ -939,7 +1072,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
   const getNextButtonEnabled = useCallback(() => {
     if (isProcessing) return true; // Disable button while processing
-    
+
     if (displayCategory?.Display == "CP") {
       return SelectedCardItem[0]?.CatServiceId == 0 || SelectedCardItem[0]?.CatServiceId == null || SelectedCardItem[0]?.CatServiceId == "" || SelectedCardItem[0]?.CatServiceId == undefined || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == 0 || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == null || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == "" || SelectedCardItem[0]?.ServiceProviderUserloginInfoId == undefined
     } else {
@@ -1026,8 +1159,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           <View style={styles.searchInputContainer}>
             <SearchInput
               value={searchQuery}
-              onChangeText={handleSearch}
-              placeholder="ابحث عن..."
+              onChangeText={(text) => {
+                setSearchQuery(text)
+                if(text == ""){
+                  handleSearch()
+                }
+              }}
+              onSearch={handleSearch}
+              placeholder="بحث عن طبيب "
               style={styles.searchInput}
             />
           </View>
@@ -1054,11 +1193,17 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               maxToRenderPerBatch={5}
               windowSize={10}
               initialNumToRender={3}
-              ListEmptyComponent={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
-                  لا يوجد نتائج
-                </Text>
-              </View>}
+              ListEmptyComponent={
+                (loading || loader2 || slotsLoaded) ? (
+                  <ListShimmerLoader cardType="default" />
+                ) : (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
+                      لا يوجد نتائج
+                    </Text>
+                  </View>
+                )
+              }
               onRefresh={fetchData}
               refreshing={refreshing}
               renderItem={({ item, index }) => {
@@ -1125,6 +1270,17 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 maxToRenderPerBatch={5}
                 windowSize={10}
                 initialNumToRender={3}
+                ListEmptyComponent={
+                  (loading || loader2 || slotsLoaded) ? (
+                    <ListShimmerLoader cardType="homeDialysis" />
+                  ) : (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
+                        لا يوجد نتائج
+                      </Text>
+                    </View>
+                  )
+                }
                 onRefresh={fetchData}
                 refreshing={refreshing}
                 renderItem={({ item, index }) => {
@@ -1145,6 +1301,17 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 refreshing={refreshing}
                 windowSize={10}
                 initialNumToRender={3}
+                ListEmptyComponent={
+                  (loading || loader2 || slotsLoaded) ? (
+                    <ListShimmerLoader cardType="default" />
+                  ) : (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
+                        لا يوجد نتائج
+                      </Text>
+                    </View>
+                  )
+                }
                 renderItem={({ item, index }) => {
                   const providerAvailability = availability.flatMap(avail =>
                     avail.Detail.filter((detail: any) => detail.OrganizationId === item.OrganizationId)
@@ -1161,19 +1328,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 }}
                 contentContainerStyle={{ padding: 16 }}
                 showsVerticalScrollIndicator={false}
-                ListEmptyComponent={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ ...globalTextStyles.bodyLarge, color: '#dc3545' }}>
-                    لا يوجد نتائج
-                  </Text>
-                </View>}
               />
         }
       </View>
       {/* } */}
       <View style={styles.BottomContainer}>
-        {/* <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>{t('back')}</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.nextButton, getNextButtonEnabled() ? styles.disabledNextButton : {}]}
           onPress={handleNext}
@@ -1589,7 +1751,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   backButton: {
-    width: "34%",
+    width: "30%",
     height: 50,
     borderRadius: 8,
     borderWidth: 1,
@@ -1598,7 +1760,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   nextButton: {
-    width: "100%",
+    width: "68%",
     height: 50,
     alignItems: "center",
     justifyContent: "center",
@@ -1608,7 +1770,7 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#179c8e',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   nextButtonText: {
     color: '#fff',

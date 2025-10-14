@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TextInput, StyleSheet, I18nManager, ViewStyle } from "react-native";
+import { View, TextInput, StyleSheet, I18nManager, ViewStyle, TouchableOpacity } from "react-native";
 import SearchIcon from "../../assets/icons/SearchIcon";
 import { globalTextStyles } from "../../styles/globalStyles";
 
@@ -8,14 +8,15 @@ interface SearchInputProps {
   value: string;
   onChangeText: (text: string) => void;
   style?: ViewStyle;
+  onSearch?: () => void;
 }
 
-const SearchInput: React.FC<SearchInputProps> = ({ placeholder, value, onChangeText, style }) => {
+const SearchInput: React.FC<SearchInputProps> = ({ placeholder, value, onChangeText, style, onSearch }) => {
   return (
     <View style={[styles.container, style, I18nManager.isRTL && styles.containerRTL]}>
-      <View style={styles.iconContainer}>
+      <TouchableOpacity onPress={onSearch} style={styles.iconContainer}>
         <SearchIcon width={22} height={22} color="#B6E2DF" />
-      </View>
+      </TouchableOpacity>
       <TextInput
         style={[styles.input, I18nManager.isRTL && styles.inputRTL]}
         placeholder={placeholder}
@@ -51,10 +52,11 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    // width: "80%",
     ...globalTextStyles.bodyMedium,
     color: "#fff",
     paddingVertical: 0,
-    paddingHorizontal: 8,
+    // paddingHorizontal: 8,
   },
   inputRTL: {
     textAlign: "right",

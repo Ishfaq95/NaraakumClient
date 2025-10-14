@@ -278,7 +278,7 @@ const BookingScreen = ({ navigation, route }: any) => {
     )
   }
 
-  const onPressEditService = (item: any) => {
+  const onPressEditService = (item?: any) => {
     setOnEditService(true);
 
     setCurrentStep(1);
@@ -288,7 +288,7 @@ const BookingScreen = ({ navigation, route }: any) => {
   const renderStep = () => {
     switch (currentStep) {
       case 1: return <Specialties onPressSpecialty={onPressSpecialty} onContinueWithService={onContinueWithService} onSelectIndividualService={onSelectService} />;
-      case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => setCurrentStep(1)} />;
+      case 2: return <DoctorListing onPressNext={() => setCurrentStep(3)} onPressBack={() => onPressEditService()} />;
       case 3: return <ReviewOrder onPressNext={() => setCurrentStep(4)} onPressEditService={(item: any) => { onPressEditService(item) }} onPressBack={() => setCurrentStep(2)} />;
       case 4: return <Payment onPressNext={onPressCheckoutOrder} onPressBack={() => setCurrentStep(3)} />;
       default: return null;

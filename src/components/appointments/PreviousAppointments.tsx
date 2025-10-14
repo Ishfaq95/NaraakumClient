@@ -723,10 +723,10 @@ const PreviousAppointments: React.FC<PreviousAppointmentsProps> = ({ userId, onJ
 
           <ScrollView
             ref={ratingScrollViewRef}
-            style={{ flexGrow: 1, flex: 1 }}
+            style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingBottom: keyboardHeight }}
+            // contentContainerStyle={{ paddingBottom: keyboardHeight }}
           >
             <View style={{ flex: 1, paddingHorizontal: 16 }}>
               <View style={{ flex: 1 }}>

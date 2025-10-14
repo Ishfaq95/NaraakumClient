@@ -174,9 +174,6 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
           <View style={{ width: '70%', height: '100%',alignItems: 'flex-start',justifyContent: 'center' }}>
             <Text style={[styles.title, isSelected && styles.selectedTitle]} numberOfLines={2}>{cleanTitle}</Text>
           </View>
-
-
-
         </View>
       </TouchableOpacity>
     );
