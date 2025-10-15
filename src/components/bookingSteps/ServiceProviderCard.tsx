@@ -273,10 +273,13 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
   const checkSelectedSlotInfo = () => {
     let returnVal = false
+    const formattedSelectedDate = selectedDate.format('YYYY-MM-DD');
+    
     if (selectedSlotInfo) {
       returnVal = selectedSlotInfo?.providerId === provider.UserId
     } else {
-      returnVal = selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId
+      returnVal = selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId && 
+                  selectedCard[0]?.SchedulingDate === formattedSelectedDate
     }
 
     return returnVal;
@@ -284,13 +287,21 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
   const checkSelectedService = (item: any) => {
     let returnVal = false
-    if (selectedSlotInfo) {
-      returnVal = selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
-    } else if (selectedService) {
-      returnVal = selectedService?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
-    } else {
-      returnVal = selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId && selectedCard[0]?.CatServiceId == item.Id
+    const formattedSelectedDate = selectedDate.format('YYYY-MM-DD');
+
+    if(selectedCard[0]?.SchedulingDate === formattedSelectedDate){
+      if (selectedSlotInfo) {
+        returnVal = selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
+      } else if (selectedService) {
+        returnVal = selectedService?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
+      } else {
+        returnVal = selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId && 
+                    selectedCard[0]?.CatServiceId == item.Id 
+                    
+      }
     }
+    
+   
     return returnVal;
   }
 
@@ -314,9 +325,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       getUserFavorites && getUserFavorites();
     }
   }
-
-
-  console.log("provider", provider)
 
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
@@ -610,8 +618,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
       dispatch(addCardItem(updatedCardArray));
     }
-
-
   }, [provider, onSelectSlot, CardArray, selectedService, services, selectedDate, availability, dispatch]);
 
   // Function to convert Arabic 12-hour time to 24-hour format
@@ -946,6 +952,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#008080',
   },
   selectedProviderCard: {
+    borderRadius:8,
     backgroundColor: 'rgba(35, 162, 164, .4)',
   },
   selectedIndicator: {

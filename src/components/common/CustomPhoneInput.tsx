@@ -12,7 +12,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import CustomBottomSheet from './CustomBottomSheet';
 
 interface Country {
@@ -1018,10 +1018,10 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
     setShowCountryModal(false);
     setSearchQuery('');
     onCountryChange?.(country);
-    
+
     // Clear the phone number when country changes
     onChangeText('');
-    
+
     // Focus on input after country selection
     setTimeout(() => {
       inputRef.current?.focus();
@@ -1030,13 +1030,13 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
 
   const formatPhoneNumber = (input: string): string => {
     const digits = input.replace(/\D/g, '');
-    
+
     if (digits.length === 0) return '';
-    
+
     const pattern = selectedCountry.pattern;
     let formatted = '';
     let digitIndex = 0;
-    
+
     for (let i = 0; i < pattern.length && digitIndex < digits.length; i++) {
       if (pattern[i] === '#') {
         formatted += digits[digitIndex];
@@ -1045,7 +1045,7 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
         formatted += pattern[i];
       }
     }
-    
+
     return formatted;
   };
 
@@ -1081,7 +1081,7 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
   return (
     <View style={[styles.container, style]}>
       {/* Phone Input Field */}
-      <View style={[styles.inputContainer,inputContainerStyle, error && styles.inputError]}>
+      <View style={[styles.inputContainer, inputContainerStyle, error && styles.inputError]}>
         {/* Country Selector */}
         <TouchableOpacity
           style={styles.countrySelector}
@@ -1091,7 +1091,9 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
           disabled={disabled}
         >
           <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
-          <Text style={styles.countryCode}>{selectedCountry.dialCode}</Text>
+          <Text style={[styles.countryCode]}>+</Text>
+          <Text style={styles.countryCode}>{selectedCountry.dialCode.replace(/^\+/, '')}</Text>
+
           <Text style={styles.dropdownIcon}>▼</Text>
         </TouchableOpacity>
 
@@ -1155,7 +1157,7 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
         </View>
       </CustomBottomSheet>
 
-      
+
     </View>
   );
 };

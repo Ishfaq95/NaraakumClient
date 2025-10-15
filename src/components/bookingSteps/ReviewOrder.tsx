@@ -26,16 +26,18 @@ import Dropdown from "../../components/common/Dropdown";
 import { profileService } from '../../services/api/ProfileService';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 // Conditionally import TrackPlayerService only for Android
-const TrackPlayerService = Platform.OS === 'android' 
-  ? require('../../services/TrackPlayerService').TrackPlayerService 
+const TrackPlayerService = Platform.OS === 'android'
+  ? require('../../services/TrackPlayerService').TrackPlayerService
   : {
     // Mock implementation for iOS
-    setupPlayer: async () => {},
-    stop: async () => {},
-    play: async () => {},
-    addTrack: async () => {},
+    setupPlayer: async () => { },
+    stop: async () => { },
+    play: async () => { },
+    addTrack: async () => { },
     getDuration: async () => 0,
     getPosition: async () => 0,
   };
@@ -95,8 +97,8 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const [apiErrorDoctor, setApiErrorDoctor] = useState('');
   const [apiErrorMessage, setApiErrorMessage] = useState('');
 
-  console.log("CardArray",CardArray)
-  
+  console.log("CardArray", CardArray)
+
   const Relation = [
     { label: 'اختر من فضلك', value: '' },
     { label: 'أب', value: '1' },
@@ -312,9 +314,9 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
           default: return 'audio/mpeg';
         }
       };
-      
+
       let responseData;
-      
+
       if (Platform.OS === 'ios') {
         const formData = new FormData();
 
@@ -340,12 +342,12 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
             'Authorization': `Bearer${store.getState().root.user.mediaToken}`,
           },
         });
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
         }
-        
+
         responseData = await response.json();
       } else {
         const finalPath = await RNFetchBlob.fs.exists(tempFilePath) ? tempFilePath : cleanPath;
@@ -369,13 +371,13 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
 
         responseData = JSON.parse(response.data);
       }
-      
+
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
         const uploadedUrl = responseData.Data?.Path || responseData.Data?.AbsolutePath;
-        
+
         // Format the URL with the duration using ^ as separator
         const formattedUrl = `${uploadedUrl}^${audioDuration}`;
-        
+
         // Update the audio file with the formatted URL
         updateAudioFile(formattedUrl);
       } else {
@@ -537,7 +539,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
 
   // Audio playback using react-native-track-player
   const playAudioWithTrackPlayer = async (audioUrl: string) => {
-    
+
     try {
       await TrackPlayerService.setupPlayer();
 
@@ -586,36 +588,36 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   };
 
 
-// Alternative implementation using Map for better performance with large datasets
-const filterAndGroupItemsOptimized = (data:any) => {
-  // Extract all items from the main array
-  const allItems:any[] = [];
-  
-  data.forEach((entry:any) => {
-    if (entry.items && Array.isArray(entry.items)) {
-      allItems.push(...entry.items);
-    }
-  });
-  
-  // Use Map to group items efficiently
-  const groupMap = new Map();
-  
-  allItems.forEach((item:any) => {
-    const { Address, SchedulingDate, SchedulingEndTime } = item;
-    
-    // Create a unique key for grouping
-    const groupKey = `${Address}|${SchedulingDate}|${SchedulingEndTime}`;
-    
-    if (groupMap.has(groupKey)) {
-      groupMap.get(groupKey).push(item);
-    } else {
-      groupMap.set(groupKey, [item]);
-    }
-  });
-  
-  // Convert Map values to array
-  return Array.from(groupMap.values());
-}
+  // Alternative implementation using Map for better performance with large datasets
+  const filterAndGroupItemsOptimized = (data: any) => {
+    // Extract all items from the main array
+    const allItems: any[] = [];
+
+    data.forEach((entry: any) => {
+      if (entry.items && Array.isArray(entry.items)) {
+        allItems.push(...entry.items);
+      }
+    });
+
+    // Use Map to group items efficiently
+    const groupMap = new Map();
+
+    allItems.forEach((item: any) => {
+      const { Address, SchedulingDate, SchedulingEndTime } = item;
+
+      // Create a unique key for grouping
+      const groupKey = `${Address}|${SchedulingDate}|${SchedulingEndTime}`;
+
+      if (groupMap.has(groupKey)) {
+        groupMap.get(groupKey).push(item);
+      } else {
+        groupMap.set(groupKey, [item]);
+      }
+    });
+
+    // Convert Map values to array
+    return Array.from(groupMap.values());
+  }
 
   useEffect(() => {
     const getUnPaidUserOrders = async () => {
@@ -670,7 +672,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
             }
           });
 
-          
+
 
           // Ensure same ItemUniqueId for items matching Address, SchedulingDate, and SchedulingEndTime
           const keyToUniqueIdMap: Map<string, string> = new Map();
@@ -687,7 +689,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
           });
 
           const groupedArray: any = groupArrayByUniqueIdAsArray(updatedCardItems);
-         
+
           setShowGroupedArray(groupedArray);
 
           dispatch(addCardItem(updatedCardItems));
@@ -745,7 +747,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
           onPress={() => setSelectedIndex(index)}
           activeOpacity={0.8}
         >
-          {imagePath ? <Image source={{ uri: imagePath }} style={styles.doctorImage} /> : <View style={{...styles.doctorImage, justifyContent: 'center', alignItems: 'center',backgroundColor: '#e4f1ef'}}><Ionicons name="person-sharp" size={28} color="#23a2a4" /></View>}
+          {imagePath ? <Image source={{ uri: imagePath }} style={styles.doctorImage} /> : <View style={{ ...styles.doctorImage, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e4f1ef' }}><Ionicons name="person-sharp" size={28} color="#23a2a4" /></View>}
           <View style={styles.doctorInfoCol}>
             <Text style={[styles.doctorName, selectedIndex === index && { color: '#fff' }]}>{t('service_provider')}</Text>
             <Text style={[styles.serviceName, selectedIndex === index && { color: '#fff' }]}>{name}</Text>
@@ -784,10 +786,10 @@ const filterAndGroupItemsOptimized = (data:any) => {
   const updateAudioFile = (audioFile: any) => {
     // Extract the URL part from the audioFile (which has format "url^duration")
     const audioUrl = getAudioUrl(audioFile);
-    
+
     // Set the URL for playback
     setUploadedFileUrl(audioUrl);
-    
+
     // Get the duration from the audioFile
     const duration = getAudioDuration(audioFile);
     setAudioDuration(duration);
@@ -801,9 +803,9 @@ const filterAndGroupItemsOptimized = (data:any) => {
         ...updatedCardArray[index],
         AudioDescription: audioFile, // Store the full string with URL and duration
       };
-      
+
       dispatch(addCardItem(updatedCardArray));
-      
+
       // Show success message after updating Redux
       Alert.alert('Success', 'Audio file uploaded successfully!');
     }
@@ -845,7 +847,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
 
     const response = await bookingService.updateOrderMainBeforePayment(payload);
 
-    if(response.StatusCode.STATUSCODE == 10025){
+    if (response.StatusCode.STATUSCODE == 10025) {
       setApiError(true);
       setApiErrorDoctor(response.Data[0].ServiceProviderNameSlang);
       setApiErrorMessage("لديه معايير لا يحققها المريض");
@@ -1022,7 +1024,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
     if (duration) {
       return parseInt(duration);
     }
-    
+
     return 0;
   };
 
@@ -1038,19 +1040,19 @@ const filterAndGroupItemsOptimized = (data:any) => {
     if (selectedDoctor) {
       const mySelfOrOther = selectedDoctor.items[0].PatientUserProfileInfoId == user.UserProfileInfoId ? 'myself' : 'other';
       setSelected(mySelfOrOther);
-      
+
       // Get audio description if available
       const audioDescription = selectedDoctor.items[0].AudioDescription;
       if (audioDescription) {
         setUploadedFileUrl(getAudioUrl(audioDescription));
-        
+
         // Get audio duration directly
         const duration = getAudioDuration(audioDescription);
         if (duration > 0) {
           setAudioDuration(duration);
         }
       }
-      
+
       if (mySelfOrOther == 'other') {
         setBeneficiary('former')
         setSelectedBeneficiary(selectedDoctor.items[0].PatientUserProfileInfoId)
@@ -1058,30 +1060,23 @@ const filterAndGroupItemsOptimized = (data:any) => {
       }
     }
   }, [selectedDoctor]);
-  
-  // // Add another effect to update duration when uploadedFileUrl changes
-  // useEffect(() => {
-  //   if (uploadedFileUrl) {
-  //     const fetchDuration = async () => {
-  //       const duration = await getAudioDuration(uploadedFileUrl);
-  //       if (duration > 0) {
-  //         setAudioDuration(duration);
-  //       }
-  //     };
-      
-  //     fetchDuration();
-  //   }
-  // }, [uploadedFileUrl]);
 
-  const getSameServicesWithSameDate = ()=>{
+  const getSameServicesWithSameDate = () => {
     const sameServices = CardArray.filter((item: any) => item.SchedulingDate == selectedDoctor.items[0].SchedulingDate);
     return sameServices;
   }
 
+  const handleDeleteUploadedAudio = () => {
+    setUploadedFileUrl(null);
+    setAudioDuration(0);
+    setAudioCurrentTime(0);
+    setAudioProgress(0);
+    setIsPlayingAudio(false);
+  }
 
   return (
     <View style={styles.container}>
-      <View style={{ height: 120, width: "100%", alignItems: "flex-start", backgroundColor: "#e4f1ef" }}>
+      <View style={{ height: 110, width: "100%", borderRadius: 10, marginBottom: 10, alignItems: "flex-start", backgroundColor: "#e4f1ef" }}>
         <FlatList
           data={showGroupedArray}
           renderItem={renderDoctorTag}
@@ -1101,6 +1096,8 @@ const filterAndGroupItemsOptimized = (data:any) => {
             let displayDate = '';
             let displayTime = '';
 
+            console.log("filteredItems", filteredItems)
+
             if (item.SchedulingDate && item.SchedulingTime) {
               displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
               displayTime = convert24HourToArabicTime(item.SchedulingTime);
@@ -1109,22 +1106,30 @@ const filterAndGroupItemsOptimized = (data:any) => {
             return (
               <View style={styles.detailsCard}>
                 <View style={styles.detailsHeader}>
-                  <Text style={styles.detailsHeaderText}>الخدمات المختارة (1)</Text>
-                  <TouchableOpacity onPress={()=>{
+                  <Text style={styles.detailsHeaderText}>الخدمات المختارة ({filteredItems.length})</Text>
+                  <TouchableOpacity onPress={() => {
                     dispatch(setSelectedUniqueId(item.ItemUniqueId));
-                    onPressEditService(item)}} style={styles.editButton}>
-                    <Text style={styles.editButtonText}>✎</Text>
+                    onPressEditService(item)
+                  }} style={styles.editButton}>
+                    <MaterialIcons name="edit" size={20} color="black" />
                   </TouchableOpacity>
                 </View>
                 {filteredItems.map((item: any, index: number) => {
+                  const cleanText = (text: string) => text.replace(/[\r\n]+/g, ' ').trim();
                   return (
                     <View style={styles.selectedServiceRow}>
-                    {item?.CatCategoryId == "42"
-                      ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
-                      : <Text style={styles.selectedServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
-                    }
-                    <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>{item.Quantity}</Text></View>
-                  </View>
+                      <View style={{ width: '85%' }}>
+                        {item?.CatCategoryId == "42"
+                          ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}`}</Text>
+                          : <Text style={styles.selectedServiceText}>{cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}</Text>
+                        }
+                      </View>
+                      <View style={{ width: '15%' }}>
+                        <View style={styles.selectedServiceCircle}>
+                          <Text style={styles.selectedServiceCircleText}>{item.Quantity}</Text>
+                        </View>
+                      </View>
+                    </View>
                   )
                 })}
                 <View style={styles.sessionInfoDetailsContainer}>
@@ -1155,8 +1160,8 @@ const filterAndGroupItemsOptimized = (data:any) => {
           })
         }
 
-        <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
-          <Text style={[globalTextStyles.bodyMedium, {  color: '#333' }]}>معلومات المستفيد (المريض)</Text>
+        <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#333' }]}>معلومات المستفيد (المريض)</Text>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', }}>
           <CommonRadioButton
@@ -1272,7 +1277,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
                   }} placeholder="رقم الهوية" keyboardType="numeric" />
                 </View>}
                 <TouchableOpacity onPress={handleSaveBeneficiary} style={{ width: "100%", backgroundColor: "#23a2a4", paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
-                  <Text style={{  ...globalTextStyles.bodyMedium, fontSize: 16 }}>يحفظ</Text>
+                  <Text style={{ ...globalTextStyles.bodyMedium, fontSize: 16 }}>يحفظ</Text>
                 </TouchableOpacity>
               </View>}
 
@@ -1280,14 +1285,20 @@ const filterAndGroupItemsOptimized = (data:any) => {
           </View>
         )}
         <View style={{ width: "100%", alignItems: "flex-start" }}>
-          <Text style={[globalTextStyles.bodyMedium, { color: '#333', textAlign: 'center', paddingVertical: 16 }]}>اسمك</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[globalTextStyles.bodyMedium, { color: '#333', textAlign: 'center', paddingVertical: 16 }]}>اسمك</Text>
+            <Text style={styles.requiredAsterisk}> *</Text>
+          </View>
           <TextInput
-            style={{ width: "100%",  ...globalTextStyles.bodyMedium,color: "#000", height: 50, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, paddingHorizontal: 10, textAlign: "right" }}
+            style={{ width: "100%", ...globalTextStyles.bodyMedium, color: "#000", height: 50, borderWidth: 1, borderColor: "#e0e0e0", borderRadius: 10, paddingHorizontal: 10, textAlign: "right" }}
             placeholder="اسمك"
             value={user?.FullnameSlang}
             editable={false}
           />
-          <Text style={[globalTextStyles.bodyMedium, {  color: '#333', textAlign: 'center', paddingVertical: 16 }]}>رقم الجوال</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[globalTextStyles.bodyMedium, { color: '#333', textAlign: 'center', paddingVertical: 16 }]}>رقم الجوال</Text>
+            <Text style={styles.requiredAsterisk}> *</Text>
+          </View>
           <CustomPhoneInput
             value={phoneNumber}
             onChangeText={handlePhoneNumberChange}
@@ -1299,11 +1310,11 @@ const filterAndGroupItemsOptimized = (data:any) => {
           />
         </View>
 
-        <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
-          <Text style={[globalTextStyles.bodyMedium, {  color: '#333' }]}>وصف الشكوى المرضية (إختياري)</Text>
+        <View style={{ width: "100%", backgroundColor: "#e4f1ef", marginVertical: 16, paddingHorizontal: 10, borderRadius: 10, alignItems: "flex-start" }}>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#333' }]}>وصف الشكوى المرضية (إختياري)</Text>
         </View>
         <View style={{ width: "100%", alignItems: "flex-start", marginBottom: 24 }}>
-          <Text style={[globalTextStyles.bodyMedium, {  color: '#333' }]}>صف شكواك كتابة (إختياري)</Text>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#333' }]}>صف شكواك كتابة (إختياري)</Text>
           <TextInput
             style={{
               width: "100%",
@@ -1379,32 +1390,50 @@ const filterAndGroupItemsOptimized = (data:any) => {
           </TouchableOpacity> */}
         </View>
 
-        <View style={{ width: "100%", alignItems: "flex-end" }}>
-          <TouchableOpacity
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: isRecording ? "#ff6b6b" : "#e4f1ef",
-              borderRadius: 8,
-              paddingVertical: 8,
-              paddingHorizontal: 18,
-              marginTop: 4
-            }}
-            onPress={isRecording ? handleStopRecording : handleStartRecording}
-            disabled={isUploading}
-          >
-            <Text style={{ fontSize: 18, color: isRecording ? "#fff" : "#23a2a4", marginLeft: 6 }}>
-              {isRecording ? "⏹️" : "🎤"}
-            </Text>
-            <Text style={{
-              
-              ...globalTextStyles.bodyMedium,
-              color: isRecording ? "#fff" : "#23a2a4",
-              fontSize: 16
-            }}>
-              {isRecording ? `إيقاف التسجيل (${formatRecordingTime(recordingTime)})` : "بدء التسجيل"}
-            </Text>
-          </TouchableOpacity>
+        <View style={{ width: "100%", alignItems: "flex-end", marginBottom: 16 }}>
+          {uploadedFileUrl ?
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <TouchableOpacity onPress={isPlayingAudio ? stopAudio : playUploadedAudio} style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#e4f1ef", borderRadius: 8, paddingVertical: 8, paddingHorizontal: 18, marginTop: 4 }}>
+                {!isPlayingAudio ? <Ionicons name="play" size={24} color="#23a2a4" /> : <Ionicons name="pause" size={24} color="#23a2a4" />}
+                <Text style={{ ...globalTextStyles.bodyMedium, color: "#23a2a4", fontSize: 16 }}>
+                  استماع
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleDeleteUploadedAudio} style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#fec3c3", borderRadius: 8, paddingVertical: 8, paddingHorizontal: 18, marginTop: 4 }}>
+                <Ionicons name="trash" size={24} color="red" />
+                <Text style={{ ...globalTextStyles.bodyMedium, color: "red", fontSize: 16 }}>
+                  حذف
+                </Text>
+              </TouchableOpacity>
+            </View>
+            :
+            <TouchableOpacity
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: isRecording ? "#eee" : "#e4f1ef",
+                borderRadius: 8,
+                paddingVertical: 8,
+                paddingHorizontal: 18,
+                marginTop: 4
+              }}
+              onPress={isRecording ? handleStopRecording : handleStartRecording}
+              disabled={isUploading}
+            >
+              <Text style={{ fontSize: 18, color: isRecording ? "#fff" : "#23a2a4", marginRight: 6 }}>
+                {isRecording ? <FontAwesome name="pause" size={20} color="#888" /> : <FontAwesome name="microphone" size={24} color="#23a2a4" />}
+              </Text>
+              <Text style={{
+
+                ...globalTextStyles.bodyMedium,
+                color: isRecording ? "#888" : "#23a2a4",
+                fontSize: 16
+              }}>
+                {isRecording ? `إيقاف (${formatRecordingTime(recordingTime)})` : "بدء التسجيل"}
+              </Text>
+            </TouchableOpacity>
+          }
+
 
           {isUploading && (
             <View style={{
@@ -1417,7 +1446,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
               marginTop: 8
             }}>
               <Text style={{ fontSize: 16, color: "#856404", marginLeft: 6 }}>📤</Text>
-              <Text style={{  ...globalTextStyles.bodyMedium, color: "#856404", fontSize: 14 }}>
+              <Text style={{ ...globalTextStyles.bodyMedium, color: "#856404", fontSize: 14 }}>
                 جاري رفع الملف... {uploadProgress}%
               </Text>
             </View>
@@ -1428,9 +1457,6 @@ const filterAndGroupItemsOptimized = (data:any) => {
 
       {/* Buttons */}
       <View style={styles.BottomContainer}>
-        {/* <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Text style={styles.backButtonText}>{t('back')}</Text>
-        </TouchableOpacity> */}
         <TouchableOpacity
           style={[styles.nextButton]}
           onPress={handleNext}
@@ -1447,7 +1473,7 @@ const filterAndGroupItemsOptimized = (data:any) => {
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
           <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
-            <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between',paddingBottom: 30 }}>
+            <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 30 }}>
               <TouchableOpacity
                 onPress={() => { setApiError(false); }}
               >
@@ -1504,7 +1530,7 @@ const styles = StyleSheet.create({
     padding: 8,
     marginHorizontal: 4,
     minWidth: 180,
-    height: 80,
+    height: 70,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -1558,15 +1584,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     backgroundColor: '#e4f1ef',
     paddingHorizontal: 10,
+    borderRadius: 10,
   },
   detailsHeaderText: {
     ...globalTextStyles.bodyMedium,
     // fontWeight: 'bold',
   },
   editButton: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: 'white',
     borderRadius: 8,
-    padding: 4,
     paddingHorizontal: 8,
   },
   editButtonText: {
@@ -1580,26 +1606,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingVertical: 2,
     borderRadius: 10,
+    width: '100%',
   },
   selectedServiceCircle: {
-    width: 28,
-    height: 28,
+    width: 20,
+    height: 20,
     borderRadius: 14,
     backgroundColor: '#23a2a4',
+    alignSelf: 'flex-end',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
   },
   selectedServiceCircleText: {
     // fontWeight: 'bold',
     ...globalTextStyles.bodyMedium,
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   selectedServiceText: {
-    ...globalTextStyles.bodyMedium,
+    ...globalTextStyles.bodySmall,
     color: '#23a2a4',
     // fontWeight: 'bold',
   },
@@ -1762,6 +1792,8 @@ const styles = StyleSheet.create({
   },
   requiredAsterisk: {
     ...globalTextStyles.bodyMedium,
+    paddingBottom: 5,
+    color: '#FF0000',
   },
   questionText: {
     ...globalTextStyles.bodyMedium,

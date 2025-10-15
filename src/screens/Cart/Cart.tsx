@@ -1,5 +1,5 @@
 import Header from "../../components/common/Header";
-import { View, Text, StyleSheet, FlatList,SafeAreaView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
 import { removeCardItem, clearCardItems, addCardItem, setSelectedUniqueId } from "../../shared/redux/reducers/bookingReducer";
@@ -74,7 +74,7 @@ const CartScreen = ({ navigation }: any) => {
         console.error('Error fetching unpaid orders:', error);
       }
     }
-    if(isFocused) {
+    if (isFocused) {
       getUnPaidUserOrders();
     }
   }, [user, isFocused]);
@@ -112,13 +112,13 @@ const CartScreen = ({ navigation }: any) => {
     let displayTime = '';
 
     if (item.SchedulingDate && item.SchedulingTime) {
-        displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
-        displayTime = convert24HourToArabicTime(item.SchedulingTime);
+      displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
+      displayTime = convert24HourToArabicTime(item.SchedulingTime);
     }
 
     return (
       <View style={styles.cardItem}>
-       {(item?.ServiceProviderUserloginInfoId || item?.OrganizationId) && <View style={styles.cardItemContent}>
+        {(item?.ServiceProviderUserloginInfoId || item?.OrganizationId) && <View style={styles.cardItemContent}>
           <Text style={styles.providerName}>{String(item?.ServiceProviderFullnameSlang || item?.orgTitleSlang || '')}</Text>
           {(item?.ServiceProviderUserloginInfoId || item?.OrganizationId) && <View style={styles.slotInfoContainer}>
             <Text style={styles.slotInfo}>{displayTime || item?.SchedulingTime}</Text>
@@ -159,24 +159,36 @@ const CartScreen = ({ navigation }: any) => {
     if (response.ResponseStatus.STATUSCODE == 200) {
       dispatch(addCardItem([]));
       navigation.navigate(ROUTES.AppNavigator, {
-          screen: ROUTES.HomeStack,
+        screen: ROUTES.HomeStack,
+        params: {
+          screen: ROUTES.BookingScreen,
           params: {
-            screen: ROUTES.BookingScreen,
-            params: {
-              currentStep: 3,
-            }
+            currentStep: 3,
           }
-        });
+        }
+      });
     } else {
       setIsLoading(false);
     }
   }
 
   const handleCheckout = () => {
-    const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
-    let selectedItem: any = displayCategory?.Display == "CP" ? CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId) : CardArray.find((item: any) => !item.OrganizationId);
+    // let isAPICallNeeded = null;
+    let selectedUniqueId = null;
+
     let isAPICallNeeded = CardArray.find((item: any) => !item.OrderID && !item.OrderDetailId);
-    const selectedUniqueId = selectedItem?.ItemUniqueId;
+    // let selectedUniqueId = selectedItem?.ItemUniqueId;
+
+    CardArray.forEach((cardItem: any) => {
+      const displayCategory = categoriesList.find((item: any) => item.Id == cardItem.CatCategoryId);
+      let selectedItem: any = displayCategory?.Display == "CP" ? !cardItem.ServiceProviderUserloginInfoId : !cardItem.OrganizationId;
+      if (selectedItem) {
+        selectedUniqueId = cardItem.ItemUniqueId;
+        return;
+      }
+    });
+
+
 
     if (!isAPICallNeeded && !selectedUniqueId) {
       navigation.navigate(ROUTES.AppNavigator, {
@@ -210,24 +222,24 @@ const CartScreen = ({ navigation }: any) => {
     </View>
   );
 
-  const calculateTotalWithTex = () =>{
+  const calculateTotalWithTex = () => {
     let subTotal = 0;
     let tax = 0;
     let total = 0;
 
     CardArray.forEach((item: any) => {
-      if(item.CatNationalityId == "213"){
+      if (item.CatNationalityId == "213") {
         subTotal += Number(item.ServicePrice) || 0;
-      }else{
+      } else {
         subTotal += (Number(item.ServicePrice) || 0);
         tax += (Number(item.ServicePrice) || 0) * 0.15;
       }
     });
-    
+
     total = subTotal + tax;
     return {
-      subTotal: Number(subTotal.toFixed(2)), 
-      tax: Number(tax.toFixed(2)), 
+      subTotal: Number(subTotal.toFixed(2)),
+      tax: Number(tax.toFixed(2)),
       total: Number(total.toFixed(2))
     };
   }
@@ -266,23 +278,23 @@ const CartScreen = ({ navigation }: any) => {
           </View>
 
         </View>
-        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-       <TouchableOpacity style={[styles.checkoutButton,{width: '56%'}]} onPress={() => {
-          navigation.navigate(ROUTES.AppNavigator, {
-            screen: ROUTES.HomeStack,
-            params: {
-              screen: ROUTES.Services
-            }
-          });
-        }}>
-          <Text numberOfLines={1} style={styles.checkoutButtonText}>{"إضافة مزيد من الخدمات"}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton,{width: '40%'}, CardArray.length == 0 && { backgroundColor: '#ccc' }]} onPress={() => {
-          handleCheckout();
-        }}>
-          <Text style={styles.checkoutButtonText}>{"إتمام الدفع"}</Text>
-        </TouchableOpacity>
-        
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <TouchableOpacity style={[styles.checkoutButton, { width: '56%' }]} onPress={() => {
+            navigation.navigate(ROUTES.AppNavigator, {
+              screen: ROUTES.HomeStack,
+              params: {
+                screen: ROUTES.Services
+              }
+            });
+          }}>
+            <Text numberOfLines={1} style={styles.checkoutButtonText}>{"إضافة مزيد من الخدمات"}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity disabled={CardArray.length == 0} style={[styles.checkoutButton, { width: '40%' }, CardArray.length == 0 && { backgroundColor: '#ccc' }]} onPress={() => {
+            handleCheckout();
+          }}>
+            <Text style={styles.checkoutButtonText}>{"إتمام الدفع"}</Text>
+          </TouchableOpacity>
+
         </View>
       </View>
 

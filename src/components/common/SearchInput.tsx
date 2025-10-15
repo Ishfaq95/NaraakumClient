@@ -25,6 +25,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ placeholder, value, onChangeT
         onChangeText={onChangeText}
         textAlign={I18nManager.isRTL ? "right" : "left"}
         underlineColorAndroid="transparent"
+        onSubmitEditing={onSearch}
       />
     </View>
   );

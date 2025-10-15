@@ -325,6 +325,37 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     selectedSquare: '0',
   });
 
+  // Helper function to check if item has available future slots
+  const hasAvailableSlots = useCallback((slots: any[]) => {
+    if (!slots || slots.length === 0) return false;
+
+    return slots.some((s: any) => {
+      if (!s.available) return false;
+
+      const currentDate = new Date();
+      const slotDate = new Date(s.date);
+      const slotTime = s.start_time;
+
+      const timeMatch = slotTime.match(/(\d{1,2}):(\d{2})\s*(ص|م)/);
+      if (!timeMatch) return false;
+
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const period = timeMatch[3];
+
+      if (period === 'م' && hours !== 12) {
+        hours += 12;
+      } else if (period === 'ص' && hours === 12) {
+        hours = 0;
+      }
+
+      const slotDateTime = new Date(slotDate);
+      slotDateTime.setHours(hours, minutes, 0, 0);
+
+      return slotDateTime > currentDate;
+    });
+  }, []);
+
   useEffect(() => {
     if (user) {
       getUserFavorites();
@@ -658,7 +689,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       fetchInitialAvailability();
     } else {
       if (category.Id == "41") {
-        getOrganizationByPackage();
+        getOrganizationByPackage(searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null);
       } else {
         fetchHospitalListByServices(null, null, `${selectedLocation.latitude},${selectedLocation.longitude}`);
         fetchOrganizationSchedulingAvailability();
@@ -667,11 +698,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setRefreshing(false);
   }
 
-  const getOrganizationByPackage = async () => {
+  const getOrganizationByPackage = async (pationLocation?: any, emptySearch?: boolean) => {
     const payload = {
-      "Search": "",
+      "Search": emptySearch ? "" : searchQuery,
       "CatCityId": null,
-      "PatientLocation": null,
+      "PatientLocation": pationLocation || null,
       "CatSquareId": null,
       "PageNumber": 0,
       "PageSize": 10
@@ -681,13 +712,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setOrganizationList(response?.OrganizationList || []);
   }
 
-  const fetchHospitalListByServices = async (cityId?: any, squareId?: any, patientLocation?: any) => {
+  const fetchHospitalListByServices = async (cityId?: any, squareId?: any, patientLocation?: any, emptySearch?: boolean) => {
     try {
       setLoading(true);
       const payload = {
         CatcategoryId: category.Id,
         ServiceIds: SelectedCardItem?.map((service: any) => service.CatServiceId).join(','),
-        Search: "",
+        Search: emptySearch ? "" : searchQuery,
         PatientLocation: patientLocation || null,
         CatCityId: cityId || null,
         CatSquareId: squareId || null,
@@ -696,6 +727,10 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       }
 
       const response = await bookingService.getHospitalListByServices(payload);
+
+      if (response?.HospitalList.length == 0) {
+        setHospitalWithSlots([])
+      }
 
       setHospitalList(response?.HospitalList || []);
     } catch (error) {
@@ -731,7 +766,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     return serviceIds.join(',');
   }
 
-  const fetchServiceProviders = async (serviceID?: string, cityId?: any, squareId?: any, patientLocation?: any) => {
+  const fetchServiceProviders = async (serviceID?: string, cityId?: any, squareId?: any, patientLocation?: any, emptySearch?: boolean) => {
     try {
       setLoading(true);
       let serviceIds = "";
@@ -752,7 +787,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           requestBody = {
             CatcategoryId: category.Id,
             ServiceIds: serviceIds,
-            Search: searchQuery,
+            Search: emptySearch ? "" : searchQuery,
             PatientLocation: patientLocation || null,
             CatCityId: cityId || null,
             CatSquareId: squareId || null,
@@ -764,7 +799,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           requestBody = {
             CatcategoryId: category.Id,
             ServiceIds: serviceIds,
-            Search: searchQuery,
+            Search: emptySearch ? "" : searchQuery,
             PatientLocation: patientLocation || null,
             CatCityId: cityId || null,
             CatSquareId: squareId || null,
@@ -778,7 +813,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         requestBody = {
           CatcategoryId: category.Id,
           ServiceIds: serviceIds,
-          Search: searchQuery,
+          Search: emptySearch ? "" : searchQuery,
           PatientLocation: patientLocation || null,
           CatCityId: cityId || null,
           CatSquareId: squareId || null,
@@ -790,6 +825,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
       const response = await bookingService.getServiceProviderListByServiceByIds(requestBody);
 
+      if (response?.ServiceProviderList.length == 0) {
+        setProviderWithSlots([])
+      }
       setServiceProviders(response?.ServiceProviderList || []);
     } catch (error) {
       console.error('Error fetching service providers:', error);
@@ -811,8 +849,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           serviceIds = getServiceIds();
         }
       }
-
-      console.log("SelectedCardItem", SelectedCardItem)
 
       const requestBody = {
         CatServiceId: serviceIds,
@@ -885,14 +921,15 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
 
     if (isWithinSevenDays) {
-      setChangeDateLoader(false)
       filterAvailabilityForDate(date, allAvailabilityData);
+      setChangeDateLoader(false)
     } else {
       setChangedSelectedDate(date)
       const formattedDate = date.locale('en').format('YYYY-MM-DD');
       generateDays(moment(formattedDate));
       fetchInitialAvailability(moment(formattedDate));
     }
+
   };
 
   const handleCalendarPress = () => {
@@ -929,8 +966,16 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     onPressBack();
   };
 
-  const handleSearch = () => {
-    fetchServiceProviders(); // Refetch with new search query
+  const handleSearch = (text: string) => {
+    if (displayCategory?.Display == "CP") {
+      fetchServiceProviders(undefined, undefined, undefined, category.Id != "42" ? searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null : null, text == "" ? true : false); // Refetch with new search query
+    } else {
+      if (category.Id == "41") {
+        getOrganizationByPackage(searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null, text == "" ? true : false);
+      } else {
+        fetchHospitalListByServices(null, null, searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null, text == "" ? true : false);
+      }
+    }
   };
 
   const handleFilterPress = () => {
@@ -1029,6 +1074,17 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     });
   }, [HospitalWithSlots, availability, selectedDate]);
 
+  // Calculate actual result count based on items with available slots
+  const resultLength = useMemo(() => {
+    if (displayCategory?.Display == "CP") {
+      return filteredProviders.filter(item => hasAvailableSlots(item.slots)).length;
+    } else if (category.Id == "41") {
+      return organizationList.length;
+    } else {
+      return filteredHospitals.filter(item => hasAvailableSlots(item.slots)).length;
+    }
+  }, [filteredProviders, organizationList, filteredHospitals, displayCategory, category, hasAvailableSlots]);
+
   const handleSelectService = (providerId: string, service: string) => {
     const obj: any = {
       selectedService: service,
@@ -1118,6 +1174,70 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     return result;
   };
 
+  if (changeDateLoader || loading || loader2 || slotsLoaded) {
+    return (
+      <View style={styles.mainContainer}>
+        <View style={styles.container}>
+          <FlatList
+            data={days}
+            horizontal
+            showsHorizontalScrollIndicator={isScrollable}
+            keyExtractor={(item) => item.icon ? 'calendar-icon' : item.fullDate?.format('YYYY-MM-DD') || ''}
+            contentContainerStyle={[styles.list, { width: isScrollable ? listWidth : '100%' }]}
+            renderItem={({ item, index }) => (
+              <TouchableOpacity
+                onPress={() => item.icon ? handleCalendarPress() : item.fullDate && handleDateSelect(item.fullDate)}
+                style={[
+                  styles.card,
+                  {
+                    width: itemWidth,
+                    backgroundColor: item.fullDate && selectedDate.isSame(item.fullDate, 'day') ? '#179c8e' : '#f7f7f7',
+                  },
+                ]}
+              >
+                {item.icon ? (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', width: itemWidth }}>
+                    <CalendarIcon width={24} height={24} color="#179c8e" />
+                  </View>
+                ) : (
+                  <>
+                    <Text style={[styles.date, item.fullDate && selectedDate.isSame(item.fullDate, 'day') ? { color: '#fff' } : { color: '#000' }]}>
+                      {item.hijriDate}
+                    </Text>
+                    <Text style={[styles.day, item.fullDate && selectedDate.isSame(item.fullDate, 'day') ? { color: '#fff' } : { color: '#000' }]}>
+                      {item.day}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          />
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <SearchInput
+                value={searchQuery}
+                onChangeText={(text) => {
+                  setSearchQuery(text)
+                  if (text == "") {
+                    handleSearch(text)
+                  }
+                }}
+                placeholder="بحث عن طبيب "
+                style={styles.searchInput}
+                onSearch={() => handleSearch(searchQuery)}
+              />
+            </View>
+            <TouchableOpacity style={styles.filterButton} onPress={handleFilterPress}>
+              <FilterIcon width={20} height={20} color="#179c8e" />
+              <Text style={styles.filterButtonText}>تطبيق الفلتر</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <ListShimmerLoader cardType="default" />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.mainContainer}>
       <View style={styles.container}>
@@ -1161,13 +1281,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               value={searchQuery}
               onChangeText={(text) => {
                 setSearchQuery(text)
-                if(text == ""){
-                  handleSearch()
+                if (text == "") {
+                  handleSearch(text)
                 }
               }}
-              onSearch={handleSearch}
               placeholder="بحث عن طبيب "
               style={styles.searchInput}
+              onSearch={() => handleSearch(searchQuery)}
             />
           </View>
           <TouchableOpacity style={styles.filterButton} onPress={handleFilterPress}>
@@ -1178,7 +1298,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       </View>
       <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={{ ...globalTextStyles.bodyLarge, fontWeight: '600', color: '#36454f' }}>
-          {`النتائج (${filteredProviders.length || organizationList.length || filteredHospitals.length})`}
+          {/* {`النتائج (${resultLength || filteredProviders.length || organizationList.length || filteredHospitals.length})`} */}
+          {`النتائج (${resultLength})`}
         </Text>
       </View>
       {/* Service Providers List */}
@@ -1211,40 +1332,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                   avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
                 );
 
-                const allAvailableSlots = item.slots?.filter((s: any) => {
-                  // Check if slot is available
-                  if (!s.available) return false;
-
-                  // Check if start time is not in the past
-                  const currentDate = new Date();
-                  const slotDate = new Date(s.date);
-                  const slotTime = s.start_time;
-
-                  // Parse the time (assuming format like "12:00 ص" or "08:00 ص")
-                  const timeMatch = slotTime.match(/(\d{1,2}):(\d{2})\s*(ص|م)/);
-                  if (!timeMatch) return false;
-
-                  let hours = parseInt(timeMatch[1]);
-                  const minutes = parseInt(timeMatch[2]);
-                  const period = timeMatch[3];
-
-                  // Convert to 24-hour format
-                  if (period === 'م' && hours !== 12) {
-                    hours += 12;
-                  } else if (period === 'ص' && hours === 12) {
-                    hours = 0;
-                  }
-
-                  // Create slot datetime
-                  const slotDateTime = new Date(slotDate);
-                  slotDateTime.setHours(hours, minutes, 0, 0);
-
-                  // Check if slot time is in the future
-                  return slotDateTime > currentDate;
-                });
-
-                if (allAvailableSlots.length == 0) {
-                  return null
+                // Check if item has available slots, return null if not
+                if (!hasAvailableSlots(item.slots)) {
+                  return null;
                 }
 
                 return <ServiceProviderCard
@@ -1317,6 +1407,11 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                     avail.Detail.filter((detail: any) => detail.OrganizationId === item.OrganizationId)
                   );
 
+                  // Check if item has available slots, return null if not
+                  if (!hasAvailableSlots(item.slots)) {
+                    return null;
+                  }
+
                   return <HospitalCard
                     hospital={item}
                     selectedDate={selectedDate}
@@ -1347,7 +1442,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         </TouchableOpacity>
       </View>
 
-      <FullScreenLoader visible={loading || loader2 || slotsLoaded || changeDateLoader} />
+      <FullScreenLoader visible={changeDateLoader || loading || loader2 || slotsLoaded} />
       <DateTimePickerModal
         isVisible={isCalendarVisible}
         mode="date"

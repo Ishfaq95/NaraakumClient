@@ -10,6 +10,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addCardItem, manageTempSlotDetail } from '../../shared/redux/reducers/bookingReducer';
 import { globalTextStyles } from '../../styles/globalStyles';
 import { convertArabicTimeTo24Hour } from '../../shared/services/service';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 
 interface Specialty {
   CatSpecialtyId: string;
@@ -234,7 +235,7 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
     return returnVal;
   }
 
-  console.log("hospital",hospital)
+  console.log("hospital?.LogoImagePath",hospital?.LogoImagePath)
 
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
@@ -251,7 +252,9 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
               resizeMode="cover"
             />
           ) : (
-            <UserPlaceholder width={80} height={80} />
+            <View  style={[styles.providerImage,{alignItems: 'center', justifyContent: 'center'}]}>
+              <FontAwesome6 name="hospital" size={40} color="#888" />
+            </View>
           )}
         </View>
         <View style={{ width: '70%' }}>
@@ -265,7 +268,7 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
         </View>
       </View>
    
-        <View style={{ width: '100%', paddingVertical: 10, backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10, marginVertical: 10 }}>
+        <View style={{ width: '100%', backgroundColor: '#f7f7f7', borderRadius: 10, paddingHorizontal: 10 }}>
           <Text style={[styles.priceText, { textAlign: 'left' }]}>
             {isRTL ? `السعر ${calculateTotalPrice(hospital?.Prices).toFixed(0)}` : `Price ${calculateTotalPrice(hospital?.Prices).toFixed(0)}`}
           </Text>
@@ -491,7 +494,7 @@ const styles = StyleSheet.create({
     color: '#179c8e',
     fontFamily: globalTextStyles.h5.fontFamily,
     fontSize: 16,
-    marginVertical: 4,
+    marginVertical: 2,
   },
   specialtyContainer: {
     flexDirection: 'row',
