@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, Alert, PermissionsAndroid, Platform, Modal } from 'react-native';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
@@ -52,6 +52,79 @@ const nationalities = [
   { label: 'مقيم', value: 'resident' },
 ];
 
+// Memoized Audio Player Component
+const AudioPlayer = React.memo(({ 
+  isPlayingAudio, 
+  audioProgress, 
+  audioCurrentTime, 
+  audioDuration,
+  uploadedFileUrl,
+  onPlayPause, 
+  onStop 
+}: {
+  isPlayingAudio: boolean;
+  audioProgress: number;
+  audioCurrentTime: number;
+  audioDuration: number;
+  uploadedFileUrl: string | null;
+  onPlayPause: () => void;
+  onStop: () => void;
+}) => {
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  return (
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#f5f6f7',
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      marginVertical: 12,
+      shadowColor: '#000',
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+      elevation: 1,
+    }}>
+      <TouchableOpacity
+        onPress={onPlayPause}
+        style={{ marginRight: 12 }}
+        accessibilityLabel={isPlayingAudio ? 'Pause' : 'Play'}
+        disabled={uploadedFileUrl == null || uploadedFileUrl == undefined}
+      >
+        <Icon
+          name={isPlayingAudio ? 'pause-circle-filled' : 'play-circle-filled'}
+          size={32}
+          color={'#b0b3b8'}
+        />
+      </TouchableOpacity>
+
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={{ color: '#888', fontSize: 15, fontVariant: ['tabular-nums'], minWidth: 60 }}>
+          {Platform.OS == 'ios' ? `${formatTime(audioCurrentTime)} / ${formatTime(audioDuration)}` : `${formatTime(audioDuration)} / ${formatTime(audioCurrentTime)}`}
+        </Text>
+        <View style={{ flex: 1, height: 4, backgroundColor: '#e0e0e0', borderRadius: 2, marginHorizontal: 10 }}>
+          <View
+            style={{
+              width: `${audioProgress}%`,
+              height: 4,
+              backgroundColor: '#b0b3b8',
+              borderRadius: 2,
+            }}
+          />
+        </View>
+      </View>
+
+      <Icon name="volume-up" size={22} color="#b0b3b8" style={{ marginHorizontal: 10 }} />
+    </View>
+  );
+});
+
 const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const { t } = useTranslation();
   const navigation = useNavigation();
@@ -72,6 +145,10 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const recordingTimerRef = useRef<any>(null);
   const audioRecorderPlayer = useRef<AudioRecorderPlayer>(new AudioRecorderPlayer());
   const progressIntervalRef = useRef<any>(null);
+  const audioProgressRef = useRef(0);
+  const audioCurrentTimeRef = useRef(0);
+  const recordingTimeRef = useRef(0);
+  const [forceUpdate, setForceUpdate] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<any>();
@@ -97,8 +174,6 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const [apiErrorDoctor, setApiErrorDoctor] = useState('');
   const [apiErrorMessage, setApiErrorMessage] = useState('');
 
-  console.log("CardArray", CardArray)
-
   const Relation = [
     { label: 'اختر من فضلك', value: '' },
     { label: 'أب', value: '1' },
@@ -110,8 +185,6 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   ];
   const selectedDoctor: any = showGroupedArray[selectedIndex];
   const dispatch = useDispatch();
-
-  console.log("selectedDoctor", selectedDoctor);
 
   useEffect(() => {
     getBeneficiaries();
@@ -213,6 +286,12 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
 
   const handleStartRecording = async () => {
     try {
+      // Clear any existing timer first
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+
       const audioSet = {
         AVSampleRateKeyIOS: 44100,
         AVFormatIDKeyIOS: AVEncodingOption.aac,
@@ -223,27 +302,41 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
         AudioSourceAndroid: AudioSourceAndroidType.MIC,
       } as any;
 
-      const result = await audioRecorderPlayer.current.startRecorder(undefined, audioSet);
-      setIsRecording(true);
+      // Reset recording time before starting
+      recordingTimeRef.current = 0;
       setRecordingTime(0);
       setActualRecordingDuration(0);
       setAudioFile(null);
       setUploadedFileUrl(null);
 
+      const result = await audioRecorderPlayer.current.startRecorder(undefined, audioSet);
+      setIsRecording(true);
+
+      // Start the timer after recorder has started
       recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        recordingTimeRef.current += 1;
+        setRecordingTime(recordingTimeRef.current);
       }, 1000);
 
     } catch (error) {
       Alert.alert('Error', 'Failed to start recording. Please try again.');
+      // Clean up on error
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
     }
   };
 
   const handleStopRecording = async () => {
     try {
+      // Capture the final duration from ref before clearing
+      const finalDuration = recordingTimeRef.current;
+      
       const audioFile = await audioRecorderPlayer.current.stopRecorder();
       setIsRecording(false);
 
+      // Clear the timer
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
         recordingTimerRef.current = null;
@@ -251,15 +344,18 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
 
       if (!audioFile) {
         Alert.alert('Error', 'No audio file was created');
+        // Reset states on error
+        recordingTimeRef.current = 0;
+        setRecordingTime(0);
         return;
       }
 
-      const finalDuration = recordingTime;
       setAudioDuration(finalDuration);
       setActualRecordingDuration(finalDuration);
-
       setAudioFile(audioFile);
-
+      
+      // Reset recording time displays
+      recordingTimeRef.current = 0;
       setRecordingTime(0);
 
       await new Promise<void>(resolve => setTimeout(resolve, 500));
@@ -267,13 +363,20 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       await uploadAudioFile(audioFile, finalDuration);
     } catch (error) {
       Alert.alert('Error', 'Failed to stop recording. Please try again.');
+      // Reset on error
+      recordingTimeRef.current = 0;
+      setRecordingTime(0);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
     }
   };
 
   const uploadAudioFile = async (audioFile: any, audioDuration: number) => {
 
     if (!audioFile) {
-      Alert.alert('Error', 'No audio file to upload');
+      console.log('Error', 'No audio file to upload');
       return;
     }
 
@@ -281,13 +384,13 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
 
     const fileExists = await RNFetchBlob.fs.exists(cleanPath);
     if (!fileExists) {
-      Alert.alert('Error', 'Audio file not found');
+      console.log('Error', 'Audio file not found');
       return;
     }
 
     const fileInfo = await RNFetchBlob.fs.stat(cleanPath);
     if (fileInfo.size < 1000) { // Less than 1KB
-      Alert.alert('Error', 'Audio file is too small, recording may have failed');
+      console.log('Error', 'Audio file is too small, recording may have failed');
       return;
     }
 
@@ -387,7 +490,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       }
 
     } catch (error) {
-      Alert.alert('Upload Failed', 'Failed to upload audio file. Please try again.');
+      console.log('Upload Failed', 'Failed to upload audio file. Please try again.');
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -400,9 +503,9 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const playUploadedAudio = async () => {
+  const playUploadedAudio = useCallback(async () => {
     if (!uploadedFileUrl) {
-      Alert.alert('Error', 'No audio file to play');
+      console.log('Error', 'No audio file to play');
       return;
     }
 
@@ -465,6 +568,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
 
             // Use the audio recorder player for iOS playback instead of TrackPlayer
             try {
+              let updateCounter = 0;
               // Set up event listeners for iOS playback
               audioRecorderPlayer.current.addPlayBackListener((e) => {
                 if (e.currentPosition >= e.duration) {
@@ -472,12 +576,21 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                   setIsPlayingAudio(false);
                   setAudioProgress(0);
                   setAudioCurrentTime(0);
+                  audioProgressRef.current = 0;
+                  audioCurrentTimeRef.current = 0;
                   audioRecorderPlayer.current.removePlayBackListener();
                 } else {
-                  // Update progress
-                  setAudioCurrentTime(e.currentPosition / 1000); // Convert to seconds
-                  setAudioProgress((e.currentPosition / e.duration) * 100);
-                  setAudioDuration(e.duration / 1000); // Convert to seconds
+                  // Update refs immediately
+                  audioCurrentTimeRef.current = e.currentPosition / 1000;
+                  audioProgressRef.current = (e.currentPosition / e.duration) * 100;
+                  
+                  // Update state only every 5 updates (reduce re-renders)
+                  updateCounter++;
+                  if (updateCounter % 5 === 0) {
+                    setAudioCurrentTime(audioCurrentTimeRef.current);
+                    setAudioProgress(audioProgressRef.current);
+                    setAudioDuration(e.duration / 1000);
+                  }
                 }
               });
 
@@ -508,9 +621,9 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     } catch (error) {
       console.log('General playback error:', error);
     }
-  };
+  }, [uploadedFileUrl, isPlayingAudio]);
 
-  const stopAudio = async () => {
+  const stopAudio = useCallback(async () => {
     if (isPlayingAudio) {
       try {
         if (Platform.OS === 'ios') {
@@ -535,7 +648,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
         console.log('Error stopping audio:', error);
       }
     }
-  };
+  }, [isPlayingAudio]);
 
   // Audio playback using react-native-track-player
   const playAudioWithTrackPlayer = async (audioUrl: string) => {
@@ -556,17 +669,26 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       await TrackPlayerService.play();
       setIsPlayingAudio(true);
 
+      let updateCounter = 0;
       progressIntervalRef.current = setInterval(async () => {
         try {
           const position = await TrackPlayerService.getPosition();
           const currentDuration = await TrackPlayerService.getDuration();
 
-          setAudioCurrentTime(position);
+          // Update refs immediately
+          audioCurrentTimeRef.current = position;
           const progress = currentDuration > 0 ? (position / currentDuration) * 100 : 0;
-          setAudioProgress(progress);
+          audioProgressRef.current = progress;
+
+          // Update state only every 5 updates (every 500ms instead of 100ms)
+          updateCounter++;
+          if (updateCounter % 5 === 0) {
+            setAudioCurrentTime(position);
+            setAudioProgress(progress);
+          }
 
           // Check if playback finished
-          if (position >= currentDuration) {
+          if (position >= currentDuration && currentDuration > 0) {
             if (progressIntervalRef.current) {
               clearInterval(progressIntervalRef.current);
               progressIntervalRef.current = null;
@@ -574,6 +696,8 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
             setIsPlayingAudio(false);
             setAudioProgress(0);
             setAudioCurrentTime(0);
+            audioProgressRef.current = 0;
+            audioCurrentTimeRef.current = 0;
           }
         } catch (error) {
           console.log('Error tracking progress:', error);
@@ -734,7 +858,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     }));
   };
 
-  const renderDoctorTag = ({ item, index }: { item: any; index: number }) => {
+  const renderDoctorTag = useCallback(({ item, index }: { item: any; index: number }) => {
     const selectedItem = item.items[0];
 
     const imagePath = selectedItem.ServiceProviderImagePath ? `${MediaBaseURL}${selectedItem.ServiceProviderImagePath}` : selectedItem.LogoImagePath ? `${MediaBaseURL}${selectedItem.LogoImagePath}` : null;
@@ -758,7 +882,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
         </View>}
       </View>
     )
-  }
+  }, [selectedIndex, t])
 
   const updatePatientInfoInSelectedDoctor = (selectedItem: any) => {
     if (selectedItem.value == "0") {
@@ -805,9 +929,6 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       };
 
       dispatch(addCardItem(updatedCardArray));
-
-      // Show success message after updating Redux
-      Alert.alert('Success', 'Audio file uploaded successfully!');
     }
   };
 
@@ -818,8 +939,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       const updatedItem = CardArray.find((item: any) => item.ItemUniqueId === pendingUpdate.uniqueId);
 
       if (updatedItem && updatedItem.PatientUserProfileInfoId === pendingUpdate.value) {
-        // Redux state has been updated
-        console.log('Redux updated successfully:', CardArray);
+        
         updatePatientInfoInOrder();
 
         // Clear the pending update
@@ -854,7 +974,6 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       return;
     }
 
-    console.log('response', response);
     if (response == "") {
       Alert.alert("خطأ في الخادم الداخلي");
       return;
@@ -973,14 +1092,6 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     setPhoneNumber(phoneInfo.phoneNumber);
   }, [user]);
 
-  // Helper to format time
-  const formatTime = (seconds: number) => {
-    if (!seconds || isNaN(seconds)) return '0:00';
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
   const handleSaveBeneficiary = async () => {
     if (beneficiaryName == "") {
       setNameError(true);
@@ -1009,7 +1120,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       "CatNationalityId": nationality == 'citizen' ? 213 : 187,
       "IDNumber": nationality == 'citizen' ? idNumber : '',
     }
-    console.log('check passed', Payload);
+    
     const response = await bookingService.addBeneficiary(Payload)
 
     if (response.StatusCode.STATUSCODE == 3008) {
@@ -1066,13 +1177,41 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     return sameServices;
   }
 
-  const handleDeleteUploadedAudio = () => {
+  const handleDeleteUploadedAudio = useCallback(() => {
+    // Stop any playing audio first
+    if (isPlayingAudio) {
+      stopAudio();
+    }
+    
+    // Clear any recording timer
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    
+    // Reset all audio states
     setUploadedFileUrl(null);
     setAudioDuration(0);
     setAudioCurrentTime(0);
     setAudioProgress(0);
     setIsPlayingAudio(false);
-  }
+    setRecordingTime(0);
+    setActualRecordingDuration(0);
+    setAudioFile(null);
+    
+    // Reset all refs
+    audioProgressRef.current = 0;
+    audioCurrentTimeRef.current = 0;
+    recordingTimeRef.current = 0;
+  }, [isPlayingAudio, stopAudio]);
+
+  const handlePlayPauseAudio = useCallback(() => {
+    if (isPlayingAudio) {
+      stopAudio();
+    } else {
+      playUploadedAudio();
+    }
+  }, [isPlayingAudio, stopAudio, playUploadedAudio]);
 
   return (
     <View style={styles.container}>
@@ -1095,8 +1234,6 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
             const item = filteredItems[0];
             let displayDate = '';
             let displayTime = '';
-
-            console.log("filteredItems", filteredItems)
 
             if (item.SchedulingDate && item.SchedulingTime) {
               displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
@@ -1339,56 +1476,15 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
           صف شكواك بالتسجيل الصوتي (إختياري)
         </Text>
 
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#f5f6f7',
-          borderRadius: 20,
-          paddingHorizontal: 16,
-          paddingVertical: 10,
-          marginVertical: 12,
-          shadowColor: '#000',
-          shadowOpacity: 0.04,
-          shadowRadius: 4,
-          elevation: 1,
-        }}>
-          <TouchableOpacity
-            onPress={isPlayingAudio ? stopAudio : playUploadedAudio}
-            style={{ marginRight: 12 }}
-            accessibilityLabel={isPlayingAudio ? 'Pause' : 'Play'}
-            disabled={uploadedFileUrl == null || uploadedFileUrl == undefined}
-          >
-            <Icon
-              name={isPlayingAudio ? 'pause-circle-filled' : 'play-circle-filled'}
-              size={32}
-              color={'#b0b3b8'}
-            />
-          </TouchableOpacity>
-
-          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ color: '#888', fontSize: 15, fontVariant: ['tabular-nums'], minWidth: 60 }}>
-              {Platform.OS == 'ios' ? `${formatTime(audioCurrentTime)} / ${formatTime(audioDuration)}` : `${formatTime(audioDuration)} / ${formatTime(audioCurrentTime)}`}
-            </Text>
-            <View style={{ flex: 1, height: 4, backgroundColor: '#e0e0e0', borderRadius: 2, marginHorizontal: 10 }}>
-              <View
-                style={{
-                  width: `${audioProgress}%`,
-                  height: 4,
-                  backgroundColor: '#b0b3b8',
-                  borderRadius: 2,
-                }}
-              />
-            </View>
-          </View>
-
-          {/* Volume Icon */}
-          <Icon name="volume-up" size={22} color="#b0b3b8" style={{ marginHorizontal: 10 }} />
-
-          {/* Menu Icon */}
-          {/* <TouchableOpacity style={{ padding: 4 }}>
-            <Icon name="more-vert" size={22} color="#b0b3b8" />
-          </TouchableOpacity> */}
-        </View>
+        <AudioPlayer
+          isPlayingAudio={isPlayingAudio}
+          audioProgress={audioProgress}
+          audioCurrentTime={audioCurrentTime}
+          audioDuration={audioDuration}
+          uploadedFileUrl={uploadedFileUrl}
+          onPlayPause={handlePlayPauseAudio}
+          onStop={stopAudio}
+        />
 
         <View style={{ width: "100%", alignItems: "flex-end", marginBottom: 16 }}>
           {uploadedFileUrl ?
@@ -1399,9 +1495,21 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                   استماع
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleDeleteUploadedAudio} style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#fec3c3", borderRadius: 8, paddingVertical: 8, paddingHorizontal: 18, marginTop: 4 }}>
-                <Ionicons name="trash" size={24} color="red" />
-                <Text style={{ ...globalTextStyles.bodyMedium, color: "red", fontSize: 16 }}>
+              <TouchableOpacity 
+                onPress={handleDeleteUploadedAudio} 
+                disabled={isPlayingAudio}
+                style={{ 
+                  flexDirection: "row", 
+                  alignItems: "center", 
+                  backgroundColor: isPlayingAudio ? "#f5f5f5" : "#fec3c3", 
+                  borderRadius: 8, 
+                  paddingVertical: 8, 
+                  paddingHorizontal: 18, 
+                  marginTop: 4,
+                  opacity: isPlayingAudio ? 0.5 : 1
+                }}>
+                <Ionicons name="trash" size={24} color={isPlayingAudio ? "#999" : "red"} />
+                <Text style={{ ...globalTextStyles.bodyMedium, color: isPlayingAudio ? "#999" : "red", fontSize: 16 }}>
                   حذف
                 </Text>
               </TouchableOpacity>
