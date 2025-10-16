@@ -111,6 +111,8 @@ const CartScreen = ({ navigation }: any) => {
     let displayDate = '';
     let displayTime = '';
 
+    const cleanText = (text: string) => text.replace(/[\r\n]+/g, ' ').trim();
+
     if (item.SchedulingDate && item.SchedulingTime) {
       displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
       displayTime = convert24HourToArabicTime(item.SchedulingTime);
@@ -134,12 +136,61 @@ const CartScreen = ({ navigation }: any) => {
           </TouchableOpacity>
           <View style={styles.quantityContainer}>
             {item?.CatCategoryId == "42"
-              ? <Text style={styles.ServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
-              : <Text style={styles.ServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
+              ? <Text style={styles.ServiceText}>{`استشارة عن بعد / ${cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}`}</Text>
+              : <Text style={styles.ServiceText}>{cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}</Text>
             }
-            {item?.ServicePrice !== undefined && item?.ServicePrice !== null &&
-              <Text style={styles.quantityText}>{`SAR ${String(item.ServicePrice)}`}</Text>
-            }
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              {item?.ServicePrice !== undefined && item?.ServicePrice !== null &&
+                <Text style={styles.quantityText}>{`SAR ${String(item.ServicePrice)}`}</Text>
+              }
+              {(item?.CatCategoryId != "42" && item?.CatCategoryId != "32") && <View style={styles.qtyControls}>
+                <TouchableOpacity
+                  style={styles.qtyButton}
+                  onPress={() => {
+                    const updated = CardArray.map((ci: any) => {
+                      if (
+                        ci.ItemUniqueId === item.ItemUniqueId &&
+                        String(ci.CatServiceId) == String(item.CatServiceId)
+                      ) {
+                        const currentQty = Number(ci.Quantity || 1);
+                        return { ...ci, Quantity: Math.max(1, currentQty - 1) };
+                      }
+                      return ci;
+                    });
+                    dispatch(addCardItem(updated));
+                  }}
+                  accessibilityLabel={"decrement quantity"}
+                >
+                  <View style={styles.iconWrap}>
+                    <View style={styles.iconBar} />
+                  </View>
+                </TouchableOpacity>
+                <Text style={styles.qtyValue}>{String(item?.Quantity || 1)}</Text>
+                <TouchableOpacity
+                  style={styles.qtyButton}
+                  onPress={() => {
+                    const updated = CardArray.map((ci: any) => {
+                      if (
+                        ci.ItemUniqueId === item.ItemUniqueId &&
+                        String(ci.CatServiceId) == String(item.CatServiceId)
+                      ) {
+                        const currentQty = Number(ci.Quantity || 1);
+                        return { ...ci, Quantity: currentQty + 1 };
+                      }
+                      return ci;
+                    });
+                    dispatch(addCardItem(updated));
+                  }}
+                  accessibilityLabel={"increment quantity"}
+                >
+                  <View style={styles.iconWrap}>
+                    <View style={styles.iconBar} />
+                    <View style={[styles.iconBar, styles.iconBarVertical]} />
+                  </View>
+                </TouchableOpacity>
+
+              </View>}
+            </View>
           </View>
         </View>
       </View>
@@ -176,7 +227,7 @@ const CartScreen = ({ navigation }: any) => {
     // let isAPICallNeeded = null;
     let selectedUniqueId = null;
 
-    let isAPICallNeeded = CardArray.find((item: any) => !item.OrderID && !item.OrderDetailId);
+    let isAPICallNeeded = CardArray.find((item: any) => (!item.OrderID && !item.OrderDetailId) || Number(item.Quantity || 1) > 1);
     // let selectedUniqueId = selectedItem?.ItemUniqueId;
 
     CardArray.forEach((cardItem: any) => {
@@ -228,11 +279,13 @@ const CartScreen = ({ navigation }: any) => {
     let total = 0;
 
     CardArray.forEach((item: any) => {
+      const qty = Number(item.Quantity || 1);
+      const price = Number(item.ServicePrice) || 0;
       if (item.CatNationalityId == "213") {
-        subTotal += Number(item.ServicePrice) || 0;
+        subTotal += price * qty;
       } else {
-        subTotal += (Number(item.ServicePrice) || 0);
-        tax += (Number(item.ServicePrice) || 0) * 0.15;
+        subTotal += price * qty;
+        tax += price * 0.15 * qty;
       }
     });
 
@@ -252,10 +305,11 @@ const CartScreen = ({ navigation }: any) => {
           <View style={styles.headerActions}>
             <Text style={styles.itemsCount}>الخدمات المختارة ({CardArray.length})</Text>
             <View>
-              <Text>{"SAR: " + CardArray.reduce((acc: number, item: any) => acc + (Number(item.ServicePrice) || 0), 0)}</Text>
+              <Text style={{...globalTextStyles.bodyMedium, color: '#23a2a4'}}>{"SAR: " + CardArray.reduce((acc: number, item: any) => acc + ((Number(item.ServicePrice) || 0) * (Number(item.Quantity || 1))), 0)}</Text>
             </View>
           </View>
         )}
+        <View style={{flex: 1}}>
         <FlatList
           data={CardArray}
           renderItem={renderCardItem}
@@ -263,6 +317,7 @@ const CartScreen = ({ navigation }: any) => {
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={renderEmptyCart}
         />
+        </View>
         <View style={styles.totalContainer}>
           <View style={styles.totalTextContainer}>
             <Text style={styles.totalText}>{"إجمالي الخدمات"}</Text>
@@ -310,7 +365,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
+    // padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   headerTitle: {
     ...globalTextStyles.h3,
@@ -320,7 +377,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
     paddingHorizontal: 8,
   },
   itemsCount: {
@@ -364,6 +421,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#e4f1ef',
     paddingHorizontal: 10,
+    borderRadius: 10,
   },
   slotInfoContainer: {
     flexDirection: 'row',
@@ -398,7 +456,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   removeButton: {
-    backgroundColor: 'red',
+    backgroundColor: '#ff3b30',
     borderRadius: 100,
     height: 22,
     width: 22,
@@ -435,11 +493,49 @@ const styles = StyleSheet.create({
     color: '#23a2a4',
     textAlign: 'left',
   },
+  qtyControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  qtyButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 16,
+    backgroundColor: '#e8f2f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrap: {
+    width: 14,
+    height: 14,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBar: {
+    width: 12,
+    height: 2,
+    backgroundColor: '#23a2a4',
+    borderRadius: 1,
+  },
+  iconBarVertical: {
+    position: 'absolute',
+    width: 2,
+    height: 12,
+  },
+  qtyValue: {
+    ...globalTextStyles.bodyMedium,
+    fontFamily: globalTextStyles.h5.fontFamily,
+    color: '#000',
+    minWidth: 16,
+    textAlign: 'center',
+  },
   totalContainer: {
     backgroundColor: "#e4f1ef",
     padding: 10,
     borderRadius: 10,
-    marginTop: 10,
+    marginTop: 2,
   },
   totalTextContainer: {
     flexDirection: 'row',
@@ -453,7 +549,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#23a2a4',
     padding: 10,
     borderRadius: 10,
-    marginTop: 10,
+    marginTop: 4,
     width: '48%',
   },
   checkoutButtonText: {

@@ -366,7 +366,7 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
         "CatSpecialtyId": item.CatSpecialtyId || 0,
         "OrganizationSpecialtiesId": 0,
         "OrganizationPackageId": 0,
-        "Quantity": 1,
+        "Quantity": item.Quantity || 1,
         "SchedulingDate": schedulingDateUTC,
         "SchedulingTime": schedulingTimeUTC,
         "CatSchedulingAvailabilityTypeId": item.CatSchedulingAvailabilityTypeId,

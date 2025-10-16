@@ -289,7 +289,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     let returnVal = false
     const formattedSelectedDate = selectedDate.format('YYYY-MM-DD');
 
-    if(selectedCard[0]?.SchedulingDate === formattedSelectedDate){
+    // if(selectedCard[0]?.SchedulingDate === formattedSelectedDate){
       if (selectedSlotInfo) {
         returnVal = selectedSlotInfo?.providerId === provider.UserId && selectedService?.selectedService == item.ServiceTitlePlang
       } else if (selectedService) {
@@ -299,7 +299,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                     selectedCard[0]?.CatServiceId == item.Id 
                     
       }
-    }
+    // }
     
    
     return returnVal;

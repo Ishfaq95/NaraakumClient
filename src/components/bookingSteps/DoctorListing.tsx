@@ -506,10 +506,19 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
     setIsProcessing(true);
     try {
-      const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
-      let selectedItem: any = displayCategory?.Display == "CP" ? CardArray.find((item: any) => !item.ServiceProviderUserloginInfoId) : CardArray.find((item: any) => !item.OrganizationId);
+      
+      let selectedUniqueId = null;
 
+    CardArray.forEach((cardItem: any) => {
+      const displayCategory = categoriesList.find((item: any) => item.Id == cardItem.CatCategoryId);
+      let selectedItem: any = displayCategory?.Display == "CP" ? !cardItem.ServiceProviderUserloginInfoId : !cardItem.OrganizationId;
       if (selectedItem) {
+        selectedUniqueId = cardItem.ItemUniqueId;
+        return;
+      }
+    });
+
+      if (selectedUniqueId) {
         setAlertModalVisible(true);
         setAlertModalMessage('لم يتم تحديد الجدول الزمني للخدمة');
         return;
@@ -1699,14 +1708,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         onRequestClose={() => { setAlertModalVisible(false); }}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 28, }}>
+          <View style={{ width: '85%', backgroundColor: '#fff', borderRadius: 18, alignItems: 'center', padding: 15, }}>
             <View style={{ width: '100%', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
               <TouchableOpacity
                 onPress={() => { setAlertModalVisible(false); }}
               >
                 <AntDesign name="close" size={28} color="#888" />
               </TouchableOpacity>
-              <Text style={{ color: '#3a434a', fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>خطأ</Text>
+              <Text style={{ ...globalTextStyles.h4, color: '#3a434a', marginBottom: 12 }}>خطأ</Text>
             </View>
             <AntDesign name="exclamationcircle" size={64} color="#d84d48" style={{ marginVertical: 18 }} />
             <Text style={{ color: '#3a434a', fontSize: 18, textAlign: 'center', fontFamily: CAIRO_FONT_FAMILY.medium, lineHeight: 28 }}>
@@ -1722,7 +1731,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               }}
               style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, width: '100%', alignItems: 'center', marginTop: 10 }}
             >
-              <Text style={{ fontFamily: globalTextStyles.h5.fontFamily, color: '#fff', fontWeight: 'bold', fontSize: 16 }}> خدمة الجدول الزمني</Text>
+              <Text style={{ ...globalTextStyles.buttonMedium, color: '#fff' }}> خدمة الجدول الزمني</Text>
             </TouchableOpacity>
           </View>
         </View>
