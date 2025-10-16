@@ -120,7 +120,7 @@ const AppointmentVisitCard: React.FC<AppointmentVisitCardProps> = React.memo(({
                 </View>
             </View>
 
-            <View style={{ backgroundColor: '#e4f1ef', borderRadius: 10, padding: 4, alignItems: "flex-start" }}>
+            <View style={{ backgroundColor: '#e4f1ef', borderRadius: 10,marginTop:4, padding: 4, alignItems: "flex-start" }}>
                 <FlatList
                     data={appointment?.TaskDetail}
                     keyExtractor={(item, index) => index.toString()}
