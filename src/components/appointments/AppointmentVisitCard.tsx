@@ -7,6 +7,7 @@ import {
     I18nManager,
     Image,
     ScrollView,
+    FlatList,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import moment from 'moment';
@@ -54,6 +55,8 @@ const AppointmentVisitCard: React.FC<AppointmentVisitCardProps> = React.memo(({
         }
     };
 
+    console.log("appointment vist", appointment)
+
     return (
         <View style={styles.card}>
             {/* Doctor Info */}
@@ -65,45 +68,9 @@ const AppointmentVisitCard: React.FC<AppointmentVisitCardProps> = React.memo(({
                     <Text style={styles.doctorName} numberOfLines={1}>
                         {appointment?.OrganizationSlang}
                     </Text>
-                    <Text style={styles.doctorName} numberOfLines={1}>
+                    <Text style={styles.organizationName} numberOfLines={1}>
                         {appointment?.FullnameSlang}
                     </Text>
-                    {/* <View style={styles.specialtiesContainer}>
-            <TouchableOpacity 
-              onPress={() => scrollByAmount('left')} 
-              style={styles.scrollButton}
-            >
-              {isRTL ? <RightArrow /> : <LeftArrow />}
-            </TouchableOpacity>
-            
-            <ScrollView
-              ref={scrollViewRef}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.specialtiesScrollView}
-              onScroll={(event) => {
-                setScrollPosition(event.nativeEvent.contentOffset.x);
-              }}
-              scrollEventThrottle={16}
-            >
-              <View style={styles.specialtiesRow}>
-                {(appointment?.Specialties || []).map((spec: any, idx: number) => (
-                  <View key={idx} style={styles.specialtyPill}>
-                    <Text style={styles.specialtyText}>
-                      {isRTL ? spec.TitleSlang : spec.TitlePlang}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </ScrollView>
-
-            <TouchableOpacity 
-              onPress={() => scrollByAmount('right')} 
-              style={styles.scrollButton}
-            >
-              {isRTL ? <LeftArrow /> : <RightArrow />}
-            </TouchableOpacity>
-          </View> */}
                 </View>
             </View>
 
@@ -145,7 +112,7 @@ const AppointmentVisitCard: React.FC<AppointmentVisitCardProps> = React.memo(({
                     ]}>
                         <Text style={[
                             styles.statusText,
-                            { color: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).borderColor }
+                            { color: '#000' }
                         ]}>
                             {getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).text}
                         </Text>
@@ -153,18 +120,29 @@ const AppointmentVisitCard: React.FC<AppointmentVisitCardProps> = React.memo(({
                 </View>
             </View>
 
-            <View style={{ height: 50, backgroundColor: '#e4f1ef', borderRadius: 10, padding: 10, alignItems: "flex-start" }}>
-                <View style={{flexDirection:"row",paddingHorizontal:3, backgroundColor: '#fff', borderRadius: 10, alignItems: "center" }}>
-                    <Text style={{ ...globalTextStyles.bodySmall, color: '#222', paddingHorizontal: 10, paddingVertical: 2 }}>{appointment?.TaskDetail[0]?.TitleSlangService}</Text>
-                    <View style={{height:25,width:25,backgroundColor:'#008080',borderRadius:15,alignItems:"center",justifyContent:"center"}}>
-                        <Text style={{...globalTextStyles.bodySmall,color:'#fff'}}>1</Text>
-                    </View>
-                </View>
+            <View style={{ backgroundColor: '#e4f1ef', borderRadius: 10, padding: 4, alignItems: "flex-start" }}>
+                <FlatList
+                    data={appointment?.TaskDetail}
+                    keyExtractor={(item, index) => index.toString()}
+                    numColumns={2}
+                    columnWrapperStyle={{ gap: 10 }}
+                    renderItem={({ item, index }: { item: any, index: number }) => (
+                        <View style={{ flexDirection: "row", paddingHorizontal: 3,marginBottom:6, backgroundColor: '#fff', borderRadius: 10, alignItems: "center" }}>
+                            <Text style={{ ...globalTextStyles.bodySmall, color: '#222', paddingHorizontal: 10, paddingVertical: 2 }}>{item?.TitleSlangService}</Text>
+                            <View style={{ height: 25, width: 25, backgroundColor: '#008080', borderRadius: 15, alignItems: "center", justifyContent: "center" }}>
+                                <Text style={{ ...globalTextStyles.bodySmall, color: '#fff' }}>{item?.Quantity}</Text>
+                            </View>
+                        </View>
+                    )}
+                />
+
+
+
             </View>
 
-            <TouchableOpacity onPress={()=>onPressMapButton(appointment)} style={{flexDirection:'row', height:50,width:'100%',borderWidth:1,borderColor:"#008080",borderRadius:10,marginTop:10,alignItems:'center',justifyContent:'center'}}>
-                <Image source={require('../../assets/icons/googleMapIcon.png')} style={{width:20,height:20}} />
-                <Text style={{...globalTextStyles.bodySmall,color:'#008080',paddingLeft:10}}>تتبع وصول المعالج</Text>
+            <TouchableOpacity onPress={() => onPressMapButton(appointment)} style={{ flexDirection: 'row', height: 40, width: '100%', borderWidth: 1, borderColor: "#008080", borderRadius: 10, marginTop: 10, alignItems: 'center', justifyContent: 'center' }}>
+                <Image source={require('../../assets/icons/googleMapIcon.png')} style={{ width: 20, height: 20 }} />
+                <Text style={{ ...globalTextStyles.bodySmall, color: '#008080', paddingRight: 10 }}>تتبع وصول المعالج</Text>
             </TouchableOpacity>
         </View>
     );
@@ -174,7 +152,8 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: '#fff',
         borderRadius: 12,
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         margin: 8,
         elevation: 2,
         shadowColor: '#000',
@@ -201,6 +180,13 @@ const styles = StyleSheet.create({
         borderRadius: 24,
     },
     doctorName: {
+        ...globalTextStyles.bodySmall,
+        fontFamily: globalTextStyles.h5.fontFamily,
+        color: '#222',
+        marginBottom: 4,
+        textAlign: 'left',
+    },
+    organizationName: {
         ...globalTextStyles.bodyMedium,
         fontFamily: globalTextStyles.h5.fontFamily,
         color: '#222',
@@ -238,19 +224,17 @@ const styles = StyleSheet.create({
     divider: {
         height: 1,
         backgroundColor: '#e0e0e0',
-        marginVertical: 12,
+        marginVertical: 4,
     },
     detailsContainer: {
         flexDirection: 'column',
         justifyContent: 'space-between',
-        marginVertical: 12,
-        paddingHorizontal: 8,
     },
     detailItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 8,
+        paddingVertical: 4,
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
     },
@@ -268,7 +252,6 @@ const styles = StyleSheet.create({
     },
     statusContainer: {
         borderRadius: 6,
-        paddingVertical: 8,
         paddingHorizontal: 12,
         borderLeftWidth: 4,
     },

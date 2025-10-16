@@ -7,6 +7,7 @@ import {
   Platform,
   FlatList,
   SafeAreaView,
+  Linking,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
@@ -34,6 +35,7 @@ import { globalTextStyles } from '../../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AppointmentTrackingMap from '../../components/AppointmentTrackingMap';
 import { setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 
 export interface Appointment {
   CardNumber: string | null;
@@ -96,7 +98,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const [openGoogleMapBottomSheet, setOpenGoogleMapBottomSheet] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-  const [routeInfo, setRouteInfo] = useState<{distance: string, duration: string} | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{ distance: string, duration: string } | null>(null);
   const unreadMessages = useSelector((state: any) => state.root.user.unreadMessages);
   const requestPermissions = async () => {
     return Platform.OS === 'ios' ? requestiOSPermissions() : requestAndroidPermissions();
@@ -196,13 +198,13 @@ const AppointmentListScreen = ({ navigation }: any) => {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      
+
       // We don't stop the WebSocketService periodic check here
       // because we want it to continue across screens
     };
-  }, [isScreenFocused, user,patientReminderList]);
+  }, [isScreenFocused, user, patientReminderList]);
 
-  
+
 
   const checkUnreadMessages = () => {
     if (user) {
@@ -217,7 +219,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
       const communicationKey = user.CommunicationKey;
       const UserId = user.Id;
       subsribeTopic(UserId, topic, dispatch);
-      
+
       // Only connect if not already connected
       if (!webSocketService.isSocketConnected()) {
         webSocketService.connect(presence, communicationKey, UserId);
@@ -225,7 +227,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
         // If already connected, make sure the global handler is set
         webSocketService.addGlobalMessageHandler();
       }
-      
+
       // Check for unread messages when screen is focused
       if (isScreenFocused) {
         checkUnreadMessages();
@@ -266,20 +268,20 @@ const AppointmentListScreen = ({ navigation }: any) => {
     if (response.ResponseStatus.STATUSCODE == 200) {
       // Update enabled appointments ref before setting state
       const reminderList = response.ReminderList;
-      
+
       // Initialize the enabled appointments set
       const enabled = new Set<string>();
-      
+
       // Check each appointment
       reminderList.forEach((appointment: any) => {
         if (checkTimeCondition(appointment)) {
           enabled.add(`${appointment.OrderId}-${appointment.TaskId}`);
         }
       });
-      
+
       // Update the ref
       enabledAppointmentsRef.current = enabled;
-      
+
       // Now set the state
       setPatientReminderList(reminderList);
     }
@@ -339,34 +341,35 @@ const AppointmentListScreen = ({ navigation }: any) => {
       rightComponent={
         <TouchableOpacity onPress={() => {
           dispatch(setSelectedUniqueId(null));
-          navigation.navigate(ROUTES.Services)}} style={styles.bookButton}>
+          navigation.navigate(ROUTES.Services)
+        }} style={styles.bookButton}>
           <Text numberOfLines={1} style={styles.bookButtonText}>{t('book_order')}</Text>
         </TouchableOpacity>
       }
       leftComponent={
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-        <TouchableOpacity onPress={() => navigation.navigate(ROUTES.NotificationScreen)} style={{}}>
-          <View style={{ position: 'relative' }}>
-            <Ionicons name="notifications" size={24} color="black" />
-            {notificationList > 0 && (
-              <View style={{ position: 'absolute', top: -10, right: 10,width: 25, height: 20, backgroundColor: '#008080', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: 'white', fontSize: 10,  }}>{notificationList > 100 ? '99+' : notificationList}</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate(ROUTES.ConversationListScreen)} style={{paddingLeft:15}}>
-          <View style={{ position: 'relative' }}>
-            <Ionicons name="chatbox" size={24} color="black" />
-            {unreadMessages > 0 && (
-              <View style={{ position: 'absolute', top: -15, right: -10, backgroundColor: '#008080', padding: 5, width: 22, height: 22, borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: 'white', fontSize: 10, }}>{unreadMessages > 100 ? '99+' : unreadMessages}</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <TouchableOpacity onPress={() => navigation.navigate(ROUTES.NotificationScreen)} style={{}}>
+            <View style={{ position: 'relative' }}>
+              <Ionicons name="notifications" size={24} color="black" />
+              {notificationList > 0 && (
+                <View style={{ position: 'absolute', top: -10, right: 10, width: 25, height: 20, backgroundColor: '#008080', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 10, }}>{notificationList > 100 ? '99+' : notificationList}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate(ROUTES.ConversationListScreen)} style={{ paddingLeft: 15 }}>
+            <View style={{ position: 'relative' }}>
+              <Ionicons name="chatbox" size={24} color="black" />
+              {unreadMessages > 0 && (
+                <View style={{ position: 'absolute', top: -15, right: -10, backgroundColor: '#008080', padding: 5, width: 22, height: 22, borderRadius: 50, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 10, }}>{unreadMessages > 100 ? '99+' : unreadMessages}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
         </View>
-        
+
       }
     />
   );
@@ -388,6 +391,10 @@ const AppointmentListScreen = ({ navigation }: any) => {
     setSelectedAppointment(appointment);
   }
 
+  const callPatient = (appointment: any) => {
+    Linking.openURL(`tel:${appointment.CellNumber}`);
+  }
+
   const rendervisitItem = useCallback(({ item }: { item: any }) => (
     <AppointmentVisitCard appointment={item} onPressMapButton={onPressMapButton} />
   ), []);
@@ -402,8 +409,8 @@ const AppointmentListScreen = ({ navigation }: any) => {
           renderItem={({ item }) => item?.TaskDetail[0]?.CatServiceServeTypeId == "1" ? renderItem({ item }) : rendervisitItem({ item })}
           keyExtractor={(item) => item?.TaskId?.toString()}
           ListEmptyComponent={
-            <View style={{ height: "100%", paddingTop:"50%", justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ ...globalTextStyles.bodyLarge, color: '#000', fontWeight: '600',textAlign:"left" }}>لا توجد تذكيرات</Text>
+            <View style={{ height: "100%", paddingTop: "50%", justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ ...globalTextStyles.bodyLarge, color: '#000', fontWeight: '600', textAlign: "left" }}>لا توجد تذكيرات</Text>
             </View>
           }
         />
@@ -418,25 +425,34 @@ const AppointmentListScreen = ({ navigation }: any) => {
       >
         <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
           <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000' }]}>تتبع وصول المعالج</Text>
+            <Text style={[globalTextStyles.buttonMedium, { color: '#000' }]}>تتبع وصول المعالج</Text>
             <TouchableOpacity onPress={() => setOpenGoogleMapBottomSheet(false)}>
               <AntDesign name="close" size={20} color="#000" />
             </TouchableOpacity>
           </View>
-          <View style={{paddingHorizontal: 16 }}>
-            <View style={{flexDirection:"row",alignItems: "center",justifyContent:"space-between" }}>
-              <View style={{alignItems:"flex-start",justifyContent:"flex-start"}}>
-                <Text style={{ ...globalTextStyles.bodyLarge, color: '#000', fontWeight: '600',textAlign:"left" }}>{selectedAppointment?.FullnameSlang}</Text>
-                <Text style={{ ...globalTextStyles.bodyMedium, color: '#000', fontWeight: '600',textAlign:"left" }}>{selectedAppointment?.OrganizationSlang}</Text>
-                <Text style={{ ...globalTextStyles.bodyMedium, color: '#000', fontWeight: '600',textAlign:"left" }}>{selectedAppointment?.CellNumber}</Text>
+          <View style={{ paddingHorizontal: 16 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flex: 1, alignItems: "flex-start", justifyContent: "center" }}>
+                <Text style={{ ...globalTextStyles.bodyLarge, color: '#000' }}>{selectedAppointment?.FullnameSlang}</Text>
+                <Text style={{ ...globalTextStyles.bodySmall,lineHeight:15, color: '#222' }}>{selectedAppointment?.OrganizationSlang}</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+
+                  <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{selectedAppointment?.CellNumber.replace(/^\+/, '')}</Text>
+                  <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>+</Text>
+
+                    <TouchableOpacity onPress={() => callPatient(selectedAppointment)} style={{width:40,height:20,marginLeft:10,backgroundColor:'#2ab318',borderRadius:10,alignItems:"center",justifyContent:"center"}}>
+                      <FontAwesome6 name="phone-volume" size={12} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+
               </View>
             </View>
 
           </View>
-          <View style={{flex:1, borderRadius:10,padding:10}}>
+          <View style={{ flex: 1, borderRadius: 10, padding: 10 }}>
             {selectedAppointment && (
-              <AppointmentTrackingMap 
-                appointment={selectedAppointment} 
+              <AppointmentTrackingMap
+                appointment={selectedAppointment}
                 onRouteInfoUpdate={(info) => setRouteInfo(info)}
               />
             )}

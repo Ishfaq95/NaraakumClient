@@ -274,7 +274,7 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
             <Text style={styles.routeInfoValue}>{routeInfo.distance}</Text>
           </View>
           <View style={styles.routeInfoItem}>
-            <Text style={styles.routeInfoLabel}>الوقت المتوقع:</Text>
+            <Text style={styles.routeInfoLabel}>الوقت المتبقى:</Text>
             <Text style={styles.routeInfoValue}>{routeInfo.duration}</Text>
           </View>
         </View>

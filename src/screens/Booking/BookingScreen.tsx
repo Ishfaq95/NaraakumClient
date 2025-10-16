@@ -430,7 +430,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     ...globalTextStyles.h4,
-    fontWeight: 'bold',
     color: '#000',
   },
   closeIcon: {

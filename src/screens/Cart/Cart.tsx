@@ -82,7 +82,7 @@ const CartScreen = ({ navigation }: any) => {
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{t('cart')}</Text>
+        <Text style={styles.headerTitle}>{'سلة الخدمات'}</Text>
       }
     />
   );

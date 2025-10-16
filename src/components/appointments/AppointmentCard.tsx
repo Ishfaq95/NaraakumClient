@@ -39,6 +39,27 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
   const scrollViewRef = useRef<ScrollView>(null);
   const [scrollPosition, setScrollPosition] = React.useState(0);
 
+  console.log("appointment",appointment)
+
+  const getSpecialtiesArray = () => {
+    // const serviceServe = appointment?.ServiceProviderSpecialties?.map((item: any) => {
+    //   return {
+    //     TitleSlang: item.ServiceTitleSlang
+    //   }
+    // });
+
+    const specialties = [
+      // ...serviceServe,
+      ...appointment?.ServiceProviderSpecialties,
+      {
+        TitleSlang: appointment?.OrganizationSlang
+      }
+    ]
+
+
+    return specialties || [];
+  }
+
   const scrollByAmount = (direction: 'left' | 'right') => {
     const scrollAmount = 120; // Width of approximately 2 tags
     
@@ -55,14 +76,8 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
       scrollViewRef.current?.scrollTo({ x: newOffset, animated: true });
     }
   };
-  console.log("appointment",appointment)
-  const getSpecialtiesArray = () => {
-    
-    const specialties = [
-        ...(appointment?.ServiceProviderSpecialties),
-    ]
-    return specialties || [];
-}
+ 
+  
 
   return (
     <View style={styles.card}>
@@ -152,7 +167,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
           ]}>
             <Text style={[
               styles.statusText,
-              { color: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).borderColor }
+              { color: '#000' }
             ]}>
               {getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).text}
             </Text>
@@ -199,7 +214,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
+    // padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     margin: 8,
     elevation: 2,
     shadowColor: '#000',
@@ -263,19 +280,17 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#e0e0e0',
-    marginVertical: 12,
+    marginVertical: 5,
   },
   detailsContainer: {
     flexDirection: 'column',
     justifyContent: 'space-between',
-    marginVertical: 12,
-    paddingHorizontal: 8,
   },
   detailItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
@@ -293,7 +308,6 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     borderRadius: 6,
-    paddingVertical: 8,
     paddingHorizontal: 12,
     borderLeftWidth: 4,
   },
@@ -306,9 +320,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 8,
-    marginBottom: 10,
+    marginBottom: 5,
+    marginTop: 5,
     justifyContent: 'center',
   },
   infoBarText: {
@@ -322,7 +337,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 6,
     justifyContent: 'center',
   },
   callBtnEnabled: {
