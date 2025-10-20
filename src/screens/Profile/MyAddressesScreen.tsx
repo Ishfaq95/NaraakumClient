@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Modal, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Modal, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, RefreshControl, ScrollView } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native';
@@ -10,11 +10,12 @@ import { profileService } from '../../services/api/ProfileService';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../shared/redux/store';
 import LocationMarkerIcon from '../../assets/icons/LocationMarkerIcon';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import { VisitLocationComponent } from '../../components/emailUpdateComponent';
 import { bookingService } from '../../services/api/BookingService';
 import CustomBottomSheet from '../../components/common/CustomBottomSheet';
 import GoogleMapComponent from '../../components/GoogleMapComponent';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const MyAddressesScreen = () => {
   const { t } = useTranslation();
@@ -24,7 +25,7 @@ const MyAddressesScreen = () => {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [openBottomSheet, setOpenBottomSheet] = useState(false)
-  const [bottomSheetHeight, setBottomSheetHeight] = useState("65%")
+  const [bottomSheetHeight, setBottomSheetHeight] = useState("60%")
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [address, setAddress] = useState({
     latitude: 0,
@@ -46,13 +47,15 @@ const MyAddressesScreen = () => {
 
   useEffect(() => {
     if (openBottomSheet) {
-      if (focusedField === 'description') {
+      if (focusedField === 'description' && Platform.OS === 'ios') {
         setBottomSheetHeight('87%');
-      } else {
-        setBottomSheetHeight('65%');
+      } else if (Platform.OS === 'ios') {
+        setBottomSheetHeight('60%');
       }
+    } else {
+      setBottomSheetHeight('60%');
     }
-  }, [openBottomSheet, focusedField]);
+  }, [openBottomSheet, focusedField, Platform.OS]);
 
   const getAddresses = async () => {
     setIsLoading(true);
@@ -125,6 +128,12 @@ const MyAddressesScreen = () => {
     if (response?.ResponseStatus?.STATUSCODE == 200) {
       getAddresses();
     }
+    setAddressForm({
+      rigin: '',
+      city: '',
+      neighborhood: '',
+      description: '',
+    })
     setOpenBottomSheet(false);
     } catch (error) {
     } finally {
@@ -134,7 +143,7 @@ const MyAddressesScreen = () => {
 
 
   const HandleGoogleMap = () => {
-    setIsGoogleMap(true)
+    // setIsGoogleMap(true)
   }
 
   const AddManuallyButton = () => {
@@ -206,10 +215,20 @@ const MyAddressesScreen = () => {
         visible={openBottomSheet}
         onClose={() => setOpenBottomSheet(false)}
         height={bottomSheetHeight}
+        showHandle={false}
       >
+        <View style={styles.sheetHeaderContainer}>
+        <TouchableOpacity onPress={() => setOpenBottomSheet(false)}>
+          <AntDesign name="close" size={30} color="#979e9eff" />
+        </TouchableOpacity>
+        <Text style={styles.bottomSheetHeaderText}>اختر موقع الزيارة</Text>
+      </View>
+        <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 10 }}
+            showsVerticalScrollIndicator={false}
+          >
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "padding"}
-          style={{ flex: 1 }}
         >
           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <View style={styles.modalBackground}>
@@ -248,6 +267,7 @@ const MyAddressesScreen = () => {
             </View>
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
+        </ScrollView>
       </CustomBottomSheet>
     </SafeAreaView>
   )
@@ -331,10 +351,24 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     backgroundColor: 'white',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
     overflow: 'hidden',
     paddingBottom: 20,
+  },
+  sheetHeaderContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E4F1EF',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+  },
+  bottomSheetHeaderText: {
+    fontSize: 16,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
+    color: '#36454F',
+
   },
 })
 

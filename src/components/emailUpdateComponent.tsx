@@ -17,7 +17,7 @@ interface EmailUpdateProps {
 
 const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, onChangeText, value, onClosePress, inputError = false }) => {
   const inputRef = React.useRef<TextInput>(null);
-  
+
   const validateAndSubmit = () => {
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,11 +25,11 @@ const EmailUpdateComponent: React.FC<EmailUpdateProps> = ({ HandleEmailUpdate, o
       Alert.alert("خطأ", "الرجاء إدخال بريد إلكتروني صحيح");
       return;
     }
-    
+
     // If email is valid, proceed with the update
     HandleEmailUpdate();
   };
-  
+
   return (
     <View style={styles.mainContainer}>
       <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -131,7 +131,7 @@ interface smsProps {
 }
 
 export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTPFor, OTPForText, headerText = "", onChangeText, value, OtpSubmitButton, HandleResendPress, resentCode, otpError = false, otpApiError = false, isLoading = false, OTPFrom }) => {
-  console.log("OTPFor",OTPFor)
+  console.log("OTPFor", OTPFor)
   return (
     <View style={[styles.mainContainer]}>
       <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
@@ -150,36 +150,36 @@ export const VerificationCodeCompoent: React.FC<smsProps> = ({ onClosePress, OTP
         {OTPFrom == 'email' ? <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 10 }}><MaterialIcons name="email" size={53} color="#23a2a4" /></View> : <Image source={require('../assets/images/sms.png')} style={{ width: 53, height: 53, resizeMode: 'contain', alignSelf: 'center', marginVertical: 10 }} />}
         <Text style={styles.optHeaderText}>تم ارسال رمز التحقق الى جوالك رقم</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={[styles.optHeaderText,{fontFamily: CAIRO_FONT_FAMILY.bold}]}>{OTPFor.replace(/^\+/, '')}</Text>
-          {OTPFor.includes('+') && <Text style={[styles.optHeaderText,{fontFamily: CAIRO_FONT_FAMILY.bold}]}>+</Text>}
+          <Text style={[styles.optHeaderText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{OTPFor.replace(/^\+/, '')}</Text>
+          {OTPFor.includes('+') && <Text style={[styles.optHeaderText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>+</Text>}
         </View>
-        
+
         {/* Center container to position the button */}
         <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center', marginVertical: 5 }}>
           {/* TouchableOpacity with hitSlop to control touch area */}
-          <TouchableOpacity 
+          <TouchableOpacity
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={onClosePress}
           >
-            <Text style={{ 
-              color: '#23a2a4', 
-              fontSize: 15, 
-              padding: 5, 
-              fontFamily: CAIRO_FONT_FAMILY.bold, 
+            <Text style={{
+              color: '#23a2a4',
+              fontSize: 15,
+              padding: 5,
+              fontFamily: CAIRO_FONT_FAMILY.bold,
               textAlign: 'center',
             }}>
               {OTPForText}
             </Text>
           </TouchableOpacity>
         </View>
-        
+
         <Text style={styles.inputHeaderText}>
           ادخل رمز التحقق <Text style={{ color: 'red' }}>*</Text>
         </Text>
         <View style={[styles.otpView, (otpError || otpApiError) && { borderWidth: 1, borderColor: 'red', borderRadius: 8 }]}>
           <TextInput returnKeyType='done' value={value} onChangeText={onChangeText} placeholder="ضع الرمز" style={[styles.inputText, { textAlign: 'center', width: '90%' },]} />
         </View>
-        {otpApiError && <Text style={{ color: 'red', fontSize: 12,marginTop: -10, fontFamily: CAIRO_FONT_FAMILY.medium, textAlign: 'left' }}>الرمز غير صالح</Text>}
+        {otpApiError && <Text style={{ color: 'red', fontSize: 12, marginTop: -10, fontFamily: CAIRO_FONT_FAMILY.medium, textAlign: 'left' }}>الرمز غير صالح</Text>}
         <TouchableOpacity onPress={OtpSubmitButton} style={styles.optButton} disabled={isLoading}>
           {isLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.saveBtnText}>تاكيد</Text>}
         </TouchableOpacity>
@@ -423,12 +423,7 @@ export const VisitLocationComponent: React.FC<AddressProps> = ({
 
   return (
     <>
-      <View style={styles.sheetHeaderContainer}>
-        <TouchableOpacity onPress={onClosePress}>
-          <AntDesign name="close" size={30} color="#979e9eff" />
-        </TouchableOpacity>
-        <Text style={styles.bottomSheetHeaderText}>اختر موقع الزيارة</Text>
-      </View>
+      
       <Text style={styles.addressTitle}>نقدم خدماتنا فى المناطق والمدن التالية</Text>
       <View style={styles.whiteContainer}>
 
@@ -660,19 +655,19 @@ export const AddBeneficiaryComponent: React.FC<beneficiaryProps> = ({
               placeholder="0"
               placeholderTextColor="#1e2525ff"
               keyboardType="numeric"
-            maxLength={2}
+              maxLength={2}
               value={ageValue}
-            onChangeText={text => {
-              // Keep only digits
-              const digitsOnly = text.replace(/[^0-9]/g, '');
-              if (digitsOnly === '') {
-                onChangeTextAge('');
-                return;
-              }
-              // Clamp to range 0..99
-              const n = Math.min(99, Math.max(0, parseInt(digitsOnly, 10)));
-              onChangeTextAge(String(n));
-            }}
+              onChangeText={text => {
+                // Keep only digits
+                const digitsOnly = text.replace(/[^0-9]/g, '');
+                if (digitsOnly === '') {
+                  onChangeTextAge('');
+                  return;
+                }
+                // Clamp to range 0..99
+                const n = Math.min(99, Math.max(0, parseInt(digitsOnly, 10)));
+                onChangeTextAge(String(n));
+              }}
               onFocus={() => setFocusedField('age')}
               onBlur={() => setFocusedField('')}
             />

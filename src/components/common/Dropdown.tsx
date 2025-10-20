@@ -84,9 +84,11 @@ const Dropdown: React.FC<DropdownProps> = ({
         }}
         disabled={disabled}
       >
-        <Text style={[styles.dropdownButtonText, labelStyle]}>
-          {selectedItem ? selectedItem.label : placeholder}
-        </Text>
+        <View style={{ width: '90%' }}>
+          <Text numberOfLines={1} style={[styles.dropdownButtonText, labelStyle, { textAlign: 'left' }]}>
+            {selectedItem ? selectedItem.label : placeholder}
+          </Text>
+        </View>
         {/* <View style={[styles.arrow, I18nManager.isRTL && styles.arrowRTL]} /> */}
         <Icon name="chevron-down" size={18} color="#666" />
       </TouchableOpacity>
@@ -154,6 +156,7 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     borderRadius: 8,
     backgroundColor: '#fff',
+    width:'100%'
   },
   dropdownButtonText: {
     ...globalTextStyles.bodySmall,

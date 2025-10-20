@@ -54,7 +54,7 @@ const ReservationReceivedItemRender = ({ item, onClickOrderDetails, getUpdatedOr
         <View style={styles.card}>
             {/* Top Row: Image and Info */}
             <View style={styles.row}>
-                <View style={{ alignItems: "flex-start" }}>
+                <View style={{ width:'90%' }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#000' }]}>اسم المستفيد</Text>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.PatientFullnameSlang}</Text>
                 </View>

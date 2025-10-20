@@ -596,7 +596,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   headerTitle: {
-    ...globalTextStyles.h4,
+    // ...globalTextStyles.h5,
+    fontSize:16,
+    fontFamily:CAIRO_FONT_FAMILY.bold,
     color: '#000'
   },
   headerContainer: {

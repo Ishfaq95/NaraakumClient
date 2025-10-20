@@ -20,6 +20,7 @@ import { MediaBaseURL } from '../../shared/utils/constants';
 // @ts-ignore
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
+import { useAlert } from '../../contexts/AlertContext';
 
 const BeneficiariesScreen = () => {
   const { t } = useTranslation();
@@ -49,7 +50,7 @@ const BeneficiariesScreen = () => {
     nationality: 'citizen',
     idNumber: '',
   })
-
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardDidShow' : 'keyboardDidShow';
@@ -57,9 +58,9 @@ const BeneficiariesScreen = () => {
 
     const keyboardShowListener = Keyboard.addListener(showEvent, () => {
       if (focusedField === 'age' && Platform.OS === 'ios') {
-        setSheetHeight('80%');
+        setSheetHeight('90%');
       } else if (focusedField === 'idNumber' && beneficiaryForm.nationality === 'citizen' && Platform.OS === 'ios') {
-        setSheetHeight('98%');
+        setSheetHeight('90%');
       }
     });
 
@@ -219,7 +220,7 @@ const BeneficiariesScreen = () => {
       })
       .catch(error => {
         console.error('Download error:', error);
-        Alert.alert('File downloading error.', error.message || 'Unknown error');
+        // Alert.alert('File downloading error.', error.message || 'Unknown error');
       })
       .then(() => {
         setIsDownloading(false);
@@ -250,28 +251,28 @@ const BeneficiariesScreen = () => {
         // Copy file to shared location
         await fs.cp(filePath, newPath);
 
-        Alert.alert(
-          'File Copied',
-          'File has been copied to a shared location. You can find it in the Files app under "On My iPhone/iPad" > "Documents" > "Shared".',
-          [
-            {
-              text: 'Open Files App',
-              onPress: () => {
-                // This will open the Files app
-                const filesUrl = 'shortcuts://run-shortcut?name=Files';
-                // Note: This is a fallback, the actual implementation might vary
-                Alert.alert('Files App', 'Please open the Files app manually and navigate to "On My iPhone/iPad" > "Documents" > "Shared" to find your file.');
-              }
-            },
-            {
-              text: 'OK',
-              style: 'cancel'
-            }
-          ]
-        );
+        // Alert.alert(
+        //   'File Copied',
+        //   'File has been copied to a shared location. You can find it in the Files app under "On My iPhone/iPad" > "Documents" > "Shared".',
+        //   [
+        //     {
+        //       text: 'Open Files App',
+        //       onPress: () => {
+        //         // This will open the Files app
+        //         const filesUrl = 'shortcuts://run-shortcut?name=Files';
+        //         // Note: This is a fallback, the actual implementation might vary
+        //         Alert.alert('Files App', 'Please open the Files app manually and navigate to "On My iPhone/iPad" > "Documents" > "Shared" to find your file.');
+        //       }
+        //     },
+        //     {
+        //       text: 'OK',
+        //       style: 'cancel'
+        //     }
+        //   ]
+        // );
       } catch (copyError) {
         console.error('Copy error:', copyError);
-        Alert.alert('Error', 'Could not copy file to shared location. Please try downloading again.');
+        // Alert.alert('Error', 'Could not copy file to shared location. Please try downloading again.');
       }
     }
   };
@@ -293,10 +294,18 @@ const BeneficiariesScreen = () => {
     })
       .fetch('GET', url)
       .then(res => {
-        Alert.alert('تم تنزيل الملف بنجاح');
+        showAlert({
+          title: 'تم تنزيل الملف بنجاح',
+          message: 'تم تنزيل الملف بنجاح',
+          type: 'success',
+        });
       })
       .catch(error => {
-        Alert.alert('File downloading error.');
+        showAlert({
+          title: 'حدث خطأ أثناء تنزيل الملف',
+          message: 'حدث خطأ أثناء تنزيل الملف',
+          type: 'error',
+        });
       })
       .then(() => {
         setIsDownloading(false);
@@ -585,7 +594,7 @@ const BeneficiariesScreen = () => {
     }
     return (
       <View style={{ padding: 10, borderWidth: 1, backgroundColor: '#fff', borderColor: '#fff', borderRadius: 10, marginBottom: 10 }}>
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>{item.CPFullnameSlang || item.FileName || ''}</Text>
+        <Text style={[globalTextStyles.arabicTextBold, { color: '#000', textAlign: 'left' }]}>{item.CPFullnameSlang || item.FileName || ''}</Text>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
           <Text style={[globalTextStyles.bodyMedium]}> رقم الطلب</Text>
           <Text style={[globalTextStyles.bodyMedium]}>{item.OrderId}</Text>
@@ -606,7 +615,9 @@ const BeneficiariesScreen = () => {
     return (
       <View style={[{ width: '100%', height: 150, backgroundColor: '#f9f1f1', marginBottom: 10, borderRadius: 10, padding: 10 }, item.UserloginInfoId == user.Id && { borderWidth: 1, borderColor: '#dc3545' }]}>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>{item.FullnameSlang}</Text>
+          <View style={{ width: '80%' }}>
+          <Text numberOfLines={1} style={[globalTextStyles.arabicTextBold, {  color: '#000',textAlign:'left' }]}>{item.FullnameSlang}</Text>
+          </View>
           <TouchableOpacity onPress={() => HandleThreeDotPress(item)} style={{ height: 30, width: 30, backgroundColor: '#e4f1ef', borderRadius: 20, padding: 5, marginLeft: 10, justifyContent: 'center', alignItems: 'center' }}>
             <Entypo name="dots-three-vertical" size={18} color="#000" />
           </TouchableOpacity>
@@ -800,12 +811,8 @@ const BeneficiariesScreen = () => {
             style={{ flex: 1 }}
             contentContainerStyle={{ paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
-            // keyboardShouldPersistTaps="handled"
           >
             <KeyboardAvoidingView
-              // style={{ flex: 1 }}
-              // behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-              // keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
             >
               <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
                 <View style={styles.modalBackground}>
