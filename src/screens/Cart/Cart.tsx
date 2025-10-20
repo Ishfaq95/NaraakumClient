@@ -84,6 +84,7 @@ const CartScreen = ({ navigation }: any) => {
       centerComponent={
         <Text style={styles.headerTitle}>{'سلة الخدمات'}</Text>
       }
+containerStyle={styles.headerContainer}
     />
   );
 
@@ -370,8 +371,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   headerTitle: {
-    ...globalTextStyles.h3,
-    color: '#000',
+    ...globalTextStyles.h4,
   },
   headerActions: {
     flexDirection: 'row',
@@ -556,6 +556,14 @@ const styles = StyleSheet.create({
     ...globalTextStyles.buttonMedium,
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0.5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 1.84,
+    elevation: 5,
   },
 });
 

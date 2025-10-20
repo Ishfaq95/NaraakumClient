@@ -98,19 +98,22 @@ const VisitOrderListScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={setIndex}
-        initialLayout={{ width: layout.width }}
-        renderTabBar={renderTabBar}
-        swipeEnabled={false}
-        animationEnabled={true}
-        lazy={true}
-        lazyPreloadDistance={0}
-        tabBarPosition="top"
-        style={styles.tabView}
-      />
+      <View style={{ flex: 1, marginTop: 3 }}>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{ width: layout.width }}
+          renderTabBar={renderTabBar}
+          swipeEnabled={false}
+          animationEnabled={true}
+          lazy={true}
+          lazyPreloadDistance={0}
+          tabBarPosition="top"
+          style={styles.tabView}
+        />
+      </View>
+
     </SafeAreaView>
   )
 }
@@ -145,7 +148,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabView: {
-    flex: 1,
+    // flex: 1,
   },
   tabBar: {
     backgroundColor: '#FFFFFF',

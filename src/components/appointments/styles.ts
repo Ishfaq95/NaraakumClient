@@ -430,4 +430,12 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
   },
+  headerContainer: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0.5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 1.84,
+    elevation: 5,
+  },
 }); 

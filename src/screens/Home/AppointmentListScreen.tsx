@@ -371,6 +371,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
         </View>
 
       }
+      containerStyle={styles.headerContainer}
     />
   );
 
@@ -403,7 +404,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <View style={{ flex: 1, backgroundColor: '#e4f1ef', padding: 10 }}>
+      <View style={{ }}>
         <FlatList
           data={patientReminderList}
           renderItem={({ item }) => item?.TaskDetail[0]?.CatServiceServeTypeId == "1" ? renderItem({ item }) : rendervisitItem({ item })}

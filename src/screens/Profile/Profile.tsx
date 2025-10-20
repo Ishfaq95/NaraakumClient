@@ -112,6 +112,7 @@ const ProfileScreen = () => {
       centerComponent={
         <Text style={styles.headerTitle}>{t('profile')}</Text>
       }
+      containerStyle={styles.headerContainer}
     />
   );
 
@@ -197,7 +198,15 @@ const styles = StyleSheet.create({
     ...globalTextStyles.bodySmall,
     color: '#fff',
     fontFamily: globalTextStyles.h6.fontFamily,
-  }
+  },
+  headerContainer: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0.5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 1.84,
+    elevation: 5,
+  },
 });
 
 export default ProfileScreen;

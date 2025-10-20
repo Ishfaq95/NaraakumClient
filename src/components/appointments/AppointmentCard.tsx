@@ -7,6 +7,7 @@ import {
   I18nManager,
   Image,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import moment from 'moment';
@@ -160,9 +161,14 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
           </View>
           <View style={[
             styles.statusContainer,
-            {
+            Platform.OS === 'android' ? {
               backgroundColor: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).backgroundColor,
-              borderLeftColor: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).borderColor
+              borderLeftColor: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).borderColor,
+              borderLeftWidth:4
+            } : {
+              backgroundColor: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).backgroundColor,
+              borderRightColor: getStatusStyle(appointment?.TaskDetail[0]?.CatOrderStatusId).borderColor,
+              borderRightWidth:4
             }
           ]}>
             <Text style={[
@@ -309,7 +315,7 @@ const styles = StyleSheet.create({
   statusContainer: {
     borderRadius: 6,
     paddingHorizontal: 12,
-    borderLeftWidth: 4,
+    direction:'ltr'
   },
   statusText: {
     ...globalTextStyles.bodySmall,
