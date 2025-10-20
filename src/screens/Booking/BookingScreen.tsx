@@ -258,15 +258,6 @@ const BookingScreen = ({ navigation, route }: any) => {
     setCurrentStep(2);
   }
 
-  // useEffect(() => {
-  //   if(category.Id == "41"){
-  //     getServices();
-  //     setCurrentStep(2);
-  //   }else{
-  //     setCurrentStep(1);
-  //   }
-  // }, [category])
-
   const getServices = async () => {
     const offered = await bookingService.getOfferedServicesListByCategory({ abc: category?.Id, Search: '' });
     dispatch(setServices(offered?.OfferedServices));

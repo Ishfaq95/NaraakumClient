@@ -5,7 +5,7 @@ import ClockIcon from '../../assets/icons/ClockIcon';
 import SettingIconSelected from '../../assets/icons/SettingIconSelected';
 import { useTranslation } from 'react-i18next';
 import CommonRadioButton from '../../components/common/CommonRadioButton';
-import { addCardItem, setApiResponse, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
+import { addCardItem, setApiResponse, setCategory, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
 import { bookingService } from '../../services/api/BookingService';
 import { convert24HourToArabicTime, generatePayloadforOrderMainBeforePayment, generatePayloadforUpdateOrderMainBeforePayment, generateUniqueId } from '../../shared/services/service';
 import { useDispatch, useSelector } from 'react-redux';
@@ -164,6 +164,8 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
+  const allCategoriesList = useSelector((state: any) => state.root.booking.allCategoriesList);
+  console.log("allCategoriesList",allCategoriesList)
   const [showGroupedArray, setShowGroupedArray] = useState([]);
   const [relationshipValue, setRelationshipValue] = useState('');
   const [relationshipError, setRelationshipError] = useState(false);
@@ -1245,8 +1247,14 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                 <View style={styles.detailsHeader}>
                   <Text style={styles.detailsHeaderText}>الخدمات المختارة ({filteredItems.length})</Text>
                   <TouchableOpacity onPress={() => {
+                    
+                    const getUpdatedCategory=allCategoriesList.find((catItem:any)=> catItem.Id == item.CatCategoryId)
+                    dispatch(setCategory(getUpdatedCategory))
                     dispatch(setSelectedUniqueId(item.ItemUniqueId));
-                    onPressEditService(item)
+                    setTimeout(()=>{
+                      onPressEditService(item)
+                    },200)
+                    
                   }} style={styles.editButton}>
                     <MaterialIcons name="edit" size={20} color="black" />
                   </TouchableOpacity>

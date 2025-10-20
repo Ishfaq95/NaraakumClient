@@ -13,7 +13,7 @@ import HomeVisitIcon from '../../assets/icons/HomeVisitIcon';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import HomeVisitCard from '../../components/HomeVisitCard';
 import { ROUTES } from '../../shared/utils/routes';
-import { setCategory } from '../../shared/redux/reducers/bookingReducer';
+import { setAllCategoryList, setCategory } from '../../shared/redux/reducers/bookingReducer';
 import { useDispatch } from 'react-redux';
 import { globalTextStyles } from '../../styles/globalStyles';
 
@@ -33,6 +33,7 @@ const Services = ({ navigation }: any) => {
         setIsLoading(true);
         const response = await bookingService.getServices();
         if (response && response.OfferedCategories) {
+            dispatch(setAllCategoryList(response.OfferedCategories))
             const onlineBooking = response.OfferedCategories.filter((item: any) => item.Id === "42");
             const homeVisitArr = response.OfferedCategories.filter((item: any) => item.Id !== "42");
             setHomeVisit(homeVisitArr);

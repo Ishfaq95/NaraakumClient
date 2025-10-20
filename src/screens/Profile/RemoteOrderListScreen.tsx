@@ -131,6 +131,7 @@ const RemoteOrderListScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
+      <View style={{ flex: 1, marginTop: 3 }}>
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
@@ -144,6 +145,7 @@ const RemoteOrderListScreen = () => {
         tabBarPosition="top"
         style={styles.tabView}
       />
+      </View>
     </SafeAreaView>
   )
 }
@@ -175,7 +177,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabView: {
-    flex: 1,
+    // flex: 1,
   },
   text: {
     fontSize: 16,
