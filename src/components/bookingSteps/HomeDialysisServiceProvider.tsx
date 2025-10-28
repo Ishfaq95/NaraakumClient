@@ -8,6 +8,8 @@ import { generateSlotsForDate } from '../../utils/timeUtils';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { useSelector, useDispatch } from 'react-redux';
 import { addCardItem, addHomeDialysisCardItem, manageTempSlotDetail } from '../../shared/redux/reducers/bookingReducer';
+import { globalTextStyles } from '../../styles/globalStyles';
+import i18next from 'i18next';
 
 const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
     provider,
@@ -27,7 +29,6 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
     const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
     const selectedCard = CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId);
     const category = useSelector((state: any) => state.root.booking.category);
-
 
     const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
     const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
@@ -148,7 +149,7 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
                 {selectedSlotInfo?.providerId === provider.UserId && <View style={{ position: 'absolute', right: 10, bottom: 10, alignItems: 'center', justifyContent: 'center' }}>
                     <CheckIcon width={40} height={40} color="#fff" />
                 </View>}
-                <View style={{ width: '30%' }}>
+                <View style={{ width: 90 }}>
                     {provider.ImagePath ? (
                         <Image
                             source={{ uri: `${MediaBaseURL}/${provider.ImagePath}` }}
@@ -159,12 +160,13 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
                         <UserPlaceholder width={80} height={80} />
                     )}
                 </View>
-                <View style={{ width: '70%' }}>
-                    <Text style={styles.providerName}>{provider.FullnameSlang}</Text>
-                    <View style={{ flexDirection: 'row', marginVertical: 2 }}>
-                        <Text style={styles.ratingText}>{provider.AccumulativeRatingAvg.toFixed(1)}</Text>
-                        <Text style={{ color: '#888', fontSize: 12 }}> ({provider.AccumulativeRatingNum} تقييم)</Text>
-                        <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
+                <View style={{ flex: 1}}>
+                    <Text numberOfLines={2} style={styles.providerName}>{provider.FullnameSlang}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
+                    <Text style={{ ...globalTextStyles.bodySmall, color: '#FFD700',  marginRight: 2 }}>★</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, color: '#000', fontFamily: globalTextStyles.h5.fontFamily }}>{provider.AccumulativeRatingAvg.toFixed(1)}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, color: '#888', fontFamily: globalTextStyles.h5.fontFamily }}> ({provider.AccumulativeRatingNum} تقييم)</Text>
+                        
                     </View>
                 </View>
             </View>
@@ -309,26 +311,6 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
     const renderTimeSlots = useMemo(() => {
         return (
             <View style={styles.specialtyContainer}>
-                {/* <TouchableOpacity
-          onPress={() => scrollTimeSlots('left')}
-          style={[styles.scrollButton, styles.leftScrollButton]}
-          activeOpacity={0.7}
-        >
-          {isRTL ? <RightArrow /> : <LeftArrow />}
-        </TouchableOpacity>
-
-        <ScrollView
-          ref={timeSlotsScrollViewRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.specialtiesScrollView}
-          onScroll={(event) => setTimeSlotsScrollPosition(event.nativeEvent.contentOffset.x)}
-          scrollEventThrottle={16}
-          snapToInterval={120}
-          decelerationRate={0}
-          snapToAlignment="start"
-          contentContainerStyle={styles.timeSlotsContent}
-        > */}
                 <View style={styles.specialtiesRow}>
                     {provider.slots && provider.slots.map((slot: any, index: any) => {
                         const isSelected = selectedSlotInfo?.providerId === provider.UserId &&
@@ -357,31 +339,49 @@ const HomeDialysisServiceProvider: React.FC<any> = React.memo(({
                         );
                     })}
                 </View>
-                {/* </ScrollView>
-
-        <TouchableOpacity
-          onPress={() => scrollTimeSlots('right')}
-          style={[styles.scrollButton, styles.rightScrollButton]}
-          activeOpacity={0.7}
-        >
-          {isRTL ? <LeftArrow /> : <RightArrow />}
-        </TouchableOpacity> */}
             </View>
         );
     }, [provider.slots, selectedSlotInfo, provider.UserId, isPastTime, handleSlotSelect, scrollTimeSlots]);
+
+    const getPriceToShow = () => {
+        const isRemoteExist = provider.ServiceServe.find((item: any) => item.CatServiceServeTypeId == "1");
+        if (isRemoteExist) {
+            return isRemoteExist.Price;
+        } else {
+            return provider.ServiceServe[0].Price;
+        }
+    }
+
+    const isRemoteExist = useMemo(() => provider.ServiceServe.find((item: any) => item.CatServiceServeTypeId == "1"), [provider.ServiceServe]);
+
+    const getSlotDurationToShow = () => {
+        let slotValueToShow=null;
+        if (isRemoteExist) {
+            slotValueToShow = isRemoteExist.SlotDuration;
+        } else {
+            slotValueToShow = provider.ServiceServe[0].SlotDuration;
+        }
+
+        if (slotValueToShow > 0 && slotValueToShow < 60) {
+            return `${slotValueToShow} ${i18next.t('دقيقة')}`;
+          }
+        
+          return `${i18next.t('1 ساعة')}`;
+    }
 
     return (
         <View style={[styles.providerCard]}>
             {providerInfo}
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, width: '100%' }}>
-                <Text style={styles.videoInfo}>استشارة طبية فيديو :</Text>
-                <Text style={{ color: '#179c8e' }}>{provider.SlotDuration} دقيقة</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, width: '100%',paddingTop: 10 }}>
+                {isRemoteExist && <Image source={require('../../assets/icons/cameramovie.png')} style={{ tintColor: '#999', width: 20, height: 20 }} />}
+                {isRemoteExist && <Text style={{ ...globalTextStyles.bodySmall, color: '#000', fontFamily: globalTextStyles.h5.fontFamily }}> استشارة عن بعد</Text>}
+                <Text style={{ ...globalTextStyles.bodySmall,marginLeft: 5, color: '#191919', fontFamily: globalTextStyles.h5.fontFamily, borderWidth: 1, borderColor: '#ddd', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 10 }}>{getSlotDurationToShow()} / <Text style={{ ...globalTextStyles.bodySmall, color: '#ea7b5e', fontFamily: globalTextStyles.h5.fontFamily }}>{getPriceToShow()} ريال</Text></Text>
 
             </View>
             <View style={styles.divider} />
             <View style={{ width: '100%', alignItems: 'flex-start' }}>
-                <Text style={styles.selectTimeLabel}>اختر توقيت الزيارة</Text>
+                <Text style={{ ...globalTextStyles.bodySmall, color: '#000', fontFamily: globalTextStyles.h5.fontFamily }}>اختر توقيت الزيارة</Text>
             </View>
 
             {renderTimeSlots}
@@ -417,8 +417,8 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     providerName: {
-        fontWeight: 'bold',
-        fontSize: 16,
+        ...globalTextStyles.bodyMedium,
+        fontFamily: globalTextStyles.h5.fontFamily,
         marginTop: 4,
         marginBottom: 2,
         color: '#222',
@@ -510,8 +510,7 @@ const styles = StyleSheet.create({
     },
     timeButtonText: {
         color: '#179c8e',
-        fontWeight: 'bold',
-        fontSize: 14,
+        fontFamily: globalTextStyles.h5.fontFamily,
         textAlign: 'center',
     },
     disabledTimeButtonText: {

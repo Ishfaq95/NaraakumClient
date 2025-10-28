@@ -10,7 +10,7 @@ import { setHomeDialysisFilePaths } from '../../shared/redux/reducers/bookingRed
 import { globalTextStyles } from '../../styles/globalStyles';
 import { profileService } from '../../services/api/ProfileService';
 
-const UploadFileStep = ( {OrderId}: any ) => {
+const UploadFileStep = ({ OrderId }: any) => {
   const user = useSelector((state: any) => state.root.user.user);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -142,7 +142,7 @@ const UploadFileStep = ( {OrderId}: any ) => {
 
       if (responseData.ResponseStatus?.STATUSCODE === '200') {
         // Add the file message to the chat
-        const previousFilePaths = [...filePaths,responseData.Data.Path];
+        const previousFilePaths = [...filePaths, responseData.Data.Path];
         dispatch(setHomeDialysisFilePaths(previousFilePaths));
         setFilePaths(previousFilePaths);
       } else {
@@ -164,36 +164,33 @@ const UploadFileStep = ( {OrderId}: any ) => {
     }
   };
 
-  console.log('filePaths', filePaths)
-
   return (
     <View style={{ flex: 1 }}>
-      <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>التقارير الطبية</Text>
-      {/* <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>رجاء ارفاق التقارير الطبية الخاصة بالمريض</Text> */}
-      <View style={{ height:200,width:'100%', marginTop: 10,backgroundColor:'#fff',borderRadius:10,padding:10,alignItems:'center',justifyContent:'center' }}>
-        <View style={{ height:'90%',width:'90%', justifyContent: 'center', alignItems: 'center', borderWidth:1,borderColor:'#000',borderStyle:'dashed',borderRadius:10 }}>
-          <TouchableOpacity onPress={handleFileSelection} style={{justifyContent:'center',alignItems:'center'}}>
-          <Feather name='upload' size={40} color='#239ea0' style={{ marginBottom: 10 }} />
+      <Text style={[globalTextStyles.bodyMedium, { color: '#000', textAlign: 'left' }]}>التقارير الطبية</Text>
+      <View style={{ height: 200, width: '100%', marginTop: 10, backgroundColor: '#fff', borderRadius: 10, padding: 10, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ height: '90%', width: '90%', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#000', borderStyle: 'dashed', borderRadius: 10 }}>
+          <TouchableOpacity onPress={handleFileSelection} style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <Feather name='upload' size={40} color='#239ea0' style={{ marginBottom: 10 }} />
           </TouchableOpacity>
-          <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000' }]}>اضغط هنا لارفاق التقارير الطبية</Text>
+          <Text style={[globalTextStyles.bodyMedium, { color: '#000' }]}>اضغط هنا لارفاق التقارير الطبية</Text>
           <Text style={[globalTextStyles.caption, { color: '#000' }]}>يمكنك اضافة ملف او اكثر</Text>
         </View>
       </View>
-      <View style={{ flex:1, marginTop: 10 }}>
+      <View style={{ flex: 1, marginTop: 10 }}>
         <FlatList
           data={filePaths}
           renderItem={({ item, index }) => (
-            <View style={{ flexDirection: 'row',width:'100%',marginBottom:8,paddingHorizontal:16, height:30,borderWidth:1,borderColor:'#fff', alignItems: 'center', justifyContent: 'space-between' }} key={index}>
-            <Text style={[globalTextStyles.caption, { color: '#000' }]}>HemoDiyalsis Report</Text>
-           
-            <TouchableOpacity  onPress={() => {
-              const previousFilePaths = filePaths.filter((_, i) => i !== index)
-              setFilePaths(previousFilePaths)
-              dispatch(setHomeDialysisFilePaths(previousFilePaths))
-            }}>
-              <Feather name='trash' size={20} color='#239ea0' />
-            </TouchableOpacity>
-          </View>
+            <View style={{ flexDirection: 'row', width: '100%', marginBottom: 8, paddingHorizontal: 16, height: 30, borderWidth: 1, borderColor: '#fff', alignItems: 'center', justifyContent: 'space-between' }} key={index}>
+              <Text style={[globalTextStyles.caption, { color: '#000' }]}>HemoDiyalsis Report</Text>
+
+              <TouchableOpacity onPress={() => {
+                const previousFilePaths = filePaths.filter((_, i) => i !== index)
+                setFilePaths(previousFilePaths)
+                dispatch(setHomeDialysisFilePaths(previousFilePaths))
+              }}>
+                <Feather name='trash' size={20} color='#239ea0' />
+              </TouchableOpacity>
+            </View>
           )}
           keyExtractor={(item, index) => index.toString()}
         />

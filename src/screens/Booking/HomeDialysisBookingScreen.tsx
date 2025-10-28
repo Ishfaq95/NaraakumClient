@@ -45,9 +45,16 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
   // Memoize filtered providers to prevent unnecessary re-renders
   const filteredProviders = useMemo(() => {
     return ProviderWithSlots.filter((item: any) => {
-      const providerAvailability = availability.flatMap(avail =>
-        avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)
-      );
+      // First check if the provider belongs to the selected organization
+      if (selectedOrganization?.OrganizationId && 
+          item.OrganizationId !== selectedOrganization.OrganizationId) {
+        return false;
+      }
+
+      // Use reduce instead of flatMap to ensure compatibility
+      const providerAvailability = availability.reduce((acc: any[], avail: any) => {
+        return [...acc, ...avail.Detail.filter((detail: any) => detail.ServiceProviderId === item.UserId)];
+      }, []);
 
       if (providerAvailability.length > 0) {
         const dayOfWeek = new Date(selectedDate.locale('en').format('YYYY-MM-DD')).toLocaleString("en-US", {
@@ -59,15 +66,21 @@ const HomeDialysisBookingScreen = ({ onPressContinue, onPressBack, selectedOrgan
       }
       return false;
     });
-  }, [ProviderWithSlots, availability, selectedDate]);
+  }, [ProviderWithSlots, availability, selectedDate, selectedOrganization]);
+
+  console.log("filteredProviders",filteredProviders, selectedOrganization)
 
   const getSlotsWithProvider = async () => {
     setSlotsLoaded(true)
     const tempProvider: any = []
+    // const providerAvailability = availability.flatMap(avail =>
+    //   avail.Detail.filter((detail: any) => detail.ServiceProviderId === provider.UserId)
+    // );
     serviceProviders.map((provider: any) => {
-      const providerAvailability = availability.flatMap(avail =>
-        avail.Detail.filter((detail: any) => detail.ServiceProviderId === provider.UserId)
-      );
+      // Use reduce instead of flatMap to ensure compatibility
+      const providerAvailability = availability.reduce((acc: any[], avail: any) => {
+        return [...acc, ...avail.Detail.filter((detail: any) => detail.ServiceProviderId === provider.UserId)];
+      }, []);
 
       const slotDuration = provider.SlotDuration || 30;
       const formattedDate = selectedDate.locale('en').format('YYYY-MM-DD');

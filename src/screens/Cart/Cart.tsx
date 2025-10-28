@@ -2,7 +2,7 @@ import Header from "../../components/common/Header";
 import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
-import { removeCardItem, clearCardItems, addCardItem, setSelectedUniqueId } from "../../shared/redux/reducers/bookingReducer";
+import { removeCardItem, clearCardItems, addCardItem, setSelectedUniqueId, setCategory } from "../../shared/redux/reducers/bookingReducer";
 import moment from "moment";
 import MinusIcon from "../../assets/icons/MinuesIcon";
 import { bookingService, categoriesList } from "../../services/api/BookingService";
@@ -14,11 +14,13 @@ import { convert24HourToArabicTime, generatePayloadforOrderMainBeforePayment, ge
 import FullScreenLoader from "../../components/FullScreenLoader";
 import { convertUTCToLocalDateTime } from "../../utils/timeUtils";
 
+
 const CartScreen = ({ navigation }: any) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const category = useSelector((state: any) => state.root.booking.category);
   const selectedSpecialtyOrService = useSelector((state: any) => state.root.booking.selectedSpecialtyOrService);
+  const allCategoriesList = useSelector((state: any) => state.root.booking.allCategoriesList);
   const user = useSelector((state: any) => state.root.user.user);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const isFocused = useIsFocused();
@@ -236,6 +238,8 @@ containerStyle={styles.headerContainer}
       let selectedItem: any = displayCategory?.Display == "CP" ? !cardItem.ServiceProviderUserloginInfoId : !cardItem.OrganizationId;
       if (selectedItem) {
         selectedUniqueId = cardItem.ItemUniqueId;
+        const getUpdatedCategory=allCategoriesList.find((catItem:any)=> catItem.Id == cardItem.CatCategoryId)
+      dispatch(setCategory(getUpdatedCategory))
         return;
       }
     });
@@ -253,6 +257,7 @@ containerStyle={styles.headerContainer}
         }
       });
     } else if (selectedUniqueId) {
+      
       dispatch(setSelectedUniqueId(selectedUniqueId));
       navigation.navigate(ROUTES.AppNavigator, {
         screen: ROUTES.HomeStack,

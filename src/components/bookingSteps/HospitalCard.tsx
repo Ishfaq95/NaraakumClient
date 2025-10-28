@@ -235,8 +235,6 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
     return returnVal;
   }
 
-  console.log("hospital?.LogoImagePath",hospital?.LogoImagePath)
-
   // Memoize static content to prevent unnecessary re-renders
   const providerInfo = useMemo(() => (
     <>

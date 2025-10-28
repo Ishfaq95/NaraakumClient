@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from 'react-native'
+import { View, Text, ScrollView, Platform } from 'react-native'
 import React from 'react'
 import { globalTextStyles } from '../../styles/globalStyles'
 
@@ -36,7 +36,7 @@ const PackageListDetails = ({ selectedOrganization, onPressNext, onPressBack }: 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ alignItems: 'flex-start', justifyContent: 'flex-start', width: '10%', height: '100%', paddingTop: 10 }}>
                 <View style={{ height: 20, width: 20, backgroundColor: '#eceff4', borderRadius: 10,alignItems:'center',justifyContent:'center' }}>
-                  <Text style={[globalTextStyles.bodyMedium, { color: '#000', textAlign: 'left', fontFamily: globalTextStyles.h5.fontFamily }]}>{item.id}</Text>
+                  <Text style={[globalTextStyles.bodyMedium, { color: '#000' ,textAlign: 'center', fontFamily: globalTextStyles.h5.fontFamily,lineHeight: Platform.OS === 'ios' ? 24 : 20 }]}>{item.id}</Text>
                 </View>
 
               </View>

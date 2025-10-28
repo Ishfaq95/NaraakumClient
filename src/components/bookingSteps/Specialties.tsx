@@ -183,6 +183,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
     <View style={[{ flex: 1, paddingHorizontal: 16, }, (category.Id != "42" && category.Id != "32") && { backgroundColor: "#fff" }]}>
       {(category.Id == "42" || category.Id == "32") ? (
         <FlatList
+          key="two-columns"
           data={filteredSpecialties}
           renderItem={renderItem}
           keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
@@ -202,6 +203,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
         />
       ) : (
         <FlatList
+          key="one-column"
           data={filteredOfferedServices}
           renderItem={renderSelectableItem}
           keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}

@@ -13,7 +13,7 @@ import HomeVisitIcon from '../../assets/icons/HomeVisitIcon';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import HomeVisitCard from '../../components/HomeVisitCard';
 import { ROUTES } from '../../shared/utils/routes';
-import { setAllCategoryList, setCategory } from '../../shared/redux/reducers/bookingReducer';
+import { setAllCategoryList, setCategory, setSelectedUniqueId } from '../../shared/redux/reducers/bookingReducer';
 import { useDispatch } from 'react-redux';
 import { globalTextStyles } from '../../styles/globalStyles';
 
@@ -81,6 +81,7 @@ const Services = ({ navigation }: any) => {
         />
     );
     const onPressService = (service: any) => {
+        dispatch(setSelectedUniqueId(null));
         if (service.Id != "42") {
             setIsHomeVisit(true);
         } else {

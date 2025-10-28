@@ -5,7 +5,7 @@ import { BaseURL } from '../shared/utils/constants';
 // Create an Axios instance
 const axiosInstance = axios.create({
   baseURL: BaseURL, // Replace with your API base URL
-  timeout: 10000, // Optional: specify timeout
+  timeout: 40000, // Optional: specify timeout
 });
 
 // Request interceptor

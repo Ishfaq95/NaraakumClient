@@ -506,17 +506,17 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
     setIsProcessing(true);
     try {
-      
+
       let selectedUniqueId = null;
 
-    CardArray.forEach((cardItem: any) => {
-      const displayCategory = categoriesList.find((item: any) => item.Id == cardItem.CatCategoryId);
-      let selectedItem: any = displayCategory?.Display == "CP" ? !cardItem.ServiceProviderUserloginInfoId : !cardItem.OrganizationId;
-      if (selectedItem) {
-        selectedUniqueId = cardItem.ItemUniqueId;
-        return;
-      }
-    });
+      CardArray.forEach((cardItem: any) => {
+        const displayCategory = categoriesList.find((item: any) => item.Id == cardItem.CatCategoryId);
+        let selectedItem: any = displayCategory?.Display == "CP" ? !cardItem.ServiceProviderUserloginInfoId : !cardItem.OrganizationId;
+        if (selectedItem) {
+          selectedUniqueId = cardItem.ItemUniqueId;
+          return;
+        }
+      });
 
       if (selectedUniqueId) {
         setAlertModalVisible(true);
@@ -831,6 +831,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           PageSize: 100,
         }
       }
+
+      console.log("requestBody", requestBody)
 
       const response = await bookingService.getServiceProviderListByServiceByIds(requestBody);
 
@@ -1154,24 +1156,18 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       return timeString; // If no AM/PM indicator, return as is
     }
 
-    const timePart = parts[0]; // e.g., "2:30"
-    const periodPart = parts[1]; // e.g., "ص" (ص for AM) or "م" (م for PM)
+    const timePart = parts[0]; 
+    const periodPart = parts[1];
 
-    // Split time into hours and minutes
     const [hours, minutes] = timePart.split(':').map(Number);
 
     let hour24 = hours;
 
-    // Convert based on Arabic period indicators
-    // ص = صباح (morning/AM)
-    // م = مساء (evening/PM)
     if (periodPart === 'ص') {
-      // AM - keep as is, but handle 12 AM case
       if (hours === 12) {
         hour24 = 0;
       }
     } else if (periodPart === 'م') {
-      // PM - add 12 hours, but handle 12 PM case
       if (hours !== 12) {
         hour24 = hours + 12;
       }
@@ -1307,12 +1303,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       </View>
       <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={{ ...globalTextStyles.bodyLarge, fontWeight: '600', color: '#36454f' }}>
-          {/* {`النتائج (${resultLength || filteredProviders.length || organizationList.length || filteredHospitals.length})`} */}
           {`النتائج (${resultLength})`}
         </Text>
       </View>
-      {/* Service Providers List */}
-      {/* {displayCategory?.Display == "CP" ? serviceProviders.length > 0 : hospitalList.length > 0 &&  */}
       <View style={{ flex: 1, paddingBottom: 50, }}>
         {
           displayCategory?.Display == "CP" ?
@@ -1435,7 +1428,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               />
         }
       </View>
-      {/* } */}
       <View style={styles.BottomContainer}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Text style={styles.backButtonText}>{t('back')}</Text>
@@ -1470,14 +1462,12 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            {/* Header */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>تحذير</Text>
               <TouchableOpacity onPress={() => setShowServiceModal(false)}>
                 <Text style={styles.closeIcon}>×</Text>
               </TouchableOpacity>
             </View>
-            {/* Message and Button */}
             <View style={styles.modalContent}>
               <Text style={styles.modalMessage}>يرجى اختيار خدمة واحدة</Text>
               <TouchableOpacity
@@ -1500,7 +1490,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         {
           showPackageList ?
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-              {/* Sticky Header */}
               <View style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -1513,7 +1502,6 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
                 backgroundColor: '#fff',
                 zIndex: 2,
               }}>
-                {/* <View style={{ width: 28 }} /> */}
                 <Text style={{ fontSize: 18, color: '#222', textAlign: 'center', fontFamily: globalTextStyles.h5.fontFamily }}>
                   باقات غسيل الكلى المنزلي
                 </Text>
@@ -1537,16 +1525,12 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               }}>
                 <Text style={{ fontSize: 16, color: '#222', fontFamily: globalTextStyles.h5.fontFamily }}>مركز عبر الطبي</Text>
                 <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
-                  {/* Replace with your WhatsApp icon if available */}
-                  {/* <Text style={{ color: '#239ea0', fontSize: 18, marginRight: 4, fontFamily: globalTextStyles.h5.fontFamily }}></Text> */}
                   <Ionicons name="logo-whatsapp" size={20} color="green" />
                   <Text style={{ color: '#000', fontSize: 14, paddingRight: 4, fontFamily: globalTextStyles.h5.fontFamily }}>للاستفسارات</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Scrollable List */}
               <ScrollView style={{ flex: 1, backgroundColor: '#f7fafd', margin: 12, marginTop: 8, borderRadius: 16, padding: 8 }} contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}>
-                {/* Example package data */}
                 {selectedOrganization?.PackageDetail?.map((pkg: any) => (
                   <View key={pkg.id} style={{
                     backgroundColor: '#fff',

@@ -39,9 +39,10 @@ const HomeDialysis: React.FC<any> = React.memo(({
                     <View style={{ width: '70%' }}>
                         <Text style={styles.providerName}>{hospital?.TitleSlang}</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}>
+                            <Text style={{ color: '#FFD700', fontSize: 18, marginRight: 2 }}>★</Text>
                             <Text style={styles.ratingText}>{hospital?.AccumulativeRatingAvg.toFixed(1)}</Text>
                             <Text style={{ ...globalTextStyles.caption, color: '#888' }}> ({hospital?.AccumulativeRatingNum} تقييم)</Text>
-                            <Text style={{ color: '#FFD700', marginLeft: 2 }}>★</Text>
+
                         </View>
                     </View>
 
@@ -50,11 +51,11 @@ const HomeDialysis: React.FC<any> = React.memo(({
                 <View style={{ marginTop: 10, width: '100%' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>
                         <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{`رسوم الاستشارة عن بعد للتقييم المبدئي :`}</Text>
-                        <Text style={{ ...globalTextStyles.bodySmall, fontFamily: globalTextStyles.h5.fontFamily, color: '#239ea0', marginLeft: 8, }}>{`${hospital?.RemoteSessionStartPrice} ريال`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, fontFamily: globalTextStyles.h5.fontFamily, color: '#239ea0', marginLeft: 8, }}>{`${hospital?.RemoteSessionStartPrice ? hospital?.RemoteSessionStartPrice : 0} ريال`}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>
                         <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{`رسوم زيارة الطبيب المنزلية للتقييم النهائي :`}</Text>
-                        <Text style={{ ...globalTextStyles.bodySmall, fontFamily: globalTextStyles.h5.fontFamily, color: '#239ea0', marginLeft: 8, }}>{`${hospital?.HomeVisitStartPrice} ريال`}</Text>
+                        <Text style={{ ...globalTextStyles.bodySmall, fontFamily: globalTextStyles.h5.fontFamily, color: '#239ea0', marginLeft: 8, }}>{`${hospital?.HomeVisitStartPrice ? hospital?.HomeVisitStartPrice : 0} ريال`}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>
                         <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{`سعر الجلسة يبدأ من :`}</Text>

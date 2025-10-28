@@ -38,14 +38,14 @@ const BookingScreen = ({ navigation, route }: any) => {
   const steps = [1, 2, 3, 4];
   const [currentUniqueId, setCurrentUniqueId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (selectedUniqueId == null) {
-      const uniqueId = generateUniqueId();
-      setCurrentUniqueId(uniqueId);
-    } else {
-      setCurrentUniqueId(selectedUniqueId);
-    }
-  }, [selectedUniqueId]);
+  // useEffect(() => {
+  //   if (selectedUniqueId == null) {
+  //     const uniqueId = generateUniqueId();
+  //     setCurrentUniqueId(uniqueId);
+  //   } else {
+  //     setCurrentUniqueId(selectedUniqueId);
+  //   }
+  // }, [selectedUniqueId]);
 
   const onPressSpecialty = (specialty: any, isSelected: boolean) => {
     if (onEditService) {
@@ -177,7 +177,7 @@ const BookingScreen = ({ navigation, route }: any) => {
 
       // const tempCardItems = [...existingCardItems, ...servicesArray];
       dispatch(setServices(null));
-      dispatch(setSelectedUniqueId(currentUniqueId));
+      dispatch(setSelectedUniqueId(selectedUniqueId));
       // dispatch(addCardItem(tempCardItems));
       setCurrentStep(2);
     }
@@ -197,7 +197,18 @@ const BookingScreen = ({ navigation, route }: any) => {
   };
 
   const onSelectService = (service: any) => {
-    dispatch(setSelectedUniqueId(currentUniqueId));
+    let uniqueId = generateUniqueId();
+    if (onEditService) {
+      uniqueId = selectedUniqueId;
+      setCurrentUniqueId(uniqueId);
+    } else {
+      if (currentUniqueId == null) {
+        setCurrentUniqueId(uniqueId);
+        dispatch(setSelectedUniqueId(uniqueId));
+      } else {
+        dispatch(setSelectedUniqueId(selectedUniqueId));
+      }
+    }
     const isExist = SelectedCardItem.find((item: any) => item.CatServiceId == service.Id);
 
     if (isExist) {
@@ -209,7 +220,7 @@ const BookingScreen = ({ navigation, route }: any) => {
       dispatch(addCardItem(tempCardItems));
     } else {
       const cardItem = {
-        "ItemUniqueId": currentUniqueId,
+        "ItemUniqueId": currentUniqueId || uniqueId,
         "CatCategoryId": category.Id,
         "CatServiceId": service.Id,
         "CatCategoryTypeId": category.CatCategoryTypeId,
@@ -289,7 +300,7 @@ const BookingScreen = ({ navigation, route }: any) => {
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{category.Id == "42"? "استشارة عن بعد" : t('booking')}</Text>
+        <Text style={styles.headerTitle}>{category.Id == "42" ? "استشارة عن بعد" : t('booking')}</Text>
       }
       leftComponent={
         <TouchableOpacity onPress={() => {

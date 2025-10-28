@@ -331,7 +331,8 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
   const payload = CardArray
     .map((item: any) => {
 
-      const displayCategory = categoriesList.find((citem: any) => citem.Id == category.Id);
+      // const displayCategory = categoriesList.find((citem: any) => citem.Id == category.Id);
+      const displayCategory = categoriesList.find((catItem: any) => catItem.Id == item.CatCategoryId);
       const shouldSkipThisItem = displayCategory?.Display == "CP"
         ? !item.ServiceProviderUserloginInfoId
         : !item.OrganizationId;
