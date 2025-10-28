@@ -4,8 +4,11 @@ import RNFS from 'react-native-fs';
 // import Share from 'react-native-share';
 import moment from 'moment';
 import RNFetchBlob from 'rn-fetch-blob';
-import { Alert, Platform, PermissionsAndroid, Share } from 'react-native';
+import { Alert, Platform, PermissionsAndroid, Share, Image } from 'react-native';
 import { store } from '../shared/redux/store';
+
+const NaraakumLogo = require('../assets/icons/NaraakumLogo.png');
+const SaudiMinistryLogo = require('../assets/icons/Saudi_Ministry_logo.png');
 
 interface InvoiceData {
   OrderId: string;
@@ -37,13 +40,118 @@ const convertTo12Hour = (time24: string): string => {
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
+// Get logo as base64 string
+const getLogoBase64 = async (): Promise<string> => {
+  try {
+    // Use Image.resolveAssetSource to get the absolute path
+    const resolvedImage = Image.resolveAssetSource(NaraakumLogo);
+    
+    if (!resolvedImage || !resolvedImage.uri) {
+      throw new Error('Could not resolve logo asset');
+    }
+    
+    console.log('Resolved logo URI:', resolvedImage.uri);
+    
+    let base64Image = '';
+    
+    // For web URIs (like http://), fetch and convert
+    if (resolvedImage.uri.startsWith('http')) {
+      const response = await RNFetchBlob.fetch('GET', resolvedImage.uri);
+      base64Image = response.base64();
+    } else {
+      // For local files, read directly
+      let filePath = resolvedImage.uri;
+      
+      // Handle different URI formats
+      if (filePath.startsWith('file://')) {
+        filePath = filePath.replace('file://', '');
+      }
+      
+      // Try RNFS first
+      try {
+        base64Image = await RNFS.readFile(filePath, 'base64');
+      } catch (rnfsError) {
+        console.log('RNFS failed, trying RNFetchBlob:', rnfsError);
+        // Fallback to RNFetchBlob
+        const response = await RNFetchBlob.fs.readFile(filePath, 'base64');
+        base64Image = response;
+      }
+    }
+    
+    if (!base64Image) {
+      throw new Error('Failed to read logo image data');
+    }
+    
+    return `data:image/png;base64,${base64Image}`;
+  } catch (error) {
+    console.error('Error loading logo:', error);
+    // Return a fallback transparent pixel if logo fails to load
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  }
+};
+
+// Get Saudi Ministry logo as base64 string
+const getMinistryLogoBase64 = async (): Promise<string> => {
+  try {
+    // Use Image.resolveAssetSource to get the absolute path
+    const resolvedImage = Image.resolveAssetSource(SaudiMinistryLogo);
+    
+    if (!resolvedImage || !resolvedImage.uri) {
+      throw new Error('Could not resolve ministry logo asset');
+    }
+    
+    console.log('Resolved ministry logo URI:', resolvedImage.uri);
+    
+    let base64Image = '';
+    
+    // For web URIs (like http://), fetch and convert
+    if (resolvedImage.uri.startsWith('http')) {
+      const response = await RNFetchBlob.fetch('GET', resolvedImage.uri);
+      base64Image = response.base64();
+    } else {
+      // For local files, read directly
+      let filePath = resolvedImage.uri;
+      
+      // Handle different URI formats
+      if (filePath.startsWith('file://')) {
+        filePath = filePath.replace('file://', '');
+      }
+      
+      // Try RNFS first
+      try {
+        base64Image = await RNFS.readFile(filePath, 'base64');
+      } catch (rnfsError) {
+        console.log('RNFS failed, trying RNFetchBlob:', rnfsError);
+        // Fallback to RNFetchBlob
+        const response = await RNFetchBlob.fs.readFile(filePath, 'base64');
+        base64Image = response;
+      }
+    }
+    
+    if (!base64Image) {
+      throw new Error('Failed to read ministry logo image data');
+    }
+    
+    return `data:image/png;base64,${base64Image}`;
+  } catch (error) {
+    console.error('Error loading ministry logo:', error);
+    // Return a fallback transparent pixel if logo fails to load
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  }
+};
+
 // Generate HTML for the invoice
-const generateInvoiceHTML = (data: any): string => {
+const generateInvoiceHTML = async (data: any): Promise<string> => {
   const invoiceNumber = `NAR-${data[0].OrderID}`;
   const invoiceDate = moment().locale("en").format('DD/MM/YYYY');
   const userInfo = store.getState().root.user.user;
 
+  // Get the logos as base64
+  const logoBase64 = await getLogoBase64();
+  const ministryLogoBase64 = await getMinistryLogoBase64();
+
   console.log('userInfo', userInfo);
+  console.log('data', data);
 
   // Determine payment method
   let paymentMethod = 'محفظة';
@@ -58,18 +166,6 @@ const generateInvoiceHTML = (data: any): string => {
       cardNumber = `xxxxxxxxxxxx${data[0].CardNumber.slice(-3)}`;
     }
   }
-
-  // // Format service name
-  // let serviceName = `استشارة عن بعد / ${data.TitleSlangService}`;
-  // if (data.TitleSlangSpecialty) {
-  //   serviceName += ` (${data.TitleSlangSpecialty})`;
-  // }
-
-  // // Format date and time
-  // const dateTimeUTC = moment.utc(`${data.SchedulingDate.split('T')[0]}T${data.SchedulingTime}`);
-  // const dateTimeLocal = dateTimeUTC.local();
-  // const schedulingDate = dateTimeLocal.format('DD/MM/YYYY');
-  // const schedulingTime = convertTo12Hour(dateTimeLocal.format('HH:mm'));
 
   const calculateTotalTax = (data: any) =>{
     let totalTax = 0;
@@ -88,6 +184,9 @@ const generateInvoiceHTML = (data: any): string => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>فاتورة نرعاكم</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
       <style>
         * {
           margin: 0;
@@ -96,26 +195,14 @@ const generateInvoiceHTML = (data: any): string => {
         }
         
         body {
-          font-family: 'Arial', sans-serif;
+          font-family: 'Cairo', 'Arial', sans-serif;
           font-size: 12px;
           line-height: 1.4;
           color: #333;
           background: #fff;
           padding: 20px;
-        }
-        
-        .invoic-box {
-          max-width: 800px;
-          margin: 0 auto;
-          background: #fff;
-          border: 1px solid #ddd;
-          padding: 20px;
-        }
-        
-        .invoic-header {
-          border-bottom: 2px solid #23a2a4;
-          padding-bottom: 20px;
-          margin-bottom: 20px;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         
         .logo {
@@ -129,14 +216,40 @@ const generateInvoiceHTML = (data: any): string => {
         }
         
         .logo p {
-          font-weight: bold;
-          color: #23a2a4;
+          font-family: 'Cairo', sans-serif;
+          font-weight: 700;
           margin-bottom: 5px;
         }
         
         .logo span {
+          font-family: 'Cairo', sans-serif;
           color: #666;
           font-size: 11px;
+          font-weight: 400;
+        }
+        
+        p {
+          font-family: 'Cairo', sans-serif;
+        }
+        
+        b, strong {
+          font-family: 'Cairo', sans-serif;
+          font-weight: 700;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+          font-family: 'Cairo', sans-serif;
+          font-weight: 700;
+        }
+        
+        th {
+          font-family: 'Cairo', sans-serif;
+          font-weight: 600;
+        }
+        
+        td {
+          font-family: 'Cairo', sans-serif;
+          font-weight: 400;
         }
         
         .info-list {
@@ -153,7 +266,7 @@ const generateInvoiceHTML = (data: any): string => {
         }
         
         .info-list b {
-          color: #23a2a4;
+         
         }
         
         table {
@@ -166,23 +279,17 @@ const generateInvoiceHTML = (data: any): string => {
           border: 1px solid #ddd;
           padding: 8px;
           text-align: right;
-        }
-        
-        th {
-          background: #23a2a4;
-          color: white;
-          font-weight: bold;
-        }
-        
-        .table-dark th {
-          background: #333;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         
         .payment-information {
           margin: 20px 0;
           padding: 20px;
-          background: #f9f9f9;
+          background: #f9f9f9 !important;
           border-radius: 5px;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         
         .payment-data {
@@ -192,15 +299,27 @@ const generateInvoiceHTML = (data: any): string => {
         }
         
         .terms {
-          background: #eee;
+          background: #eee !important;
           padding: 15px;
           margin: 20px 0;
           border-radius: 5px;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         
         .terms h3 {
-          color: #23a2a4;
+          font-family: 'Cairo', sans-serif;
+          font-weight: 700;
           margin-bottom: 10px;
+        }
+        
+        .terms p {
+          font-family: 'Cairo', sans-serif;
+          font-weight: 400;
+        }
+        
+        a {
+          font-family: 'Cairo', sans-serif;
         }
         
         .invoic-footer {
@@ -220,10 +339,25 @@ const generateInvoiceHTML = (data: any): string => {
           margin-left: 10px;
         }
         
+        figcaption {
+          font-family: 'Cairo', sans-serif;
+        }
+        
+        figcaption p {
+          font-family: 'Cairo', sans-serif;
+        }
+        
+        span {
+          font-family: 'Cairo', sans-serif;
+        }
+        
         .total {
-          background: #23a2a4;
+          font-family: 'Cairo', sans-serif;
+          background: #23a2a4 !important;
           color: white;
-          font-weight: bold;
+          font-weight: 700;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         
         .text-end {
@@ -257,27 +391,27 @@ const generateInvoiceHTML = (data: any): string => {
         .d-none {
           display: none;
         }
-        
+      
         .bg-sub-color {
-          background: #f0f0f0;
+          background-color:rgb(215, 28, 28) !important;
         }
       </style>
     </head>
     <body>
       <div class="invoic-box">
         <header class="invoic-header float-start w-100">
-          <div style="display: flex; justify-content: space-between; align-items: start; width: 100%;">
+          <div style="display: flex; justify-content: space-between; align-items: start; width: 100%; font-family: 'Cairo', sans-serif;">
             <div class="logo">
-              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" width="80" height="auto" alt="logo" />
-              <p>نرعاكم للرعاية الصحية المنزلية</p>
-              <span>www.naraakum.com</span>
+              <img src="${logoBase64}" width="80" height="auto" alt="logo" />
+              <p style="font-family: 'Cairo', sans-serif;">نرعاكم للرعاية الصحية المنزلية</p>
+              <span style="font-family: 'Cairo', sans-serif;">www.naraakum.com</span>
             </div>
             <div class="info-list">
-              <span>
-                <p>رقم الفاتورة <b class="ms-3">${invoiceNumber}</b></p>
+              <span style="font-family: 'Cairo', sans-serif;">
+                <p style="font-family: 'Cairo', sans-serif;">رقم الفاتورة <b class="ms-3" style="font-family: 'Cairo', sans-serif;">${invoiceNumber}</b></p>
               </span>
-              <span>
-                <p>تاريخ الإصدار <b class="ms-3">${invoiceDate}</b></p>
+              <span style="font-family: 'Cairo', sans-serif;">
+                <p style="font-family: 'Cairo', sans-serif;">تاريخ الإصدار <b class="ms-3" style="font-family: 'Cairo', sans-serif;">${invoiceDate}</b></p>
               </span>
             </div>
           </div>
@@ -287,16 +421,16 @@ const generateInvoiceHTML = (data: any): string => {
           <table class="table table-bordered mt-4">
             <thead>
               <tr>
-                <th scope="col" class="text-start">المستفيد</th>
-                <th scope="col" class="text-start">رقم الجوال</th>
-                <th scope="col" class="text-start">البريد الإلكتروني</th>
+                <th scope="col" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white; font-weight: bold;">المستفيد</th>
+                <th scope="col" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white; font-weight: bold;">رقم الجوال</th>
+                <th scope="col" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white; font-weight: bold;">البريد الإلكتروني</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>${userInfo.FullnameSlang}</td>
-                <td><span dir="ltr">${userInfo.CellNumber}</span></td>
-                <td>${userInfo.Email}</td>
+                <td style="font-family: 'Cairo', sans-serif;">${userInfo.FullnameSlang}</td>
+                <td><span dir="ltr" style="font-family: 'Cairo', sans-serif;">${userInfo.CellNumber}</span></td>
+                <td style="font-family: 'Cairo', sans-serif;">${userInfo.Email}</td>
               </tr>
             </tbody>
           </table>
@@ -306,12 +440,12 @@ const generateInvoiceHTML = (data: any): string => {
           <table class="table table-bordered mt-4">
             <thead class="table-dark">
               <tr>
-                <th scope="col" class="text-start">الخدمة</th>
-                <th scope="col" class="text-start">العدد</th>
-                <th scope="col" class="text-start">مقدم الرعاية</th>
-                <th scope="col" class="text-start">تاريخ الجلسة</th>
-                <th scope="col" class="text-start">السعر (SAR)</th>
-                <th scope="col" class="text-start">الضريبة</th>
+                <th scope="col" class="text-end" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white;">الخدمة</th>
+                <th scope="col" class="text-end" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white;">العدد</th>
+                <th scope="col" class="text-end" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white;">مقدم الرعاية</th>
+                <th scope="col" class="text-end" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white;">تاريخ الجلسة</th>
+                <th scope="col" class="text-end" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white;">السعر (SAR)</th>
+                <th scope="col" class="text-end" bgcolor="#23a2a4" style="font-family: 'Cairo', sans-serif; color: white;">الضريبة</th>
               </tr>
             </thead>
             <tbody>
@@ -331,55 +465,55 @@ const generateInvoiceHTML = (data: any): string => {
 
                 return `
                 <tr>
-                  <td>${serviceName}</td>
-                  <td>1</td>
-                  <td>${item.ServiceProviderFullnameSlang}</td>
+                  <td style="font-family: 'Cairo', sans-serif;">${serviceName}</td>
+                  <td style="font-family: 'Cairo', sans-serif;">1</td>
+                  <td style="font-family: 'Cairo', sans-serif;">${item.ServiceProviderFullnameSlang}</td>
                   <td align="right">
-                    <span class="date">
-                      <p style="direction: ltr;">${schedulingDate} ${schedulingTime}</p>
+                    <span class="date" style="font-family: 'Cairo', sans-serif;">
+                      <p style="font-family: 'Cairo', sans-serif; direction: ltr;">${schedulingDate} ${schedulingTime}</p>
                     </span>
                   </td>
-                  <td>${item.ServicePrice?.toString() || 0}</td>
-                  <td>${texCalculate?.toString() || 0}</td>
+                  <td style="font-family: 'Cairo', sans-serif;">${item.ServicePrice?.toString() || 0}</td>
+                  <td style="font-family: 'Cairo', sans-serif;">${texCalculate?.toString() || 0}</td>
                 </tr>
                 `;
               }).join('')}
               <tr class="pt">
-                <td colspan="5">
-                  <p class="text-end">الخدمات</p>
-                  <p class="text-end">الضريبة (15%)</p>
+                <td colspan="5" style="font-family: 'Cairo', sans-serif;">
+                  <p class="text-end" style="font-family: 'Cairo', sans-serif;">الخدمات</p>
+                  <p class="text-end" style="font-family: 'Cairo', sans-serif;">الضريبة (15%)</p>
                 </td>
-                <td>
-                  <p>${data.reduce((sum: number, item: InvoiceData) => sum + item.ServicePrice, 0)?.toString()}</p>
-                  <p>${calculateTotalTax(data)}</p>
+                <td style="font-family: 'Cairo', sans-serif;">
+                  <p style="font-family: 'Cairo', sans-serif;">${data.reduce((sum: number, item: InvoiceData) => sum + item.ServicePrice, 0)?.toString()}</p>
+                  <p style="font-family: 'Cairo', sans-serif;">${calculateTotalTax(data)}</p>
                 </td>
               </tr>
               <tr>
                 <td colspan="4"></td>
-                <td colspan="1" class="bg-sub-color text-left">المجموع</td>
-                <td class="bg-sub-color total">${data.reduce((sum: number, item: InvoiceData) => sum + item.ServiceCharges, 0)?.toString()}</td>
+                <td colspan="1" class="text-left" bgcolor="#e4f1ef" style="font-family: 'Cairo', sans-serif; font-weight: bold;">المجموع</td>
+                <td bgcolor="#e4f1ef" style="font-family: 'Cairo', sans-serif; color: #23a2a4; font-weight: bold;">${data.reduce((sum: number, item: InvoiceData) => sum + item.ServiceCharges, 0)?.toString()}</td>
               </tr>
             </tbody>
           </table>
         </section>
 
-        <section class="payment-information float-start w-100">
-          <div style="display: flex; justify-content: space-between; align-items: start;">
+        <section class="payment-information float-start w-100" style="font-family: 'Cairo', sans-serif; margin: 20px 0; padding: 20px; background: #f9f9f9; -webkit-print-color-adjust: exact; print-color-adjust: exact; border-radius: 5px;">
+          <div style="font-family: 'Cairo', sans-serif; display: flex; justify-content: space-between; align-items: start;">
             <div style="float: right;">
               <!-- QR Code placeholder -->
             </div>
             <div style="float: left;">
               <div class="payment-data">
-                <span style="float: right;">
-                  <p>السداد بواسطة</p>
-                  <span>
-                    <b>${paymentMethod}</b>
+                <span style="font-family: 'Cairo', sans-serif; float: right;">
+                  <p style="font-family: 'Cairo', sans-serif;">السداد بواسطة</p>
+                  <span style="font-family: 'Cairo', sans-serif;">
+                    <b style="font-family: 'Cairo', sans-serif;">${paymentMethod}</b>
                   </span>
                 </span>
                 ${cardNumber ? `
-                <span style="float: left; margin-right: 15px;">
-                  <p>بطاقة رقم</p>
-                  <b>${cardNumber}</b>
+                <span style="font-family: 'Cairo', sans-serif; float: left; margin-right: 15px;">
+                  <p style="font-family: 'Cairo', sans-serif;">بطاقة رقم</p>
+                  <b style="font-family: 'Cairo', sans-serif;">${cardNumber}</b>
                 </span>
                 ` : ''}
               </div>
@@ -387,31 +521,31 @@ const generateInvoiceHTML = (data: any): string => {
           </div>
         </section>
 
-        <section class="terms float-start w-100">
+        <section class="terms float-start w-100" style="font-family: 'Cairo', sans-serif; background: #eee; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 15px; margin: 20px 0; border-radius: 5px;">
           <article>
-            <h3>سياسة الالغاء والارجاع</h3>
-            <p>
+            <h3 style="font-family: 'Cairo', sans-serif; margin-bottom: 10px;">سياسة الالغاء والارجاع</h3>
+            <p style="font-family: 'Cairo', sans-serif;">
               للاطلاع على سياسة الالغاء والارجاع بشكل مفصل قم بالضغط
-              <a target="_blank" href="https://www.naraakum.com/TermsCancellation">هنـا</a>
+              <a target="_blank" style="font-family: 'Cairo', sans-serif; color: #23a2a4;" href="https://www.naraakum.com/TermsCancellation">هنـا</a>
             </p>
           </article>
         </section>
 
         <footer class="invoic-footer float-start w-100">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-family: 'Cairo', sans-serif; display: flex; justify-content: space-between; align-items: center;">
             <div style="float: right;">
               <figure class="saudi-ministry">
-                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" alt="" style="float: right;" />
-                <figcaption style="float: left; margin-right: 15px;">
-                  <p>مرخص من قبل وزارة الصحة</p>
-                  <p>تحت رقم <b>123456789</b></p>
+                <img src="${ministryLogoBase64}" alt="Saudi Ministry of Health" width="60" height="auto" style="float: right;" />
+                <figcaption style="font-family: 'Cairo', sans-serif; float: left; margin-right: 15px;">
+                  <p style="font-family: 'Cairo', sans-serif;">مرخص من قبل وزارة الصحة</p>
+                  <p style="font-family: 'Cairo', sans-serif;">تحت رقم <b style="font-family: 'Cairo', sans-serif;">123456789</b></p>
                 </figcaption>
               </figure>
             </div>
             <div style="float: left; margin-top: 15px;">
               <div class="info-list">
-                <span>
-                  <p>خدمة العملاء <b class="ms-3">+966 11 123 4567</b></p>
+                <span style="font-family: 'Cairo', sans-serif;">
+                  <p style="font-family: 'Cairo', sans-serif;">خدمة العملاء <b class="ms-3" style="font-family: 'Cairo', sans-serif;">+966 11 123 4567</b></p>
                 </span>
               </div>
             </div>
@@ -428,7 +562,7 @@ const generateInvoiceHTML = (data: any): string => {
 // Generate PDF from HTML
 const generateInvoicePDF = async (data: any): Promise<string> => {
   try {
-    const html = generateInvoiceHTML(data);
+    const html = await generateInvoiceHTML(data);
     
     // Add timestamp to make filename unique
     const timestamp = new Date().getTime();

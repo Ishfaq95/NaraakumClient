@@ -165,7 +165,6 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
   const allCategoriesList = useSelector((state: any) => state.root.booking.allCategoriesList);
-  console.log("allCategoriesList",allCategoriesList)
   const [showGroupedArray, setShowGroupedArray] = useState([]);
   const [relationshipValue, setRelationshipValue] = useState('');
   const [relationshipError, setRelationshipError] = useState(false);
@@ -753,6 +752,8 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
 
         if (response.Cart && response.Cart.length > 0) {
           const convertedCardItems = response.Cart;
+
+          console.log('convertedCardItems', convertedCardItems);
 
           setShowGroupedArray([]);
           const existingCardItems: any[] = [];
