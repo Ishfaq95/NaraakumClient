@@ -194,7 +194,7 @@ const ReservationReceivedScreen = () => {
                   </View>
                   <View style={{ paddingTop: 5, width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { width: '15%', color: '#36454f' }]}>الأسم</Text>
-                    <Text style={[globalTextStyles.bodyMedium, { width: '85%', fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', flexWrap: 'wrap',textAlign:'right' }]}>{`${orderDetailsByServiceProvider?.OrderDetail[0]?.FullNameSlang} testing `}</Text>
+                    <Text style={[globalTextStyles.bodyMedium, { width: '85%', fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', flexWrap: 'wrap',textAlign:'right' }]}>{`${orderDetailsByServiceProvider?.OrderDetail[0]?.FullNameSlang}`}</Text>
                   </View>
                   <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                     <Text style={[globalTextStyles.bodyMedium, { color: '#36454f' }]}>صلة القرابة</Text>

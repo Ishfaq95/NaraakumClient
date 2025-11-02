@@ -87,7 +87,6 @@ const UpdateProfileScreen = () => {
   const mediaToken = useSelector((state: any) => state.root.user.mediaToken);
   const [loadingImage, setLoadingImage] = useState(false)
   const isRTL = I18nManager.isRTL;
-  const insets = useSafeAreaInsets();
   const dispatch = useDispatch()
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordModalMessage, setPasswordModalMessage] = useState('');
@@ -145,7 +144,7 @@ const UpdateProfileScreen = () => {
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
-      (e) => {
+      () => {
         handleKeyboardOpen()
       }
     );
@@ -401,7 +400,7 @@ const UpdateProfileScreen = () => {
     );
   };
 
-  const uploadFile = async (file: any, pickerResult: any) => {
+  const uploadFile = async (file: any) => {
     try {
       setIsUploading(true);
       let url = `${MediaBaseURL}/common/upload`;

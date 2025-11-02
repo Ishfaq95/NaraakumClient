@@ -1451,7 +1451,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         onCancel={handleCalendarCancel}
         locale={currentLang === 'ar' ? 'ar-SA' : 'en'}
         minimumDate={new Date()}
-        maximumDate={moment().add(30, 'days').toDate()}
+        // maximumDate={moment().add(30, 'days').toDate()}
         display="default"
       />
       <Modal

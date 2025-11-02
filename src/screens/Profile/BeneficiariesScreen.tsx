@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, SafeAreaView, Image, Modal, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, Share, PermissionsAndroid, ScrollView } from 'react-native'
 import Header from '../../components/common/Header';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useNavigation } from '@react-navigation/native';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,7 @@ const BeneficiariesScreen = () => {
   const [openBottomSheetMenu, setOpenBottomSheetMenu] = useState(false)
   const [selectedItem, setSelectedItem] = useState<any>({})
   const [selectedItemToDelete, setSelectedItemToDelete] = useState<any>(null);
+  const isDeletingRef = useRef(false);
 
   const [focusedField, setFocusedField] = useState('');
   const [openBottomSheetReport, setOpenBottomSheetReport] = useState(false)
@@ -701,7 +702,9 @@ const BeneficiariesScreen = () => {
   }
 
   const HandleDeleteBeneficiaryData = async () => {
-    if (!selectedItemToDelete) return;
+    if (!selectedItemToDelete || isDeletingRef.current) return;
+    
+    isDeletingRef.current = true;
     const userId = selectedItemToDelete.UserProfileinfoId;
     try {
       setIsLoading(true)
@@ -715,6 +718,7 @@ const BeneficiariesScreen = () => {
 
     } finally {
       setIsLoading(false)
+      isDeletingRef.current = false;
     }
   }
 
@@ -898,10 +902,18 @@ const BeneficiariesScreen = () => {
 
             <Text style={[{ paddingHorizontal: 16, paddingVertical: 10, color: '#000', fontFamily: CAIRO_FONT_FAMILY.regular }]}>هل أنت متأكد؟</Text>
             <View style={styles.buttonContainer}>
-              <TouchableOpacity onPress={HandleDeleteBeneficiaryData} style={styles.buttonYes}>
+              <TouchableOpacity 
+                onPress={HandleDeleteBeneficiaryData} 
+                style={[styles.buttonYes, (isLoading || isDeletingRef.current) && { opacity: 0.5 }]}
+                disabled={isLoading || isDeletingRef.current}
+              >
                 <Text style={styles.buttonText}>نعم</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setDeleteModal(false)} style={styles.buttonNo}>
+              <TouchableOpacity 
+                onPress={() => setDeleteModal(false)} 
+                style={styles.buttonNo}
+                disabled={isLoading || isDeletingRef.current}
+              >
                 <Text style={styles.buttonText}>لا</Text>
               </TouchableOpacity>
             </View>

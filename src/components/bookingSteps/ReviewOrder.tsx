@@ -1282,7 +1282,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                   <View style={styles.sessionInfoDetailItem}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <CalendarIcon width={18} height={18} />
-                      <Text style={styles.sessionInfoLabel}>تاريخ الجلسة</Text>
+                      <Text style={styles.sessionInfoLabel}>{ (item?.CatCategoryId == "42" || item?.CatCategoryId == "32") ? 'تاريخ الجلسة' : 'تاريخ الزيارة'}</Text>
                     </View>
                     <Text style={styles.sessionInfoValue}>{displayDate}</Text>
                   </View>

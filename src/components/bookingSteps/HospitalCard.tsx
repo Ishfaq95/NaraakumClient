@@ -12,46 +12,6 @@ import { globalTextStyles } from '../../styles/globalStyles';
 import { convertArabicTimeTo24Hour } from '../../shared/services/service';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 
-interface Specialty {
-  CatSpecialtyId: string;
-  TitlePlang: string;
-  TitleSlang: string;
-  UserloginInfoId: string;
-  CatLevelId: number;
-  LevelTitlePlang: string;
-  LevelTitleSlang: string;
-}
-
-interface AvailabilityDetail {
-  ServiceProviderId: string;
-  StartTime: string;
-  EndTime: string;
-}
-
-interface Availability {
-  Detail: AvailabilityDetail[];
-}
-
-interface TimeConfig {
-  Id: string;
-  CatServiceId: string;
-  CatSpecialtyId: string;
-  StartTime: string;
-  EndTime: string;
-  CatAvailabilityTypeId: string;
-  ServiceProviderId: string;
-  StartDate: string;
-  EndDate: string;
-  OrganizationId: string;
-  ShowCareProviderInfo: boolean;
-  ServiceProviderHolidays: string | null;
-  UnavailableStartdate: string | null;
-  UnavailableEnddate: string | null;
-  UnavailableStartTime: string | null;
-  UnavailableEndTime: string | null;
-  BookedSlots: any[];
-}
-
 interface TimeSlot {
   date: string;
   fullTime: string;
@@ -60,54 +20,6 @@ interface TimeSlot {
   availability_type_id: string;
   is_holiday: boolean;
   available: boolean;
-}
-
-interface Service {
-  CatCategoryId: string;
-  CatCategoryTypeId: number;
-  CatLevelId: number;
-  CatServiceCategoryId: string;
-  CatServiceServeTypeId: number;
-  DescriptionPlang: string;
-  DescriptionSlang: string;
-  FeatureExcludedPlang: string;
-  FeatureExcludedSlang: string;
-  FeatureIncludedPlang: string;
-  FeatureIncludedSlang: string;
-  Id: string;
-  ImagePath: string;
-  Price: number;
-  TitlePlang: string;
-  TitleSlang: string;
-  iswithNurse: boolean;
-}
-
-interface ServiceProvider {
-  RowId: string;
-  ServiceIds: string;
-  Prices: string;
-  PriceswithTax: string;
-  OrganizationId: string;
-  OrganizationTitlePlang: string;
-  OrganizationTitleSlang: string;
-  OrgImagePath: string | null;
-  UserId: string;
-  FullnamePlang: string;
-  FullnameSlang: string;
-  CellNumber: string;
-  Email: string;
-  Gender: boolean;
-  ImagePath: string | null;
-  AboutPlang: string;
-  AboutSlang: string;
-  YearsofExperience: string;
-  AccumulativeRatingNum: number;
-  AccumulativeRatingAvg: number;
-  SlotDuration: number;
-  Specialties: Specialty[];
-  ServiceServe: any[];
-  slots?: any[];
-  OrganizationServiceIds: string;
 }
 
 interface ServiceProviderCardProps {
@@ -122,7 +34,6 @@ interface ServiceProviderCardProps {
 
 const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
   hospital,
-  onTimeSelect,
   selectedDate,
   availability,
   selectedSlotInfo,
@@ -132,10 +43,10 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const dispatch = useDispatch();
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const services = useSelector((state: any) => state.root.booking.services);
-  const cardItems = useSelector((state: any) => state.root.booking.cardItems);
   const tempSlotDetail = useSelector((state: any) => state.root.booking.tempSlotDetail);
   const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
   const selectedCard = CardArray.filter((item: any) => item.ItemUniqueId === selectedUniqueId);
+  const user = useSelector((state: any) => state.root.user.user);
 
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
@@ -144,13 +55,11 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const [slotsError, setSlotsError] = useState<string | null>(null);
   const [showServiceModal, setShowServiceModal] = useState(false);
 
-  const specialtiesScrollViewRef = useRef<ScrollView>(null);
   const timeSlotsScrollViewRef = useRef<ScrollView>(null);
   const isRTL = true;
 
   const lastCardItem = tempSlotDetail;
   const isProviderSelected = lastCardItem && lastCardItem?.OrganizationId === hospital?.OrganizationId;
-  const selectedCardItem = isProviderSelected ? lastCardItem : null;
 
   // Helper function to calculate total price from comma-separated prices
   const calculateTotalPrice = (pricesString: string): number => {
@@ -297,25 +206,7 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
   };
 
   // Converts time string and date to a Date object
-  const getDateTime = (date: string, time: string, is24Hour = false) => {
-    if (is24Hour) {
-      // time is already in HH:mm format
-      const [hour, minute] = time.split(':').map(Number);
-      return new Date(`${date}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`);
-    } else {
-      // convert AM/PM time (e.g., 11:30 PM)
-      const formattedTime = convertArabicTime(time);
-      const [timePart, period] = formattedTime.split(' ');
-      let [hour, minute] = timePart.split(':').map(Number);
-      if (period.toUpperCase() === 'PM' && hour !== 12) hour += 12;
-      if (period.toUpperCase() === 'AM' && hour === 12) hour = 0;
-      return new Date(`${date}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`);
-    }
-  };
 
-  const isTimeSlotAvailable = (slot: TimeSlot) => {
-    return !isPastTime(slot);
-  }
 
   const handleSlotSelect = useCallback((time: any) => {
     onSelectSlot(hospital, time);
@@ -326,6 +217,7 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
     // Find the correct price for the selected service
     const serviceIds = hospital?.ServiceIds.split(',');
     const prices = hospital?.Prices.split(',');
+    const priceswithTax = hospital?.PriceswithTax.split(',');
 
     // Update each selected item with service-specific values
     selectedCard.forEach((selectedItem: any) => {
@@ -339,13 +231,16 @@ const HospitalCard: React.FC<ServiceProviderCardProps> = React.memo(({
         const serviceId = selectedItem.CatServiceId;
         const servicePriceIndex = serviceIds.findIndex((id: string) => id === serviceId);
         const servicePrice = servicePriceIndex !== -1 ? prices[servicePriceIndex] : "0";
+        const servicePriceswithTax = servicePriceIndex !== -1 ? priceswithTax[servicePriceIndex] : "0";
         const serviceOrgId = hospital?.OrganizationServiceIds.split(',')[servicePriceIndex];
 
         updatedCardArray[itemIndex] = {
           ...updatedCardArray[itemIndex],
           "OrganizationServiceId": serviceOrgId,
           "OrganizationId": hospital?.OrganizationId,
-          "ServiceCharges": servicePrice,
+          "ServiceCharges": user?.CatNationalityId == "213" ? servicePrice : servicePriceswithTax,
+          "PriceswithTax": servicePriceswithTax,
+          "ServicePrice": servicePrice,
           "ServiceProviderUserloginInfoId": 0,
           "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
           "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),

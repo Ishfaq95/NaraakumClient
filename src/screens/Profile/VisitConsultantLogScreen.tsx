@@ -194,7 +194,7 @@ const VisitConsultantLogScreen = () => {
           {/* Header */}
           <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row',borderTopLeftRadius: 10,borderTopRightRadius: 10, paddingHorizontal: 16 }}>
             <Text style={[globalTextStyles.bodyLarge, {fontSize:16, color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
-              {visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId === 42 ? 'سجل الجلسة' : 'سجل الزيارة'}
+              {visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId == 42 || visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId == 32 ? 'سجل الجلسة' : 'سجل الزيارة'}
             </Text>
             <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
               <AntDesign name="close" size={24} color="#979e9eff" />
@@ -203,12 +203,6 @@ const VisitConsultantLogScreen = () => {
 
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             <View style={{flex:1,paddingHorizontal:16}}>
-            {/* Patient Name */}
-            {/* <View style={{ paddingVertical: 10, alignItems: 'flex-start' }}>
-              <Text style={[globalTextStyles.h3, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
-                {visitHistoryData?.patientName || 'مريض'}
-              </Text>
-            </View> */}
 
             {/* Hospital Information */}
             <View style={styles.sectionContainer}>

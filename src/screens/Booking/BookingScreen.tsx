@@ -16,7 +16,7 @@ import { generateUniqueId } from '../../shared/services/service';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import FullScreenLoader from '../../components/FullScreenLoader';
-import { bookingService } from '../../services/api/BookingService';
+import { bookingService, categoriesList } from '../../services/api/BookingService';
 import { globalTextStyles } from '../../styles/globalStyles';
 import { ROUTES } from '../../shared/utils/routes';
 
@@ -297,10 +297,33 @@ const BookingScreen = ({ navigation, route }: any) => {
     }
   };
 
+  const getHeaderTitle = (category: any) => {
+    if (currentStep == 1) {
+      return category?.TitleSlang || "";
+    } else if (currentStep == 2) {
+      if (category.Id == "42") {
+        return category?.TitleSlang;
+      } else {
+        const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
+        if (displayCategory?.Display == "CP") {
+          return category?.TitleSlang;
+        } else {
+          return 'مقدمي الرعاية';
+        }
+      }
+    } else if (currentStep == 3) {
+      return "ملخص الطلب"
+    } else if (currentStep == 4) {
+      return "الدفع والسداد"
+    } else {
+      return "";
+    }
+  }
+
   const renderHeader = () => (
     <Header
       centerComponent={
-        <Text style={styles.headerTitle}>{category.Id == "42" ? "استشارة عن بعد" : t('booking')}</Text>
+        <Text style={styles.headerTitle}>{getHeaderTitle(category)}</Text>
       }
       leftComponent={
         <TouchableOpacity onPress={() => {

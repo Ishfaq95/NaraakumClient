@@ -41,7 +41,7 @@ const VisitConsultantLogItemRender = memo(({ item, getMedicine, getVisitMainReco
             <View style={styles.infoRow}>
             <View style={{ flexDirection: "row",width: '40%', alignItems: "center",gap:5 }}>
             <MaterialIcons name="event" size={16} color="#23a2a4" style={styles.icon} />
-                    <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>تاريخ الجلسة</Text>
+                    <Text style={[styles.infoText, { fontFamily: CAIRO_FONT_FAMILY.regular }]}>{(item?.CatCategoryId == 42 || item?.CatCategoryId == 32) ? 'تاريخ الجلسة' : 'تاريخ الزيارة'}</Text>
                 </View>
                 <Text numberOfLines={1} style={[styles.infoText, {width: '60%', fontFamily: CAIRO_FONT_FAMILY.bold }]}>{moment(item?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
             </View>
@@ -49,7 +49,7 @@ const VisitConsultantLogItemRender = memo(({ item, getMedicine, getVisitMainReco
             {/* Buttons */}
             <View style={styles.buttonRow}>
                 <TouchableOpacity onPress={() => getVisitMainRecordDetails(item)} style={styles.outlineBtn}>
-                    <Text style={[styles.outlineBtnText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>سجل الجلسة</Text>
+                    <Text style={[styles.outlineBtnText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>{(item?.CatCategoryId == 42 || item?.CatCategoryId == 32) ? 'سجل الجلسة' : 'سجل الزيارة'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => getMedicine(item)} disabled={item?.MedicineCount == 0} style={[styles.filledBtn, {opacity: item?.MedicineCount == 0 ? 0.7 : 1, backgroundColor: item?.MedicineCount == 0 ? '#23a2a4' : '#23a2a4' }]}>
                     <Text style={[styles.filledBtnText, { fontFamily: CAIRO_FONT_FAMILY.bold }]}>وصفة طبية</Text>
