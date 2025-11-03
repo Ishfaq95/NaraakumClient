@@ -258,34 +258,39 @@ const AppointmentListScreen = ({ navigation }: any) => {
   }, []);
 
   const getPatientReminderList = async () => {
-    setIsLoading(true);
-    const payload = {
-      "ReceiverId": user?.Id,
-      "PageNumber": 1,
-      "PageSize": 100
+    try {
+      setIsLoading(true);
+      const payload = {
+        "ReceiverId": user?.Id,
+        "PageNumber": 1,
+        "PageSize": 100
+      }
+      const response = await bookingService.getPatientReminderList(payload);
+      if (response.ResponseStatus.STATUSCODE == 200) {
+        // Update enabled appointments ref before setting state
+        const reminderList = response.ReminderList;
+
+        // Initialize the enabled appointments set
+        const enabled = new Set<string>();
+
+        // Check each appointment
+        reminderList.forEach((appointment: any) => {
+          if (checkTimeCondition(appointment)) {
+            enabled.add(`${appointment.OrderId}-${appointment.TaskId}`);
+          }
+        });
+
+        // Update the ref
+        enabledAppointmentsRef.current = enabled;
+
+        // Now set the state
+        setPatientReminderList(reminderList);
+      }
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsLoading(false);
     }
-    const response = await bookingService.getPatientReminderList(payload);
-    if (response.ResponseStatus.STATUSCODE == 200) {
-      // Update enabled appointments ref before setting state
-      const reminderList = response.ReminderList;
-
-      // Initialize the enabled appointments set
-      const enabled = new Set<string>();
-
-      // Check each appointment
-      reminderList.forEach((appointment: any) => {
-        if (checkTimeCondition(appointment)) {
-          enabled.add(`${appointment.OrderId}-${appointment.TaskId}`);
-        }
-      });
-
-      // Update the ref
-      enabledAppointmentsRef.current = enabled;
-
-      // Now set the state
-      setPatientReminderList(reminderList);
-    }
-    setIsLoading(false);
   }
 
   // Handle notifications when screen is focused
@@ -404,7 +409,7 @@ const AppointmentListScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <View style={{ }}>
+      <View style={{}}>
         <FlatList
           data={patientReminderList}
           renderItem={({ item }) => item?.TaskDetail[0]?.CatServiceServeTypeId == "1" ? renderItem({ item }) : rendervisitItem({ item })}
@@ -435,15 +440,15 @@ const AppointmentListScreen = ({ navigation }: any) => {
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <View style={{ flex: 1, alignItems: "flex-start", justifyContent: "center" }}>
                 <Text style={{ ...globalTextStyles.bodyLarge, color: '#000' }}>{selectedAppointment?.FullnameSlang}</Text>
-                <Text style={{ ...globalTextStyles.bodySmall,lineHeight:15, color: '#222' }}>{selectedAppointment?.OrganizationSlang}</Text>
+                <Text style={{ ...globalTextStyles.bodySmall, lineHeight: 15, color: '#222' }}>{selectedAppointment?.OrganizationSlang}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
 
                   <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{selectedAppointment?.CellNumber.replace(/^\+/, '')}</Text>
                   <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>+</Text>
 
-                    <TouchableOpacity onPress={() => callPatient(selectedAppointment)} style={{width:40,height:20,marginLeft:10,backgroundColor:'#2ab318',borderRadius:10,alignItems:"center",justifyContent:"center"}}>
-                      <FontAwesome6 name="phone-volume" size={12} color="#fff" />
-                    </TouchableOpacity>
+                  <TouchableOpacity onPress={() => callPatient(selectedAppointment)} style={{ width: 40, height: 20, marginLeft: 10, backgroundColor: '#2ab318', borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
+                    <FontAwesome6 name="phone-volume" size={12} color="#fff" />
+                  </TouchableOpacity>
                 </View>
 
               </View>

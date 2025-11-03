@@ -1674,6 +1674,8 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     )
   }
 
+
+
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
@@ -1701,6 +1703,8 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               if (item?.TaskMainId) {
                 visitRecord = visitRecordList.filter((visit: any) => visit.TaskMainId == item.TaskMainId);
               }
+
+              console.log("item value", item)
 
               if (item.SchedulingDate && item.SchedulingTime) {
                 const datePart = item.SchedulingDate.split('T')[0];
@@ -1737,7 +1741,11 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                     </View>
                     <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                       <Text style={[globalTextStyles.bodyMedium, { color: '#36454f', width: "30%" }]}>رقم الجوال</Text>
-                      <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: "right", width: "70%", flexWrap: "wrap" }]}>{item.PhoneNumber}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+
+                        <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', flexWrap: "wrap" }]}>{item.PhoneNumber.replace(/^\+/, '')}</Text>
+                        <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', flexWrap: "wrap" }]}>+</Text>
+                      </View>
                     </View>
                     <View style={{ width: '100%', alignItems: 'flex-start', paddingHorizontal: 10, paddingTop: 5 }}>
                       <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>حالة الطلب</Text>
@@ -1844,7 +1852,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       <View style={styles.sessionInfoDetailItem}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <CalendarIcon width={18} height={18} />
-                          <Text style={styles.sessionInfoLabel}>تاريخ الزيارة</Text>
+                          <Text style={styles.sessionInfoLabel}>{(item?.CatServiceServeTypeId == "1") ? 'تاريخ الجلسة' : 'تاريخ الزيارة'}</Text>
                         </View>
                         <Text style={styles.sessionInfoValue}>{displayDate}</Text>
                       </View>
@@ -1934,15 +1942,16 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       <View style={{ padding: 10, borderRadius: 10 }}>
                         <FlatList
                           data={visitRecord}
-                          renderItem={({ item }) => (
-                            <View style={{ flex: 1, backgroundColor: '#f0f0f0', padding: 10, borderRadius: 10 }}>
+                          renderItem={({ item: visititem }: any) => (
+
+                            <View style={{ flex: 1, backgroundColor: '#f0f0f0', padding: 10, borderRadius: 10, marginBottom: 8 }}>
                               <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
                                 <View style={{ width: '75%' }}>
                                   <Text style={{ fontFamily: CAIRO_FONT_FAMILY.medium, color: '#333', textAlign: 'left' }}>اسم المستفيد</Text>
-                                  <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: 'left' }}>{item.PatientFullNameSLang}</Text>
+                                  <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: 'left' }}>{visititem?.PatientFullNameSLang}</Text>
                                 </View>
                                 <View style={{ height: 50, width: 50, backgroundColor: 'lightgray', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
-                                  <UniversalImage source={{ uri: `${MediaBaseURL}${item.LogoImagePath}` }} style={{ height: '100%', width: '100%', borderRadius: 10 }} />
+                                  {visititem?.ImagePath && <UniversalImage source={{ uri: `${MediaBaseURL}${visititem.ImagePath}` }} style={{ height: '100%', width: '100%', borderRadius: 10 }} />}
                                 </View>
                               </View>
                               <View style={{ borderRadius: 10, marginTop: 10 }}>
@@ -1951,30 +1960,30 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                                     <CalendarIcon width={18} height={18} />
                                     <Text style={styles.sessionInfoLabel}>المركز الطبى</Text>
                                   </View>
-                                  <Text style={styles.sessionInfoValue}>{item.TitleSlang}</Text>
+                                  <Text style={styles.sessionInfoValue}>{visititem?.TitleSlang}</Text>
                                 </View>
                                 <View style={styles.sessionInfoDetailItem}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                                     <ClockIcon width={18} height={18} />
                                     <Text style={styles.sessionInfoLabel}>مقدم الرعاية</Text>
                                   </View>
-                                  <Text style={styles.sessionInfoValue}>{item.FullnameSlang}</Text>
+                                  <Text style={styles.sessionInfoValue}>{visititem?.FullnameSlang}</Text>
                                 </View>
                                 <View style={styles.sessionInfoDetailItem}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                                     <SettingIconSelected width={18} height={18} />
-                                    <Text style={styles.sessionInfoLabel}>تاريخ الزيارة</Text>
+                                    <Text style={styles.sessionInfoLabel}>{(item?.CatServiceServeTypeId == "1") ? 'تاريخ الجلسة' : 'تاريخ الزيارة'}</Text>
                                   </View>
                                   <View style={{}}>
-                                    <Text style={styles.sessionInfoValue}>{moment(item.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
+                                    <Text style={styles.sessionInfoValue}>{moment(visititem?.VisitDate).locale('en').format('DD/MM/YYYY')}</Text>
                                   </View>
                                 </View>
                               </View>
                               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                                <TouchableOpacity onPress={() => getVisitMainRecordDetails(item, 'visit')} style={{ width: '48%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
-                                  <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>سجل الزيارة</Text>
+                                <TouchableOpacity onPress={() => getVisitMainRecordDetails(visititem, 'visit')} style={{ width: '48%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                                  <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item?.CatServiceServeTypeId == "1" ? 'سجل الجلسة' : 'سجل الزيارة'}</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => getVisitMainRecordDetails(item, 'medicine')} style={{ width: '48%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                                <TouchableOpacity onPress={() => getVisitMainRecordDetails(visititem, 'medicine')} style={{ width: '48%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
                                   <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>وصفة طبية</Text>
                                 </TouchableOpacity>
                               </View>
@@ -2036,7 +2045,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
           <View style={{ height: 1, width: '100%', marginVertical: 10, backgroundColor: "rgba(0,0,0,0.1)" }} />
 
-          <View style={{ width: '100%', borderRadius: 10,paddingBottom:50 }}>
+          <View style={{ width: '100%', borderRadius: 10, paddingBottom: 50 }}>
             <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', }}>سياسة الالغاء</Text>
             <Text style={{ fontFamily: CAIRO_FONT_FAMILY.medium, color: '#333', }}>
               نحن في مركز د بسام الطبي نولي أهمية كبيرة لتقديم خدمات عالية
@@ -2046,8 +2055,8 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
             </Text>
 
-            <TouchableOpacity style={{paddingVertical:10}}>
-              <Text style={{textDecorationLine:'underline',fontFamily: CAIRO_FONT_FAMILY.medium, color: '#179c8e',}}> إقراء المزيد</Text>
+            <TouchableOpacity style={{ paddingVertical: 10 }}>
+              <Text style={{ textDecorationLine: 'underline', fontFamily: CAIRO_FONT_FAMILY.medium, color: '#179c8e', }}> إقراء المزيد</Text>
             </TouchableOpacity>
           </View>
 

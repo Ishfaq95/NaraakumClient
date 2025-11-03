@@ -385,7 +385,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       // If selectServiceFilter changed, call both APIs
       if (serviceFilterChanged && selectServiceFilter != 0) {
         const filterServiceIds = services.filter((service: any) => service.CatLevelId == selectServiceFilter).map((service: any) => service.Id);
-        fetchServiceProviders(filterServiceIds[0]);
+        fetchServiceProviders(filterServiceIds[0],selectedCity != "0" ? selectedCity : null,
+          selectedSquare != "0" ? selectedSquare : null,
+          searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null);
         fetchInitialAvailability(null, filterServiceIds[0]);
       }
       // If other filters changed (searchNearMe, selectedCity, selectedSquare), call only fetchServiceProviders
@@ -1450,7 +1452,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         onConfirm={handleCalendarConfirm}
         onCancel={handleCalendarCancel}
         locale={currentLang === 'ar' ? 'ar-SA' : 'en'}
-        minimumDate={new Date()}
+        date={selectedDate.isSame(moment(), 'day') ? new Date() : selectedDate.toDate()}
+        // minimumDate={selectedDate.isSame(moment(), 'day') ? new Date() : selectedDate.toDate()}
         // maximumDate={moment().add(30, 'days').toDate()}
         display="default"
       />

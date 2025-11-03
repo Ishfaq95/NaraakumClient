@@ -28,6 +28,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Entypo from 'react-native-vector-icons/Entypo';
 
 // Conditionally import TrackPlayerService only for Android
 const TrackPlayerService = Platform.OS === 'android'
@@ -53,14 +54,14 @@ const nationalities = [
 ];
 
 // Memoized Audio Player Component
-const AudioPlayer = React.memo(({ 
-  isPlayingAudio, 
-  audioProgress, 
-  audioCurrentTime, 
+const AudioPlayer = React.memo(({
+  isPlayingAudio,
+  audioProgress,
+  audioCurrentTime,
   audioDuration,
   uploadedFileUrl,
-  onPlayPause, 
-  onStop 
+  onPlayPause,
+  onStop
 }: {
   isPlayingAudio: boolean;
   audioProgress: number;
@@ -333,7 +334,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     try {
       // Capture the final duration from ref before clearing
       const finalDuration = recordingTimeRef.current;
-      
+
       const audioFile = await audioRecorderPlayer.current.stopRecorder();
       setIsRecording(false);
 
@@ -354,7 +355,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       setAudioDuration(finalDuration);
       setActualRecordingDuration(finalDuration);
       setAudioFile(audioFile);
-      
+
       // Reset recording time displays
       recordingTimeRef.current = 0;
       setRecordingTime(0);
@@ -584,7 +585,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                   // Update refs immediately
                   audioCurrentTimeRef.current = e.currentPosition / 1000;
                   audioProgressRef.current = (e.currentPosition / e.duration) * 100;
-                  
+
                   // Update state only every 5 updates (reduce re-renders)
                   updateCounter++;
                   if (updateCounter % 5 === 0) {
@@ -942,7 +943,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       const updatedItem = CardArray.find((item: any) => item.ItemUniqueId === pendingUpdate.uniqueId);
 
       if (updatedItem && updatedItem.PatientUserProfileInfoId === pendingUpdate.value) {
-        
+
         updatePatientInfoInOrder();
 
         // Clear the pending update
@@ -1123,7 +1124,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
       "CatNationalityId": nationality == 'citizen' ? 213 : 187,
       "IDNumber": nationality == 'citizen' ? idNumber : '',
     }
-    
+
     const response = await bookingService.addBeneficiary(Payload)
 
     if (response.StatusCode.STATUSCODE == 3008) {
@@ -1185,13 +1186,13 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     if (isPlayingAudio) {
       stopAudio();
     }
-    
+
     // Clear any recording timer
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
     }
-    
+
     // Reset all audio states
     setUploadedFileUrl(null);
     setAudioDuration(0);
@@ -1201,7 +1202,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
     setRecordingTime(0);
     setActualRecordingDuration(0);
     setAudioFile(null);
-    
+
     // Reset all refs
     audioProgressRef.current = 0;
     audioCurrentTimeRef.current = 0;
@@ -1238,6 +1239,8 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
             let displayDate = '';
             let displayTime = '';
 
+            console.log("item", item);
+
             if (item.SchedulingDate && item.SchedulingTime) {
               displayDate = moment(item.SchedulingDate).locale('en').format('DD/MM/YYYY');
               displayTime = convert24HourToArabicTime(item.SchedulingTime);
@@ -1248,14 +1251,14 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                 <View style={styles.detailsHeader}>
                   <Text style={styles.detailsHeaderText}>الخدمات المختارة ({filteredItems.length})</Text>
                   <TouchableOpacity onPress={() => {
-                    
-                    const getUpdatedCategory=allCategoriesList.find((catItem:any)=> catItem.Id == item.CatCategoryId)
+
+                    const getUpdatedCategory = allCategoriesList.find((catItem: any) => catItem.Id == item.CatCategoryId)
                     dispatch(setCategory(getUpdatedCategory))
                     dispatch(setSelectedUniqueId(item.ItemUniqueId));
-                    setTimeout(()=>{
+                    setTimeout(() => {
                       onPressEditService(item)
-                    },200)
-                    
+                    }, 200)
+
                   }} style={styles.editButton}>
                     <MaterialIcons name="edit" size={20} color="black" />
                   </TouchableOpacity>
@@ -1282,24 +1285,32 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                   <View style={styles.sessionInfoDetailItem}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <CalendarIcon width={18} height={18} />
-                      <Text style={styles.sessionInfoLabel}>{ (item?.CatCategoryId == "42" || item?.CatCategoryId == "32") ? 'تاريخ الجلسة' : 'تاريخ الزيارة'}</Text>
+                      <Text style={styles.sessionInfoLabel}>{(item?.CatServiceServeTypeId == "1") ? 'تاريخ الجلسة' : 'تاريخ الزيارة'}</Text>
                     </View>
                     <Text style={styles.sessionInfoValue}>{displayDate}</Text>
                   </View>
                   <View style={styles.sessionInfoDetailItem}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <ClockIcon width={18} height={18} />
-                      <Text style={styles.sessionInfoLabel}>توقيت الجلسة</Text>
+                      <Text style={styles.sessionInfoLabel}>{(item?.CatServiceServeTypeId == "1") ? 'توقيت الجلسة' : 'توقيت الزيارة'}</Text>
                     </View>
                     <Text style={styles.sessionInfoValue}>{displayTime}</Text>
                   </View>
-                  <View style={styles.sessionInfoDetailItem}>
+                  {item?.CatServiceServeTypeId == "1" ? <View style={styles.sessionInfoDetailItem}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <SettingIconSelected width={18} height={18} />
                       <Text style={styles.sessionInfoLabel}>المدة</Text>
                     </View>
                     <Text style={styles.sessionInfoValue}>{calculateDuration(item?.SchedulingTime, item?.SchedulingEndTime)}</Text>
-                  </View>
+                  </View> :
+                    <View style={{ }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="location-sharp" size={18} color="#23a2a4" />
+                        <Text style={styles.sessionInfoLabel}> موقع الزيارة</Text>
+                      </View>
+                      <Text style={{...globalTextStyles.bodyMedium, color: '#333', textAlign: 'right'}}>{item?.Address}</Text>
+                    </View>
+                  }
                 </View>
               </View>
             )
@@ -1504,16 +1515,16 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                   استماع
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={handleDeleteUploadedAudio} 
+              <TouchableOpacity
+                onPress={handleDeleteUploadedAudio}
                 disabled={isPlayingAudio}
-                style={{ 
-                  flexDirection: "row", 
-                  alignItems: "center", 
-                  backgroundColor: isPlayingAudio ? "#f5f5f5" : "#fec3c3", 
-                  borderRadius: 8, 
-                  paddingVertical: 8, 
-                  paddingHorizontal: 18, 
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: isPlayingAudio ? "#f5f5f5" : "#fec3c3",
+                  borderRadius: 8,
+                  paddingVertical: 8,
+                  paddingHorizontal: 18,
                   marginTop: 4,
                   opacity: isPlayingAudio ? 0.5 : 1
                 }}>
