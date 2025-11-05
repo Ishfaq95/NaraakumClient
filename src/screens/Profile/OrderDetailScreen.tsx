@@ -36,6 +36,8 @@ import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
 import RatingVector from '../../assets/icons/ratingVector';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import { generateAndDownloadInvoice } from '../../services/InvoiceService';
+import { useAlert } from '../../contexts/AlertContext';
 
 const OrderDetailScreen = ({ navigation, route }: any) => {
   const OrderId = route?.params?.OrderId;
@@ -119,7 +121,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const [visitHistoryData, setVisitHistoryData] = useState<any>(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-
+  const { showAlert } = useAlert();
   const handleMedicalCenterStarPress = (starIndex: number) => {
     setMedicalCenterRating(starIndex + 1);
   };
@@ -735,6 +737,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       const response = await profileService.getUserOrderDetail(payload);
 
       if (response.ResponseStatus.STATUSCODE == 200) {
+        console.log("response.UserOrders", response.UserOrders);
         const OrderDetailArray = response.UserOrders;
         const groupedArray: any = groupArrayByUniqueIdAsArray(OrderDetailArray[0].OrderDetail);
         setShowGroupedArray(groupedArray);
@@ -1635,6 +1638,37 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     }
   };
 
+  const handleDownloadInvoice = async () => {
+    try {
+      const invoiceData = selectedDoctor.items;
+
+      // Generate and download the invoice
+      await generateAndDownloadInvoice(invoiceData);
+
+      if (Platform.OS === 'ios') {
+
+      } else {
+
+        // // Show success message
+        showAlert({
+          title: 'تم التحميل بنجاح',
+          message: 'تم حفظ الفاتورة في مجلد المستندات',
+          type: 'success',
+          confirmText: 'حسناً',
+          onConfirm: () => { }
+        });
+      }
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      showAlert({
+        title: 'خطأ',
+        message: 'حدث خطأ أثناء إنشاء الفاتورة',
+        type: 'error',
+        confirmText: 'حسناً',
+      });
+    }
+  };
+
   const downloadMedicalReport = async (item: any) => {
     downloadFileFromReport(item.FilePath)
   }
@@ -2038,7 +2072,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               </View>
             </View>
 
-            <TouchableOpacity style={{ width: '100%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
+            <TouchableOpacity onPress={() => handleDownloadInvoice()} style={{ width: '100%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
               <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>تحميل الفاتورة</Text>
             </TouchableOpacity>
           </View>

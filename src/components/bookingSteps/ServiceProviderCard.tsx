@@ -119,7 +119,7 @@ interface ServiceProviderCardProps {
   selectedDate: any;
   availability: any;
   selectedSlotInfo?: { providerId: string, slotTime: string } | null;
-  onSelectSlot: (provider: any, slot: any) => void;
+  onSelectSlot: (provider: any, slot: any, selectedServiceValues?: any) => void;
   onSelectService?: (providerId: string, service: string) => void;
   selectedService?: any;
   userFavorites?: any[];
@@ -399,9 +399,9 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
                     <Text style={[styles.priceText, { textAlign: 'left' }]}>
                       {`${item.ServiceTitleSlang}: ${Number(item.Price).toFixed(0)}`}
                     </Text>
-                    <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, item)} style={[styles.checkbox, checkSelectedService(item) && styles.checkedBox]}>
+                    {provider.ServiceServe.length > 1 && <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, item)} style={[styles.checkbox, checkSelectedService(item) && styles.checkedBox]}>
                       {checkSelectedService(item) && <CheckIcon width={12} height={12} />}
-                    </TouchableOpacity>
+                    </TouchableOpacity>}
                   </View>
                 )
               }}
@@ -530,11 +530,12 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }
 
   const handleSlotSelect = useCallback((time: any) => {
-    onSelectSlot(provider, time);
+    
 
     if (category.Id == "42" || category.Id == "32") {
-      const getServiceId = selectedService ? services.find((service: any) => service.TitlePlang == selectedService.selectedService) : 0;
+      const getServiceId = selectedService ? services?.length > 1 ? services.find((service: any) => service.TitlePlang == selectedService.selectedService) : 0 : 0;
       const selectedServiceValues = selectedService && provider.ServiceServe.find((item: any) => item.ServiceTitlePlang == selectedService.selectedService);
+      onSelectSlot(provider, time,selectedServiceValues);
       const updatedCardArray = [...CardArray];
 
       // Find the index of the item that matches the selectedUniqueId
@@ -560,25 +561,52 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         } else {
           updatedCardArray[selectedIndex] = {
             ...updatedCardArray[selectedIndex],
-            "CatNationalityId": user?.CatNationalityId,
-            "OrganizationServiceId": selectedServiceValues?.OrganizationServiceId || 0,
             "OrganizationId": provider.OrganizationId,
-            "ServiceCharges": selectedServiceValues?.Price || 0,
-            "PriceswithTax": selectedServiceValues?.PriceswithTax || 0,
-            "ServicePrice": selectedServiceValues?.Price || 0,
             "ServiceProviderUserloginInfoId": provider.UserId,
             "SchedulingDate": selectedDate.format('YYYY-MM-DD'),
             "SchedulingTime": convertArabicTimeTo24Hour(time.start_time),
             "AvailabilityId": availability.Id,
-            "CatServiceId": selectedServiceValues?.Id,
             "CatSchedulingAvailabilityTypeId": availability.CatAvailabilityTypeId,
             "ServiceProviderFullnameSlang": provider.FullnameSlang,
           };
+
+          if(provider.ServiceServe.length == 1){
+            updatedCardArray[selectedIndex] = {
+              ...updatedCardArray[selectedIndex],
+              "OrganizationServiceId": provider.ServiceServe[0].OrganizationServiceId,
+              "CatNationalityId": user?.CatNationalityId,
+              "ServiceCharges": provider.ServiceServe[0].Price,
+              "PriceswithTax": provider.ServiceServe[0].PriceswithTax,
+              "ServicePrice": provider.ServiceServe[0].Price,
+              "CatServiceId": provider.ServiceServe[0].Id,
+            };
+          }else if(selectedServiceValues){
+            updatedCardArray[selectedIndex] = {
+              ...updatedCardArray[selectedIndex],
+              "OrganizationServiceId": selectedServiceValues?.OrganizationServiceId || 0,
+              "CatNationalityId": user?.CatNationalityId,
+              "ServiceCharges": selectedServiceValues?.Price || 0,
+              "PriceswithTax": selectedServiceValues?.PriceswithTax || 0,
+              "ServicePrice": selectedServiceValues?.Price || 0,
+              "CatServiceId": selectedServiceValues?.Id,
+            };
+          } else {
+            updatedCardArray[selectedIndex] = {
+              ...updatedCardArray[selectedIndex],
+              "OrganizationServiceId":  0,
+              "CatNationalityId": user?.CatNationalityId,
+              "ServiceCharges":  0,
+              "PriceswithTax":  0,
+              "ServicePrice":  0,
+              "CatServiceId": null,
+            };
+          }
         }
       }
 
       dispatch(addCardItem(updatedCardArray));
     } else {
+      onSelectSlot(provider, time);
       const updatedCardArray = [...CardArray];
 
       // Find the correct price for the selected service

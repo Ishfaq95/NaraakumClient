@@ -806,7 +806,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
           const keyToUniqueIdMap: Map<string, string> = new Map();
           updatedCardItems.forEach((item: any, index: number) => {
             const key = `${item.Address}|${item.SchedulingDate}|${item.SchedulingEndTime}`;
-            let uid = keyToUniqueIdMap.get(key);
+            let uid : any = keyToUniqueIdMap.get(key);
             if (!uid) {
               uid = item.ItemUniqueId ? item.ItemUniqueId : generateUniqueId();
               keyToUniqueIdMap.set(key, uid);

@@ -995,12 +995,27 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setFilterBottomSheetVisible(true)
   };
 
-  const handleSelectSlot = useCallback((provider: any, slot: any) => {
+  const handleSelectSlot = useCallback((provider: any, slot: any, selectedServiceValues?: any) => {
     console.log("SelectedCardItem", SelectedCardItem)
     const serviceId = SelectedCardItem[0]?.CatServiceId
-    if (serviceId == 0 || serviceId == null || serviceId == "" || serviceId == undefined) {
-      setShowServiceModal(true)
-    }
+      if(provider.ServiceServe.length == 1){
+        handleSelectService(provider.UserId, provider.ServiceServe[0].ServiceTitlePlang);
+      }else if (selectedServiceValues) {
+        const isAutoSelected = provider.ServiceServe.find((item: any) => item.Id == selectedServiceValues.Id);
+        if(isAutoSelected){
+          handleSelectService(provider.UserId, isAutoSelected.ServiceTitlePlang);
+        } else {
+          setShowServiceModal(true)
+        }
+      } else {
+        const isAutoSelected = provider.ServiceServe.find((item: any) => item.Id == serviceId);
+        if(isAutoSelected){
+          handleSelectService(provider.UserId, isAutoSelected.ServiceTitlePlang);
+        } else {
+          setShowServiceModal(true)
+        }
+      }
+    // }
     // If the same slot is already selected, deselect it
     if (selectedSlotInfo?.providerId === provider.UserId && selectedSlotInfo?.slotTime === slot.start_time) {
       setSelectedSlotInfo(null);

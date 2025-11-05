@@ -150,9 +150,6 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
   const logoBase64 = await getLogoBase64();
   const ministryLogoBase64 = await getMinistryLogoBase64();
 
-  console.log('userInfo', userInfo);
-  console.log('data', data);
-
   // Determine payment method
   let paymentMethod = 'محفظة';
   let cardNumber = '';
