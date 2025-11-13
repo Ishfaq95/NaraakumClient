@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native'
 import LottieAnimation from '../common/LottieAnimation'
 import { LOTTIE_ANIMATIONS } from '../../assets/animation'
@@ -13,16 +13,40 @@ import { scheduleNotificationAndroid, scheduleNotificationIOS } from '../../shar
 import { notificationService } from '../../services/api/NotificationService'
 import { useSelector } from 'react-redux';
 import { useAlert } from '../../contexts/AlertContext';
+import { profileService } from '../../services/api/ProfileService'
 
 const OrderSuccess = ({ navigation, route }: any) => {
   const OrderDetail = route?.params?.SuccessResponse;
   const user = useSelector((state: any) => state.root.user.user);
   const { t } = useTranslation();
   const { showAlert } = useAlert();
+  const [completeOrderDetail, setCompleteOrderDetail] = useState<any>([]);
 
   useEffect(() => {
     setUpNotification();
   }, []);
+
+  useEffect(() => {
+    if (OrderDetail) {
+      getOrderDetail(OrderDetail[0].OrderID);
+    }
+  }, [OrderDetail]);
+
+  const getOrderDetail = async (OrderId: string) => {
+    try {
+      const payload = {
+        "OrderId": OrderId,
+      }
+
+      const response = await profileService.getUserOrderDetail(payload);
+
+      if (response.ResponseStatus.STATUSCODE == 200) {
+        const OrderDetailArray = response.UserOrders;
+        setCompleteOrderDetail(OrderDetailArray[0]);
+      }
+    } catch (error) {
+    }
+  }
 
   const setUpNotification = async () => {
     try {
@@ -41,8 +65,8 @@ const OrderSuccess = ({ navigation, route }: any) => {
 
   const handleDownloadInvoice = async () => {
     try {
-      if (OrderDetail) {
-        const invoiceData = OrderDetail;
+      if (completeOrderDetail) {
+        const invoiceData = completeOrderDetail;
 
         // Generate and download the invoice
          await generateAndDownloadInvoice(invoiceData);
@@ -67,8 +91,6 @@ const OrderSuccess = ({ navigation, route }: any) => {
           }
         });
          }
-        
-        
       } else {
         showAlert({
           title: 'خطأ',
@@ -119,6 +141,7 @@ const OrderSuccess = ({ navigation, route }: any) => {
       containerStyle={styles.headerContainer}
     />
   );
+
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}

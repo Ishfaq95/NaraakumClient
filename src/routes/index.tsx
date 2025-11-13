@@ -39,6 +39,7 @@ import SignUpScreen from '../screens/SignUp/SignUpScreen';
 import SignUpProfileScreen from '../screens/SignUp/SignUpProfileScreen';
 import PrivacyPolicy from '../screens/SignUp/PrivicyPolicy';
 import OrderNotCompleted from '../components/bookingSteps/OrderNotCompleted';
+import CancellationPolicy from '../screens/Profile/profileComponents/CancellationPolicy';
 
 const Stack = createNativeStackNavigator();
 
@@ -94,6 +95,7 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.NotificationScreen} component={NotificationScreen} />
       <Stack.Screen name={ROUTES.ConversationListScreen} component={ConversationListScreen} />
       <Stack.Screen name={ROUTES.ChatScreenMainView} component={ChatScreenMainView} />
+      <Stack.Screen name={ROUTES.CancellationPolicy} component={CancellationPolicy} />
     </Stack.Navigator>
   );
 };

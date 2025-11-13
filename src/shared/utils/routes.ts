@@ -52,5 +52,6 @@ export const ROUTES = {
     NotificationScreen: "NotificationScreen",
     ConversationListScreen: "ConversationListScreen",
     ChatScreenMainView: "ChatScreenMainView",
+    CancellationPolicy: "CancellationPolicy",
   };
   

@@ -310,6 +310,16 @@ export const getAllSquares = async (payload: any): Promise<any> => {
     }
 };
 
+export const cancelOrder = async (payload: any): Promise<any> => {
+    try {
+        const response = await axiosInstance.post('user/UpdateOrderStatus', payload);
+        return response.data;
+    } catch (error: any) {
+        console.error('Error canceling order:', error);
+        throw error;
+    }
+};
+
 export const bookingService = {
     getServices,
     getOfferedServicesListByCategory,
@@ -337,4 +347,5 @@ export const bookingService = {
     addToFavorites,
     getAllCities,
     getAllSquares,
+    cancelOrder,
 }; 

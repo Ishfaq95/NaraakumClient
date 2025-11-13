@@ -5,20 +5,16 @@ import CalendarIcon from '../../assets/icons/CalendarIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
 import SettingIconSelected from '../../assets/icons/SettingIconSelected';
 import { useTranslation } from 'react-i18next';
-import CommonRadioButton from '../../components/common/CommonRadioButton';
-import PhoneNumberInput from '../../components/PhoneNumberInput';
 import { countries } from '../../utils/countryData';
-import { addCardItem, setApiResponse } from '../../shared/redux/reducers/bookingReducer';
+import { setApiResponse } from '../../shared/redux/reducers/bookingReducer';
 import { bookingService } from '../../services/api/BookingService';
-import { generatePayloadforOrderMainBeforePayment, generatePayloadforUpdateOrderMainBeforePayment, generateUniqueId } from '../../shared/services/service';
+import { generatePayloadforUpdateOrderMainBeforePayment } from '../../shared/services/service';
 import { useDispatch, useSelector } from 'react-redux';
 import { MediaBaseURL } from '../../shared/utils/constants';
 import moment from 'moment';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFetchBlob from 'rn-fetch-blob';
-import axiosInstance from '../../Network/axiosInstance';
 import { store } from '../../shared/redux/store';
-// import { TrackPlayerService } from '../../services/TrackPlayerService';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { globalTextStyles, CAIRO_FONT_FAMILY } from '../../styles/globalStyles';
 import { profileService } from '../../services/api/ProfileService';
@@ -38,6 +34,7 @@ import RatingVector from '../../assets/icons/ratingVector';
 import FullScreenLoader from '../../components/FullScreenLoader';
 import { generateAndDownloadInvoice } from '../../services/InvoiceService';
 import { useAlert } from '../../contexts/AlertContext';
+import { ROUTES } from '../../shared/utils/routes';
 
 const OrderDetailScreen = ({ navigation, route }: any) => {
   const OrderId = route?.params?.OrderId;
@@ -48,8 +45,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const [mobileNumber, setMobileNumber] = useState('');
   const [isValidNumber, setIsValidNumber] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any | undefined>(countries.find(c => c.code === 'sa'));
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
   const [actualRecordingDuration, setActualRecordingDuration] = useState(0);
   const [audioFile, setAudioFile] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -65,8 +60,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const [medicalReportListBottomSheet, setMedicalReportListBottomSheet] = useState(false);
 
   const user = useSelector((state: any) => state.root.user.user);
-  const CardArray = useSelector((state: any) => state.root.booking.cardItems);
-  const apiResponse = useSelector((state: any) => state.root.booking.apiResponse);
   const [showGroupedArray, setShowGroupedArray] = useState([]);
   const [completeOrderDetail, setCompleteOrderDetail] = useState<any>([]);
   const [medicalHistoryBottomSheet, setMedicalHistoryBottomSheet] = useState(false);
@@ -240,7 +233,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     audioRecorderPlayer.current.setSubscriptionDuration(0.1);
 
     // Add record back listener for debugging
-    audioRecorderPlayer.current.addRecordBackListener((e) => {
+    audioRecorderPlayer.current.addRecordBackListener(() => {
     });
 
     // Set up audio session for better recording quality
@@ -300,70 +293,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const handleStartRecording = async () => {
-    try {
-      // Configure recording with better settings for proper metadata
-      const audioSet = {
-        AudioEncoderAndroid: 'aac',
-        AudioSourceAndroid: 'mic',
-        AVEncoderAudioQualityKeyIOS: 'high',
-        AVNumberOfChannelsKeyIOS: 2,
-        AVFormatIDKeyIOS: 'aac',
-        OutputFormatAndroid: 'aac',
-        AudioSamplingRateAndroid: 44100,
-        AudioEncodingBitRateAndroid: 128000,
-      } as any;
 
-      const result = await audioRecorderPlayer.current.startRecorder(undefined, audioSet);
-      setIsRecording(true);
-      setRecordingTime(0);
-      setActualRecordingDuration(0);
-      setAudioFile(null);
-      setUploadedFileUrl(null);
-
-      // Start timer to track recording duration
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-
-    } catch (error) {
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
-    }
-  };
-
-  const handleStopRecording = async () => {
-    try {
-      const audioFile = await audioRecorderPlayer.current.stopRecorder();
-      setIsRecording(false);
-
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
-
-      if (!audioFile) {
-        Alert.alert('Error', 'No audio file was created');
-        return;
-      }
-
-      // Store the actual recording duration before resetting the timer
-      const finalDuration = recordingTime;
-      setActualRecordingDuration(finalDuration);
-
-      setAudioFile(audioFile);
-
-      // Reset timer display
-      setRecordingTime(0);
-
-      // Wait a moment for the file to be fully written
-      await new Promise<void>(resolve => setTimeout(resolve, 500));
-
-      // Automatically upload the file
-      await uploadAudioFile(audioFile);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to stop recording. Please try again.');
-    }
-  };
 
   const uploadAudioFile = async (audioFile: any) => {
 
@@ -471,7 +401,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
       // Try to read a small portion of the file to verify it's valid
       try {
-        const fileContent = await RNFetchBlob.fs.readFile(tempFilePath, 'base64');
       } catch (readError) {
       }
 
@@ -508,7 +437,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
         setUploadedFileUrl(uploadedUrl);
 
         // Update the cart with audio description (similar to web implementation)
-        const audioDescription = `${uploadedUrl}^${duration}`;
 
         // Optional: Show success message
         Alert.alert('Success', 'Audio file uploaded successfully!');
@@ -532,112 +460,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const playUploadedAudio = async () => {
-    if (!uploadedFileUrl) {
-      Alert.alert('Error', 'No audio file to play');
-      return;
-    }
 
-    try {
-      // Stop any currently playing audio
-      if (isPlayingAudio) {
-        await audioRecorderPlayer.current.stopPlayer();
-        setIsPlayingAudio(false);
-        setAudioProgress(0);
-        setAudioCurrentTime(0);
-        return;
-      }
-
-      // Reset progress
-      setAudioProgress(0);
-      setAudioCurrentTime(0);
-
-      // Set up audio session for playback
-      try {
-        // For iOS, add a small delay to ensure audio session is ready
-        if (Platform.OS === 'ios') {
-          await new Promise(resolve => setTimeout(() => resolve(undefined), 100));
-        }
-      } catch (error) {
-      }
-
-      // Create full URL
-      const fullUrl = uploadedFileUrl.startsWith('http')
-        ? uploadedFileUrl
-        : `${MediaBaseURL}/${uploadedFileUrl}`;
-
-      // For iOS, download the file first then use track player
-      if (Platform.OS === 'ios') {
-        try {
-          const fileName = `audio_${Date.now()}.m4a`;
-          const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-
-          // Download with progress tracking
-          const downloadResult = await RNFS.downloadFile({
-            fromUrl: fullUrl,
-            toFile: filePath,
-            background: true,
-            progress: (res) => {
-
-            },
-          }).promise;
-
-          if (downloadResult.statusCode === 200) {
-
-            // Verify file exists and has content
-            const fileExists = await RNFS.exists(filePath);
-            if (!fileExists) {
-              throw new Error('Downloaded file does not exist');
-            }
-
-            const fileStats = await RNFS.stat(filePath);
-            if (fileStats.size < 1000) {
-              throw new Error('Downloaded file is too small');
-            }
-
-            try {
-              await playAudioWithTrackPlayer(filePath);
-            } catch (trackPlayerError) {
-              setIsPlayingAudio(false);
-            }
-          } else {
-            throw new Error(`Download failed with status: ${downloadResult.statusCode}`);
-          }
-
-        } catch (error) {
-          setIsPlayingAudio(false);
-        }
-      } else {
-        // Android implementation - use track player
-        try {
-          await playAudioWithTrackPlayer(fullUrl);
-        } catch (error) {
-          setIsPlayingAudio(false);
-        }
-      }
-    } catch (error) {
-    }
-  };
-
-  const stopAudio = async () => {
-    if (isPlayingAudio) {
-      try {
-        // Stop track player
-        // await TrackPlayerService.stop();
-
-        // Clear progress interval
-        if (progressIntervalRef.current) {
-          // clearInterval(progressIntervalRef.current);
-          // progressIntervalRef.current = null;
-        }
-
-        setIsPlayingAudio(false);
-        setAudioProgress(0);
-        setAudioCurrentTime(0);
-      } catch (error) {
-      }
-    }
-  };
 
   const calculateTotalWithTex = () => {
     let subTotal = 0;
@@ -662,7 +485,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   }
 
   // Audio playback using react-native-track-player
-  const playAudioWithTrackPlayer = async (audioUrl: string) => {
+  const playAudioWithTrackPlayer = async () => {
     try {
 
       // Setup track player if not already done
@@ -815,22 +638,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     )
   }
 
-  const createOrderMainBeforePayment = async () => {
-    const payload = {
-      "OrderId": CardArray[0].OrderID,
-      "CatPlatformId": 1,
-      "OrderDetail": generatePayloadforUpdateOrderMainBeforePayment(CardArray)
-    }
-
-    const response = await bookingService.updateOrderMainBeforePayment(payload);
-
-    if (response.ResponseStatus.STATUSCODE == 200) {
-      dispatch(setApiResponse(response.Data))
-
-    } else {
-      Alert.alert(response.ResponseStatus.MESSAGE)
-    }
-  }
 
   useEffect(() => {
     if (mobileNumber) {
@@ -871,60 +678,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   }
 
   // Form validation function
-  const validateAndSaveForm = () => {
-    // Clear previous errors
-    setMedicalComplaintError(false);
-    setSufferingDurationError(false);
-    setIsRecurringError(false);
-    setAllergiesError(false);
-    setIsSmokingError(false);
-    setFamilyMedicalProblemsError(false);
-
-    let isValid = true;
-
-    // Validate Medical Complaint
-    if (!medicalComplaint.trim()) {
-      setMedicalComplaintError(true);
-      isValid = false;
-    }
-
-    // Validate Duration of Suffering
-    if (!sufferingDuration.trim()) {
-      setSufferingDurationError(true);
-      isValid = false;
-    }
-
-    // Validate Is Recurring
-    if (!isRecurring) {
-      setIsRecurringError(true);
-      isValid = false;
-    }
-
-    // Validate Allergies
-    if (!allergies.trim()) {
-      setAllergiesError(true);
-      isValid = false;
-    }
-
-    // Validate Smoking Status
-    if (!isSmoking) {
-      setIsSmokingError(true);
-      isValid = false;
-    }
-
-    // Validate Family Medical Problems
-    if (!familyMedicalProblems.trim()) {
-      setFamilyMedicalProblemsError(true);
-      isValid = false;
-    }
-
-    if (isValid) {
-      // Form is valid, proceed with saving
-      // Here you can add your API call to save the form data
-      Alert.alert('نجح', 'تم حفظ البيانات بنجاح');
-    }
-    // No alert on error - just red highlighting will show
-  };
 
   // Keyboard listeners for rating bottom sheet
   useEffect(() => {
@@ -1017,7 +770,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       "IDNumber": beneficiaryForm.nationality === 'citizen' ? beneficiaryForm.idNumber : '',
       "UserProfileId": selectedDoctor?.items[0]?.PatientUserProfileInfoId,
     }
-    const response = await bookingService.updateBeneficiaryData(Payload)
     setOpenBeneficiaryBottomSheet(false)
   }
 
@@ -1335,7 +1087,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               text: 'Open Files App',
               onPress: () => {
                 // This will open the Files app
-                const filesUrl = 'shortcuts://run-shortcut?name=Files';
                 // Note: This is a fallback, the actual implementation might vary
                 Alert.alert('Files App', 'Please open the Files app manually and navigate to "On My iPhone/iPad" > "Documents" > "Shared" to find your file.');
               }
@@ -1376,7 +1127,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
         const filePath = file.filePath
         const fileName = `MedicalHistory_${medicalData.OrderId}_${moment().locale('en').format('YYYYMMDD_HHmmss')}`;
 
-        const downloadPath = await downloadFileForHistory(filePath, fileName);
 
       } else {
         Alert.alert('Error', 'Failed to generate PDF');
@@ -1389,7 +1139,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const uploadFile = async (file: any, pickerResult: any) => {
+  const uploadFile = async (file: any) => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
@@ -1610,10 +1360,10 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       },
     })
       .fetch('GET', url)
-      .then(res => {
+      .then(() => {
         Alert.alert('تم تنزيل الملف بنجاح');
       })
-      .catch(error => {
+      .catch(() => {
         Alert.alert('File downloading error.');
       })
       .then(() => {
@@ -1640,7 +1390,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
   const handleDownloadInvoice = async () => {
     try {
-      const invoiceData = selectedDoctor.items;
+      const invoiceData = completeOrderDetail;
 
       // Generate and download the invoice
       await generateAndDownloadInvoice(invoiceData);
@@ -1708,6 +1458,81 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     )
   }
 
+  const handleCancelOrder = async (item: any) => {
+    var orderDetailIds = item.map((element: any) => element.OrderDetailId).join(',');
+    
+    try {
+      const payload = {
+        "OrderDetailIds": orderDetailIds,
+        "CatOrderStatusId": 9,
+        "UpdatebyUserloginInfoId": user?.Id,
+        "UpdatebyRoleId": 0,
+        "OrderStatusNote": ""
+      }
+      const response = await bookingService.cancelOrder(payload);
+      if (response.ResponseStatus.STATUSCODE == 200) {
+        showAlert({
+          title: 'تم الإلغاء بنجاح',
+          message: 'تم إلغاء الطلب بنجاح',
+          type: 'success',
+          confirmText: 'حسناً',
+          onConfirm: () => {
+            navigation.goBack();
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error canceling order:', error);
+      showAlert({
+        title: 'خطأ',
+        message: 'حدث خطأ أثناء إلغاء الطلب',
+        type: 'error',
+        confirmText: 'حسناً',
+      });
+    }
+  }
+
+  const isCancelable = (item: any) => {
+    // List of order status IDs that prevent cancellation
+    const nonCancelableStatusIds = [24, 9, 4, 10];
+    
+    // Check if any item has a non-cancelable status
+    const hasNonCancelableStatus = item.some((element: any) => 
+      nonCancelableStatusIds.includes(element.CatOrderStatusId)
+    );
+    
+    // If any item has a non-cancelable status, return false
+    if (hasNonCancelableStatus) {
+      return false;
+    }
+ 
+    // Sort the array in ascending order by SchedulingDate and SchedulingTime
+    const sortedItems = [...item].sort((a: any, b: any) => {
+      const dateA = new Date(`${a.SchedulingDate.split('T')[0]}T${a.SchedulingTime}`);
+      const dateB = new Date(`${b.SchedulingDate.split('T')[0]}T${b.SchedulingTime}`);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    // Get the earliest scheduled appointment
+    const earliestAppointment = sortedItems[0];
+    
+    // Combine SchedulingDate and SchedulingTime to create full datetime
+    const scheduledDateTime = new Date(
+      `${earliestAppointment.SchedulingDate.split('T')[0]}T${earliestAppointment.SchedulingTime}`
+    );
+    
+    // Get current time
+    const now = new Date();
+    
+    // Calculate difference in milliseconds
+    const timeDifference = scheduledDateTime.getTime() - now.getTime();
+    
+    // Convert to hours
+    const hoursDifference = timeDifference / (1000 * 60 * 60);
+    
+    // Return true if more than 24 hours remaining, false otherwise
+    return hoursDifference > 24;
+  }
 
 
   return (
@@ -1729,7 +1554,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
         {selectedDoctor?.uniqueId && <ScrollView style={{ flex: 1 }}>
           {
-            selectedDoctor?.items?.map((item: any, index: number) => {
+            selectedDoctor?.items?.map((item: any) => {
               let displayDate = '';
               let displayTime = '';
 
@@ -1737,8 +1562,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               if (item?.TaskMainId) {
                 visitRecord = visitRecordList.filter((visit: any) => visit.TaskMainId == item.TaskMainId);
               }
-
-              console.log("item value", item)
 
               if (item.SchedulingDate && item.SchedulingTime) {
                 const datePart = item.SchedulingDate.split('T')[0];
@@ -1756,7 +1579,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                   <View style={{ paddingBottom: 10, width: '100%', backgroundColor: '#fff', borderRadius: 10, marginBottom: 10 }}>
                     <View style={{ height: 45, width: '100%', backgroundColor: '#e4f1ef', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 10 }}>
                       <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>معلومات الطلب</Text>
-                      <TouchableOpacity style={{ height: 35, width: 100, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#dc3545', borderRadius: 10 }}>
+                      <TouchableOpacity disabled={!isCancelable(selectedDoctor?.items)} onPress={() => handleCancelOrder(selectedDoctor?.items)} style={{ height: 35, width: 100, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#dc3545', borderRadius: 10 }}>
                         <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>إلغاء الحجز</Text>
                       </TouchableOpacity>
 
@@ -1767,24 +1590,24 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                     </View>
                     <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                       <Text style={[globalTextStyles.bodyMedium, { color: '#36454f', width: "30%" }]}>رقم الطلب</Text>
-                      <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: "right", width: "70%", flexWrap: "wrap" }]}>{item.OrderId}</Text>
+                      <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: "right", width: "70%", flexWrap: "wrap" }]}>{completeOrderDetail?.OrderID}</Text>
                     </View>
                     <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                       <Text style={[globalTextStyles.bodyMedium, { color: '#36454f', width: "30%" }]}>مقدم الطلب</Text>
-                      <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: "right", width: "70%", flexWrap: "wrap" }]}>{item.FullNameSlang}</Text>
+                      <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: "right", width: "70%", flexWrap: "wrap" }]}>{completeOrderDetail?.FullNameSlang}</Text>
                     </View>
                     <View style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, }}>
                       <Text style={[globalTextStyles.bodyMedium, { color: '#36454f', width: "30%" }]}>رقم الجوال</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
 
-                        <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', flexWrap: "wrap" }]}>{item.PhoneNumber.replace(/^\+/, '')}</Text>
+                        <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', flexWrap: "wrap" }]}>{completeOrderDetail?.PhoneNumber?.replace(/^\+/, '')}</Text>
                         <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', flexWrap: "wrap" }]}>+</Text>
                       </View>
                     </View>
                     <View style={{ width: '100%', alignItems: 'flex-start', paddingHorizontal: 10, paddingTop: 5 }}>
                       <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>حالة الطلب</Text>
 
-                      {/* Order Status Component */}
+                      {/* Order Status Component */} 
                       <View style={styles.orderStatusContainer}>
                         {/* Other Orders Status */}
                         {item?.CatOrderStatusId != 24 && item?.CatOrderStatusId != 9 && item?.CatOrderStatusId != 4 && (
@@ -2089,7 +1912,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
             </Text>
 
-            <TouchableOpacity style={{ paddingVertical: 10 }}>
+            <TouchableOpacity onPress={() => navigation.navigate(ROUTES.CancellationPolicy as never)} style={{ paddingVertical: 10 }}>
               <Text style={{ textDecorationLine: 'underline', fontFamily: CAIRO_FONT_FAMILY.medium, color: '#179c8e', }}> إقراء المزيد</Text>
             </TouchableOpacity>
           </View>

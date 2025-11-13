@@ -142,7 +142,7 @@ const getMinistryLogoBase64 = async (): Promise<string> => {
 
 // Generate HTML for the invoice
 const generateInvoiceHTML = async (data: any): Promise<string> => {
-  const invoiceNumber = `NAR-${data[0].OrderID}`;
+  const invoiceNumber = `NAR-${data.OrderID}`;
   const invoiceDate = moment().locale("en").format('DD/MM/YYYY');
   const userInfo = store.getState().root.user.user;
 
@@ -154,13 +154,13 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
   let paymentMethod = 'محفظة';
   let cardNumber = '';
 
-  if (data[0].CardNumber) {
-    if (data[0].CardNumber.startsWith('5')) {
+  if (data.CardNumber) {
+    if (data.CardNumber.startsWith('5')) {
       paymentMethod = 'Mastercard';
-      cardNumber = `xxxxxxxxxxxx${data[0].CardNumber.slice(-3)}`;
-    } else if (data[0].CardNumber.startsWith('4')) {
+      cardNumber = `xxxxxxxxxxxx${data.CardNumber.slice(-3)}`;
+    } else if (data.CardNumber.startsWith('4')) {
       paymentMethod = 'Visa';
-      cardNumber = `xxxxxxxxxxxx${data[0].CardNumber.slice(-3)}`;
+      cardNumber = `xxxxxxxxxxxx${data.CardNumber.slice(-3)}`;
     }
   }
 
@@ -168,7 +168,7 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
     let totalTax = 0;
     data.forEach((item: any) => {
       if(item.CatNationalityId != "213"){
-        totalTax += (parseFloat(item.ServicePrice) - parseFloat(item.ServiceCharges));
+        totalTax += (parseFloat(item.PriceBySP) - parseFloat(item.PriceCharged));
       }
     });
     return totalTax;
@@ -446,7 +446,7 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
               </tr>
             </thead>
             <tbody>
-              ${data.map((item: any, index: number) => {
+              ${data.OrderDetail.map((item: any, index: number) => {
                 // Format service name
                 let serviceName = item.CatCategoryID == "42" ? `استشارة عن بعد / ${item.ServiceTitleSlang}` : `${item.ServiceTitleSlang}`;
                 // if (item.TitleSlangSpecialty) {
@@ -458,19 +458,19 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
                 const dateTimeLocal = dateTimeUTC.local();
                 const schedulingDate = dateTimeLocal.locale('en').format('DD/MM/YYYY');
                 const schedulingTime = convertTo12Hour(dateTimeLocal.locale('en').format('HH:mm'));
-                const texCalculate = item.CatNationalityId == "213" ? item.ServicePrice : parseFloat(item.ServiceCharges) - parseFloat(item.ServicePrice);
+                const texCalculate = item.CatNationalityId == "213" ? item.PriceBySP : parseFloat(item.PriceCharged) - parseFloat(item.PriceBySP);
 
                 return `
                 <tr>
                   <td style="font-family: 'Cairo', sans-serif;">${serviceName}</td>
                   <td style="font-family: 'Cairo', sans-serif;">1</td>
-                  <td style="font-family: 'Cairo', sans-serif;">${item.ServiceProviderFullnameSlang}</td>
+                  <td style="font-family: 'Cairo', sans-serif;">${item.ServiceProviderSName}</td>
                   <td align="right">
                     <span class="date" style="font-family: 'Cairo', sans-serif;">
                       <p style="font-family: 'Cairo', sans-serif; direction: ltr;">${schedulingDate} ${schedulingTime}</p>
                     </span>
                   </td>
-                  <td style="font-family: 'Cairo', sans-serif;">${item.ServicePrice?.toString() || 0}</td>
+                  <td style="font-family: 'Cairo', sans-serif;">${item.PriceBySP?.toString() || 0}</td>
                   <td style="font-family: 'Cairo', sans-serif;">${texCalculate?.toString() || 0}</td>
                 </tr>
                 `;
@@ -481,14 +481,14 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
                   <p class="text-end" style="font-family: 'Cairo', sans-serif;">الضريبة (15%)</p>
                 </td>
                 <td style="font-family: 'Cairo', sans-serif;">
-                  <p style="font-family: 'Cairo', sans-serif;">${data.reduce((sum: number, item: InvoiceData) => sum + item.ServicePrice, 0)?.toString()}</p>
-                  <p style="font-family: 'Cairo', sans-serif;">${calculateTotalTax(data)}</p>
+                  <p style="font-family: 'Cairo', sans-serif;">${data.OrderDetail.reduce((sum: number, item: any) => sum + item.PriceBySP, 0)?.toString()}</p>
+                  <p style="font-family: 'Cairo', sans-serif;">${calculateTotalTax(data.OrderDetail)}</p>
                 </td>
               </tr>
               <tr>
                 <td colspan="4"></td>
                 <td colspan="1" class="text-left" bgcolor="#e4f1ef" style="font-family: 'Cairo', sans-serif; font-weight: bold;">المجموع</td>
-                <td bgcolor="#e4f1ef" style="font-family: 'Cairo', sans-serif; color: #23a2a4; font-weight: bold;">${data.reduce((sum: number, item: InvoiceData) => sum + item.ServiceCharges, 0)?.toString()}</td>
+                <td bgcolor="#e4f1ef" style="font-family: 'Cairo', sans-serif; color: #23a2a4; font-weight: bold;">${data.OrderDetail.reduce((sum: number, item: any) => sum + item.PriceCharged, 0)?.toString()}</td>
               </tr>
             </tbody>
           </table>
@@ -563,7 +563,7 @@ const generateInvoicePDF = async (data: any): Promise<string> => {
     
     // Add timestamp to make filename unique
     const timestamp = new Date().getTime();
-    const fileName = `Naraakum_Invoice_${data[0].OrderID}_${timestamp}`;
+    const fileName = `Naraakum_Invoice_${data.OrderID}_${timestamp}`;
 
     console.log('Generating PDF for invoice:', fileName);
 
@@ -580,14 +580,11 @@ const generateInvoicePDF = async (data: any): Promise<string> => {
     const file = await RNHTMLtoPDF.convert(options);
 
     if (file && file.filePath) {
-      console.log('PDF generated successfully at:', file.filePath);
       return file.filePath;
     } else {
-      console.error('Failed to generate PDF, no file path returned');
       throw new Error('Failed to generate PDF');
     }
   } catch (error) {
-    console.error('Error generating PDF:', error);
     throw error;
   }
 };
@@ -656,8 +653,6 @@ const shareFile = async (filePath: string, fileName: string) => {
     // Ensure the file exists
     const fileExists = await RNFetchBlob.fs.exists(filePath);
     if (!fileExists) {
-      console.error('File does not exist at path:', filePath);
-      Alert.alert('Error', 'File does not exist. Please try again.');
       return;
     }
     
@@ -722,21 +717,8 @@ const shareFile = async (filePath: string, fileName: string) => {
       
       // Copy file to shared location
       await fs.cp(filePath, newPath);
-      console.log('File copied successfully to:', newPath);
 
-      Alert.alert(
-        'File Saved',
-        'File has been saved to Documents folder. You can find it in the Files app under "On My iPhone/iPad" > "Documents" > "Shared".',
-        [
-          {
-            text: 'OK',
-            style: 'default'
-          }
-        ]
-      );
     } catch (copyError) {
-      console.error('Copy error:', copyError);
-      Alert.alert('Error', 'Could not save file. Please try again.');
     }
   }
 };
@@ -781,12 +763,9 @@ const downloadFIleForIOS = (url: string, fileName: string) => {
     })
       .fetch('GET', url)
       .then(res => {
-        console.log('File downloaded successfully to:', res.path());
         shareFile(res.path(), uniqueFileName);
       })
       .catch(error => {
-        console.error('Download error:', error);
-        Alert.alert('File downloading error.', error.message || 'Unknown error');
       });
   }
 };
@@ -809,10 +788,7 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
           // Use internal storage if permission denied
           destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
           await RNFS.copyFile(filePath, destinationPath);
-          Alert.alert(
-            'File downloaded successfully',
-            'Saved to internal storage'
-          );
+      
           return destinationPath;
         }
       }
@@ -821,18 +797,11 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
       try {
         destinationPath = `/storage/emulated/0/Download/${fileName}.pdf`;
         await RNFS.copyFile(filePath, destinationPath);
-        Alert.alert(
-          'File downloaded successfully',
-          'Saved to Downloads folder'
-        );
+        
       } catch (externalError) {
         // Fallback to internal Downloads
         destinationPath = `${fs.dirs.DownloadDir}/${fileName}.pdf`;
         await RNFS.copyFile(filePath, destinationPath);
-        // Alert.alert(
-        //   'File downloaded successfully',
-        //   'Saved to internal storage'
-        // );
       }
     } else {
       // iOS - use Documents directory
@@ -842,8 +811,6 @@ const downloadFile = async (filePath: string, fileName: string): Promise<string>
 
     return destinationPath;
   } catch (error) {
-    console.error('Error copying file:', error);
-    Alert.alert('File downloading error.', error instanceof Error ? error.message : 'Unknown error');
     throw error;
   }
 };
@@ -857,9 +824,6 @@ export const generateAndDownloadInvoice = async (data: any) => {
     const pathParts = filePath.split('/');
     const fileName = pathParts[pathParts.length - 1];
     
-    console.log('Generated PDF at path:', filePath);
-    console.log('Using filename:', fileName);
-    
     if (Platform.OS === 'ios') {
       // On iOS, the filePath from RNHTMLtoPDF is already a local file path
       downloadFIleForIOS(filePath, fileName);
@@ -868,8 +832,6 @@ export const generateAndDownloadInvoice = async (data: any) => {
     }
     
   } catch (error) {
-    console.error('Error in generateAndDownloadInvoice:', error);
-    Alert.alert('Error', 'Failed to generate invoice. Please try again.');
   }
 };
 

@@ -25,7 +25,7 @@ export const scheduleNotificationAndroid = async (notificationList: any) => {
 
       const trigger: TimestampTrigger = {
         type: TriggerType.TIMESTAMP,
-        timestamp: localDate.getTime(), // cleaner and safer
+        timestamp: localDate.getTime(),
       };
       await notifee.createTriggerNotification(
         {
@@ -58,17 +58,15 @@ export const scheduleNotificationAndroid = async (notificationList: any) => {
       );
     }
 
-    const notifeeNotifs = await notifee.getTriggerNotifications();
+    // const notifeeNotifs = await notifee.getTriggerNotifications();
   } catch (error) { }
 };
 
 export const scheduleNotificationIOS = (notificationList: any) => {
   notificationList.map((item: any, index: any) => {
     const data = item;
-    // Convert UTC date string to local Date object
-    const localDate = new Date(data.ReminderDate); // Date object auto-adjusts to local timezone
+    const localDate = new Date(data.ReminderDate);
 
-    // Optional: skip past dates
     if (localDate <= new Date()) {
       return;
     }
@@ -84,11 +82,10 @@ export const scheduleNotificationIOS = (notificationList: any) => {
       title: data.Subject,
       message: data.NotificationBody,
       date: localDate,
-      // date: new Date(Date.now() + 60 * 1000),
       playSound: true,
       soundName: 'default',
       userInfo: reminderObj,
-      allowWhileIdle: true, // important for background
+      allowWhileIdle: true,
     });
   });
 
@@ -115,7 +112,6 @@ export const requestiOSPermissions = async () => {
 
 export const requestAndroidPermissions = async () => {
   try {
-    // For Android 11+ (API 30+), WRITE_EXTERNAL_STORAGE is deprecated
     const androidVersion = Number(Platform.Version);
 
     let permissions = [
@@ -125,7 +121,6 @@ export const requestAndroidPermissions = async () => {
       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
     ];
 
-    // Only add storage permissions for Android 10 and below
     if (androidVersion < 30) {
       permissions.push(
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -174,7 +169,6 @@ export const subsribeTopic = (Id: any, topic: any, dispatch: any) => {
 };
 
 export const getStatusStyle = (statusId: string | number) => {
-  // Convert statusId to number if it's a string
   const numericStatusId = typeof statusId === 'string' ? parseInt(statusId, 10) : statusId;
 
   switch (numericStatusId) {
@@ -228,7 +222,6 @@ export const getDuration = (appointment: any) => {
     return '';
   }
 
-  // Convert times to local moment objects
   const startTime = moment.utc().set({
     hours: parseInt(appointment.SchedulingTime.split(':')[0]),
     minutes: parseInt(appointment.SchedulingTime.split(':')[1])
@@ -251,32 +244,23 @@ export const getDuration = (appointment: any) => {
 export const convertArabicTimeTo24Hour = (timeString: string): string => {
   if (!timeString) return timeString;
 
-
-  // Remove any extra spaces and split by space
   const parts = timeString.trim().split(' ');
   if (parts.length < 2) {
-    return timeString; // If no AM/PM indicator, return as is
+    return timeString;
   }
 
-  const timePart = parts[0]; // e.g., "2:30"
-  const periodPart = parts[1]; // e.g., "ص" (ص for AM) or "م" (م for PM)
+  const timePart = parts[0];
+  const periodPart = parts[1];
 
-
-  // Split time into hours and minutes
   const [hours, minutes] = timePart.split(':').map(Number);
 
   let hour24 = hours;
 
-  // Convert based on Arabic period indicators
-  // ص = صباح (morning/AM)
-  // م = مساء (evening/PM)
   if (periodPart === 'ص') {
-    // AM - keep as is, but handle 12 AM case
     if (hours === 12) {
       hour24 = 0;
     }
   } else if (periodPart === 'م') {
-    // PM - add 12 hours, but handle 12 PM case
     if (hours !== 12) {
       hour24 = hours + 12;
     }
@@ -309,12 +293,10 @@ export const formatDate = (dateString: string) => {
 export const formatTime = (timeString: string) => {
   if (!timeString) return '';
   try {
-    // If timeString is in ISO format
     if (timeString.includes('T')) {
       return moment.utc(timeString).local().locale("en").format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
     }
 
-    // If timeString is just time (HH:mm)
     const [hours, minutes] = timeString.split(':');
     const date = moment.utc().set({ hours: parseInt(hours), minutes: parseInt(minutes) });
     return date.local().locale("en").format('hh:mm A').replace('AM', 'ص').replace('PM', 'م');
@@ -327,18 +309,17 @@ export const formatTime = (timeString: string) => {
 export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
 
   const selectedLocation = store.getState().root.booking.selectedLocation;
+  const user = store.getState().root.user.user;
   const category = store.getState().root.booking.category;
   const payload = CardArray
     .map((item: any) => {
 
-      // const displayCategory = categoriesList.find((citem: any) => citem.Id == category.Id);
       const displayCategory = categoriesList.find((catItem: any) => catItem.Id == item.CatCategoryId);
       const shouldSkipThisItem = displayCategory?.Display == "CP"
         ? !item.ServiceProviderUserloginInfoId
         : !item.OrganizationId;
 
       if (shouldSkipThisItem) {
-        // skip only the invalid item, include others
         return undefined;
       }
 
@@ -350,7 +331,6 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
       if (schedulingTime.includes("T")) {
         schedulingTime = schedulingTime.split("T")[1];
       }
-      // Convert SchedulingDate and SchedulingTime to UTC
       const { utcDate, utcTime } = convertLocalToUTCDateTime(schedulingDate, schedulingTime);
       let schedulingDateUTC = utcDate;
       let schedulingTimeUTC = utcTime;
@@ -374,7 +354,8 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
         "AvailabilityId": item.AvailabilityId,
         "OrderAddress": selectedLocation?.address || "",
         "OrderAddressGoogleLocation": selectedLocation?.latitude + "," + selectedLocation?.longitude || "",
-        "saveinAddress": false
+        "saveinAddress": false,
+        "PatientUserProfileInfoId": user.UserProfileInfoId,
       })
     })
     .filter(Boolean);
@@ -384,9 +365,7 @@ export const generatePayloadforOrderMainBeforePayment = (CardArray: any) => {
 
 export const generatePayloadforUpdateOrderMainBeforePayment = (CardArray: any) => {
 
-
   const payload = CardArray.map((item: any) => {
-    console.log('item', item);
     let schedulingDate = item.SchedulingDate;
     let schedulingTime = item.SchedulingTime;
     if (schedulingDate.includes("T")) {
@@ -492,7 +471,6 @@ export const generatePayloadForUploadMedicalhistoryReports = (homeDialysisFilePa
       fileType == 'PNG'
     )
       ResourceCategoryId = '1';
-
 
     return ({
       "CatFileTypeId": ResourceCategoryId,

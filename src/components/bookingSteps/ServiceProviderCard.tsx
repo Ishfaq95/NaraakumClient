@@ -530,8 +530,6 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }
 
   const handleSlotSelect = useCallback((time: any) => {
-    
-
     if (category.Id == "42" || category.Id == "32") {
       const getServiceId = selectedService ? services?.length > 1 ? services.find((service: any) => service.TitlePlang == selectedService.selectedService) : 0 : 0;
       const selectedServiceValues = selectedService && provider.ServiceServe.find((item: any) => item.ServiceTitlePlang == selectedService.selectedService);
