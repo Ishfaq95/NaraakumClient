@@ -299,7 +299,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [alertModalVisible, setAlertModalVisible] = useState(false);
   const [alertModalMessage, setAlertModalMessage] = useState('');
   const [userFavorites, setUserFavorites] = useState<any[]>([]);
-  const [searchNearMe, setSearchNearMe] = useState(true);
+  const [searchNearMe, setSearchNearMe] = useState(false);
   const [allCities, setAllCities] = useState<any[]>([]);
   const [allSquares, setAllSquares] = useState<any[]>([{
     label: "الجميع",
@@ -310,6 +310,14 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const dispatch = useDispatch();
   const navigation = useNavigation();
+
+  useEffect(() => {
+    if (category.Id == "42") {
+      setSearchNearMe(false);
+    } else {
+      setSearchNearMe(true);
+    }
+  }, [category.Id])
 
   // Refs to store previous filter values
   const prevFiltersRef = useRef({
@@ -381,7 +389,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         const filterServiceIds = services.filter((service: any) => service.CatLevelId == selectServiceFilter).map((service: any) => service.Id);
         fetchServiceProviders(filterServiceIds[0],selectedCity != "0" ? selectedCity : null,
           selectedSquare != "0" ? selectedSquare : null,
-          searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null);
+          searchNearMe ? `${selectedLocation?.latitude},${selectedLocation?.longitude}` : null);
         fetchInitialAvailability(null, filterServiceIds[0]);
       }
       // If other filters changed (searchNearMe, selectedCity, selectedSquare), call only fetchServiceProviders
@@ -390,7 +398,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           undefined,
           selectedCity != "0" ? selectedCity : null,
           selectedSquare != "0" ? selectedSquare : null,
-          searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null
+          searchNearMe ? `${selectedLocation?.latitude},${selectedLocation?.longitude}` : null
         );
       }
 
@@ -427,7 +435,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           fetchHospitalListByServices(
             selectedCity != "0" ? selectedCity : null,
             selectedSquare != "0" ? selectedSquare : null,
-            searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null
+            searchNearMe ? `${selectedLocation?.latitude},${selectedLocation?.longitude}` : null
           )
         }
 
@@ -690,13 +698,13 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setDisplayCategory(displayCategory);
     // Call both APIs when component mounts
     if (displayCategory?.Display == "CP") {
-      fetchServiceProviders(undefined, null, null, category.Id != "42" ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null);
+      fetchServiceProviders(undefined, null, null, category.Id != "42" ? `${selectedLocation?.latitude},${selectedLocation?.longitude}` : null);
       fetchInitialAvailability();
     } else {
       if (category.Id == "41") {
-        getOrganizationByPackage(searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null);
+        getOrganizationByPackage(searchNearMe ? `${selectedLocation?.latitude},${selectedLocation?.longitude}` : null);
       } else {
-        fetchHospitalListByServices(null, null, `${selectedLocation.latitude},${selectedLocation.longitude}`);
+        fetchHospitalListByServices(null, null, `${selectedLocation?.latitude},${selectedLocation?.longitude}`);
         fetchOrganizationSchedulingAvailability();
       }
     }
@@ -975,12 +983,12 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
   const handleSearch = (text: string) => {
     if (displayCategory?.Display == "CP") {
-      fetchServiceProviders(undefined, undefined, undefined, category.Id != "42" ? searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null : null, text == "" ? true : false); // Refetch with new search query
+      fetchServiceProviders(undefined, undefined, undefined, category.Id != "42" ? searchNearMe ? `${selectedLocation?.latitude},${selectedLocation?.longitude}` : null : null, text == "" ? true : false); // Refetch with new search query
     } else {
       if (category.Id == "41") {
-        getOrganizationByPackage(searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null, text == "" ? true : false);
+        getOrganizationByPackage(searchNearMe ? `${selectedLocation?.latitude},${selectedLocation?.longitude}` : null, text == "" ? true : false);
       } else {
-        fetchHospitalListByServices(null, null, searchNearMe ? `${selectedLocation.latitude},${selectedLocation.longitude}` : null, text == "" ? true : false);
+        fetchHospitalListByServices(null, null, searchNearMe ? `${selectedLocation?.latitude},${selectedLocation?.longitude}` : null, text == "" ? true : false);
       }
     }
   };
