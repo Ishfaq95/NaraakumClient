@@ -1,13 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Dimensions, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import MapView, { Callout, Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import { StyleSheet, View, Dimensions, Text, TextInput, TouchableOpacity, Alert, Platform, PermissionsAndroid, Linking } from 'react-native';
+import MapView, { Callout, MapPressEvent, Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { CAIRO_FONT_FAMILY } from '../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
 import Config from 'react-native-config';
 import Geolocation from '@react-native-community/geolocation';
+import { PERMISSIONS, request, RESULTS } from 'react-native-permissions';
 import { useTranslation } from 'react-i18next';
 import { GOOGLE_MAP_API_KEY } from '../shared/utils/constants';
+import CustomAlertModal from './common/CustomAlertModal';
+
+const { width, height } = Dimensions.get('window');
 
 interface GoogleMapComponentProps {
   initialRegion?: {
@@ -36,6 +40,13 @@ interface GoogleMapComponentProps {
   setFocusedField: (value: string) => void;
 }
 
+const DEFAULT_REGION = {
+  latitude: 24.7136, 
+    longitude: 46.6753,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+};
+
 const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   onClosePress,
   setDescriptionValue,
@@ -49,56 +60,96 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   const mapRef = useRef<MapView>(null);
   const { t } = useTranslation();
   const descriptionInputRef = useRef<TextInput>(null);
-  const [region, setRegion] = useState<Region>({
-    latitude: 24.7136, // Riyadh
-    longitude: 46.6753,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  });
+  const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [marker, setMarker] = useState<{ latitude: number; longitude: number } | null>(null);
  
   const [loading, setLoading] = useState(false);
   const placesRef = useRef<GooglePlacesAutocompleteRef>(null);
- 
- 
+  const [permissionModal, setPermissionModal]=useState(false)
+
+  const requestLocationPermission = async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        const result = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+  
+        if (result === RESULTS.GRANTED) {
+          return true;
+        } else if (
+          result === RESULTS.BLOCKED 
+        ) {
+          setPermissionModal(true);
+          return false;
+        } else {
+          return false;
+        }
+      } else {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+  
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          return true;
+        } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+          setPermissionModal(true);
+          return false;
+        } 
+      }
+    } catch (error) {
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    const permission = await requestLocationPermission();
+    if (!permission) {
+      return;
+    }
+  
+    try {
+      const position = await new Promise<Geolocation.GeoPosition>((resolve, reject) => {
+        Geolocation.getCurrentPosition(
+          (pos) => {
+            resolve(pos);
+          },
+          (error) => {
+            reject(error);
+          },
+          {
+            enableHighAccuracy: false, 
+            timeout: 30000,       
+            maximumAge: 5000,        
+            distanceFilter: 0,
+          }
+        );
+      });
+  
+      const { latitude, longitude } = position.coords;
+            setMarker({ latitude, longitude });
+            
+            if (mapRef.current) {
+              mapRef.current.getMapBoundaries().then((bounds) => {
+                const currentZoom = {
+                  latitudeDelta: bounds.northEast.latitude - bounds.southWest.latitude,
+                  longitudeDelta: bounds.northEast.longitude - bounds.southWest.longitude,
+                };
+                
+                mapRef.current?.animateToRegion({
+                  latitude,
+                  longitude,
+                  latitudeDelta: currentZoom.latitudeDelta,
+                  longitudeDelta: currentZoom.longitudeDelta,
+                }, 1000);
+              });
+            }
+  
+      getAddressFromCoordinates(latitude, longitude);
+    } catch (error) {
+      console.log('❌ Geolocation error:', error);
+    }
+  };
+  
   useEffect(() => {
     getCurrentLocation();
   }, []);
-
-  const getCurrentLocation = () => {
-    Geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setMarker({ latitude, longitude });
-
-        // Center the marker in the screen view but preserve zoom level
-        if (mapRef.current) {
-          // Get current map boundaries to preserve zoom
-          mapRef.current.getMapBoundaries().then((bounds) => {
-            const currentZoom = {
-              latitudeDelta: bounds.northEast.latitude - bounds.southWest.latitude,
-              longitudeDelta: bounds.northEast.longitude - bounds.southWest.longitude,
-            };
-
-            // Center on current location with current zoom
-            mapRef.current?.animateToRegion({
-              latitude,
-              longitude,
-              latitudeDelta: currentZoom.latitudeDelta,
-              longitudeDelta: currentZoom.longitudeDelta,
-            }, 1000);
-          });
-        }
-
-        // Get address for current location
-        getAddressFromCoordinates(latitude, longitude);
-      },
-      (error) => {
-        Alert.alert('Location Error', 'Unable to get your current location. Please select a location on the map.');
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
-  };
 
   const getAddressFromCoordinates = async (latitude: number, longitude: number) => {
     setLoading(true);
@@ -143,62 +194,75 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
     }
   };
 
-  const handleMapPress = (e: any) => {
+  const handleMapPress = async (e: MapPressEvent) => {
     const { latitude, longitude } = e.nativeEvent.coordinate;
     setMarker({ latitude, longitude });
-    setRegion({
-      ...region,
-      latitude,
-      longitude,
-    });
+    
+    if (mapRef.current) {
+      mapRef.current.getMapBoundaries().then((bounds) => {
+        const currentZoom = {
+          latitudeDelta: bounds.northEast.latitude - bounds.southWest.latitude,
+          longitudeDelta: bounds.northEast.longitude - bounds.southWest.longitude,
+        };
+        
+        mapRef.current?.animateToRegion({
+          latitude,
+          longitude,
+          latitudeDelta: currentZoom.latitudeDelta,
+          longitudeDelta: currentZoom.longitudeDelta,
+        }, 1000);
+      });
+    }
+    
     getAddressFromCoordinates(latitude, longitude);
   };
+
+  const HandleClose = () => {
+    setPermissionModal(false)
+  }
+
+  const HandleConfirm = async() => {
+   setPermissionModal(false);
+   await Linking.openSettings();
+  }
 
   return (
     <>
       <View style={styles.sheetHeaderContainer}>
         <TouchableOpacity onPress={onClosePress}>
-          <AntDesign name="close" size={30} color="#979e9eff" />
+          <AntDesign name="right" size={30} color="#000" />
         </TouchableOpacity>
         <Text style={styles.bottomSheetHeaderText}>اضافة عنوان</Text>
+        <View/>
       </View>
 
       <View style={styles.mapContainer}>
         <MapView
           style={styles.map}
-          initialRegion={{
-            latitude: region.latitude,
-            longitude: region.longitude,
-            latitudeDelta: region.latitudeDelta,
-            longitudeDelta: region.longitudeDelta,
-          }}
-          provider={PROVIDER_GOOGLE}
+          initialRegion={region}
           ref={mapRef}
-          region={region}
-          onPress={handleMapPress} 
-          onRegionChangeComplete={(newRegion) => {
-            setRegion(newRegion);
-          }}
+          onPress={handleMapPress}
+          showsUserLocation
         >
           {marker && (
-            <Marker
-              coordinate={marker}
-              draggable
-              onDragEnd={handleMapPress}
-              title="Selected Location"
-              description="Drag or tap to select a location"
-              tracksViewChanges={false}
-              pinColor='red'
-             
-            >
-              <Callout>
-                <View style={{ padding: 10, width: 250 }}>
-                  <Text style={{ fontSize: 14, fontFamily: CAIRO_FONT_FAMILY.regular }}>{selectedAddress.address}</Text>
-                </View>
-              </Callout>
-            </Marker>
-          )}
+          <Marker 
+            coordinate={marker} 
+            onPress={() => {
+              if (mapRef.current) {
+                mapRef.current.animateToRegion({
+                  latitude: marker.latitude,
+                  longitude: marker.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }, 1000);
+              }
+            }}
+          />
+        )}
         </MapView>
+        <TouchableOpacity onPress={getCurrentLocation} style={styles.currntLocationButton}>
+          <Text style={styles.currentLocationText}>Current Location</Text>
+        </TouchableOpacity>
         <View style={styles.searchBarContainer}>
         <TouchableOpacity onPress={() => placesRef.current?.focus()} style={styles.container}>
             <GooglePlacesAutocomplete
@@ -305,6 +369,15 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
             او أختر المدينة والمنطقة <Text style={{ color: '#23a2a4', fontFamily: CAIRO_FONT_FAMILY.regular }}>مباشرة</Text></Text>
         </TouchableOpacity>
       </View>
+      <CustomAlertModal
+        visible={permissionModal}
+        title={'Permission Required'}
+        message={'Please enable location access in your phone settings to detect your current location.'}
+        onClose={HandleClose}
+        onConfirm={HandleConfirm}
+        confirmText={'Open Setting'}
+        type={'info'}
+      />
     </>
   );
 };
@@ -312,7 +385,7 @@ export default GoogleMapComponent;
 
 const styles = StyleSheet.create({
   sheetHeaderContainer: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#E4F1EF',
@@ -335,6 +408,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: CAIRO_FONT_FAMILY.regular,
     color: '#36454F',
+    textAlign:'center'
 
   },
   saveBtnText: {
@@ -364,6 +438,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA'
   },
   whiteContainer: {
+    marginTop:10,
     paddingHorizontal: 20,
     alignItems: 'flex-start',
   },
@@ -468,4 +543,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     right: 4,
   },
+  currntLocationButton:{
+    position:'absolute',
+    bottom:  height*0.01,
+    left:10,
+    borderRadius: 50,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
+    backgroundColor:'#36a6ad',
+    alignItems:'center',
+    justifyContent:'center',
+    zIndex:999
+  },
+  currentLocationText:{
+    color:'#fff',
+    fontSize:14,
+    padding:10
+  }
 })

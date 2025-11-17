@@ -54,6 +54,7 @@
     "react-native-file-picker": "^0.0.21",
     "react-native-file-viewer": "^2.1.5",
     "react-native-fs": "^2.20.0",
+    "react-native-geolocation-service": "5.3.1",
     "react-native-gesture-handler": "^2.26.0",
     "react-native-get-random-values": "^1.11.0",
     "react-native-google-places-autocomplete": "^2.5.7",
@@ -65,10 +66,10 @@
     "react-native-invoke-app": "^1.0.6",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-loader-kit": "^2.0.8",
-    "react-native-maps": "^1.24.3",
+    "react-native-maps": "^1.15.6",
     "react-native-modal-datetime-picker": "^18.0.0",
     "react-native-pager-view": "^6.8.1",
-    "react-native-permissions": "^5.4.1",
+    "react-native-permissions": "5.4.1",
     "react-native-phone-number-input": "^2.1.0",
     "react-native-push-notification": "^8.1.1",
     "react-native-responsive-fontsize": "^0.5.1",
@@ -121,5 +122,6 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "packageManager": "yarn@3.6.4+sha512.e70835d4d6d62c07be76b3c1529cb640c7443f0fe434ef4b6478a5a399218cbaf1511b396b3c56eb03bc86424cff2320f6167ad2fde273aa0df6e60b7754029f"
 }

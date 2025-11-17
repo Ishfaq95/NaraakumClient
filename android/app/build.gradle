@@ -130,6 +130,7 @@ dependencies {
     implementation project(':react-native-linear-gradient')
     implementation project(':react-native-html-to-pdf')
     implementation project(':rnwebrtc')
+    implementation 'com.google.android.gms:play-services-location:21.2.0'
 
      implementation 'com.google.firebase:firebase-crashlytics:18.2.13'
      implementation("androidx.browser:browser") {

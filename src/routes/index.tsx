@@ -40,6 +40,7 @@ import SignUpProfileScreen from '../screens/SignUp/SignUpProfileScreen';
 import PrivacyPolicy from '../screens/SignUp/PrivicyPolicy';
 import OrderNotCompleted from '../components/bookingSteps/OrderNotCompleted';
 import CancellationPolicy from '../screens/Profile/profileComponents/CancellationPolicy';
+import GoogleMapScreen from '../screens/GoogleMapScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -96,6 +97,7 @@ const RootNavigator = () => {
       <Stack.Screen name={ROUTES.ConversationListScreen} component={ConversationListScreen} />
       <Stack.Screen name={ROUTES.ChatScreenMainView} component={ChatScreenMainView} />
       <Stack.Screen name={ROUTES.CancellationPolicy} component={CancellationPolicy} />
+      <Stack.Screen name={ROUTES.GoogleMapScreen} component={GoogleMapScreen} />
     </Stack.Navigator>
   );
 };

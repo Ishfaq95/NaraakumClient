@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, FlatList, Modal, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform, RefreshControl, ScrollView } from 'react-native'
 import Header from '../../components/common/Header';
 import React, { useEffect, useState } from 'react'
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
 import { ROUTES } from '../../shared/utils/routes';
 import { useTranslation } from 'react-i18next';
@@ -14,14 +14,18 @@ import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import { VisitLocationComponent } from '../../components/emailUpdateComponent';
 import { bookingService } from '../../services/api/BookingService';
 import CustomBottomSheet from '../../components/common/CustomBottomSheet';
-import GoogleMapComponent from '../../components/GoogleMapComponent';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { GoogleMapReturnData } from 'shared/services/crashlytics/types';
+
+type GoogleMapScreenParams = {
+  onClose: (data: GoogleMapReturnData) => void;
+};
 
 const MyAddressesScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const user = useSelector((state: RootState) => state.root.user.user);
-
+  const route = useRoute();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [openBottomSheet, setOpenBottomSheet] = useState(false)
@@ -44,6 +48,40 @@ const MyAddressesScreen = () => {
   useEffect(() => {
     getAddresses();
   }, []);
+
+  useEffect(() => {
+    if (!route.params) return;
+    if (route.params?.fromSave) {
+      const { mapAddress, description } = route.params;
+  
+      // Set address & form
+      setAddress({
+        latitude: mapAddress.latitude,
+        longitude: mapAddress.longitude,
+        address: mapAddress.address,
+        city: mapAddress.city,
+      });
+  
+      setAddressForm(prev => ({
+        ...prev,
+        description: description,
+      }));
+  
+      // Save via API
+      saveMapAddressButton();  // ✅ call your API function
+  
+      setOpenBottomSheet(false); // bottom sheet should be closed
+      return;
+    }
+  
+    // CASE 2: Back / Close button clicked
+    if (route.params?.openBottomSheet) {
+      setOpenBottomSheet(true);
+      return;
+    }
+  
+  }, [route.params]);
+  
 
   useEffect(() => {
     if (openBottomSheet) {
@@ -143,8 +181,32 @@ const MyAddressesScreen = () => {
 
 
   const HandleGoogleMap = () => {
-    // setIsGoogleMap(true)
-  }
+  navigation.navigate<ROUTES.GoogleMapScreen, GoogleMapScreenParams>(ROUTES.GoogleMapScreen, {
+    onClose: (data: GoogleMapReturnData) => {
+      if (data.fromSave && data.mapAddress) {
+        setAddress({
+          latitude: data.mapAddress.latitude,
+          longitude: data.mapAddress.longitude,
+          address: data.mapAddress.address,
+          city: data.mapAddress.city,
+        });
+
+        setAddressForm(prev => ({
+          ...prev,
+          description: data.description || '',
+        }));
+
+        // Save to API
+        saveMapAddressButton();
+
+        // Close bottom sheet
+        setOpenBottomSheet(false);
+      } else if (data.openSheet) {
+        setOpenBottomSheet(true);
+      }
+    },
+  });
+};
 
   const AddManuallyButton = () => {
     setIsGoogleMap(false)
@@ -185,6 +247,8 @@ const MyAddressesScreen = () => {
         setIsLoading(false);
       }
   }
+
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -233,7 +297,7 @@ const MyAddressesScreen = () => {
           <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <View style={styles.modalBackground}>
               <View style={[styles.modalContainer,{paddingBottom:isGoogleMap ? 50 : 20}]}>
-                {
+                {/* {
                   isGoogleMap ? (
                     <GoogleMapComponent
                       onClosePress={() => setOpenBottomSheet(false)}
@@ -247,7 +311,7 @@ const MyAddressesScreen = () => {
                       setFocusedField={setFocusedField}
                       />
                   ) : (
-         
+          */}
                 <VisitLocationComponent
                   onClosePress={() => setOpenBottomSheet(false)}
                   setRiginValue={(text) => updateBeneficiaryField('rigin', text)}
@@ -262,7 +326,7 @@ const MyAddressesScreen = () => {
                   GoogleMapButton={HandleGoogleMap}
                   setFocusedField={setFocusedField}
                 />
-                  )}
+                  {/* )} */}
               </View>
             </View>
           </TouchableWithoutFeedback>
