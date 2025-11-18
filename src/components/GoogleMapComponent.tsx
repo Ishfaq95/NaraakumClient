@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Dimensions, Text, TextInput, TouchableOpacity, Alert, Platform, PermissionsAndroid, Linking } from 'react-native';
+import { StyleSheet, View, Dimensions, Text, TextInput, TouchableOpacity, Alert, Platform, PermissionsAndroid, Linking, Image } from 'react-native';
 import MapView, { Callout, MapPressEvent, Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { CAIRO_FONT_FAMILY } from '../styles/globalStyles';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
 import Config from 'react-native-config';
-import Geolocation from '@react-native-community/geolocation';
+import Geolocation from 'react-native-geolocation-service';
 import { PERMISSIONS, request, RESULTS } from 'react-native-permissions';
 import { useTranslation } from 'react-i18next';
 import { GOOGLE_MAP_API_KEY } from '../shared/utils/constants';
@@ -62,7 +62,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   const descriptionInputRef = useRef<TextInput>(null);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [marker, setMarker] = useState<{ latitude: number; longitude: number } | null>(null);
- 
+  const [listOpen, setListOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const placesRef = useRef<GooglePlacesAutocompleteRef>(null);
   const [permissionModal, setPermissionModal]=useState(false)
@@ -100,51 +100,47 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
 
   const getCurrentLocation = async () => {
     const permission = await requestLocationPermission();
-    if (!permission) {
-      return;
-    }
+    if (!permission) return;
   
-    try {
-      const position = await new Promise<Geolocation.GeoPosition>((resolve, reject) => {
-        Geolocation.getCurrentPosition(
-          (pos) => {
-            resolve(pos);
-          },
-          (error) => {
-            reject(error);
-          },
-          {
-            enableHighAccuracy: false, 
-            timeout: 30000,       
-            maximumAge: 5000,        
-            distanceFilter: 0,
-          }
-        );
-      });
+    Geolocation.getCurrentPosition(
+      (position) => {
+        // ✅ position is available here
+        console.log("Position:", position);
+        const { latitude, longitude } = position.coords;
   
-      const { latitude, longitude } = position.coords;
-            setMarker({ latitude, longitude });
-            
-            if (mapRef.current) {
-              mapRef.current.getMapBoundaries().then((bounds) => {
-                const currentZoom = {
-                  latitudeDelta: bounds.northEast.latitude - bounds.southWest.latitude,
-                  longitudeDelta: bounds.northEast.longitude - bounds.southWest.longitude,
-                };
-                
-                mapRef.current?.animateToRegion({
-                  latitude,
-                  longitude,
-                  latitudeDelta: currentZoom.latitudeDelta,
-                  longitudeDelta: currentZoom.longitudeDelta,
-                }, 1000);
-              });
-            }
+        setMarker({ latitude, longitude });
   
-      getAddressFromCoordinates(latitude, longitude);
-    } catch (error) {
-      console.log('❌ Geolocation error:', error);
-    }
+        if (mapRef.current) {
+          mapRef.current.getMapBoundaries().then((bounds) => {
+            const currentZoom = {
+              latitudeDelta: bounds.northEast.latitude - bounds.southWest.latitude,
+              longitudeDelta: bounds.northEast.longitude - bounds.southWest.longitude,
+            };
+  
+            mapRef.current?.animateToRegion(
+              {
+                latitude,
+                longitude,
+                latitudeDelta: currentZoom.latitudeDelta,
+                longitudeDelta: currentZoom.longitudeDelta,
+              },
+              1000
+            );
+          });
+        }
+  
+        getAddressFromCoordinates(latitude, longitude);
+      },
+      (error) => {
+        console.log("❌ Geo error:", error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 5000,
+        distanceFilter: 0,
+      }
+    );
   };
   
   useEffect(() => {
@@ -242,7 +238,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
           initialRegion={region}
           ref={mapRef}
           onPress={handleMapPress}
-          showsUserLocation
+          pointerEvents={listOpen ? "none" : "auto"} 
         >
           {marker && (
           <Marker 
@@ -261,30 +257,48 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         )}
         </MapView>
         <TouchableOpacity onPress={getCurrentLocation} style={styles.currntLocationButton}>
-          <Text style={styles.currentLocationText}>Current Location</Text>
+        <Image source={require('../assets/images/location.png')} style={styles.locationImg} />
         </TouchableOpacity>
         <View style={styles.searchBarContainer}>
-        <TouchableOpacity onPress={() => placesRef.current?.focus()} style={styles.container}>
+        <TouchableOpacity style={styles.container}>
             <GooglePlacesAutocomplete
               ref={placesRef}
               listViewDisplayed={true}
               timeout={20000}
               onPress={(data, details = null) => {
-                if (details && details.geometry && details.geometry.location) {
-                  const { lat, lng } = details.geometry.location;
-                  setMarker({ latitude: lat, longitude: lng });
-                  setRegion({
-                    ...region,
+                setListOpen(false); 
+                const lat = details?.geometry?.location?.lat;
+                const lng = details?.geometry?.location?.lng;
+              
+                if (!lat || !lng) return;
+                setMarker({
+                  latitude: lat,
+                  longitude: lng,
+                });
+                mapRef.current?.animateToRegion(
+                  {
                     latitude: lat,
                     longitude: lng,
-                  });
-                  getAddressFromCoordinates(lat, lng);
-                }
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                  },
+                  800
+                );
+                setSelectedAddress({
+                  latitude: lat,
+                  longitude: lng,
+                  address: data.description,
+                  city: data.structured_formatting?.main_text ?? "",
+                });
+                getAddressFromCoordinates(lat, lng);
+               
               }}
               predefinedPlaces={[]}
             textInputProps={{
               editable: true,
               clearButtonMode:'never',
+              onFocus: () => setListOpen(true),  
+              onBlur: () => setListOpen(false),
             }}
             placeholder="ابحث عن الموقع"
             minLength={2}
@@ -315,7 +329,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
               listView: {
                 position: 'absolute',
                 top: 48,
-                zIndex: 9999,
+                zIndex: 99999,
                 backgroundColor: '#fff',
                 width: '100%',
                 elevation: 10,
@@ -361,7 +375,9 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         </TouchableOpacity>
 
         {/* Submit */}
-        <TouchableOpacity onPress={saveMapAddressButton} style={styles.optButton}>
+        <TouchableOpacity disabled={selectedAddress.address === '' && selectedAddress.city === ''} onPress={saveMapAddressButton} style={[styles.optButton,{
+          backgroundColor:selectedAddress.address === '' && selectedAddress.city === '' ? '#bfbeba' : '#23a2a4'
+        }]}>
           <Text style={styles.saveBtnText}>حفظ</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={AddManuallyButton} style={styles.googleButton}>
@@ -506,6 +522,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#EFF6FF",
     borderRadius: 10,
+    zIndex:999
   },
   textInputContainer: {
     width: "100%",
@@ -544,10 +561,10 @@ const styles = StyleSheet.create({
     right: 4,
   },
   currntLocationButton:{
+    width:50,
+    height:50,
     position:'absolute',
-    bottom:  height*0.01,
-    left:10,
-    borderRadius: 50,
+    borderRadius: 50/2,
     elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.3,
@@ -555,12 +572,20 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     backgroundColor:'#36a6ad',
     alignItems:'center',
+    zIndex:999,
+    bottom:0,
     justifyContent:'center',
-    zIndex:999
+    margin:10
   },
   currentLocationText:{
     color:'#fff',
     fontSize:14,
     padding:10
+  },
+  locationImg:{
+    width:20,
+    height:20,
+    resizeMode:'contain',
+    tintColor:'#fff'
   }
 })

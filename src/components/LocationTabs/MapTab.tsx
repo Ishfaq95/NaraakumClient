@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Dimensions, Platform, Alert, PermissionsAndroid, Linking } from 'react-native';
-import MapView, { Marker, MapPressEvent, Region } from 'react-native-maps';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Dimensions, Platform, Alert, PermissionsAndroid, Linking, Image } from 'react-native';
+import MapView, { Marker, MapPressEvent, Region, PROVIDER_GOOGLE } from 'react-native-maps';
 // import Geolocation from '@react-native-community/geolocation';
 import { setSelectedLocation } from '../../shared/redux/reducers/bookingReducer';
 import { useDispatch } from 'react-redux';
 import { globalTextStyles } from '../../styles/globalStyles';
-import Geolocation from '@react-native-community/geolocation';
+import Geolocation from 'react-native-geolocation-service';
 import { PERMISSIONS, request, RESULTS } from 'react-native-permissions';
 import CustomAlertModal from '../common/CustomAlertModal';
 // import Icon from 'react-native-vector-icons/MaterialIcons'; // For cross and location icons
@@ -63,52 +63,49 @@ const MapTab = ({ onPressLocation }: { onPressLocation: () => void }) => {
 
   const getCurrentLocation = async () => {
     const permission = await requestLocationPermission();
-    if (!permission) {
-      return;
-    }
+    if (!permission) return;
   
-    try {
-      const position = await new Promise<Geolocation.GeoPosition>((resolve, reject) => {
-        Geolocation.getCurrentPosition(
-          (pos) => {
-            resolve(pos);
-          },
-          (error) => {
-            reject(error);
-          },
-          {
-            enableHighAccuracy: false, 
-            timeout: 30000,       
-            maximumAge: 5000,        
-            distanceFilter: 0,
-          }
-        );
-      });
+    Geolocation.getCurrentPosition(
+      (position) => {
+        // ✅ position is available here
+        console.log("Position:", position);
+        const { latitude, longitude } = position.coords;
   
-      const { latitude, longitude } = position.coords;
-            setMarker({ latitude, longitude });
-            
-            if (mapRef.current) {
-              mapRef.current.getMapBoundaries().then((bounds) => {
-                const currentZoom = {
-                  latitudeDelta: bounds.northEast.latitude - bounds.southWest.latitude,
-                  longitudeDelta: bounds.northEast.longitude - bounds.southWest.longitude,
-                };
-                
-                mapRef.current?.animateToRegion({
-                  latitude,
-                  longitude,
-                  latitudeDelta: currentZoom.latitudeDelta,
-                  longitudeDelta: currentZoom.longitudeDelta,
-                }, 1000);
-              });
-            }
+        setMarker({ latitude, longitude });
   
-      getAddressFromCoordinates(latitude, longitude);
-    } catch (error) {
-      console.log('❌ Geolocation error:', error);
-    }
+        if (mapRef.current) {
+          mapRef.current.getMapBoundaries().then((bounds) => {
+            const currentZoom = {
+              latitudeDelta: bounds.northEast.latitude - bounds.southWest.latitude,
+              longitudeDelta: bounds.northEast.longitude - bounds.southWest.longitude,
+            };
+  
+            mapRef.current?.animateToRegion(
+              {
+                latitude,
+                longitude,
+                latitudeDelta: currentZoom.latitudeDelta,
+                longitudeDelta: currentZoom.longitudeDelta,
+              },
+              1000
+            );
+          });
+        }
+  
+        getAddressFromCoordinates(latitude, longitude);
+      },
+      (error) => {
+        console.log("❌ Geo error:", error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 5000,
+        distanceFilter: 0,
+      }
+    );
   };
+  
   
   useEffect(() => {
     getCurrentLocation();
@@ -207,13 +204,13 @@ const MapTab = ({ onPressLocation }: { onPressLocation: () => void }) => {
   }
 
   return (
+    <>
     <View style={{ flex: 1 }}>
       <MapView
         ref={mapRef}
         style={styles.map}
         initialRegion={region}
         onPress={handleMapPress}
-        showsUserLocation
       >
         {marker && (
           <Marker 
@@ -233,8 +230,9 @@ const MapTab = ({ onPressLocation }: { onPressLocation: () => void }) => {
     
       </MapView>
       <TouchableOpacity onPress={getCurrentLocation} style={styles.currntLocationButton}>
-          <Text style={styles.currentLocationText}>Current Location</Text>
+      <Image source={require('../../assets/images/location.png')} style={styles.locationImg} />
         </TouchableOpacity>
+      </View>
       <View style={styles.cardContainer}>
     
         <Text style={styles.cardTitle}>موقع الزيارة</Text>
@@ -242,8 +240,8 @@ const MapTab = ({ onPressLocation }: { onPressLocation: () => void }) => {
           <Text style={styles.city}>{city || '---'}</Text>
           <Text style={styles.address}>{address || '---'}</Text>
         </View>
-        <TouchableOpacity disabled={city && address === '' ? true : false} onPress={handleConfirmLocation} style={[styles.confirmButton,{
-          backgroundColor:city && address === '' ? 'gray' : '#36a6ad'
+        <TouchableOpacity disabled={city === '' && address === ''} onPress={handleConfirmLocation} style={[styles.confirmButton,{
+          backgroundColor:city === '' && address === '' ? '#bfbeba' : '#36a6ad'
         }]}>
           <Text style={styles.confirmButtonText}>تأكيد الموقع</Text>
         </TouchableOpacity>
@@ -258,7 +256,7 @@ const MapTab = ({ onPressLocation }: { onPressLocation: () => void }) => {
         confirmText={'Open Setting'}
         type={'info'}
       />
-    </View>
+    </>
   );
 };
 
@@ -315,10 +313,10 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   currntLocationButton:{
+    width:50,
+    height:50,
     position:'absolute',
-    bottom:  height*0.32,
-    left:10,
-    borderRadius: 50,
+    borderRadius: 50/2,
     elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.3,
@@ -326,13 +324,21 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     backgroundColor:'#36a6ad',
     alignItems:'center',
+    zIndex:999,
+    bottom:0,
     justifyContent:'center',
-    zIndex:999
+    margin:10
   },
   currentLocationText:{
     color:'#fff',
     fontSize:14,
     padding:10
+  },
+  locationImg:{
+    width:20,
+    height:20,
+    resizeMode:'contain',
+    tintColor:'#fff'
   }
 });
 
