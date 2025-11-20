@@ -385,7 +385,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
       }
 
       // If selectServiceFilter changed, call both APIs
-      if (serviceFilterChanged && selectServiceFilter != 0) {
+      if (serviceFilterChanged) {
         const filterServiceIds = services.filter((service: any) => service.CatLevelId == selectServiceFilter).map((service: any) => service.Id);
         fetchServiceProviders(filterServiceIds[0],selectedCity != "0" ? selectedCity : null,
           selectedSquare != "0" ? selectedSquare : null,
