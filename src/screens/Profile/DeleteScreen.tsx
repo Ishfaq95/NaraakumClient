@@ -20,6 +20,8 @@ import { signInWithGoogle } from '../../services/auth/googleAuthService';
 import appleAuth from '@invertase/react-native-apple-authentication';
 import { globalTextStyles } from '../../styles/globalStyles';
 import FullScreenLoader from '../../components/FullScreenLoader';
+import messaging from '@react-native-firebase/messaging';
+import { tokenRefreshService } from '../../services/axios/tokenRefreshService';
 
 
 interface Country {
@@ -46,6 +48,7 @@ const DeleteScreen = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.root.user.user);
   const webSocketService = WebSocketService.getInstance();
+  const topic = useSelector((state: RootState) => state.root.user.topic);
 
   console.log(user);
 
@@ -106,6 +109,12 @@ const DeleteScreen = () => {
       } else if (response?.StatusCode?.STATUSCODE == 3032) {
         setDeleteAccountError(true);
       }else{
+        if(topic){
+          messaging()
+            .unsubscribeFromTopic(topic)
+            .then(() => { });
+        }
+        tokenRefreshService.reset();
         dispatch(setUser(null));
         dispatch(setTopic(null));
         webSocketService.disconnect();
@@ -160,6 +169,12 @@ const DeleteScreen = () => {
           [{ text: "OK" }]
         );
       }else{
+        if(topic){
+          messaging()
+            .unsubscribeFromTopic(topic)
+            .then(() => { });
+        }
+        tokenRefreshService.reset();
         dispatch(setUser(null));
         dispatch(setTopic(null));
         webSocketService.disconnect();

@@ -18,6 +18,7 @@ import { RootState } from '../../shared/redux/store';
 import { globalTextStyles } from '../../styles/globalStyles';
 import { profileService } from '../../services/api/ProfileService';
 import messaging from '@react-native-firebase/messaging';
+import { tokenRefreshService } from '../../services/axios/tokenRefreshService';
 
 const menuItems = [
   { label: 'حسابي', icon: <Icon name="person" size={20} color="#239EA0" />, key: 'account', route: ROUTES.updateProfile },
@@ -56,6 +57,7 @@ const ProfileScreen = () => {
     dispatch(setTopic(null));
     webSocketService.disconnect();
     dispatch(setUser(null));
+    tokenRefreshService.reset();
   };
 
   const getCpAddedOrders = async () => {
