@@ -78,7 +78,6 @@ const BookingScreen = ({ navigation, route }: any) => {
         // Find the index of the item that matches the selectedUniqueId
         const selectedIndex = updatedCardArray.findIndex(item => item.ItemUniqueId === selectedUniqueId);
         const selectedItem = updatedCardArray[selectedIndex];
-        console.log("selectedItem", selectedItem)
         if (specialty.CatLevelId == 3) {
           updatedCardArray[selectedIndex] = {
             ...specialty,
