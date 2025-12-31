@@ -67,6 +67,8 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
   const placesRef = useRef<GooglePlacesAutocompleteRef>(null);
   const [permissionModal, setPermissionModal]=useState(false)
 
+  console.log("selectedAddress",selectedAddress)
+
   const requestLocationPermission = async () => {
     try {
       if (Platform.OS === 'ios') {
@@ -238,7 +240,11 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
           initialRegion={region}
           ref={mapRef}
           onPress={handleMapPress}
-          pointerEvents={listOpen ? "none" : "auto"} 
+          pointerEvents={listOpen ? "none" : "auto"}
+          scrollEnabled={!listOpen}
+          pitchEnabled={!listOpen}
+          rotateEnabled={!listOpen}
+          zoomEnabled={!listOpen}
         >
           {marker && (
           <Marker 
@@ -259,41 +265,40 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
         <TouchableOpacity onPress={getCurrentLocation} style={styles.currntLocationButton}>
         <Image source={require('../assets/images/location.png')} style={styles.locationImg} />
         </TouchableOpacity>
-        <View style={styles.searchBarContainer}>
-        <TouchableOpacity style={styles.container}>
-            <GooglePlacesAutocomplete
-              ref={placesRef}
-              listViewDisplayed={true}
-              timeout={20000}
-              onPress={(data, details = null) => {
-                setListOpen(false); 
-                const lat = details?.geometry?.location?.lat;
-                const lng = details?.geometry?.location?.lng;
-              
-                if (!lat || !lng) return;
-                setMarker({
+        <View style={styles.searchBarContainer} pointerEvents="box-none">
+          <GooglePlacesAutocomplete
+            ref={placesRef}
+            listViewDisplayed={true}
+            timeout={20000}
+            onPress={(data, details = null) => {
+              setListOpen(false); 
+              const lat = details?.geometry?.location?.lat;
+              const lng = details?.geometry?.location?.lng;
+            
+              if (!lat || !lng) return;
+              setMarker({
+                latitude: lat,
+                longitude: lng,
+              });
+              mapRef.current?.animateToRegion(
+                {
                   latitude: lat,
                   longitude: lng,
-                });
-                mapRef.current?.animateToRegion(
-                  {
-                    latitude: lat,
-                    longitude: lng,
-                    latitudeDelta: 0.005,
-                    longitudeDelta: 0.005,
-                  },
-                  800
-                );
-                setSelectedAddress({
-                  latitude: lat,
-                  longitude: lng,
-                  address: data.description,
-                  city: data.structured_formatting?.main_text ?? "",
-                });
-                getAddressFromCoordinates(lat, lng);
-               
-              }}
-              predefinedPlaces={[]}
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                },
+                800
+              );
+              setSelectedAddress({
+                latitude: lat,
+                longitude: lng,
+                address: data.description,
+                city: data.structured_formatting?.main_text ?? "",
+              });
+              getAddressFromCoordinates(lat, lng);
+             
+            }}
+            predefinedPlaces={[]}
             textInputProps={{
               editable: true,
               clearButtonMode:'never',
@@ -302,21 +307,20 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
             }}
             placeholder="ابحث عن الموقع"
             minLength={2}
-            fetchDetails={true}      
+            fetchDetails={true}
+            enablePoweredByContainer={false}
             renderRightButton={() => (
               <TouchableOpacity
-              onPress={() => {
-                // Clear the input when custom cross is pressed
-                if (placesRef.current) {
-                  placesRef.current.setAddressText('');
-                }
-              }}
-              style={styles.leftIconContainer}
-              
-                
-            >
-              <AntDesign name="close" size={17} color="#fff" />
-            </TouchableOpacity>
+                onPress={() => {
+                  // Clear the input when custom cross is pressed
+                  if (placesRef.current) {
+                    placesRef.current.setAddressText('');
+                  }
+                }}
+                style={styles.leftIconContainer}
+              >
+                <AntDesign name="close" size={17} color="#fff" />
+              </TouchableOpacity>
             )}
             query={{
               key: GOOGLE_MAP_API_KEY,
@@ -332,6 +336,7 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
                 zIndex: 99999,
                 backgroundColor: '#fff',
                 width: '100%',
+                maxHeight: 300,
                 elevation: 10,
                 borderBottomLeftRadius: 10,
                 borderBottomRightRadius: 10,
@@ -340,10 +345,20 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({
                 shadowOpacity: 0.2,
                 shadowRadius: 4,
               },
-              
+              row: {
+                backgroundColor: '#fff',
+                padding: 13,
+                height: 44,
+                flexDirection: 'row',
+              },
+              separator: {
+                height: 0.5,
+                backgroundColor: '#c8c7cc',
+              },
             }}
+            keyboardShouldPersistTaps="handled"
+            suppressDefaultStyles={false}
           />
-          </TouchableOpacity>
         </View>
       </View>
       <View style={styles.whiteContainer}>

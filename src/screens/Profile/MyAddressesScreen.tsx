@@ -53,7 +53,7 @@ const MyAddressesScreen = () => {
     if (!route.params) return;
     if (route.params?.fromSave) {
       const { mapAddress, description } = route.params;
-  
+
       // Set address & form
       setAddress({
         latitude: mapAddress.latitude,
@@ -61,27 +61,27 @@ const MyAddressesScreen = () => {
         address: mapAddress.address,
         city: mapAddress.city,
       });
-  
+
       setAddressForm(prev => ({
         ...prev,
         description: description,
       }));
-  
+
       // Save via API
       saveMapAddressButton();  // ✅ call your API function
-  
+
       setOpenBottomSheet(false); // bottom sheet should be closed
       return;
     }
-  
+
     // CASE 2: Back / Close button clicked
     if (route.params?.openBottomSheet) {
       setOpenBottomSheet(true);
       return;
     }
-  
+
   }, [route.params]);
-  
+
 
   useEffect(() => {
     if (openBottomSheet) {
@@ -132,13 +132,13 @@ const MyAddressesScreen = () => {
         ]}
       >
         <View style={styles.row}>
-          <View style={{ alignItems:'flex-start',justifyContent:'flex-start'}}>
+          <View style={{ alignItems: 'flex-start', justifyContent: 'flex-start' }}>
             <LocationMarkerIcon size={22} />
           </View>
           <View style={styles.textContainer}>
-            <Text style={[globalTextStyles.h6, {color: '#000'}]}>{item.TitleSlang}</Text>
-            <Text style={[globalTextStyles.bodySmall, {color: '#000', marginBottom: 10, textAlign: 'left' }]}>{item.Address}</Text>
-            <Text style={[globalTextStyles.bodySmall, {color: '#000', marginBottom: 10, textAlign: 'left' }]}>{item.Description}</Text>
+            <Text style={[globalTextStyles.h6, { color: '#000' }]}>{item.TitleSlang}</Text>
+            <Text style={[globalTextStyles.bodySmall, { color: '#000', marginBottom: 10, textAlign: 'left' }]}>{item.Address}</Text>
+            <Text style={[globalTextStyles.bodySmall, { color: '#000', marginBottom: 10, textAlign: 'left' }]}>{item.Description}</Text>
           </View>
         </View>
       </View>
@@ -150,29 +150,29 @@ const MyAddressesScreen = () => {
   }
 
   const HandleSaveAddress = async () => {
-   try {
-    setIsLoading(true);
-    const payload = {
-      "Address": "",
-      "CatCityId": addressForm.city,
-      "CatAreaId": addressForm.rigin,
-      "CatSquareId": addressForm.neighborhood,
-      "Area": "",
-      "Description": addressForm.description,
-      "GoogleLocation": "",
-      "UserLogininfoId": user.Id
-    }
-    const response = await bookingService.AddUserLocation(payload)
-    if (response?.ResponseStatus?.STATUSCODE == 200) {
-      getAddresses();
-    }
-    setAddressForm({
-      rigin: '',
-      city: '',
-      neighborhood: '',
-      description: '',
-    })
-    setOpenBottomSheet(false);
+    try {
+      setIsLoading(true);
+      const payload = {
+        "Address": "",
+        "CatCityId": addressForm.city,
+        "CatAreaId": addressForm.rigin,
+        "CatSquareId": addressForm.neighborhood,
+        "Area": "",
+        "Description": addressForm.description,
+        "GoogleLocation": "",
+        "UserLogininfoId": user.Id
+      }
+      const response = await bookingService.AddUserLocation(payload)
+      if (response?.ResponseStatus?.STATUSCODE == 200) {
+        getAddresses();
+      }
+      setAddressForm({
+        rigin: '',
+        city: '',
+        neighborhood: '',
+        description: '',
+      })
+      setOpenBottomSheet(false);
     } catch (error) {
     } finally {
       setIsLoading(false);
@@ -181,48 +181,48 @@ const MyAddressesScreen = () => {
 
 
   const HandleGoogleMap = () => {
-  navigation.navigate<ROUTES.GoogleMapScreen, GoogleMapScreenParams>(ROUTES.GoogleMapScreen, {
-    onClose: (data: GoogleMapReturnData) => {
-      if (data.fromSave && data.mapAddress) {
-        setAddress({
-          latitude: data.mapAddress.latitude,
-          longitude: data.mapAddress.longitude,
-          address: data.mapAddress.address,
-          city: data.mapAddress.city,
-        });
+    navigation.navigate<ROUTES.GoogleMapScreen, GoogleMapScreenParams>(ROUTES.GoogleMapScreen, {
+      onClose: (data: GoogleMapReturnData) => {
+        if (data.fromSave && data.mapAddress) {
+          setAddress({
+            latitude: data.mapAddress.latitude,
+            longitude: data.mapAddress.longitude,
+            address: data.mapAddress.address,
+            city: data.mapAddress.city,
+          });
 
-        setAddressForm(prev => ({
-          ...prev,
-          description: data.description || '',
-        }));
+          setAddressForm(prev => ({
+            ...prev,
+            description: data.description || '',
+          }));
 
-        // Save to API
-        saveMapAddressButton();
+          // Save to API
+          saveMapAddressButton(data.mapAddress);
 
-        // Close bottom sheet
-        setOpenBottomSheet(false);
-      } else if (data.openSheet) {
-        setOpenBottomSheet(true);
-      }
-    },
-  });
-};
+          // Close bottom sheet
+          setOpenBottomSheet(false);
+        } else if (data.openSheet) {
+          setOpenBottomSheet(true);
+        }
+      },
+    });
+  };
 
   const AddManuallyButton = () => {
     setIsGoogleMap(false)
   }
 
-  const saveMapAddressButton = async() => {
+  const saveMapAddressButton = async (mapAddress?: any) => {
     try {
       setIsLoading(true);
       const payload = {
-        "Address": address.address || '',
+        "Address": address.address || mapAddress.address || '',
         "CatCityId": addressForm.city || '',
         "CatAreaId": addressForm.rigin || '1',
         "CatSquareId": addressForm.neighborhood || '1',
-        "Area": address.address || '',
+        "Area": address.address || mapAddress.address || '',
         "Description": addressForm.description || '',
-        "GoogleLocation": `${address.latitude},${address.longitude}` || '',
+        "GoogleLocation": `${address.latitude},${address.longitude}` || `${mapAddress.latitude},${mapAddress.longitude}` || '',
         "UserLogininfoId": user.Id
       }
       const response = await bookingService.AddUserLocation(payload)
@@ -242,10 +242,10 @@ const MyAddressesScreen = () => {
         address: '',
         city: '',
       })
-      } catch (error) {
-      } finally {
-        setIsLoading(false);
-      }
+    } catch (error) {
+    } finally {
+      setIsLoading(false);
+    }
   }
 
 
@@ -282,22 +282,22 @@ const MyAddressesScreen = () => {
         showHandle={false}
       >
         <View style={styles.sheetHeaderContainer}>
-        <TouchableOpacity onPress={() => setOpenBottomSheet(false)}>
-          <AntDesign name="close" size={30} color="#979e9eff" />
-        </TouchableOpacity>
-        <Text style={styles.bottomSheetHeaderText}>اختر موقع الزيارة</Text>
-      </View>
+          <TouchableOpacity onPress={() => setOpenBottomSheet(false)}>
+            <AntDesign name="close" size={30} color="#979e9eff" />
+          </TouchableOpacity>
+          <Text style={styles.bottomSheetHeaderText}>اختر موقع الزيارة</Text>
+        </View>
         <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 10 }}
-            showsVerticalScrollIndicator={false}
-          >
-        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 10 }}
+          showsVerticalScrollIndicator={false}
         >
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <View style={styles.modalBackground}>
-              <View style={[styles.modalContainer,{paddingBottom:isGoogleMap ? 50 : 20}]}>
-                {/* {
+          <KeyboardAvoidingView
+          >
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+              <View style={styles.modalBackground}>
+                <View style={[styles.modalContainer, { paddingBottom: isGoogleMap ? 50 : 20 }]}>
+                  {/* {
                   isGoogleMap ? (
                     <GoogleMapComponent
                       onClosePress={() => setOpenBottomSheet(false)}
@@ -312,25 +312,25 @@ const MyAddressesScreen = () => {
                       />
                   ) : (
           */}
-                <VisitLocationComponent
-                  onClosePress={() => setOpenBottomSheet(false)}
-                  setRiginValue={(text) => updateBeneficiaryField('rigin', text)}
-                  riginValue={addressForm.rigin}
-                  setCityValue={(text) => updateBeneficiaryField('city', text)}
-                  cityValue={addressForm.city}
-                  setDescriptionValue={(text) => updateBeneficiaryField('description', text)}
-                  descriptionValue={addressForm.description}
-                  setNeighbearhoodValue={(text) => updateBeneficiaryField('neighborhood', text)}
-                  neighbearhoodValue={addressForm.neighborhood}
-                  saveAddressButton={HandleSaveAddress}
-                  GoogleMapButton={HandleGoogleMap}
-                  setFocusedField={setFocusedField}
-                />
+                  <VisitLocationComponent
+                    onClosePress={() => setOpenBottomSheet(false)}
+                    setRiginValue={(text) => updateBeneficiaryField('rigin', text)}
+                    riginValue={addressForm.rigin}
+                    setCityValue={(text) => updateBeneficiaryField('city', text)}
+                    cityValue={addressForm.city}
+                    setDescriptionValue={(text) => updateBeneficiaryField('description', text)}
+                    descriptionValue={addressForm.description}
+                    setNeighbearhoodValue={(text) => updateBeneficiaryField('neighborhood', text)}
+                    neighbearhoodValue={addressForm.neighborhood}
+                    saveAddressButton={HandleSaveAddress}
+                    GoogleMapButton={HandleGoogleMap}
+                    setFocusedField={setFocusedField}
+                  />
                   {/* )} */}
+                </View>
               </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
         </ScrollView>
       </CustomBottomSheet>
     </SafeAreaView>

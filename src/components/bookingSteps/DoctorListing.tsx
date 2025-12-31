@@ -263,6 +263,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
   const [loader2, setLoader2] = useState(false);
   const [slotsLoaded, setSlotsLoaded] = useState(false);
   const [changeDateLoader, setChangeDateLoader] = useState(false);
+  const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const user = useSelector((state: any) => state.root.user.user);
   const services = useSelector((state: any) => state.root.booking.services);
@@ -641,6 +642,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setSlotsLoaded(false)
 
     setProviderWithSlots(tempProvider)
+    setHasInitialDataLoaded(true)
   }
 
   useEffect(() => {
@@ -694,6 +696,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
   const fetchData = async () => {
     setRefreshing(true);
+    setHasInitialDataLoaded(false);
     const displayCategory = categoriesList.find((item: any) => item.Id == category.Id);
     setDisplayCategory(displayCategory);
     // Call both APIs when component mounts
@@ -1342,7 +1345,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
               windowSize={10}
               initialNumToRender={3}
               ListEmptyComponent={
-                (loading || loader2 || slotsLoaded) ? (
+                (loading || loader2 || slotsLoaded || changeDateLoader || !hasInitialDataLoaded) ? (
                   <ListShimmerLoader cardType="default" />
                 ) : (
                   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -1735,8 +1738,9 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
             <TouchableOpacity
               onPress={() => {
                 setAlertModalVisible(false);
-                navigation.navigate(ROUTES.CartStack, {
-                  screen: ROUTES.CartScreen,
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: ROUTES.CartStack, screen: ROUTES.CartScreen }],
                 })
               }}
               style={{ backgroundColor: '#239ea0', borderRadius: 10, paddingVertical: 12, width: '100%', alignItems: 'center', marginTop: 10 }}

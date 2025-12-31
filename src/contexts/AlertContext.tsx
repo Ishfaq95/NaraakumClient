@@ -9,6 +9,7 @@ interface AlertConfig {
   cancelText?: string;
   type?: 'info' | 'success' | 'warning' | 'error';
   showCancelButton?: boolean;
+  dismissable?: boolean; // If false, alert cannot be dismissed by user
 }
 
 interface AlertContextType {
@@ -49,6 +50,7 @@ export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         cancelText={alertConfig.cancelText}
         type={alertConfig.type}
         showCancelButton={alertConfig.showCancelButton}
+        dismissable={alertConfig.dismissable !== false}
       />
     </AlertContext.Provider>
   );
