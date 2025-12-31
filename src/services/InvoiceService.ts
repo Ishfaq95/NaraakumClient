@@ -317,6 +317,18 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
         
         a {
           font-family: 'Cairo', sans-serif;
+          color: #23a2a4;
+          text-decoration: underline;
+        }
+        
+        a:link {
+          color: #23a2a4;
+          text-decoration: underline;
+        }
+        
+        a:visited {
+          color: #23a2a4;
+          text-decoration: underline;
         }
         
         .invoic-footer {
@@ -479,10 +491,12 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
                 <td colspan="5" style="font-family: 'Cairo', sans-serif;">
                   <p class="text-end" style="font-family: 'Cairo', sans-serif;">الخدمات</p>
                   <p class="text-end" style="font-family: 'Cairo', sans-serif;">الضريبة (15%)</p>
+                  <p class="text-end" style="font-family: 'Cairo', sans-serif;">الخصم</p>
                 </td>
                 <td style="font-family: 'Cairo', sans-serif;">
                   <p style="font-family: 'Cairo', sans-serif;">${data.OrderDetail.reduce((sum: number, item: any) => sum + item.PriceBySP, 0)?.toString()}</p>
-                  <p style="font-family: 'Cairo', sans-serif;">${calculateTotalTax(data.OrderDetail)}</p>
+                  <p style="font-family: 'Cairo', sans-serif;">${calculateTotalTax(data.OrderDetail) || 0}</p>
+                  <p style="font-family: 'Cairo', sans-serif;">${data.OrderDetail.reduce((sum: number, item: any) => sum + item.DiscountAmount, 0)?.toString() || 0}</p>
                 </td>
               </tr>
               <tr>
@@ -523,7 +537,7 @@ const generateInvoiceHTML = async (data: any): Promise<string> => {
             <h3 style="font-family: 'Cairo', sans-serif; margin-bottom: 10px;">سياسة الالغاء والارجاع</h3>
             <p style="font-family: 'Cairo', sans-serif;">
               للاطلاع على سياسة الالغاء والارجاع بشكل مفصل قم بالضغط
-              <a target="_blank" style="font-family: 'Cairo', sans-serif; color: #23a2a4;" href="https://www.naraakum.com/TermsCancellation">هنـا</a>
+              <a style="font-family: 'Cairo', sans-serif; color: #23a2a4; text-decoration: underline; cursor: pointer;" href="https://www.naraakum.com/TermsCancellation">هنـا</a>
             </p>
           </article>
         </section>

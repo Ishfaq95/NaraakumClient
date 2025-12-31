@@ -59,6 +59,7 @@ import {useTranslation} from 'react-i18next';
 import {WEBSITE_URL} from '../../shared/utils/constants';
 import { notificationService } from '../../services/api/NotificationService';
 import moment from 'moment';
+import { CAIRO_FONT_FAMILY } from '../../styles/globalStyles';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const SMALL_VIDEO_WIDTH = 140;
@@ -508,7 +509,7 @@ const VideoCallScreen = ({
                 <Text
                   style={{
                     fontSize: 18,
-                    fontWeight: '400',
+                    fontFamily: CAIRO_FONT_FAMILY.regular,
                     color: 'white',
                     paddingLeft: 5,
                   }}>
@@ -552,11 +553,11 @@ const VideoCallScreen = ({
                   <NetworkSignalIcon />
                   <View style={{paddingLeft: 6}}>
                     <Text
-                      style={{fontSize: 12, fontWeight: '600', color: 'white'}}>
+                      style={{fontSize: 12, fontFamily: CAIRO_FONT_FAMILY.semiBold, color: 'white'}}>
                       Poor connection{' '}
                     </Text>
                     <Text
-                      style={{fontSize: 10, fontWeight: '400', color: 'white'}}>
+                      style={{fontSize: 10, fontFamily: CAIRO_FONT_FAMILY.regular, color: 'white'}}>
                       Try moving to get better signal
                     </Text>
                   </View>
@@ -582,7 +583,7 @@ const VideoCallScreen = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                  <Text>{`في انتظار انضمام ${displayName}`}</Text>
+                  <Text style={{fontSize: 16, fontFamily: CAIRO_FONT_FAMILY.regular, color: 'white'}}>{`في انتظار انضمام ${displayName}`}</Text>
                 </View>
               </>
             )}
@@ -758,16 +759,17 @@ const styles = StyleSheet.create({
   sessionText: {
     color: '#fff',
     fontSize: 14,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
   },
   timerText: {
     color: '#fff',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   connectionStatus: {
     color: '#FF0000',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   connectionTip: {
     color: '#fff',
@@ -909,7 +911,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   fullView: {
     flex: 1,
@@ -942,7 +944,7 @@ const styles = StyleSheet.create({
   messageCount: {
     color: 'white',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   waitingParticipantView: {
     flex: 1,
@@ -956,6 +958,7 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontSize: 14,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
   },
   miniViewControls: {
     position: 'absolute',
@@ -1034,12 +1037,13 @@ const styles = StyleSheet.create({
   },
   modalHeading: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
     color: '#fff',
     marginBottom: 10,
   },
   modalDetail: {
     fontSize: 16,
+    fontFamily: CAIRO_FONT_FAMILY.regular,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 20,
@@ -1053,7 +1057,7 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: CAIRO_FONT_FAMILY.bold,
   },
 });
 

@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, SafeAreaView
 import React, { useEffect, useState } from 'react'
 import { messagesAndCallService } from '../../services/api/MessagesAndCallService';
 import { useDispatch, useSelector } from 'react-redux';
-import { globalTextStyles } from '../../styles/globalStyles';
+import { CAIRO_FONT_FAMILY, globalTextStyles } from '../../styles/globalStyles';
 import Header from '../../components/common/Header';
 import { useTranslation } from 'react-i18next';
 import ArrowRightIcon from '../../assets/icons/RightArrow';
@@ -13,6 +13,8 @@ import { ROUTES } from '../../shared/utils/routes';
 import WebSocketService from '../../components/WebSocketService';
 import { setUnreadMessages } from '../../shared/redux/reducers/userReducer';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import UniversalImage from '../../components/common/UniversalImage';
+import FullScreenLoader from '../../components/FullScreenLoader';
 
 const ConversationListScreen = () => {
     const { t } = useTranslation();
@@ -24,12 +26,14 @@ const ConversationListScreen = () => {
     const navigation = useNavigation();
     const isFocused = useIsFocused();
     const dispatch = useDispatch();
+    const [isLoading, setIsLoading] = useState(false);
     useEffect(() => {
         getConversationList();
-    }, [isFocused,unreadMessages]);
+    }, [isFocused, unreadMessages]);
 
     const getConversationList = async () => {
         try {
+            setIsLoading(true);
             const payload = {
                 "PatientId": user.Id
             }
@@ -44,12 +48,14 @@ const ConversationListScreen = () => {
                 setConversationList(sortedData);
             }
         } catch (error) {
+        } finally {
+            setIsLoading(false);
         }
 
     }
 
     useEffect(() => {
-       webSocketService.addGlobalMessageHandler();
+        webSocketService.addGlobalMessageHandler();
     }, [isFocused]);
 
     const onRefresh = async () => {
@@ -63,41 +69,49 @@ const ConversationListScreen = () => {
     }
 
     const renderConversationTile = ({ item }: any) => {
+        console.log("item", item);
         return (
             <TouchableOpacity
                 style={styles.conversationTile}
                 onPress={() => {
                     // Navigate to chat screen with conversation details
-                    navigation.navigate(ROUTES.ChatScreenMainView, { patientId: item?.patientDetails?.userlogininfoId, serviceProviderId: item?.careproviderDetails?.userlogininfoId, displayName: item?.careproviderDetails?.username,item:item });
+                    (navigation as any).navigate(ROUTES.ChatScreenMainView, {
+                        patientId: item?.patientDetails?.userlogininfoId,
+                        serviceProviderId: item?.careproviderDetails?.userlogininfoId,
+                        displayName: item?.careproviderDetails?.username || '',
+                        item: item
+                    });
                 }}
             >
                 <View style={styles.avatarContainer}>
-                    {item?.careproviderDetails?.profilePictureUrl ? <Image
-                        source={{
-                            uri: `${MediaBaseURL}${item?.careproviderDetails?.profilePictureUrl}`
-                        }}
+                    {item?.careproviderDetails?.profilePictureUrl ? 
+                    <UniversalImage
+                        source={{ uri: `${MediaBaseURL}${item?.careproviderDetails?.profilePictureUrl}` }}
                         style={styles.avatar}
-                    /> : <View style={[styles.avatar,{alignItems:'center',justifyContent:'center',backgroundColor:'gray'}]}> <Ionicons name="person" size={36} color="#fff" /></View>}
+                    /> 
+                     : <View style={[styles.avatar, { alignItems: 'center', justifyContent: 'center', backgroundColor: 'gray' }]}>
+                        <Ionicons name="person" size={36} color="#fff" /></View>
+                    }
                 </View>
 
                 <View style={styles.contentContainer}>
                     <View style={styles.headerRow}>
                         <Text style={styles.userName} numberOfLines={1}>
-                            {item?.careproviderDetails?.username}
+                            {item?.careproviderDetails?.username || ''}
                         </Text>
                         <Text style={styles.timestamp}>
-                            {moment(item.lastmessageTime).locale('en').fromNow()}
+                            {item?.lastmessageTime ? moment(item.lastmessageTime).locale('en').fromNow() : ''}
                         </Text>
                     </View>
 
                     <View style={styles.messageRow}>
                         <Text style={styles.lastMessage} numberOfLines={1}>
-                            {item?.lastmessage}
+                            {item?.lastmessageType == 'FilePath' ? 'ملف' : item?.lastmessage || ''}
                         </Text>
-                        {item.unseenmsgCount > 0 && (
+                        {item?.unseenmsgCount > 0 && (
                             <View style={styles.unreadBadge}>
                                 <Text style={styles.unreadCount}>
-                                    {item?.unseenmsgCount > 99 ? '99+' : item?.unseenmsgCount}
+                                    {item?.unseenmsgCount > 99 ? '99+' : String(item?.unseenmsgCount || 0)}
                                 </Text>
                             </View>
                         )}
@@ -128,14 +142,24 @@ const ConversationListScreen = () => {
                 <FlatList
                     data={conversationList}
                     renderItem={renderConversationTile}
-                    keyExtractor={(item) => item._id}
+                    keyExtractor={(item, index) => item?._id || item?.Id || `conversation-${index}`}
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.listContainer}
+                    contentContainerStyle={[
+                        styles.listContainer,
+                        conversationList.length === 0 && styles.emptyContainer
+                    ]}
                     refreshing={refreshing}
                     onRefresh={onRefresh}
                     refreshControl={undefined}
+                    ListEmptyComponent={
+                        <View style={styles.emptyView}>
+                            <Text style={styles.emptyText}>لم يتم العثور على محادثات</Text>
+                        </View>
+                    }
                 />
             </View>
+
+            <FullScreenLoader visible={isLoading} />
         </SafeAreaView>
     )
 }
@@ -203,20 +227,21 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 4,
-        width:'100%'
+        width: '100%'
     },
     userName: {
-        ...globalTextStyles.bodyLarge,
-        width:'70%',
-        fontWeight: '600',
+        fontSize: 16,
+        fontFamily: CAIRO_FONT_FAMILY.semiBold,
+        width: '70%',
+        textAlign: 'left',
         color: '#000',
     },
     timestamp: {
-        width:'30%',
-        textAlign:'right',
-        ...globalTextStyles.bodySmall,
-        color: '#666',
+        width: '30%',
+        textAlign: 'right',
         fontSize: 12,
+        fontFamily: CAIRO_FONT_FAMILY.regular,
+        color: '#666',
     },
     messageRow: {
         flexDirection: 'row',
@@ -224,7 +249,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     lastMessage: {
-        ...globalTextStyles.bodyMedium,
+        fontSize: 14,
+        fontFamily: CAIRO_FONT_FAMILY.regular,
         color: '#666',
     },
     unreadBadge: {
@@ -240,6 +266,20 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 12,
         fontWeight: '600',
+    },
+    emptyContainer: {
+        flexGrow: 1,
+        justifyContent: 'center',
+    },
+    emptyView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 40,
+    },
+    emptyText: {
+        ...globalTextStyles.bodyMedium,
+        color: '#666',
     },
 });
 

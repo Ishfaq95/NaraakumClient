@@ -139,8 +139,8 @@ containerStyle={styles.headerContainer}
           </TouchableOpacity>
           <View style={styles.quantityContainer}>
             {item?.CatCategoryId == "42"
-              ? <Text style={styles.ServiceText}>{`استشارة عن بعد / ${cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}`}</Text>
-              : <Text style={styles.ServiceText}>{cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}</Text>
+              ? <Text style={styles.ServiceText}>{`استشارة عن بعد / ${cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}${item?.SpecialtyTitleSlang ? ` (${item?.SpecialtyTitleSlang})` : ''}`}</Text>
+              : <Text style={styles.ServiceText}>{`${cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}${item?.SpecialtyTitleSlang ? ` (${item?.SpecialtyTitleSlang})` : ''}`}</Text>
             }
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               {item?.ServicePrice !== undefined && item?.ServicePrice !== null &&

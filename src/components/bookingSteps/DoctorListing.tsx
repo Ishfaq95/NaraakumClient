@@ -1320,10 +1320,16 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
           </TouchableOpacity>
         </View>
       </View>
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ ...globalTextStyles.bodyLarge, fontWeight: '600', color: '#36454f' }}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16,paddingVertical: 6,backgroundColor: '#fff',marginVertical: 10,marginHorizontal: 16,borderRadius: 10, alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 16,fontFamily: CAIRO_FONT_FAMILY.semiBold, color: '#36454f' }}>
           {`النتائج (${resultLength})`}
         </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 14,fontFamily: CAIRO_FONT_FAMILY.medium, color: '#36454f', marginRight: 6 }}>متاح</Text>
+          <View style={{ width: 15, height: 15, borderRadius: 10, borderWidth: 1, borderColor: '#239ea0' }} />
+          <Text style={{ fontSize: 14,fontFamily: CAIRO_FONT_FAMILY.medium, color: '#36454f',marginLeft: 10,marginRight: 6 }}>حجز</Text>
+          <View style={{ width: 15, height: 15, borderRadius: 10, backgroundColor: '#B7E0E1',borderWidth: 1,borderColor: '#B7E0E1' }} />
+        </View>
       </View>
       <View style={{ flex: 1, paddingBottom: 50, }}>
         {
@@ -1470,7 +1476,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
         onCancel={handleCalendarCancel}
         locale={currentLang === 'ar' ? 'ar-SA' : 'en'}
         date={selectedDate.isSame(moment(), 'day') ? new Date() : selectedDate.toDate()}
-        // minimumDate={selectedDate.isSame(moment(), 'day') ? new Date() : selectedDate.toDate()}
+        minimumDate={new Date()}
         // maximumDate={moment().add(30, 'days').toDate()}
         display="default"
       />

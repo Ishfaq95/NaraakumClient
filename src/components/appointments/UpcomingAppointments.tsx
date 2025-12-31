@@ -13,6 +13,8 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   SafeAreaView,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { appointmentService, Appointment } from '../../services/api/appointmentService';
@@ -27,6 +29,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import { generateVisitHistoryPDF } from '../../components/GeneratePDF/VisitConsultantLog';
 import { profileService } from '../../services/api/ProfileService';
 import { ROUTES } from '../../shared/utils/routes';
+import { useAlert } from '../../contexts/AlertContext';
 
 const PAGE_SIZE = 10;
 
@@ -55,7 +58,8 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ userId, onJ
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isRatingVisible, setIsRatingVisible] = useState(false);
   const [openMoreOptionBottomSheet, setOpenMoreOptionBottomSheet] = useState(false);
-
+  const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
+  const { showAlert } = useAlert();
   const MoreOptionMenu = (item: any) => [
     { title: 'معلومات الحجز', key: 'booking_info', onPress: () => { setOpenMoreOptionBottomSheet(false); navigation.navigate(ROUTES.OrderDetailScreen, {OrderId:item?.OrderId}); } },
     { title: 'ارسال رسالة', key: 'send_message', onPress: () => { setOpenMoreOptionBottomSheet(false);  } },
@@ -220,6 +224,8 @@ useEffect(() => {
   };
 
   const handleSubmitRating = async () => {
+    setIsRatingSubmitting(true);
+    try {
     const payload = {
       "UserloginInfoId": userId,
       "Comment": comment,
@@ -241,18 +247,20 @@ useEffect(() => {
       setStaffRating(0);
       setComment('');
 
-      Alert.alert('تم تحديث التقييم', 'تم تحديث التقييم بنجاح', [
-        {
-          text: 'موافق',
-          onPress: () => {
-            setIsRatingVisible(false);
-          }
+      showAlert({
+        title: 'تم تحديث التقييم',
+        message: 'تم تحديث التقييم بنجاح',
+        onConfirm: () => {
+          setIsRatingVisible(false);
         }
-      ]);
+      });
     }
-    // Here you can add API call to submit the ratings
-
-  };
+  }catch (error) {
+      console.error('Error submitting rating:', error);
+    } finally {
+      setIsRatingSubmitting(false);
+    }
+  }
 
   const onMoreIcon = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
@@ -318,7 +326,7 @@ useEffect(() => {
         <View style={{ flex: 1, backgroundColor: '#eff5f5',borderTopLeftRadius: 10,borderTopRightRadius: 10 }}>
           {/* Header */}
           <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row',borderTopLeftRadius: 10,borderTopRightRadius: 10, paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
+              <Text style={[globalTextStyles.bodyLarge, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
               {visitHistoryData?.data?.HospitalInfo?.[0]?.CatCategoryId === 42 ? 'سجل الجلسة' : 'سجل الزيارة'}
             </Text>
             <TouchableOpacity onPress={() => setIsBottomSheetVisible(false)}>
@@ -709,30 +717,37 @@ useEffect(() => {
         height="80%"
         showHandle={false}
       >
-        <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
-          {/* Header */}
-          <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', borderTopLeftRadius: 10, borderTopRightRadius: 10, paddingHorizontal: 16 }}>
-            <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
-              {'إستبيان مدى رضاك عن الخدمة'}
-            </Text>
-            <TouchableOpacity onPress={() => setIsRatingVisible(false)}>
-              <AntDesign name="close" size={24} color="#979e9eff" />
-            </TouchableOpacity>
-          </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={0}
+        >
+          <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+            {/* Header */}
+            <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', borderTopLeftRadius: 10, borderTopRightRadius: 10, paddingHorizontal: 16 }}>
+              <Text style={[globalTextStyles.bodyLarge, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
+                {'إستبيان مدى رضاك عن الخدمة'}
+              </Text>
+              <TouchableOpacity onPress={() => setIsRatingVisible(false)}>
+                <AntDesign name="close" size={24} color="#979e9eff" />
+              </TouchableOpacity>
+            </View>
 
-          <ScrollView
-            ref={ratingScrollViewRef}
-            style={{ flexGrow: 1, flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingBottom: keyboardHeight }}
-          >
+            <ScrollView
+              ref={ratingScrollViewRef}
+              style={{ flexGrow: 1, flex: 1 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{
+                paddingBottom: Platform.OS === 'ios' ? 20 : 0
+              }}
+            >
             <View style={{ flex: 1, paddingHorizontal: 16 }}>
               <View style={{ flex: 1 }}>
                 <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم المركز الطبي</Text>
+                  <Text style={{ fontSize: 16, color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم المركز الطبي</Text>
                 </View>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>بشكل عام ما مدى رضاكم عن الخدمة ؟</Text>
+                <Text style={{ fontSize: 16, color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>بشكل عام ما مدى رضاكم عن الخدمة ؟</Text>
 
                 {/* Star Rating */}
                 <View style={{ alignItems: 'center', marginTop: 20 }}>
@@ -756,7 +771,7 @@ useEffect(() => {
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>كيف كان التوقيت المتعلق بتقديم الخدمة ووصولها اليكم ؟</Text>
+                <Text style={{ fontSize: 16, color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>كيف كان التوقيت المتعلق بتقديم الخدمة ووصولها اليكم ؟</Text>
 
                 {/* Star Rating */}
                 <View style={{ alignItems: 'center', marginTop: 20 }}>
@@ -781,9 +796,9 @@ useEffect(() => {
 
               <View style={{ flex: 1 }}>
                 <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم الطبيب المعالج / الطاقم الطبي</Text>
+                  <Text style={{ fontSize: 16, color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم الطبيب المعالج / الطاقم الطبي</Text>
                 </View>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>ما مدى راحتك مع الطاقم الطبي/الأخصائي/التمريض ؟</Text>
+                <Text style={{ fontSize: 16, color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>ما مدى راحتك مع الطاقم الطبي/الأخصائي/التمريض ؟</Text>
 
                 {/* Star Rating */}
                 <View style={{ alignItems: 'center', marginTop: 20 }}>
@@ -810,7 +825,6 @@ useEffect(() => {
               <View style={{ marginTop: 20, paddingHorizontal: 16 }}>
                 <Text style={{
                   fontSize: 16,
-                  fontWeight: '600',
                   color: '#000',
                   textAlign: 'center',
                   marginBottom: 10,
@@ -852,21 +866,21 @@ useEffect(() => {
                     opacity: (medicalCenterRating > 0 || timingRating > 0 || staffRating > 0) ? 1 : 0.6
                   }}
                   onPress={handleSubmitRating}
-                  disabled={(medicalCenterRating === 0 && timingRating === 0 && staffRating === 0)}
+                  disabled={(medicalCenterRating === 0 && timingRating === 0 && staffRating === 0) || isRatingSubmitting}
                 >
-                  <Text style={{
+                  {isRatingSubmitting ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{
                     color: '#fff',
                     fontSize: 16,
-                    fontWeight: 'bold',
                     fontFamily: CAIRO_FONT_FAMILY.bold
                   }}>
                     إرسال التقييم
-                  </Text>
+                  </Text>}
                 </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </CustomBottomSheet>
 
       <CustomBottomSheet

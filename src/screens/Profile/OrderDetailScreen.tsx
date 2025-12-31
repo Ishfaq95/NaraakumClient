@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Alert, PermissionsAndroid, Platform, TouchableWithoutFeedback, Keyboard, Share } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Alert, PermissionsAndroid, Platform, TouchableWithoutFeedback, Keyboard, Share, Image, Linking, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
 import * as DocumentPicker from '@react-native-documents/picker';
 import CalendarIcon from '../../assets/icons/CalendarIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
@@ -7,7 +7,7 @@ import SettingIconSelected from '../../assets/icons/SettingIconSelected';
 import { useTranslation } from 'react-i18next';
 import { countries } from '../../utils/countryData';
 import { setApiResponse } from '../../shared/redux/reducers/bookingReducer';
-import { bookingService } from '../../services/api/BookingService';
+import { bookingService, categoriesList } from '../../services/api/BookingService';
 import { generatePayloadforUpdateOrderMainBeforePayment } from '../../shared/services/service';
 import { useDispatch, useSelector } from 'react-redux';
 import { MediaBaseURL } from '../../shared/utils/constants';
@@ -26,6 +26,7 @@ import Dropdown from '../../components/common/Dropdown';
 import UniversalImage from '../../components/common/UniversalImage';
 import { AddBeneficiaryComponent } from '../../components/emailUpdateComponent';
 import { generatePrescriptionPDF, generateVisitHistoryPDF } from '../../components/GeneratePDF/VisitConsultantLog';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 // @ts-ignore
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 // @ts-ignore
@@ -35,6 +36,8 @@ import FullScreenLoader from '../../components/FullScreenLoader';
 import { generateAndDownloadInvoice } from '../../services/InvoiceService';
 import { useAlert } from '../../contexts/AlertContext';
 import { ROUTES } from '../../shared/utils/routes';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import AppointmentTrackingMap from '../../components/AppointmentTrackingMap';
 
 const OrderDetailScreen = ({ navigation, route }: any) => {
   const OrderId = route?.params?.OrderId;
@@ -105,7 +108,15 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const [familyMedicalProblemsError, setFamilyMedicalProblemsError] = useState(false);
   const [isRatingVisible, setIsRatingVisible] = useState(false);
   const ratingScrollViewRef = useRef<ScrollView>(null);
+  const medicalHistoryScrollViewRef = useRef<ScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const medicalComplaintRef = useRef<View>(null);
+  const sufferingDurationRef = useRef<View>(null);
+  const isRecurringRef = useRef<View>(null);
+  const allergiesRef = useRef<View>(null);
+  const isSmokingRef = useRef<View>(null);
+  const familyMedicalProblemsRef = useRef<View>(null);
+  const [fieldPositions, setFieldPositions] = useState<{[key: string]: number}>({});
   const [medicalCenterRating, setMedicalCenterRating] = useState(0);
   const [timingRating, setTimingRating] = useState(0);
   const [staffRating, setStaffRating] = useState(0);
@@ -114,6 +125,8 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const [visitHistoryData, setVisitHistoryData] = useState<any>(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [openGoogleMapBottomSheet, setOpenGoogleMapBottomSheet] = useState(false);
+  const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
   const { showAlert } = useAlert();
   const handleMedicalCenterStarPress = (starIndex: number) => {
     setMedicalCenterRating(starIndex + 1);
@@ -128,6 +141,8 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   };
 
   const handleSubmitRating = async () => {
+    setIsRatingSubmitting(true);
+    try {
     const payload = {
       "UserloginInfoId": user?.Id,
       "Comment": comment,
@@ -148,19 +163,21 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       setTimingRating(0);
       setStaffRating(0);
       setComment('');
-
-      Alert.alert('تم تحديث التقييم', 'تم تحديث التقييم بنجاح', [
-        {
-          text: 'موافق',
-          onPress: () => {
-            setIsRatingVisible(false);
-          }
+      showAlert({
+        title: 'تم تحديث التقييم',
+        message: 'تم تحديث التقييم بنجاح',
+        onConfirm: () => {
+          setIsRatingVisible(false);
         }
-      ]);
-    }
-    // Here you can add API call to submit the ratings
+      });
 
-  };
+    }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    } finally {
+      setIsRatingSubmitting(false);
+    }
+  }
 
   const getVisitMainRecordDetails = async (item: any, type: string) => {
     try {
@@ -330,7 +347,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
       // Determine file extension based on the actual file
-      const fileExtension = audioFile.split('.').pop() || 'm4a';
+      const fileExtension = audioFile?.split('.').pop() || 'm4a';
       // Use the actual file extension for better compatibility
       const fileName = `audio_${timestamp}.${fileExtension}`;
 
@@ -614,7 +631,16 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
   const renderDoctorTag = ({ item, index }: { item: any; index: number }) => {
     const selectedItem = item.items[0];
-    const imagePath = selectedItem.ServiceProviderImage ? `${MediaBaseURL}${selectedItem.ServiceProviderImage}` : selectedItem.ServiceImage ? `${MediaBaseURL}${selectedItem.ServiceProviderImage}` : `${MediaBaseURL}${selectedItem.OrganizationImagePath}`;
+    console.log("selectedItem", selectedItem);
+    const displayCategory = categoriesList.find((item: any) => item.Id == selectedItem?.CatCategoryId);
+    console.log("displayCategory", displayCategory?.Display);
+    let imagePath: any = null;
+    if (displayCategory?.Display == "CP") {
+      imagePath = selectedItem.ServiceProviderImagePath ? `${MediaBaseURL}${selectedItem.ServiceProviderImagePath}` : null;
+    } else {
+      imagePath = selectedItem.OrganizationImagePath ? `${MediaBaseURL}${selectedItem.OrganizationImagePath}` : null;
+    }
+
     const name = selectedItem.ServiceProviderSName || selectedItem.OrganizationSlang;
 
     return (
@@ -624,7 +650,12 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
           onPress={() => setSelectedIndex(index)}
           activeOpacity={0.8}
         >
-          <UniversalImage source={{ uri: imagePath }} style={styles.doctorImage} />
+          {imagePath ?
+            <UniversalImage source={{ uri: imagePath }} style={styles.doctorImage} /> :
+            <View style={[styles.doctorImage, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#e4f1ef' }]} >
+              <Ionicons name="person" size={28} color="#AFAFAF" />
+            </View>
+          }
           <View style={styles.doctorInfoCol}>
             <Text style={[styles.doctorName, selectedIndex === index && { color: '#fff' }]}>{t('service_provider')}</Text>
             <Text style={[styles.serviceName, selectedIndex === index && { color: '#fff' }]}>{name}</Text>
@@ -679,25 +710,33 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
   // Form validation function
 
-  // Keyboard listeners for rating bottom sheet
+  // Keyboard listeners for rating bottom sheet and medical history bottom sheet
   useEffect(() => {
+    if (!isRatingVisible && !medicalHistoryBottomSheet) return;
+
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
-      setKeyboardHeight(e.endCoordinates.height);
-      // Scroll to comment section when keyboard appears
-      setTimeout(() => {
-        ratingScrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      if (Platform.OS === 'ios') {
+        setKeyboardHeight(e.endCoordinates.height);
+        // Scroll to comment section when keyboard appears for rating
+        if (isRatingVisible) {
+          setTimeout(() => {
+            ratingScrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        }
+      }
     });
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardHeight(0);
+      if (Platform.OS === 'ios') {
+        setKeyboardHeight(0);
+      }
     });
 
     return () => {
       keyboardDidShowListener?.remove();
       keyboardDidHideListener?.remove();
     };
-  }, []);
+  }, [isRatingVisible, medicalHistoryBottomSheet]);
 
   const renderHeader = () => (
     <Header
@@ -773,29 +812,50 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     setOpenBeneficiaryBottomSheet(false)
   }
 
+  const scrollToField = (fieldName: string) => {
+    const position = fieldPositions[fieldName];
+    if (position !== undefined && medicalHistoryScrollViewRef.current) {
+      medicalHistoryScrollViewRef.current.scrollTo({
+        y: Math.max(0, position - 20),
+        animated: true,
+      });
+    }
+  };
+
+  const handleFieldLayout = (fieldName: string, event: any) => {
+    const { y } = event.nativeEvent.layout;
+    setFieldPositions(prev => ({ ...prev, [fieldName]: y }));
+  };
+
   const updateMedicalHistory = async () => {
     if (medicalComplaint == '') {
       setMedicalComplaintError(true);
+      setTimeout(() => scrollToField('medicalComplaint'), 100);
       return;
     }
     if (sufferingDuration == '') {
       setSufferingDurationError(true);
+      setTimeout(() => scrollToField('sufferingDuration'), 100);
       return;
     }
     if (isRecurring == '') {
       setIsRecurringError(true);
+      setTimeout(() => scrollToField('isRecurring'), 100);
       return;
     }
     if (allergies == '') {
       setAllergiesError(true);
+      setTimeout(() => scrollToField('allergies'), 100);
       return;
     }
     if (isSmoking == '') {
       setIsSmokingError(true);
+      setTimeout(() => scrollToField('isSmoking'), 100);
       return;
     }
     if (familyMedicalProblems == '') {
       setFamilyMedicalProblemsError(true);
+      setTimeout(() => scrollToField('familyMedicalProblems'), 100);
       return;
     }
     const Payload = {
@@ -1146,7 +1206,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
       let url = `${MediaBaseURL}/common/upload`;
       let ResourceCategoryId = '2';
 
-      let fileType = file.name.split('.').pop();
+      let fileType = file.name?.split('.').pop();
       if (fileType == 'pdf' || fileType == 'PDF') ResourceCategoryId = '4';
       else if (
         fileType == 'jpg' ||
@@ -1262,7 +1322,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   };
 
   const getFileName = (url: string) => {
-    const fileName = url.split('/').pop();
+    const fileName = url?.split('/').pop();
     return fileName;
   };
 
@@ -1305,9 +1365,9 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
   const getFileNameFromUrl = (url: string) => {
     // Split the URL by '/'
-    const parts = url.split('/');
+    const parts = url?.split('/');
     // Get the last part, which is the filename
-    let fileName = parts.pop();
+    let fileName = parts?.pop();
 
     // If no filename found, generate a default one
     if (!fileName || fileName === '') {
@@ -1315,7 +1375,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     }
 
     // Remove any query parameters
-    fileName = fileName.split('?')[0];
+    fileName = fileName?.split('?')[0];
 
     return fileName;
   };
@@ -1444,7 +1504,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
     }
     return (
       <View style={{ padding: 10, borderWidth: 1, backgroundColor: '#fff', borderColor: '#fff', borderRadius: 10, marginBottom: 10 }}>
-        <Text style={[globalTextStyles.bodyMedium, { fontWeight: 'bold', color: '#000', textAlign: 'left' }]}>{item.CPFullnameSlang || item.FileName || ''}</Text>
+        <Text style={[globalTextStyles.bodyMedium, { color: '#000', textAlign: 'left', fontFamily: CAIRO_FONT_FAMILY.bold }]}>{item.CPFullnameSlang || item.FileName || ''}</Text>
         <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
           <TouchableOpacity onPress={() => downloadMedicalReport(item)} style={{ height: 40, width: '48%', backgroundColor: '#23a2a4', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginTop: 10 }}>
             <Text style={[globalTextStyles.bodyMedium, { color: '#fff' }]}>{'تحميل الملف'}</Text>
@@ -1460,7 +1520,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
   const handleCancelOrder = async (item: any) => {
     var orderDetailIds = item.map((element: any) => element.OrderDetailId).join(',');
-    
+
     try {
       const payload = {
         "OrderDetailIds": orderDetailIds,
@@ -1495,51 +1555,56 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
   const isCancelable = (item: any) => {
     // List of order status IDs that prevent cancellation
     const nonCancelableStatusIds = [24, 9, 4, 10];
-    
+
     // Check if any item has a non-cancelable status
-    const hasNonCancelableStatus = item.some((element: any) => 
+    const hasNonCancelableStatus = item.some((element: any) =>
       nonCancelableStatusIds.includes(element.CatOrderStatusId)
     );
-    
+
     // If any item has a non-cancelable status, return false
     if (hasNonCancelableStatus) {
       return false;
     }
- 
+
     // Sort the array in ascending order by SchedulingDate and SchedulingTime
     const sortedItems = [...item].sort((a: any, b: any) => {
-      const dateA = new Date(`${a.SchedulingDate.split('T')[0]}T${a.SchedulingTime}`);
-      const dateB = new Date(`${b.SchedulingDate.split('T')[0]}T${b.SchedulingTime}`);
+      const dateA = new Date(`${a.SchedulingDate?.split('T')[0]}T${a.SchedulingTime}`);
+      const dateB = new Date(`${b.SchedulingDate?.split('T')[0]}T${b.SchedulingTime}`);
       return dateA.getTime() - dateB.getTime();
     });
 
     // Get the earliest scheduled appointment
     const earliestAppointment = sortedItems[0];
-    
+
     // Combine SchedulingDate and SchedulingTime to create full datetime
     const scheduledDateTime = new Date(
-      `${earliestAppointment.SchedulingDate.split('T')[0]}T${earliestAppointment.SchedulingTime}`
+      `${earliestAppointment.SchedulingDate?.split('T')[0]}T${earliestAppointment.SchedulingTime}`
     );
-    
+
     // Get current time
     const now = new Date();
-    
+
     // Calculate difference in milliseconds
     const timeDifference = scheduledDateTime.getTime() - now.getTime();
-    
+
     // Convert to hours
     const hoursDifference = timeDifference / (1000 * 60 * 60);
-    
+
     // Return true if more than 24 hours remaining, false otherwise
     return hoursDifference > 24;
   }
 
+  console.log("selectedDoctor", selectedDoctor?.items[0]);
+
+  const callPatient = (appointment: any) => {
+    Linking.openURL(`tel:${appointment.PhoneNumber}`);
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       {renderHeader()}
-      <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 16 }}>
-        <View style={{ height: 120, width: "100%", backgroundColor: "#fff", alignItems: "flex-start" }}>
+      <View style={{ flex: 1, backgroundColor: '#e4f1ef', paddingHorizontal: 10 }}>
+        <View style={{ height: 120, marginTop: 10, borderTopLeftRadius: 10, borderTopRightRadius: 10, width: "100%", backgroundColor: "#fff", alignItems: "flex-start" }}>
           {/* Doctor tags */}
           <FlatList
             data={showGroupedArray}
@@ -1552,7 +1617,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
           />
         </View>
 
-        {selectedDoctor?.uniqueId && <ScrollView style={{ flex: 1 }}>
+        {selectedDoctor?.uniqueId && <ScrollView style={{ flex: 1, paddingHorizontal: 10, backgroundColor: '#fff' }}>
           {
             selectedDoctor?.items?.map((item: any) => {
               let displayDate = '';
@@ -1564,7 +1629,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               }
 
               if (item.SchedulingDate && item.SchedulingTime) {
-                const datePart = item.SchedulingDate.split('T')[0];
+                const datePart = item.SchedulingDate?.split('T')[0];
                 const utcDateTime = moment.utc(`${datePart}T${item.SchedulingTime}:00Z`);
                 if (utcDateTime.isValid()) {
                   const localDateTime = utcDateTime.local();
@@ -1577,10 +1642,10 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                 <View style={{ backgroundColor: '#fff' }}>
                   {/* Order Information */}
                   <View style={{ paddingBottom: 10, width: '100%', backgroundColor: '#fff', borderRadius: 10, marginBottom: 10 }}>
-                    <View style={{ height: 45, width: '100%', backgroundColor: '#e4f1ef', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, borderTopLeftRadius: 10, borderTopRightRadius: 10, marginBottom: 10 }}>
+                    <View style={{ height: 45, width: '100%', backgroundColor: '#e4f1ef', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row', paddingHorizontal: 10, borderRadius: 10, marginBottom: 10 }}>
                       <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>معلومات الطلب</Text>
-                      <TouchableOpacity disabled={!isCancelable(selectedDoctor?.items)} onPress={() => handleCancelOrder(selectedDoctor?.items)} style={{ height: 35, width: 100, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#dc3545', borderRadius: 10 }}>
-                        <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>إلغاء الحجز</Text>
+                      <TouchableOpacity disabled={!isCancelable(selectedDoctor?.items)} onPress={() => handleCancelOrder(selectedDoctor?.items)} style={[{ height: 35, width: 100, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#dc3545', borderRadius: 10 }]}>
+                        <Text style={[globalTextStyles.bodyMedium, !isCancelable(selectedDoctor?.items) ? { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#999' } : { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#191919' }]}>إلغاء الحجز</Text>
                       </TouchableOpacity>
 
                     </View>
@@ -1607,7 +1672,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                     <View style={{ width: '100%', alignItems: 'flex-start', paddingHorizontal: 10, paddingTop: 5 }}>
                       <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333' }]}>حالة الطلب</Text>
 
-                      {/* Order Status Component */} 
+                      {/* Order Status Component */}
                       <View style={styles.orderStatusContainer}>
                         {/* Other Orders Status */}
                         {item?.CatOrderStatusId != 24 && item?.CatOrderStatusId != 9 && item?.CatOrderStatusId != 4 && (
@@ -1652,6 +1717,8 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                               )}
                               <Text style={[styles.statusText, item?.CatOrderStatusId == 10 && styles.activeStatusText]}>اكتملت الخدمة</Text>
                             </View>
+
+
                           </View>
                         )}
 
@@ -1688,6 +1755,13 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                             </View>
                           </View>
                         )}
+
+                        {item?.CatServiceServeTypeId != "1" && <View>
+                          <TouchableOpacity onPress={() => setOpenGoogleMapBottomSheet(true)} style={{ flexDirection: 'row', height: 40, width: '100%', borderWidth: 1, borderColor: "#008080", borderRadius: 10, marginTop: 10, alignItems: 'center', justifyContent: 'center' }}>
+                            <Image source={require('../../assets/icons/googleMapIcon.png')} style={{ width: 20, height: 20 }} />
+                            <Text style={{ ...globalTextStyles.bodySmall, color: '#008080', paddingRight: 10 }}>تتبع وصول المعالج</Text>
+                          </TouchableOpacity>
+                        </View>}
                       </View>
                     </View>
                   </View>
@@ -1700,7 +1774,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                     <View style={styles.selectedServiceRow}>
                       {item?.CatCategoryId == "42"
                         ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}`}</Text>
-                        : <Text style={styles.selectedServiceText}>{String(item?.ServiceTitleSlang || item?.TitleSlang || '')}</Text>
+                        : <Text style={styles.selectedServiceText}>{`${String(item?.ServiceTitleSlang || item?.TitleSlang || '')}${item?.SpecialtyTitleSlang ? `(${item?.SpecialtyTitleSlang})` : ''}`}</Text>
                       }
                       <View style={styles.selectedServiceCircle}><Text style={styles.selectedServiceCircleText}>1</Text></View>
                     </View>
@@ -1716,11 +1790,11 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       <View style={styles.sessionInfoDetailItem}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <ClockIcon width={18} height={18} />
-                          <Text style={styles.sessionInfoLabel}>توقيت الزيارة</Text>
+                          <Text style={styles.sessionInfoLabel}>{item?.CatServiceServeTypeId == "1" ? 'توقيت الجلسة' : 'توقيت الزيارة'}</Text>
                         </View>
                         <Text style={styles.sessionInfoValue}>{displayTime}</Text>
                       </View>
-                      {/* <View style={styles.sessionInfoDetailItem}>
+                      {item?.CatServiceServeTypeId != "1" && <View style={styles.sessionInfoDetailItem}>
                         <View style={{ width: '30%', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <SettingIconSelected width={18} height={18} />
                           <Text style={styles.sessionInfoLabel}>موقع الزيارة</Text>
@@ -1728,7 +1802,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                         <View style={{ width: '70%', alignItems: "flex-end" }}>
                           <Text style={styles.sessionInfoValue}>{item?.Address}</Text>
                         </View>
-                      </View> */}
+                      </View>}
                     </View>
                   </View>
                   {/* Patient Information */}
@@ -1754,14 +1828,14 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: "right", width: "70%", flexWrap: "wrap" }]}>{item.IDNumber}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, marginTop: 10 }}>
-                      <TouchableOpacity onPress={() => onPressBeneficiary(item)} disabled={item?.PatientUserProfileInfoId == user?.UserProfileInfoId} style={[{ width: '48%', height: 50, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, item?.PatientUserProfileInfoId == user?.UserProfileInfoId ? { backgroundColor: '#179c8e', opacity: 0.5 } : { backgroundColor: '#179c8e', }]}>
+                      <TouchableOpacity onPress={() => onPressBeneficiary(item)} disabled={(item?.PatientUserProfileInfoId == user?.UserProfileInfoId || (item?.CatOrderStatusId == 9 || item?.CatOrderStatusId == 4))} style={[{ width: '48%', height: 50, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, item?.PatientUserProfileInfoId == user?.UserProfileInfoId ? { backgroundColor: '#179c8e', opacity: 0.5 } : { backgroundColor: '#179c8e', }]}>
                         <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>بيانات المستفيد</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleMedicalHistoryBottomSheet(item)} style={{ width: '48%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                      <TouchableOpacity onPress={() => handleMedicalHistoryBottomSheet(item)} disabled={(item?.CatOrderStatusId == 9 || item?.CatOrderStatusId == 4)} style={[{ width: '48%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, (item?.CatOrderStatusId == 9 || item?.CatOrderStatusId == 4) ? { backgroundColor: '#179c8e', opacity: 0.5 } : { backgroundColor: '#179c8e', }]}>
                         <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>التاريخ المرضي</Text>
                       </TouchableOpacity>
                     </View>
-                    <TouchableOpacity onPress={() => getMedicalReportList()} style={{ width: '94%', marginHorizontal: 10, height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
+                    <TouchableOpacity disabled={(item?.CatOrderStatusId == 9 || item?.CatOrderStatusId == 4)} onPress={() => getMedicalReportList()} style={[{ width: '94%', marginHorizontal: 10, height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }, (item?.CatOrderStatusId == 9 || item?.CatOrderStatusId == 4) ? { backgroundColor: '#179c8e', opacity: 0.5 } : { backgroundColor: '#179c8e', }]}>
                       <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>التقارير الطبية</Text>
                     </TouchableOpacity>
                     <Text style={[globalTextStyles.bodyMedium, { fontFamily: CAIRO_FONT_FAMILY.medium, color: 'red', textAlign: 'left', paddingHorizontal: 10, marginTop: 10 }]}>اكمل معلومات المستفيد ( اختيارى)</Text>
@@ -1867,7 +1941,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                         <RatingVector width={200} height={200} color="#179c8e" />
                       </View>
                       <Text style={{ fontFamily: CAIRO_FONT_FAMILY.bold, color: '#333', textAlign: 'center' }}>يمهنا رائيك لتحسين خدمتنا بإستمرار قم بالإجابة على الإستبيان التالي</Text>
-                      <TouchableOpacity onPress={() => setIsRatingVisible(true)} style={{ width: '100%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}>
+                      <TouchableOpacity disabled={(item?.CatOrderStatusId == 9 || item?.CatOrderStatusId == 4)} onPress={() => setIsRatingVisible(true)} style={[{ width: '100%', height: 50, backgroundColor: '#179c8e', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 10 }, (item?.CatOrderStatusId == 9 || item?.CatOrderStatusId == 4) ? { backgroundColor: '#179c8e', opacity: 0.5 } : { backgroundColor: '#179c8e', }]}>
                         <Text style={[globalTextStyles.bodyMedium, { color: '#fff', fontFamily: CAIRO_FONT_FAMILY.bold }]}>بدء الإستبيان</Text>
                       </TouchableOpacity>
                     </View>
@@ -1923,8 +1997,13 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
           visible={medicalHistoryBottomSheet}
           onClose={() => setMedicalHistoryBottomSheet(false)}
           showHandle={false}
-          height="60%"
+          height={Platform.OS === 'ios' ? '90%' : '60%'}
         >
+          <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={0}
+      >
           <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
             <View style={{ height: 50, backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
               <Text style={styles.bottomSheetHeaderText}>التاريخ المرضي</Text>
@@ -1934,17 +2013,24 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
             </View>
             <ScrollView
-              style={{ flex: 1 }}
-              // contentContainerStyle={{ paddingBottom: 20 }}
+              ref={medicalHistoryScrollViewRef}
+              style={{ flexGrow: 1, flex: 1 }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ 
+                paddingBottom: Platform.OS === 'ios' ?  20 : 0 
+              }}
             >
               <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
                 <View style={styles.modalBackground}>
                   <View style={styles.modalContainer}>
                     <View style={styles.formContainer}>
                       {/* Medical Complaint */}
-                      <View style={styles.inputGroup}>
+                      <View 
+                        ref={medicalComplaintRef}
+                        style={styles.inputGroup}
+                        onLayout={(event) => handleFieldLayout('medicalComplaint', event)}
+                      >
                         <View style={styles.questionRow}>
                           <Text style={styles.questionText}>ماهي شكواك الطبيه</Text>
                           <Text style={styles.requiredAsterisk}> *</Text>
@@ -1967,7 +2053,11 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       </View>
 
                       {/* Duration of Suffering */}
-                      <View style={styles.inputGroup}>
+                      <View 
+                        ref={sufferingDurationRef}
+                        style={styles.inputGroup}
+                        onLayout={(event) => handleFieldLayout('sufferingDuration', event)}
+                      >
                         <View style={styles.questionRow}>
                           <Text style={styles.questionText}>كم مدة المعاناه</Text>
                           <Text style={styles.requiredAsterisk}> *</Text>
@@ -1987,7 +2077,11 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       </View>
 
                       {/* Is it recurring */}
-                      <View style={styles.inputGroup}>
+                      <View 
+                        ref={isRecurringRef}
+                        style={styles.inputGroup}
+                        onLayout={(event) => handleFieldLayout('isRecurring', event)}
+                      >
                         <View style={styles.questionRow}>
                           <Text style={styles.questionText}>هل هي متكرره</Text>
                           <Text style={styles.requiredAsterisk}> *</Text>
@@ -2010,7 +2104,11 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       </View>
 
                       {/* Allergies */}
-                      <View style={styles.inputGroup}>
+                      <View 
+                        ref={allergiesRef}
+                        style={styles.inputGroup}
+                        onLayout={(event) => handleFieldLayout('allergies', event)}
+                      >
                         <View style={styles.questionRow}>
                           <Text style={styles.questionText}>هل لديك حساسيه ؟</Text>
                           <Text style={styles.requiredAsterisk}> *</Text>
@@ -2030,7 +2128,11 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       </View>
 
                       {/* Smoking */}
-                      <View style={styles.inputGroup}>
+                      <View 
+                        ref={isSmokingRef}
+                        style={styles.inputGroup}
+                        onLayout={(event) => handleFieldLayout('isSmoking', event)}
+                      >
                         <View style={styles.questionRow}>
                           <Text style={styles.questionText}>هل تدخن ؟</Text>
                           <Text style={styles.requiredAsterisk}> *</Text>
@@ -2053,7 +2155,11 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       </View>
 
                       {/* Family Medical Problems */}
-                      <View style={styles.inputGroup}>
+                      <View 
+                        ref={familyMedicalProblemsRef}
+                        style={styles.inputGroup}
+                        onLayout={(event) => handleFieldLayout('familyMedicalProblems', event)}
+                      >
                         <View style={styles.questionRow}>
                           <Text style={styles.questionText}>هل هناك مشاكل طبيه في الأسره ؟</Text>
                           <Text style={styles.requiredAsterisk}> *</Text>
@@ -2091,6 +2197,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
               </TouchableWithoutFeedback>
             </ScrollView>
           </View>
+          </KeyboardAvoidingView>
         </CustomBottomSheet>
 
         <CustomBottomSheet
@@ -2284,10 +2391,15 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
           height="80%"
           showHandle={false}
         >
+          <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={0}
+      >
           <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
             {/* Header */}
             <View style={{ height: 50, backgroundColor: "#e4f1ef", justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', borderTopLeftRadius: 10, borderTopRightRadius: 10, paddingHorizontal: 16 }}>
-              <Text style={[globalTextStyles.bodyLarge, { fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
+              <Text style={[globalTextStyles.bodyLarge, { color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }]}>
                 {'إستبيان مدى رضاك عن الخدمة'}
               </Text>
               <TouchableOpacity onPress={() => setIsRatingVisible(false)}>
@@ -2297,17 +2409,17 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
             <ScrollView
               ref={ratingScrollViewRef}
-              style={{ flexGrow: 1, flex: 1 }}
+              style={{ flex: 1 }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: keyboardHeight }}
+              contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 20 : 0 }}
             >
               <View style={{ flex: 1, paddingHorizontal: 16 }}>
                 <View style={{ flex: 1 }}>
                   <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم المركز الطبي</Text>
+                    <Text style={{ fontSize: 16, color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم المركز الطبي</Text>
                   </View>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>بشكل عام ما مدى رضاكم عن الخدمة ؟</Text>
+                  <Text style={{ fontSize: 16, color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>بشكل عام ما مدى رضاكم عن الخدمة ؟</Text>
 
                   {/* Star Rating */}
                   <View style={{ alignItems: 'center', marginTop: 20 }}>
@@ -2331,7 +2443,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                 </View>
 
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>كيف كان التوقيت المتعلق بتقديم الخدمة ووصولها اليكم ؟</Text>
+                  <Text style={{ fontSize: 16, color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>كيف كان التوقيت المتعلق بتقديم الخدمة ووصولها اليكم ؟</Text>
 
                   {/* Star Rating */}
                   <View style={{ alignItems: 'center', marginTop: 20 }}>
@@ -2356,9 +2468,9 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
                 <View style={{ flex: 1 }}>
                   <View style={{ height: 50, backgroundColor: '#e4f1ef', marginTop: 10, borderRadius: 10, padding: 10, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم الطبيب المعالج / الطاقم الطبي</Text>
+                    <Text style={{ fontSize: 16, color: '#000', fontFamily: CAIRO_FONT_FAMILY.bold }}>تقييم الطبيب المعالج / الطاقم الطبي</Text>
                   </View>
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>ما مدى راحتك مع الطاقم الطبي/الأخصائي/التمريض ؟</Text>
+                  <Text style={{ fontSize: 16, color: '#000', textAlign: 'center', marginTop: 10, fontFamily: CAIRO_FONT_FAMILY.bold }}>ما مدى راحتك مع الطاقم الطبي/الأخصائي/التمريض ؟</Text>
 
                   {/* Star Rating */}
                   <View style={{ alignItems: 'center', marginTop: 20 }}>
@@ -2385,7 +2497,6 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                 <View style={{ marginTop: 20, paddingHorizontal: 16 }}>
                   <Text style={{
                     fontSize: 16,
-                    fontWeight: '600',
                     color: '#000',
                     textAlign: 'center',
                     marginBottom: 10,
@@ -2427,21 +2538,21 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
                       opacity: (medicalCenterRating > 0 || timingRating > 0 || staffRating > 0) ? 1 : 0.6
                     }}
                     onPress={handleSubmitRating}
-                    disabled={(medicalCenterRating === 0 && timingRating === 0 && staffRating === 0)}
+                    disabled={(medicalCenterRating === 0 && timingRating === 0 && staffRating === 0) || isRatingSubmitting}
                   >
-                    <Text style={{
+                    {isRatingSubmitting ? <ActivityIndicator size="small" color="#fff" /> :<Text style={{
                       color: '#fff',
                       fontSize: 16,
-                      fontWeight: 'bold',
                       fontFamily: CAIRO_FONT_FAMILY.bold
                     }}>
                       إرسال التقييم
-                    </Text>
+                    </Text>}
                   </TouchableOpacity>
                 </View>
               </View>
             </ScrollView>
           </View>
+          </KeyboardAvoidingView>
         </CustomBottomSheet>
 
         <CustomBottomSheet
@@ -2838,6 +2949,50 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
           </View>
         </CustomBottomSheet>
 
+        <CustomBottomSheet
+          visible={openGoogleMapBottomSheet}
+          onClose={() => setOpenGoogleMapBottomSheet(false)}
+          height={'80%'}
+          backdropClickable={false}
+          showHandle={false}
+        >
+          <View style={{ flex: 1, backgroundColor: '#eff5f5', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+            <View style={{ height: 50, width: '100%', backgroundColor: "#e4f1ef", borderTopLeftRadius: 10, borderTopRightRadius: 10, justifyContent: 'space-between', alignItems: 'center', flexDirection: 'row', paddingHorizontal: 16 }}>
+              <Text style={[globalTextStyles.buttonMedium, { color: '#000' }]}>تتبع وصول المعالج</Text>
+              <TouchableOpacity onPress={() => setOpenGoogleMapBottomSheet(false)}>
+                <AntDesign name="close" size={20} color="#000" />
+              </TouchableOpacity>
+            </View>
+            <View style={{ paddingHorizontal: 16 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View style={{ flex: 1, alignItems: "flex-start", justifyContent: "center" }}>
+                  <Text style={{ ...globalTextStyles.bodyLarge, color: '#000' }}>{selectedDoctor?.items[0]?.FullNameSlang}</Text>
+                  <Text style={{ ...globalTextStyles.bodySmall, lineHeight: 15, color: '#222' }}>{selectedDoctor?.items[0]?.OrganizationSlang}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+
+                    <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>{selectedDoctor?.items[0]?.PhoneNumber?.replace(/^\+/, '')}</Text>
+                    <Text style={{ ...globalTextStyles.bodySmall, color: '#222' }}>+</Text>
+
+                    <TouchableOpacity onPress={() => callPatient(selectedDoctor?.items[0])} style={{ width: 40, height: 20, marginLeft: 10, backgroundColor: '#2ab318', borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
+                      <FontAwesome6 name="phone-volume" size={12} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+
+                </View>
+              </View>
+
+            </View>
+            <View style={{ flex: 1, borderRadius: 10, padding: 10 }}>
+              {selectedDoctor?.items[0] && (
+                <AppointmentTrackingMap
+                  appointment={selectedDoctor?.items[0]}
+                  onRouteInfoUpdate={(info: any) => { }}
+                />
+              )}
+            </View>
+          </View>
+        </CustomBottomSheet>
+
         <FullScreenLoader visible={isLoading} />
 
       </View>
@@ -2979,9 +3134,9 @@ const styles = StyleSheet.create({
     fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   selectedServiceText: {
-    ...globalTextStyles.bodyMedium,
-    color: '#23a2a4',
-    fontFamily: CAIRO_FONT_FAMILY.bold,
+    fontSize: 14,
+    color: '#36454F',
+    fontFamily: CAIRO_FONT_FAMILY.semiBold,
   },
   sessionInfoTitle: {
     ...globalTextStyles.bodyMedium,
@@ -3123,19 +3278,27 @@ const styles = StyleSheet.create({
   },
   statusText: {
     ...globalTextStyles.bodySmall,
+    paddingRight: Platform.OS == 'ios' ? 0 : 35,
+    paddingLeft: Platform.OS == 'ios' ? 35 : 0,
     color: '#666',
   },
   activeStatusText: {
     color: '#23a2a4',
     fontFamily: CAIRO_FONT_FAMILY.bold,
+    paddingRight: Platform.OS == 'ios' ? 0 : 2,
+    paddingLeft: Platform.OS == 'ios' ? 2 : 0,
   },
   cancelledStatusText: {
     color: '#23a2a4',
     fontFamily: CAIRO_FONT_FAMILY.bold,
+    paddingRight: Platform.OS == 'ios' ? 0 : 2,
+    paddingLeft: Platform.OS == 'ios' ? 2 : 0,
   },
   missedStatusText: {
     color: '#23a2a4',
     fontFamily: CAIRO_FONT_FAMILY.bold,
+    paddingRight: Platform.OS == 'ios' ? 0 : 2,
+    paddingLeft: Platform.OS == 'ios' ? 2 : 0,
   },
   bottomSheetHeaderText: {
     fontSize: 16,
@@ -3403,7 +3566,6 @@ const styles = StyleSheet.create({
   },
   vitalSignValue: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#23a2a4',
     fontFamily: CAIRO_FONT_FAMILY.bold,
   },
@@ -3417,7 +3579,6 @@ const styles = StyleSheet.create({
   },
   oeTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
     color: '#23a2a4',
     marginBottom: 3,
     fontFamily: CAIRO_FONT_FAMILY.bold,
@@ -3437,14 +3598,12 @@ const styles = StyleSheet.create({
   },
   diagnosisType: {
     fontSize: 14,
-    fontWeight: 'bold',
     color: '#23a2a4',
     marginBottom: 5,
     fontFamily: CAIRO_FONT_FAMILY.bold,
   },
   diagnosisSpecialty: {
     fontSize: 13,
-    fontWeight: 'bold',
     color: '#333',
     marginBottom: 5,
     fontFamily: CAIRO_FONT_FAMILY.bold,
@@ -3455,7 +3614,6 @@ const styles = StyleSheet.create({
   },
   diagnosisCode: {
     fontSize: 12,
-    fontWeight: 'bold',
     color: '#23a2a4',
     marginRight: 5,
     fontFamily: CAIRO_FONT_FAMILY.bold,
@@ -3479,7 +3637,6 @@ const styles = StyleSheet.create({
   },
   labTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
     color: '#23a2a4',
     marginBottom: 3,
     fontFamily: CAIRO_FONT_FAMILY.bold,
@@ -3531,7 +3688,6 @@ const styles = StyleSheet.create({
   },
   medicineLabel: {
     fontSize: 12,
-    fontWeight: 'bold',
     color: '#23a2a4',
     marginRight: 5,
     fontFamily: CAIRO_FONT_FAMILY.bold,

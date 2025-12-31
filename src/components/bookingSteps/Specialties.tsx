@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, FlatList, Text, Image, TouchableOpacity, StyleSheet, I18nManager, ActivityIndicator, Modal, ScrollView } from 'react-native';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { View, FlatList, Text, Image, TouchableOpacity, StyleSheet, I18nManager, ActivityIndicator, Modal, ScrollView, Dimensions } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import SearchInput from '../common/SearchInput';
 import { bookingService } from '../../services/api/BookingService';
@@ -22,6 +22,9 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [showMoreButton, setShowMoreButton] = useState(false);
+  const hasMeasuredText = useRef(false);
   const CardArray = useSelector((state: any) => state.root.booking.cardItems);
   const dispatch = useDispatch();
   const selectedUniqueId = useSelector((state: any) => state.root.booking.selectedUniqueId);
@@ -29,6 +32,9 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
 
   useEffect(() => {
     if (category) {
+      setIsDescriptionExpanded(false);
+      setShowMoreButton(false);
+      hasMeasuredText.current = false;
       if (category.Id == "42" || category.Id == "32") {
         fetchServicesAndSpecialtiesData();
       } else {
@@ -188,7 +194,7 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
           renderItem={renderItem}
           keyExtractor={(item, idx) => item.Id?.toString() || idx.toString()}
           numColumns={2}
-          columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 8, columnGap: 8 }}
+          columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 4, columnGap: 8 }}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
@@ -213,8 +219,40 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
           ListHeaderComponent={
             <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
               <Text style={{ ...globalTextStyles.buttonLarge, color: '#000' }}>وصف الخدمة</Text>
-              <Text style={{ ...globalTextStyles.bodyMedium, color: '#000' }}>{formatSlang(category?.DescriptionSlang)}</Text>
-              <Text style={{ ...globalTextStyles.buttonMedium, color: '#000' }}>اختر خدمة او اكثر</Text>
+              <View>
+                {/* Hidden text to measure actual line count */}
+                {!hasMeasuredText.current && (
+                  <Text 
+                    style={[globalTextStyles.bodyMedium, styles.hiddenMeasureText]}
+                    onTextLayout={(event) => {
+                      const { lines } = event.nativeEvent;
+                      if (lines.length > 4) {
+                        setShowMoreButton(true);
+                      }
+                      hasMeasuredText.current = true;
+                    }}
+                  >
+                    {formatSlang(category?.DescriptionSlang)}
+                  </Text>
+                )}
+                <Text 
+                  style={{ ...globalTextStyles.bodyMedium, color: '#000' }}
+                  numberOfLines={isDescriptionExpanded ? undefined : 4}
+                >
+                  {formatSlang(category?.DescriptionSlang)}
+                </Text>
+                {showMoreButton && (
+                  <TouchableOpacity 
+                    onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    style={styles.showMoreButton}
+                  >
+                    <Text style={styles.showMoreText}>
+                      {isDescriptionExpanded ? 'عرض أقل' : 'عرض المزيد'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <Text style={{ ...globalTextStyles.buttonMedium, color: '#000', marginTop: 12 }}>اختر خدمة او اكثر</Text>
             </View>
           }
         />
@@ -254,18 +292,17 @@ const Specialties = ({ onPressSpecialty, onContinueWithService, onSelectIndividu
                 <Ionicons name="close" size={22} color="#333" />
               </TouchableOpacity>
             </View>
-            {/* Message and Button */}
-            <View style={styles.modalContent}>
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <Text style={styles.modalMessage}>{formatSlang(selectedService?.DescriptionSlang)}</Text>
-              </ScrollView>
-              {/* <TouchableOpacity
-                onPress={() => setShowServiceModal(false)}
-                style={styles.modalButton}
-              >
-                <Text style={styles.modalButtonText}>يغلق</Text>
-              </TouchableOpacity> */}
-            </View>
+            {/* Scrollable Content */}
+            <ScrollView 
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={true}
+              bounces={true}
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={styles.modalMessage}>{formatSlang(selectedService?.DescriptionSlang)}</Text>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -391,13 +428,15 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   modalContainer: {
-    width: 320,
-    maxHeight: '80%',
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: Dimensions.get('window').height * 0.85,
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
@@ -405,33 +444,42 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
+    flexDirection: 'column',
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#e8f3f2',
-    paddingVertical: 5,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    minHeight: 50,
   },
   modalTitle: {
     ...globalTextStyles.h4,
     color: '#000',
+    flex: 1,
+    marginRight: 10,
   },
   closeIcon: {
     fontSize: 22,
     color: '#888',
   },
-  modalContent: {
+  modalScrollView: {
+    flexShrink: 1,
+    maxHeight: Dimensions.get('window').height * 0.75,
+  },
+  scrollContent: {
     padding: 16,
-    maxHeight: '100%',
+    paddingBottom: 20,
   },
   modalMessage: {
     ...globalTextStyles.h5,
     color: '#000',
     textAlign: 'left',
+    lineHeight: 24,
   },
   modalButton: {
     backgroundColor: '#27a6a1',
@@ -449,6 +497,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  showMoreButton: {
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  showMoreText: {
+    ...globalTextStyles.bodyMedium,
+    color: '#23a2a4',
+    textDecorationLine: 'underline',
+  },
+  hiddenMeasureText: {
+    position: 'absolute',
+    opacity: 0,
+    zIndex: -1,
+    color: '#000',
   },
 });
 

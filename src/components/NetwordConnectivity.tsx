@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { useNavigation } from "@react-navigation/native";
 import { ROUTES } from "../shared/utils/routes";
+import { useSelector } from "react-redux";
 
 export const Connectivity = () => {
   const netInfo = useNetInfo();
   const [didMount, setDidMount] = useState(false);
   const [previousConnection, setPreviousConnection] = useState(false);
   const navigation=useNavigation()
-
+  const user = useSelector((state: any) => state.root.user.user);
   useEffect(() => {
     setDidMount(true);
   }, []);
@@ -19,12 +20,16 @@ export const Connectivity = () => {
         if (!netInfo.isConnected) {
           navigation.navigate(ROUTES.NetworkError)
         } else {
-          navigation.navigate(ROUTES.AppNavigator, {
-            screen: ROUTES.HomeStack,
-            params: {
-              screen: ROUTES.AppointmentListScreen,
-            }
-          });
+          if (user) {
+            navigation.navigate(ROUTES.AppNavigator, {
+              screen: ROUTES.HomeStack,
+              params: {
+                screen: ROUTES.AppointmentListScreen,
+              }
+            });
+          } else {
+            navigation.navigate(ROUTES.AuthWelcome);
+          }
         }
         setPreviousConnection(netInfo.isConnected);
       }

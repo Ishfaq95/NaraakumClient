@@ -150,18 +150,24 @@ const LoginScreen = () => {
 
       if (response?.ResponseStatus?.STATUSCODE == 200) {
         if (response.StatusCode.STATUSCODE == 200) {
-          setIsLoading(false);
-          dispatch(setUser(response.Userinfo));
-          if (rememberMe) {
-            const data = {
-              "Username": activeTab === 'mobile' ? fullNumber : emailOrUsername,
-              "Password": password,
-              "Filter": activeTab === 'mobile' ? "mob" : "email"
+          if(response.Userinfo.CatUserTypeId == 1) {
+            setAPIError(false);
+            setIsLoading(false);
+            dispatch(setUser(response.Userinfo));
+            if (rememberMe) {
+              const data = {
+                "Username": activeTab === 'mobile' ? fullNumber : emailOrUsername,
+                "Password": password,
+                "Filter": activeTab === 'mobile' ? "mob" : "email"
+              }
+              dispatch(setRememberMeRedux(data));
+            } else {
+              dispatch(setRememberMeRedux(null));
             }
-            dispatch(setRememberMeRedux(data));
           } else {
-            dispatch(setRememberMeRedux(null));
+            setAPIError(true);
           }
+         
         } else {
           setAPIError(true);
         }
@@ -175,7 +181,9 @@ const LoginScreen = () => {
       }
       setIsLoading(false);
     } catch (error: any) {
-      console.error('Login error:', error);
+      if(error.status == 400) {
+        setAPIError(true);
+      }
       setIsLoading(false);
       // Handle login error here (show error message, etc.)
     }
@@ -237,12 +245,7 @@ const LoginScreen = () => {
       }
 
     } catch (error: any) {
-      console.error('Google login error:', error);
-      Alert.alert(
-        t('error'),
-        error.message || t('google_login_failed'),
-        [{ text: t('ok') }]
-      );
+      
     } finally {
       setIsLoading(false);
     }

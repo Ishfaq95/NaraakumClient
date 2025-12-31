@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Text, ActivityIndicator, Alert } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+import { StyleSheet, View, Text, ActivityIndicator, Alert, Platform } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
 import { CAIRO_FONT_FAMILY } from '../styles/globalStyles';
 import { GOOGLE_MAP_API_KEY } from '../shared/utils/constants';
 
@@ -17,11 +18,28 @@ interface Location {
 interface RouteInfo {
   distance: string;
   duration: string;
-  polylinePoints: Location[];
 }
+
+// Memoized marker components to prevent re-renders
+const OriginMarker = React.memo(() => (
+  <View style={styles.markerContainer}>
+    <View style={[styles.markerCircle, styles.redMarker]}>
+      <Text style={styles.markerText}>A</Text>
+    </View>
+  </View>
+));
+
+const DestinationMarker = React.memo(() => (
+  <View style={styles.markerContainer}>
+    <View style={[styles.markerCircle, styles.redMarker]}>
+      <Text style={styles.markerText}>B</Text>
+    </View>
+  </View>
+));
 
 const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appointment, onRouteInfoUpdate }) => {
   const mapRef = useRef<MapView>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [origin, setOrigin] = useState<Location | null>(null);
   const [destination, setDestination] = useState<Location | null>(null);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
@@ -45,17 +63,13 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
       setOrigin(originCoords);
 
       // Parse destination coordinates (Patient location)
-      const destinationCoords = parseCoordinates(appointment.TaskDetail?.[0]?.GoogleLocation);
+      const destinationCoords = parseCoordinates(appointment.TaskDetail?.[0]?.GoogleLocation || appointment?.GoogleLocation);
       if (!destinationCoords) {
         throw new Error('Invalid destination coordinates');
       }
       setDestination(destinationCoords);
 
-      // Get route information
-      await getRouteInfo(originCoords, destinationCoords);
-
     } catch (error) {
-      console.error('Error initializing map:', error);
       Alert.alert('خطأ', 'حدث خطأ في تحميل الخريطة');
     } finally {
       setLoading(false);
@@ -76,55 +90,89 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
       
       return { latitude: lat, longitude: lng };
     } catch (error) {
-      console.error('Error parsing coordinates:', error);
       return null;
     }
   };
 
-  const getRouteInfo = async (origin: Location, destination: Location) => {
-    try {
-      
-      // For now, let's create a simple direct line and calculate basic distance
-      const directDistance = calculateDistance(origin, destination);
-      const estimatedTime = Math.round(directDistance * 2); // Rough estimate: 2 min per km
-      
-      // Create a simple polyline with just origin and destination
-      const simplePolyline = [origin, destination];
-      
-      const routeInfoData = {
-        distance: `${directDistance.toFixed(1)} كم`,
-        duration: `${estimatedTime} دقيقة`,
-        polylinePoints: simplePolyline
-      };
-      
-      setRouteInfo(routeInfoData);
-      
-      // Pass route info to parent component
-      if (onRouteInfoUpdate) {
-        onRouteInfoUpdate({
-          distance: routeInfoData.distance,
-          duration: routeInfoData.duration
-        });
-      }
-
-      // Fit map to show both markers
-      fitMapToMarkers(origin, destination, simplePolyline);
-      
-    } catch (error) {
-      console.error('Error getting route:', error);
-      // Set default route info
-      setRouteInfo({
-        distance: 'غير متوفر',
-        duration: 'غير متوفر',
-        polylinePoints: [origin, destination]
-      });
-      
-      // Fit map to show both markers without route
-      fitMapToMarkers(origin, destination, [origin, destination]);
+  const formatDistance = (distanceInKm: number): string => {
+    // react-native-maps-directions returns distance in kilometers
+    if (distanceInKm < 1) {
+      // Show in meters for distances less than 1km
+      const meters = Math.round(distanceInKm * 1000);
+      return `${meters} m`;
+    } else {
+      // Show in kilometers with 1 decimal place for distances >= 1km
+      return `${distanceInKm.toFixed(1)} km`;
     }
   };
 
-  // Calculate distance between two points using Haversine formula
+  const formatDuration = (durationInMinutes: number): string => {
+    // react-native-maps-directions returns duration in minutes
+    const totalMinutes = Math.round(durationInMinutes);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      // Show hours and minutes for durations >= 1 hour
+      if (minutes > 0) {
+        return `${hours} hr ${minutes} min`;
+      } else {
+        return `${hours} hr`;
+      }
+    } else {
+      // Show only minutes for durations < 1 hour
+      return `${totalMinutes} min`;
+    }
+  };
+
+  const handleDirectionsReady = (result: any) => {
+    if (result) {
+      const distance = result.distance ? formatDistance(result.distance) : 'Not Available';
+      const duration = result.duration ? formatDuration(result.duration) : 'Not Available';
+      
+      const routeInfoData = {
+        distance,
+        duration,
+      };
+
+      setRouteInfo(routeInfoData);
+
+      if (onRouteInfoUpdate) {
+        onRouteInfoUpdate(routeInfoData);
+      }
+
+      // Fit map to show the route
+      if (mapRef.current && origin && destination) {
+        setTimeout(() => {
+          mapRef.current?.fitToCoordinates([origin, destination], {
+            edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
+            animated: true,
+          });
+        }, 300);
+      }
+    }
+  };
+
+  const handleDirectionsError = (errorMessage: string) => {
+    // Set fallback route info
+    if (origin && destination) {
+      // calculateDistance returns distance in kilometers
+      const directDistanceKm = calculateDistance(origin, destination);
+      // Estimate time: roughly 2 minutes per kilometer (average driving speed ~30 km/h)
+      const estimatedTimeMinutes = Math.round(directDistanceKm * 2);
+      
+      const fallbackRoute = {
+        distance: formatDistance(directDistanceKm),
+        duration: formatDuration(estimatedTimeMinutes),
+      };
+
+      setRouteInfo(fallbackRoute);
+      if (onRouteInfoUpdate) {
+        onRouteInfoUpdate(fallbackRoute);
+      }
+    }
+  };
+
   const calculateDistance = (point1: Location, point2: Location): number => {
     const R = 6371; // Earth's radius in kilometers
     const dLat = (point2.latitude - point1.latitude) * Math.PI / 180;
@@ -137,85 +185,42 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
     return R * c;
   };
 
-  const decodePolyline = (encoded: string): Location[] => {
-    if (!encoded || encoded.length === 0) {
-      return [];
-    }
+  const computeInitialRegion = (start: Location, end: Location) => {
+    const latDiff = Math.abs(start.latitude - end.latitude);
+    const lngDiff = Math.abs(start.longitude - end.longitude);
+    
+    // Ensure minimum deltas to show both markers even if they're very close
+    const minLatDelta = 0.01;
+    const minLngDelta = 0.01;
+    
+    const latitudeDelta = Math.max(latDiff * 2, minLatDelta);
+    const longitudeDelta = Math.max(lngDiff * 2, minLngDelta);
 
-    const poly = [];
-    let index = 0, len = encoded.length;
-    let lat = 0, lng = 0;
+    const midLat = (start.latitude + end.latitude) / 2;
+    const midLng = (start.longitude + end.longitude) / 2;
 
-    try {
-      while (index < len) {
-        let shift = 0, result = 0;
-
-        do {
-          if (index >= len) break;
-          let b = encoded.charCodeAt(index++) - 63;
-          result |= (b & 0x1f) << shift;
-          shift += 5;
-        } while (result >= 0x20);
-
-        let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lat += dlat;
-
-        shift = 0;
-        result = 0;
-
-        do {
-          if (index >= len) break;
-          let b = encoded.charCodeAt(index++) - 63;
-          result |= (b & 0x1f) << shift;
-          shift += 5;
-        } while (result >= 0x20);
-
-        let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
-        lng += dlng;
-
-        poly.push({
-          latitude: lat / 1E5,
-          longitude: lng / 1E5
-        });
-      }
-
-      return poly;
-    } catch (error) {
-      console.error('Error decoding polyline:', error);
-      return [];
-    }
+    return {
+      latitude: midLat,
+      longitude: midLng,
+      latitudeDelta,
+      longitudeDelta,
+    };
   };
 
-  const fitMapToMarkers = (origin: Location, destination: Location, polylinePoints: Location[]) => {
-    if (!mapRef.current) return;
-
-    const allPoints = [origin, destination, ...polylinePoints];
-    
-    // Calculate bounds
-    let minLat = Math.min(...allPoints.map(p => p.latitude));
-    let maxLat = Math.max(...allPoints.map(p => p.latitude));
-    let minLng = Math.min(...allPoints.map(p => p.longitude));
-    let maxLng = Math.max(...allPoints.map(p => p.longitude));
-
-    // Add padding
-    const latPadding = (maxLat - minLat) * 0.1;
-    const lngPadding = (maxLng - minLng) * 0.1;
-
-    const region = {
-      latitude: (minLat + maxLat) / 2,
-      longitude: (minLng + maxLng) / 2,
-      latitudeDelta: (maxLat - minLat) + latPadding,
-      longitudeDelta: (maxLng - minLng) + lngPadding,
-    };
-
-    mapRef.current.animateToRegion(region, 1000);
+  const fitMapToMarkers = () => {
+    if (mapRef.current && origin && destination) {
+      mapRef.current.fitToCoordinates([origin, destination], {
+        edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
+        animated: true,
+      });
+    }
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#23a2a4" />
-        <Text style={styles.loadingText}>جاري تحميل الخريطة...</Text>
+        <Text style={styles.loadingText}>Loading map...</Text>
       </View>
     );
   }
@@ -223,7 +228,7 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
   if (!origin || !destination) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>لا يمكن تحميل الخريطة</Text>
+        <Text style={styles.errorText}>Cannot load map</Text>
       </View>
     );
   }
@@ -233,48 +238,62 @@ const AppointmentTrackingMap: React.FC<AppointmentTrackingMapProps> = ({ appoint
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={{
-          latitude: (origin.latitude + destination.latitude) / 2,
-          longitude: (origin.longitude + destination.longitude) / 2,
-          latitudeDelta: Math.abs(origin.latitude - destination.latitude) * 1.5,
-          longitudeDelta: Math.abs(origin.longitude - destination.longitude) * 1.5,
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        initialRegion={computeInitialRegion(origin, destination)}
+        onMapReady={() => {
+          setMapReady(true);
+          // Fit map to show both markers initially
+          setTimeout(() => {
+            fitMapToMarkers();
+          }, 300);
         }}
       >
         {/* Origin Marker (Organization) */}
         <Marker
           coordinate={origin}
-          title="المركز الطبي"
+          title="Organization"
           description={appointment.OrganizationSlang}
-          pinColor="green"
-        />
+          tracksViewChanges={false}
+        >
+          <OriginMarker />
+        </Marker>
 
         {/* Destination Marker (Patient Location) */}
         <Marker
           coordinate={destination}
-          title="موقع المريض"
-          description={appointment.TaskDetail?.[0]?.Address || 'موقع المريض'}
-          pinColor="red"
-        />
+          title="Patient Location"
+          description={appointment.Address || 'Patient Location'}
+          tracksViewChanges={false}
+        >
+          <DestinationMarker />
+        </Marker>
 
-        {/* Always show a line between origin and destination */}
-        <Polyline
-          coordinates={[origin, destination]}
-          strokeColor="#23a2a4"
-          strokeWidth={4}
-          geodesic={true}
-        />
+        {/* Route Directions using react-native-maps-directions */}
+        {origin && destination && (
+          <MapViewDirections
+            origin={origin}
+            destination={destination}
+            apikey={GOOGLE_MAP_API_KEY}
+            strokeWidth={4}
+            strokeColor="#23a2a4"
+            mode="DRIVING"
+            onReady={handleDirectionsReady}
+            onError={handleDirectionsError}
+            optimizeWaypoints={false}
+            precision="high"
+          />
+        )}
       </MapView>
 
       {/* Route Info Overlay */}
       {routeInfo && (
         <View style={styles.routeInfoContainer}>
           <View style={styles.routeInfoItem}>
-            <Text style={styles.routeInfoLabel}>المسافة:</Text>
+            <Text style={styles.routeInfoLabel}>Distance:</Text>
             <Text style={styles.routeInfoValue}>{routeInfo.distance}</Text>
           </View>
           <View style={styles.routeInfoItem}>
-            <Text style={styles.routeInfoLabel}>الوقت المتبقى:</Text>
+            <Text style={styles.routeInfoLabel}>Expected Time:</Text>
             <Text style={styles.routeInfoValue}>{routeInfo.duration}</Text>
           </View>
         </View>
@@ -342,6 +361,37 @@ const styles = StyleSheet.create({
     fontFamily: CAIRO_FONT_FAMILY.bold,
     color: '#23a2a4',
   },
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markerCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FF0000',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  redMarker: {
+    backgroundColor: '#FF0000',
+  },
+  markerText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontFamily: CAIRO_FONT_FAMILY.bold,
+    fontWeight: 'bold',
+  },
 });
 
-export default AppointmentTrackingMap; 
+export default AppointmentTrackingMap;

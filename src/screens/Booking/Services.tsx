@@ -67,13 +67,21 @@ const Services = ({ navigation }: any) => {
         setIsLoading(false);
     }
 
+    const handleBackNavigation = () => {
+        if(navigation.canGoBack()){
+            navigation.goBack();
+        }else{
+            navigation.navigate(ROUTES.CartStack);
+        }
+    }
+
     const renderHeader = () => (
         <Header
             centerComponent={
                 <Text style={styles.headerTitle}>{isHomeVisit ? "الرعاية المنزلية" : "خدمات"}</Text>
             }
             leftComponent={
-                <TouchableOpacity onPress={() => isHomeVisit ? setIsHomeVisit(false) : navigation.goBack()} style={styles.bookButton}>
+                <TouchableOpacity onPress={() => isHomeVisit ? setIsHomeVisit(false) : handleBackNavigation()} style={styles.bookButton}>
                     {I18nManager.isRTL ?  <ArrowRightIcon /> : <BackIcon />}
                 </TouchableOpacity>
             }

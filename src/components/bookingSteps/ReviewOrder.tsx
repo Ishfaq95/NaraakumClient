@@ -817,7 +817,7 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
           });
 
           const groupedArray: any = groupArrayByUniqueIdAsArray(updatedCardItems);
-
+          setSelectedIndex(groupedArray.length > 0 ? groupedArray.length - 1 : 0);
           setShowGroupedArray(groupedArray);
 
           dispatch(addCardItem(updatedCardItems));
@@ -1269,8 +1269,8 @@ const ReviewOrder = ({ onPressNext, onPressBack, onPressEditService }: any) => {
                     <View style={styles.selectedServiceRow}>
                       <View style={{ width: '85%' }}>
                         {item?.CatCategoryId == "42"
-                          ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}`}</Text>
-                          : <Text style={styles.selectedServiceText}>{cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}</Text>
+                          ? <Text style={styles.selectedServiceText}>{`استشارة عن بعد / ${cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}${item?.SpecialtyTitleSlang ? ` (${item?.SpecialtyTitleSlang})` : ''}`}</Text>
+                          : <Text style={styles.selectedServiceText}>{`${cleanText(String(item?.ServiceTitleSlang || item?.TitleSlang || ''))}${item?.SpecialtyTitleSlang ? ` (${item?.SpecialtyTitleSlang})` : ''}`}</Text>
                         }
                       </View>
                       <View style={{ width: '15%' }}>
@@ -1757,9 +1757,9 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   selectedServiceText: {
-    ...globalTextStyles.bodySmall,
-    color: '#23a2a4',
-    // fontWeight: 'bold',
+    fontSize: 14,
+    color: '#191919',
+    fontFamily: CAIRO_FONT_FAMILY.semiBold,
   },
   sessionInfoTitle: {
     ...globalTextStyles.bodyMedium,

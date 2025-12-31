@@ -32,7 +32,7 @@ setup_permissions([
   # 'FaceID',
   # 'LocationAccuracy',
   # 'LocationAlways',
-  # 'LocationWhenInUse',
+  'LocationWhenInUse',
   'MediaLibrary',
   'Microphone',
   # 'Motion',
@@ -68,7 +68,9 @@ target 'Naraakum_client' do
   pod 'RNInAppBrowser', :path => '../node_modules/react-native-inappbrowser-reborn'
   pod 'react-native-webrtc', :path => '../node_modules/@videosdk.live/react-native-webrtc'
   pod 'GoogleSignIn', '~> 7.1'
-  pod 'react-native-maps/Google', :path => '../node_modules/react-native-maps'
+  pod 'react-native-maps', :path => '../node_modules/react-native-maps'
+  pod 'GoogleMaps'
+  pod 'Google-Maps-iOS-Utils'
 
   pod 'RNFBApp', :path => '../node_modules/@react-native-firebase/app'
   pod 'RNFBCrashlytics', :path => '../node_modules/@react-native-firebase/crashlytics'

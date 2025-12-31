@@ -39,6 +39,8 @@ import {check, PERMISSIONS, request, RESULTS} from 'react-native-permissions';
 import Svg, {Path} from 'react-native-svg';
 import RightArrowIcon from '../../assets/icons/RightArrow';
 import { getVideoSDKToken } from '../../services/api/MessagesAndCallService';
+import { CAIRO_FONT_FAMILY } from '../../styles/globalStyles';
+import { useAlert } from '../../contexts/AlertContext';
 
 const width = 200;
 
@@ -46,7 +48,7 @@ const PreViewScreen = ({navigation, route}: any) => {
   const [tracks, setTrack] = useState('');
   const [micOn, setMicon] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
-  const [facingMode, setfacingMode] = useState('user');
+  const [facingMode, setfacingMode] = useState<'user' | 'environment'>('user');
   const [videoSDKToken, setVideoSDKToken] = useState('');
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const meetingTypes = [
@@ -66,7 +68,7 @@ const PreViewScreen = ({navigation, route}: any) => {
   const [volume, setVolume] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
   const isFocused = useIsFocused();
-
+  const { showAlert } = useAlert();
   useEffect(() => {
     if (Platform.OS == 'android') {
       checkPermission();
@@ -227,29 +229,106 @@ const PreViewScreen = ({navigation, route}: any) => {
     }
   };
 
-  const onJoinMeeting = () => {
-    if (videoSDKToken) {
-      const paramsVal = {
-        name: displayName,
-        token: videoSDKToken,
-        meetingId: meetingId,
-        micEnabled: micOn,
-        webcamEnabled: videoOn,
-        meetingType: meetingType.key,
-        defaultCamera: facingMode === 'user' ? 'front' : 'back',
-        sessionStartTime: sessionStartTime,
-        sessionEndTime: sessionEndTime,
-        Data: route?.params,
-      };
+  const checkAndRequestPermissions = async (): Promise<boolean> => {
+    try {
+      let cameraPermission;
+      let microphonePermission;
 
-      setMicon(true);
-      setVideoOn(true);
-      if(meetingId){
-        navigation.navigate(ROUTES.Meeting, paramsVal);
-      }else{
-        Alert.alert('Meeting ID is required');
+      if (Platform.OS === 'ios') {
+        // Check iOS permissions
+        cameraPermission = await check(PERMISSIONS.IOS.CAMERA);
+        microphonePermission = await check(PERMISSIONS.IOS.MICROPHONE);
+
+        // Request camera permission if not granted
+        if (cameraPermission !== RESULTS.GRANTED) {
+          cameraPermission = await request(PERMISSIONS.IOS.CAMERA);
+        }
+
+        // Request microphone permission if not granted
+        if (microphonePermission !== RESULTS.GRANTED) {
+          microphonePermission = await request(PERMISSIONS.IOS.MICROPHONE);
+        }
+      } else {
+        // Check Android permissions
+        cameraPermission = await check(PERMISSIONS.ANDROID.CAMERA);
+        microphonePermission = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
+
+        // Request camera permission if not granted
+        if (cameraPermission !== RESULTS.GRANTED) {
+          cameraPermission = await request(PERMISSIONS.ANDROID.CAMERA);
+        }
+
+        // Request microphone permission if not granted
+        if (microphonePermission !== RESULTS.GRANTED) {
+          microphonePermission = await request(PERMISSIONS.ANDROID.RECORD_AUDIO);
+        }
       }
+
+      // Check if both permissions are granted
+      if (cameraPermission === RESULTS.GRANTED && microphonePermission === RESULTS.GRANTED) {
+        return true;
+      } else {
+        // Show alert for denied permissions
+        const deniedPermissions = [];
+        if (cameraPermission !== RESULTS.GRANTED) {
+          deniedPermissions.push('Camera');
+        }
+        if (microphonePermission !== RESULTS.GRANTED) {
+          deniedPermissions.push('Microphone');
+        }
+
+        showAlert({
+          title: 'Permissions Required',
+          message: `Please grant ${deniedPermissions.join(' and ')} permission${deniedPermissions.length > 1 ? 's' : ''} to join the meeting. You can enable them in your device settings.`,
+          type: 'error',
+          confirmText: 'OK',
+        });
+
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+      Alert.alert('Error', 'An error occurred while checking permissions. Please try again.');
+      return false;
     }
+  };
+
+  const onJoinMeeting = async () => {
+    if (!videoSDKToken) {
+      Alert.alert('Error', 'Video SDK token is required');
+      return;
+    }
+
+    if (!meetingId) {
+      Alert.alert('Error', 'Meeting ID is required');
+      return;
+    }
+
+    // Check and request permissions first
+    const hasPermissions = await checkAndRequestPermissions();
+    
+    if (!hasPermissions) {
+      // Stop here if permissions are not granted
+      return;
+    }
+
+    // Both permissions are granted, proceed with navigation
+    const paramsVal = {
+      name: displayName,
+      token: videoSDKToken,
+      meetingId: meetingId,
+      micEnabled: micOn,
+      webcamEnabled: videoOn,
+      meetingType: meetingType.key,
+      defaultCamera: facingMode === 'user' ? 'front' : 'back',
+      sessionStartTime: sessionStartTime,
+      sessionEndTime: sessionEndTime,
+      Data: route?.params,
+    };
+
+    setMicon(true);
+    setVideoOn(true);
+    navigation.navigate(ROUTES.Meeting, paramsVal);
   };
 
   const handleLanguageToggle = () => {
@@ -299,16 +378,16 @@ const PreViewScreen = ({navigation, route}: any) => {
               <TouchableOpacity
                 onPress={handleBackPress}
                 style={{flexDirection: 'row', paddingHorizontal: 8}}>
-                <RightArrowIcon />
+                <RightArrowIcon color="#fff" />
                 <Text
-                  style={{paddingLeft: 4, fontSize: 16, fontWeight: 'bold'}}>
+                  style={{paddingLeft: 4,color: '#fff', fontSize: 16, fontFamily: CAIRO_FONT_FAMILY.bold,lineHeight: 24}}>
                   خلف
                 </Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity onPress={handleBackPress} style={{flexDirection: 'row'}}>
                 <BackIcon />
-                <Text style={{paddingLeft: 8}}>Back</Text>
+                <Text style={{paddingLeft: 8, fontSize: 16, fontFamily: CAIRO_FONT_FAMILY.medium}}>Back</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -372,16 +451,12 @@ const PreViewScreen = ({navigation, route}: any) => {
               </View>
 
               <Text
-                style={
-                  I18nManager.isRTL
-                    ? {fontSize: 15, fontWeight: '500', color: 'black'}
-                    : {
-                        paddingLeft: 10,
-                        fontSize: 15,
-                        fontWeight: '500',
-                        color: 'black',
-                      }
-                }>
+                style={{
+                  fontSize: 15,
+                  fontFamily: CAIRO_FONT_FAMILY.medium,
+                  color: 'black',
+                  ...(I18nManager.isRTL ? {} : {paddingLeft: 10}),
+                }}>
                 {t('video')}
               </Text>
             </View>
@@ -414,7 +489,7 @@ const PreViewScreen = ({navigation, route}: any) => {
                 <MicIcon />
               </View>
 
-              <Text style={{fontSize: 15, fontWeight: '500', color: 'black'}}>
+              <Text style={{fontSize: 15, fontFamily: CAIRO_FONT_FAMILY.medium, color: 'black'}}>
                 {t('microphone')}
               </Text>
             </View>
@@ -463,7 +538,7 @@ const PreViewScreen = ({navigation, route}: any) => {
             backgroundColor: isSessionExpired ? '#CCCCCC' : '#32A3A4',
             opacity: isSessionExpired ? 0.7 : 1,
           }}>
-          <Text style={{fontSize: 14, fontWeight: '400', color: 'white'}}>
+          <Text style={{fontSize: 14, fontFamily: CAIRO_FONT_FAMILY.semiBold, color: 'white'}}>
             {t('join_now')}
           </Text>
         </TouchableOpacity>

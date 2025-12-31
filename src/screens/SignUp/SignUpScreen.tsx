@@ -241,12 +241,7 @@ const SignUpScreen = () => {
                 }
             }
         } catch (error: any) {
-            console.error('Google login error:', error);
-            Alert.alert(
-                t('error'),
-                error.message || t('google_login_failed'),
-                [{ text: t('ok') }]
-            );
+            
         } finally {
             setIsLoading(false);
         }
