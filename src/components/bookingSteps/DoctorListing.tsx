@@ -643,6 +643,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
     setProviderWithSlots(tempProvider)
     setHasInitialDataLoaded(true)
+    // Clear date loader when slots are processed and list is ready
+    setChangeDateLoader(false)
   }
 
   useEffect(() => {
@@ -680,6 +682,8 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
     setSlotsLoaded(false)
 
     setHospitalWithSlots(tempHospital)
+    // Clear date loader when slots are processed and list is ready
+    setChangeDateLoader(false)
   }
 
   const getServiceIds = () => {
@@ -916,7 +920,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
     // Add calendar icon as the 8th item
     daysArray.push({ day: '', date: '', icon: true });
-    setChangeDateLoader(false)
+    // Don't clear loader here - let it be cleared when slots are processed
     setDays(daysArray);
   };
 
@@ -940,7 +944,7 @@ const DoctorListing = ({ onPressNext, onPressBack }: any) => {
 
     if (isWithinSevenDays) {
       filterAvailabilityForDate(date, allAvailabilityData);
-      setChangeDateLoader(false)
+      // Don't clear loader here - let it be cleared when slots are processed in getSlotsWithProvider/getSlotsWithHospital
     } else {
       setChangedSelectedDate(date)
       const formattedDate = date.locale('en').format('YYYY-MM-DD');
