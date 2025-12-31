@@ -149,7 +149,11 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   const user = useSelector((state: any) => state.root.user.user);
 
   const [specialtiesScrollPosition, setSpecialtiesScrollPosition] = useState(0);
+  const [specialtiesContentWidth, setSpecialtiesContentWidth] = useState(0);
+  const [specialtiesScrollViewWidth, setSpecialtiesScrollViewWidth] = useState(0);
   const [timeSlotsScrollPosition, setTimeSlotsScrollPosition] = useState(0);
+  const [timeSlotsContentWidth, setTimeSlotsContentWidth] = useState(0);
+  const [timeSlotsScrollViewWidth, setTimeSlotsScrollViewWidth] = useState(0);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
@@ -190,7 +194,7 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
   }, [selectedDate]);
 
   useEffect(() => {
-    if (timeSlots.length > 0) {
+    if (timeSlots.length > 0 && timeSlotsContentWidth > 0 && timeSlotsScrollViewWidth > 0) {
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
@@ -207,26 +211,34 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       });
 
       setTimeout(() => {
-        if (timeSlotsScrollViewRef.current) {
-          if (timeSlotsScrollViewRef.current) {
-            const slotWidth = 104;
-            const scrollAmount = slotWidth * nextSlotIndex / 2;
-            const currentPosition = timeSlotsScrollPosition;
-            const newPosition = true
-              ? Math.max(0, currentPosition - scrollAmount)
-              : currentPosition + scrollAmount;
-
-            requestAnimationFrame(() => {
-              timeSlotsScrollViewRef.current?.scrollTo({
-                x: newPosition,
-                animated: true
-              });
-            });
+        if (timeSlotsScrollViewRef.current && nextSlotIndex >= 0) {
+          const slotWidth = 120; // snapToInterval value
+          const maxScroll = Math.max(0, timeSlotsContentWidth - timeSlotsScrollViewWidth);
+          
+          // Calculate scroll position to show the next available slot
+          let targetPosition: number;
+          if (isRTL) {
+            // In RTL, scroll from right to left (positive direction)
+            // Start from maxScroll and scroll left to show the slot
+            const scrollAmount = slotWidth * nextSlotIndex;
+            targetPosition = Math.max(0, maxScroll - scrollAmount);
+          } else {
+            // In LTR, scroll from left to right (positive direction)
+            const scrollAmount = slotWidth * nextSlotIndex;
+            targetPosition = Math.min(maxScroll, scrollAmount);
           }
+
+          requestAnimationFrame(() => {
+            timeSlotsScrollViewRef.current?.scrollTo({
+              x: targetPosition,
+              animated: true
+            });
+            setTimeSlotsScrollPosition(targetPosition);
+          });
         }
       }, 1000);
     }
-  }, [timeSlots]);
+  }, [timeSlots, timeSlotsContentWidth, timeSlotsScrollViewWidth, isRTL]);
 
   const onServiceSelectUpdate = (providerId: string, service: any) => {
     onSelectService && onSelectService(providerId, service.ServiceTitlePlang)
@@ -283,6 +295,20 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     }
 
     return returnVal;
+  }
+
+  const checkServiceButtonDisabled = () => {
+    const formattedSelectedDate = selectedDate.format('YYYY-MM-DD');
+    if(selectedCard[0]?.ServiceProviderUserloginInfoId){
+      if(selectedCard[0]?.ServiceProviderUserloginInfoId == provider.UserId && selectedCard[0]?.SchedulingDate === formattedSelectedDate){
+        return false
+      }else{
+        return true
+      }
+    }
+    else{
+      return false
+    }
   }
 
   const checkSelectedService = (item: any) => {
@@ -393,15 +419,40 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
               data={provider.ServiceServe}
               keyExtractor={(item, index) => index.toString()}
               numColumns={2}
+              columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 10 }}
               renderItem={({ item }) => {
                 return (
-                  <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', gap: 10, width: '48%', justifyContent: 'flex-end' }}>
-                    <Text style={[styles.priceText, { textAlign: 'left' }]}>
+                  <View style={{ 
+                    flexDirection: isRTL ? 'row-reverse' : 'row', 
+                    alignItems: 'center', 
+                    flex: 1,
+                    maxWidth: '48%',
+                  }}>
+                    <Text 
+                      style={[styles.priceText, { 
+                        textAlign: 'left', 
+                        flex: 1,
+                        marginRight: isRTL ? 0 : 8,
+                        marginLeft: isRTL ? 8 : 0,
+                      }]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
                       {`${item.ServiceTitleSlang}: ${Number(item.Price).toFixed(0)}`}
                     </Text>
-                    {provider.ServiceServe.length > 1 && <TouchableOpacity onPress={() => onServiceSelectUpdate(provider.UserId, item)} style={[styles.checkbox, checkSelectedService(item) && styles.checkedBox]}>
-                      {checkSelectedService(item) && <CheckIcon width={12} height={12} />}
-                    </TouchableOpacity>}
+                    {provider.ServiceServe.length > 1 && (
+                      <TouchableOpacity 
+                        disabled={checkServiceButtonDisabled()} 
+                        onPress={() => onServiceSelectUpdate(provider.UserId, item)} 
+                        style={[
+                          styles.checkbox, 
+                          checkSelectedService(item) && styles.checkedBox, 
+                          checkServiceButtonDisabled() && styles.disabledCheckbox,
+                        ]}
+                      >
+                        {checkSelectedService(item) && <CheckIcon width={12} height={12} />}
+                      </TouchableOpacity>
+                    )}
                   </View>
                 )
               }}
@@ -430,24 +481,143 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
     return specialties || [];
   }
 
+  // Reset scroll position when specialties change
+  // In RTL mode, start from the right (end position)
+  useEffect(() => {
+    if (specialtiesScrollViewRef.current && specialtiesContentWidth > 0 && specialtiesScrollViewWidth > 0) {
+      const maxScroll = Math.max(0, specialtiesContentWidth - specialtiesScrollViewWidth);
+      const initialPosition = isRTL ? maxScroll : 0;
+      
+      // Use setTimeout to ensure layout is complete before scrolling
+      setTimeout(() => {
+        if (specialtiesScrollViewRef.current) {
+          setSpecialtiesScrollPosition(initialPosition);
+          specialtiesScrollViewRef.current.scrollTo({ x: initialPosition, animated: false });
+        }
+      }, 100);
+    }
+  }, [provider.Specialties, specialtiesContentWidth, specialtiesScrollViewWidth, isRTL]);
+
+  // Calculate if we can scroll left/right
+  // Use a small tolerance to handle floating point precision issues
+  const SCROLL_TOLERANCE = 2;
+  
+  const canScrollLeft = useMemo(() => {
+    // If content fits in viewport or dimensions not ready, no scrolling needed
+    if (specialtiesContentWidth <= specialtiesScrollViewWidth || specialtiesScrollViewWidth === 0 || specialtiesContentWidth === 0) {
+      return false;
+    }
+    
+    const maxScroll = Math.max(0, specialtiesContentWidth - specialtiesScrollViewWidth);
+    
+    if (isRTL) {
+      // In RTL: can scroll left if not at the rightmost position (maxScroll)
+      // At start (position = 0), can scroll left = true
+      // At end (position = maxScroll), can scroll left = false
+      return specialtiesScrollPosition < (maxScroll - SCROLL_TOLERANCE);
+    } else {
+      // In LTR: can scroll left if not at the start (position > 0)
+      // At start (position = 0), can scroll left = false
+      // At end (position = maxScroll), can scroll left = true
+      return specialtiesScrollPosition > SCROLL_TOLERANCE;
+    }
+  }, [specialtiesScrollPosition, specialtiesContentWidth, specialtiesScrollViewWidth, isRTL]);
+
+  const canScrollRight = useMemo(() => {
+    // If content fits in viewport or dimensions not ready, no scrolling needed
+    if (specialtiesContentWidth <= specialtiesScrollViewWidth || specialtiesScrollViewWidth === 0 || specialtiesContentWidth === 0) {
+      return false;
+    }
+    
+    const maxScroll = Math.max(0, specialtiesContentWidth - specialtiesScrollViewWidth);
+    
+    if (isRTL) {
+      // In RTL: can scroll right if not at the start (position > 0)
+      // At start (position = 0), can scroll right = false
+      // At end (position = maxScroll), can scroll right = true
+      return specialtiesScrollPosition > SCROLL_TOLERANCE;
+    } else {
+      // In LTR: can scroll right if not at the rightmost position (maxScroll)
+      // At start (position = 0), can scroll right = true
+      // At end (position = maxScroll), can scroll right = false
+      return specialtiesScrollPosition < (maxScroll - SCROLL_TOLERANCE);
+    }
+  }, [specialtiesScrollPosition, specialtiesContentWidth, specialtiesScrollViewWidth, isRTL]);
+
+  const scrollSpecialties = useCallback((direction: 'left' | 'right') => {
+    if (specialtiesScrollViewRef.current && specialtiesScrollViewWidth > 0) {
+      // Use a smaller scroll amount (60% of viewport) for smoother scrolling
+      const scrollAmount = Math.min(specialtiesScrollViewWidth * 0.6, 200);
+      const currentPosition = specialtiesScrollPosition;
+      const maxScroll = Math.max(0, specialtiesContentWidth - specialtiesScrollViewWidth);
+      
+      let newPosition: number;
+      
+      if (isRTL) {
+        // In RTL: left button scrolls left (positive), right button scrolls right (negative)
+        newPosition = direction === 'left'
+          ? Math.min(maxScroll, currentPosition + scrollAmount)
+          : Math.max(0, currentPosition - scrollAmount);
+      } else {
+        // In LTR: left button scrolls left (negative), right button scrolls right (positive)
+        newPosition = direction === 'left'
+          ? Math.max(0, currentPosition - scrollAmount)
+          : Math.min(maxScroll, currentPosition + scrollAmount);
+      }
+
+      // Clamp the position to valid range
+      newPosition = Math.max(0, Math.min(maxScroll, newPosition));
+
+      specialtiesScrollViewRef.current.scrollTo({
+        x: newPosition,
+        animated: true
+      });
+    }
+  }, [specialtiesScrollPosition, specialtiesContentWidth, specialtiesScrollViewWidth, isRTL]);
+
   const specialtiesSection = useMemo(() => (
     <View style={styles.specialtyContainer}>
-      {getSpecialtiesArray()?.length > 2 && <TouchableOpacity
-        onPress={() => scrollSpecialties('left')}
-        style={[styles.scrollButton, styles.leftScrollButton]}
-        activeOpacity={0.7}
-      >
-        {isRTL ? <RightArrow /> : <LeftArrow />}
-      </TouchableOpacity>}
+      {getSpecialtiesArray()?.length > 2 && (
+        <TouchableOpacity
+          onPress={() => scrollSpecialties('left')}
+          disabled={!canScrollLeft}
+          style={[
+            styles.scrollButton, 
+            styles.leftScrollButton,
+            !canScrollLeft && styles.disabledScrollButton
+          ]}
+          activeOpacity={0.7}
+        >
+          {isRTL ? <RightArrow color={"#fff"} /> : <LeftArrow color={ "#fff" } />}
+        </TouchableOpacity>
+      )}
 
       <ScrollView
         ref={specialtiesScrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.specialtiesScrollView}
-        onScroll={(event) => setSpecialtiesScrollPosition(event.nativeEvent.contentOffset.x)}
+        onScroll={(event) => {
+          const offsetX = event.nativeEvent.contentOffset.x;
+          setSpecialtiesScrollPosition(offsetX);
+        }}
+        onScrollEndDrag={(event) => {
+          const offsetX = event.nativeEvent.contentOffset.x;
+          setSpecialtiesScrollPosition(offsetX);
+        }}
+        onMomentumScrollEnd={(event) => {
+          const offsetX = event.nativeEvent.contentOffset.x;
+          setSpecialtiesScrollPosition(offsetX);
+        }}
+        onContentSizeChange={(contentWidth) => {
+          setSpecialtiesContentWidth(contentWidth);
+        }}
+        onLayout={(event) => {
+          const { width } = event.nativeEvent.layout;
+          setSpecialtiesScrollViewWidth(width);
+        }}
         scrollEventThrottle={16}
-        decelerationRate={0}
+        decelerationRate="fast"
         contentContainerStyle={styles.specialtiesContent}
       >
         <View style={styles.specialtiesRow}>
@@ -461,47 +631,116 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
         </View>
       </ScrollView>
 
-      {getSpecialtiesArray()?.length > 2 && <TouchableOpacity
-        onPress={() => scrollSpecialties('right')}
-        style={[styles.scrollButton, styles.rightScrollButton]}
-        activeOpacity={0.7}
-      >
-        {isRTL ? <LeftArrow /> : <RightArrow />}
-      </TouchableOpacity>}
+      {getSpecialtiesArray()?.length > 2 && (
+        <TouchableOpacity
+          onPress={() => scrollSpecialties('right')}
+          disabled={!canScrollRight}
+          style={[
+            styles.scrollButton, 
+            styles.rightScrollButton,
+            !canScrollRight && styles.disabledScrollButton
+          ]}
+          activeOpacity={0.7}
+        >
+          {isRTL ? <LeftArrow color={ "#fff"} /> : <RightArrow color={ "#fff"} />}
+        </TouchableOpacity>
+      )}
     </View>
-  ), [provider.Specialties]);
+  ), [provider.Specialties, canScrollLeft, canScrollRight, scrollSpecialties, isRTL]);
 
-  const scrollSpecialties = (direction: 'left' | 'right') => {
-    if (specialtiesScrollViewRef.current) {
-      const scrollAmount = 100;
-      const currentPosition = specialtiesScrollPosition;
-      const newPosition = direction === 'right'
-        ? Math.max(0, currentPosition - scrollAmount)
-        : currentPosition + scrollAmount;
-
-      requestAnimationFrame(() => {
-        specialtiesScrollViewRef.current?.scrollTo({
-          x: newPosition,
-          animated: true
-        });
-      });
+  // Reset scroll position when time slots change
+  // In RTL mode, start from the right (end position)
+  useEffect(() => {
+    if (timeSlotsScrollViewRef.current && timeSlotsContentWidth > 0 && timeSlotsScrollViewWidth > 0) {
+      const maxScroll = Math.max(0, timeSlotsContentWidth - timeSlotsScrollViewWidth);
+      const initialPosition = isRTL ? maxScroll : 0;
+      
+      // Use setTimeout to ensure layout is complete before scrolling
+      setTimeout(() => {
+        if (timeSlotsScrollViewRef.current) {
+          setTimeSlotsScrollPosition(initialPosition);
+          timeSlotsScrollViewRef.current.scrollTo({ x: initialPosition, animated: false });
+        }
+      }, 100);
     }
-  };
+  }, [provider.slots, timeSlotsContentWidth, timeSlotsScrollViewWidth, isRTL]);
+
+  // Calculate if we can scroll left/right for time slots
+  // Use a small tolerance to handle floating point precision issues
+  const TIME_SLOTS_SCROLL_TOLERANCE = 2;
+  
+  const canScrollTimeSlotsLeft = useMemo(() => {
+    // If content fits in viewport or dimensions not ready, no scrolling needed
+    if (timeSlotsContentWidth <= timeSlotsScrollViewWidth || timeSlotsScrollViewWidth === 0 || timeSlotsContentWidth === 0) {
+      return false;
+    }
+    
+    const maxScroll = Math.max(0, timeSlotsContentWidth - timeSlotsScrollViewWidth);
+    
+    if (isRTL) {
+      // In RTL: can scroll left if not at the rightmost position (maxScroll)
+      // At start (position = 0), can scroll left = true
+      // At end (position = maxScroll), can scroll left = false
+      return timeSlotsScrollPosition < (maxScroll - TIME_SLOTS_SCROLL_TOLERANCE);
+    } else {
+      // In LTR: can scroll left if not at the start (position > 0)
+      // At start (position = 0), can scroll left = false
+      // At end (position = maxScroll), can scroll left = true
+      return timeSlotsScrollPosition > TIME_SLOTS_SCROLL_TOLERANCE;
+    }
+  }, [timeSlotsScrollPosition, timeSlotsContentWidth, timeSlotsScrollViewWidth, isRTL]);
+
+  const canScrollTimeSlotsRight = useMemo(() => {
+    // If content fits in viewport or dimensions not ready, no scrolling needed
+    if (timeSlotsContentWidth <= timeSlotsScrollViewWidth || timeSlotsScrollViewWidth === 0 || timeSlotsContentWidth === 0) {
+      return false;
+    }
+    
+    const maxScroll = Math.max(0, timeSlotsContentWidth - timeSlotsScrollViewWidth);
+    
+    if (isRTL) {
+      // In RTL: can scroll right if not at the start (position > 0)
+      // At start (position = 0), can scroll right = false
+      // At end (position = maxScroll), can scroll right = true
+      return timeSlotsScrollPosition > TIME_SLOTS_SCROLL_TOLERANCE;
+    } else {
+      // In LTR: can scroll right if not at the rightmost position (maxScroll)
+      // At start (position = 0), can scroll right = true
+      // At end (position = maxScroll), can scroll right = false
+      return timeSlotsScrollPosition < (maxScroll - TIME_SLOTS_SCROLL_TOLERANCE);
+    }
+  }, [timeSlotsScrollPosition, timeSlotsContentWidth, timeSlotsScrollViewWidth, isRTL]);
 
   const scrollTimeSlots = useCallback((direction: 'left' | 'right') => {
-    if (timeSlotsScrollViewRef.current) {
-      const scrollAmount = 120;
+    if (timeSlotsScrollViewRef.current && timeSlotsScrollViewWidth > 0) {
+      // Use a smaller scroll amount (60% of viewport) for smoother scrolling
+      const scrollAmount = Math.min(timeSlotsScrollViewWidth * 0.6, 200);
       const currentPosition = timeSlotsScrollPosition;
-      const newPosition = direction === 'left'
-        ? Math.max(0, currentPosition - scrollAmount)
-        : currentPosition + scrollAmount;
+      const maxScroll = Math.max(0, timeSlotsContentWidth - timeSlotsScrollViewWidth);
+      
+      let newPosition: number;
+      
+      if (isRTL) {
+        // In RTL: left button scrolls left (positive), right button scrolls right (negative)
+        newPosition = direction === 'left'
+          ? Math.min(maxScroll, currentPosition + scrollAmount)
+          : Math.max(0, currentPosition - scrollAmount);
+      } else {
+        // In LTR: left button scrolls left (negative), right button scrolls right (positive)
+        newPosition = direction === 'left'
+          ? Math.max(0, currentPosition - scrollAmount)
+          : Math.min(maxScroll, currentPosition + scrollAmount);
+      }
+
+      // Clamp the position to valid range
+      newPosition = Math.max(0, Math.min(maxScroll, newPosition));
 
       timeSlotsScrollViewRef.current.scrollTo({
         x: newPosition,
         animated: true
       });
     }
-  }, [timeSlotsScrollPosition]);
+  }, [timeSlotsScrollPosition, timeSlotsContentWidth, timeSlotsScrollViewWidth, isRTL]);
 
   // Helper to convert Arabic AM/PM to English AM/PM
   const convertArabicTime = (timeStr: string) => {
@@ -705,10 +944,15 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
       <View style={styles.specialtyContainer}>
         <TouchableOpacity
           onPress={() => scrollTimeSlots('left')}
-          style={[styles.scrollButton, styles.leftScrollButton]}
+          disabled={!canScrollTimeSlotsLeft}
+          style={[
+            styles.scrollButton, 
+            styles.leftScrollButton,
+            !canScrollTimeSlotsLeft && styles.disabledScrollButton
+          ]}
           activeOpacity={0.7}
         >
-          {isRTL ? <RightArrow /> : <LeftArrow />}
+          {isRTL ? <RightArrow color={ "#fff" } /> : <LeftArrow color={ "#fff"} />}
         </TouchableOpacity>
 
         <ScrollView
@@ -716,10 +960,28 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.specialtiesScrollView}
-          onScroll={(event) => setTimeSlotsScrollPosition(event.nativeEvent.contentOffset.x)}
+          onScroll={(event) => {
+            const offsetX = event.nativeEvent.contentOffset.x;
+            setTimeSlotsScrollPosition(offsetX);
+          }}
+          onScrollEndDrag={(event) => {
+            const offsetX = event.nativeEvent.contentOffset.x;
+            setTimeSlotsScrollPosition(offsetX);
+          }}
+          onMomentumScrollEnd={(event) => {
+            const offsetX = event.nativeEvent.contentOffset.x;
+            setTimeSlotsScrollPosition(offsetX);
+          }}
+          onContentSizeChange={(contentWidth) => {
+            setTimeSlotsContentWidth(contentWidth);
+          }}
+          onLayout={(event) => {
+            const { width } = event.nativeEvent.layout;
+            setTimeSlotsScrollViewWidth(width);
+          }}
           scrollEventThrottle={16}
           snapToInterval={120}
-          decelerationRate={0}
+          decelerationRate="fast"
           snapToAlignment="start"
           contentContainerStyle={styles.timeSlotsContent}
         >
@@ -766,14 +1028,19 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = React.memo(({
 
         <TouchableOpacity
           onPress={() => scrollTimeSlots('right')}
-          style={[styles.scrollButton, styles.rightScrollButton]}
+          disabled={!canScrollTimeSlotsRight}
+          style={[
+            styles.scrollButton, 
+            styles.rightScrollButton,
+            !canScrollTimeSlotsRight && styles.disabledScrollButton
+          ]}
           activeOpacity={0.7}
         >
-          {isRTL ? <LeftArrow /> : <RightArrow />}
+          {isRTL ? <LeftArrow color={ "#fff" } /> : <RightArrow color={ "#fff" } />}
         </TouchableOpacity>
       </View>
     );
-  }, [provider.slots, selectedSlotInfo, provider.UserId, isPastTime, handleSlotSelect, scrollTimeSlots]);
+  }, [provider.slots, selectedSlotInfo, provider.UserId, isPastTime, handleSlotSelect, scrollTimeSlots, canScrollTimeSlotsLeft, canScrollTimeSlotsRight, isRTL]);
 
   return (
     <View style={[styles.providerCard]}>
@@ -849,12 +1116,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   scrollButton: {
-    padding: 8,
+    padding: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f7f7f7',
-    borderRadius: 8,
-    minWidth: 40,
+    backgroundColor: '#00000061',
+    borderRadius: 15,
+    // minWidth: 40,
+  },
+  disabledScrollButton: {
+    opacity: 0.4,
   },
   leftScrollButton: {
     marginRight: 4,
@@ -976,6 +1246,10 @@ const styles = StyleSheet.create({
   },
   checkedBox: {
     backgroundColor: '#008080',
+  },
+  disabledCheckbox: {
+    backgroundColor: '#f5f5f5',
+    borderColor: '#ccc',
   },
   selectedProviderCard: {
     borderRadius:8,
