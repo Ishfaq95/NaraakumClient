@@ -106,7 +106,7 @@ const ConversationListScreen = () => {
 
                     <View style={styles.messageRow}>
                         <Text style={styles.lastMessage} numberOfLines={1}>
-                            {item?.lastmessageType == 'FilePath' ? 'ملف' : item?.lastmessage || ''}
+                            {item?.lastmessageType == 'FilePath' ? 'ملف' : item?.lastmessageType=="VoiceNote"? "ملاحظة صوتية" : item?.lastmessage || ''}
                         </Text>
                         {item?.unseenmsgCount > 0 && (
                             <View style={styles.unreadBadge}>
