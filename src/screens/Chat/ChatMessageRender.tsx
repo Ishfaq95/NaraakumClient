@@ -1,5 +1,5 @@
 // ChatMessageRender.js
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   Text,
@@ -20,11 +20,24 @@ import {Alert} from 'react-native';
 import RNFetchBlob from 'rn-fetch-blob';
 import DownloadIcon from '../../assets/icons/DownloadIcon';
 import DownloadIconBlack from '../../assets/icons/DownloadIconBlack';
-import Sound from 'react-native-sound';
+import AudioRecorderPlayer, { AudioEncoderAndroidType, AudioSourceAndroidType, AVEncoderAudioQualityIOSType, AVEncodingOption } from 'react-native-audio-recorder-player';
 import VoiceNoteIcon from '../../assets/icons/VoiceNoteIcon';
 import VoiceNoteIconBlack from '../../assets/icons/VoiceNoteIconBlack';
 import {MediaBaseURL} from '../../shared/utils/constants';
 import { globalTextStyles } from '../../styles/globalStyles';
+
+// Conditionally import TrackPlayerService only for Android
+const TrackPlayerService = Platform.OS === 'android'
+  ? require('../../services/TrackPlayerService').TrackPlayerService
+  : {
+    // Mock implementation for iOS
+    setupPlayer: async () => { },
+    stop: async () => { },
+    play: async () => { },
+    addTrack: async () => { },
+    getDuration: async () => 0,
+    getPosition: async () => 0,
+  };
 
 interface Message {
   SenderId: string;
@@ -40,18 +53,43 @@ const ChatMessageRender = ({item}: {item: Message}) => {
   const isOwnMessage = item.SenderId == user.Id;
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [sound, setSound] = useState<Sound | null>(null);
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const [duration, setDuration] = useState(0);
+  const [audioProgress, setAudioProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const audioRecorderPlayer = useRef<AudioRecorderPlayer>(new AudioRecorderPlayer());
+  const progressIntervalRef = useRef<any>(null);
+  const audioProgressRef = useRef(0);
+  const audioCurrentTimeRef = useRef(0);
 
   useEffect(() => {
+    audioRecorderPlayer.current.setSubscriptionDuration(0.1);
+    audioRecorderPlayer.current.addRecordBackListener((e) => {
+    });
+
     return () => {
-      if (sound) {
-        sound.release();
+      // Cleanup on unmount
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      if (audioRecorderPlayer.current) {
+        audioRecorderPlayer.current.removeRecordBackListener();
+        try {
+          audioRecorderPlayer.current.stopPlayer();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      }
+      if (Platform.OS === 'android') {
+        try {
+          TrackPlayerService.stop();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
       }
     };
-  }, [sound]);
+  }, []);
 
   const formattedTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -85,7 +123,7 @@ const ChatMessageRender = ({item}: {item: Message}) => {
 
     setIsDownloading(true);
     const fileURL = `${MediaBaseURL}/${url}`;
-    let fileName = getFileNameFromUrl(fileURL);
+    let fileName = getFileNameFromUrl(fileURL) || 'file';
     if (Platform.OS === 'ios') {
       downloadFIleForIOS(fileURL, fileName);
     } else {
@@ -93,11 +131,11 @@ const ChatMessageRender = ({item}: {item: Message}) => {
     }
   };
 
-  const getFileNameFromUrl = (url: string) => {
+  const getFileNameFromUrl = (url: string): string => {
     // Split the URL by '/'
     const parts = url.split('/');
     // Get the last part, which is the filename
-    return parts.pop();
+    return parts.pop() || 'file';
   };
 
   const downloadFIleForIOS = (url: string, fileName: string) => {
@@ -116,11 +154,10 @@ const ChatMessageRender = ({item}: {item: Message}) => {
           'The file is saved to your device.',
         );
         RNFetchBlob.ios.previewDocument(filePath);
+        setIsDownloading(false);
       })
       .catch(error => {
         Alert.alert('File downloading error.');
-      })
-      .finally(() => {
         setIsDownloading(false);
       });
   };
@@ -143,169 +180,245 @@ const ChatMessageRender = ({item}: {item: Message}) => {
       .fetch('GET', url)
       .then(res => {
         Alert.alert('File downloaded successfully');
+        setIsDownloading(false);
       })
       .catch(error => {
         Alert.alert('File downloading error.');
-      })
-      .finally(() => {
         setIsDownloading(false);
       });
   };
 
   const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const cleanUrl = (url: string) => {
-    return url.split('^')[0];
+  const getAudioUrl = (audioUrl: string): string => {
+    const audioUrlValue = audioUrl.split('^')[0];
+    if (audioUrlValue) {
+      return audioUrlValue;
+    }
+    return '';
   };
 
-  const playVoiceNote = (url: string) => {
+  const getAudioDuration = (audioUrl: string): number => {
+    const duration = audioUrl.split('^')[1];
+    if (duration) {
+      return parseInt(duration);
+    }
+    return 0;
+  };
 
+  const stopAudio = useCallback(async () => {
     if (isPlaying) {
-      sound?.stop();
-      setIsPlaying(false);
-      progressAnim.setValue(0);
-      setCurrentTime(0);
-      return;
-    }
-
-    if (sound) {
-      sound.play(success => {
-        if (success) {
-          setIsPlaying(false);
-          progressAnim.setValue(0);
-          setCurrentTime(0);
+      try {
+        if (Platform.OS === 'ios') {
+          await audioRecorderPlayer.current.stopPlayer();
+          audioRecorderPlayer.current.removePlayBackListener();
         } else {
-          Alert.alert('Error', 'Failed to play voice note');
-          setIsPlaying(false);
+          await TrackPlayerService.stop();
         }
-      });
+
+        // Clear progress interval if it exists
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+
+        setIsPlaying(false);
+        setAudioProgress(0);
+        setCurrentTime(0);
+        audioProgressRef.current = 0;
+        audioCurrentTimeRef.current = 0;
+        progressAnim.setValue(0);
+      } catch (error) {
+        console.log('Error stopping audio:', error);
+      }
+    }
+  }, [isPlaying]);
+
+  // Audio playback using react-native-track-player for Android
+  const playAudioWithTrackPlayer = async (audioUrl: string) => {
+    try {
+      await TrackPlayerService.setupPlayer();
+
+      await new Promise(resolve => setTimeout(() => resolve(undefined), 200));
+
+      await TrackPlayerService.stop();
+
+      await new Promise(resolve => setTimeout(() => resolve(undefined), 200));
+
+      await TrackPlayerService.addTrack(audioUrl, 'Voice Note');
+
+      await new Promise(resolve => setTimeout(() => resolve(undefined), 500));
+
+      await TrackPlayerService.play();
       setIsPlaying(true);
+
+      let updateCounter = 0;
+      progressIntervalRef.current = setInterval(async () => {
+        try {
+          const position = await TrackPlayerService.getPosition();
+          const currentDuration = await TrackPlayerService.getDuration();
+
+          // Update refs immediately
+          audioCurrentTimeRef.current = position;
+          const progress = currentDuration > 0 ? (position / currentDuration) * 100 : 0;
+          audioProgressRef.current = progress;
+
+          // Update state only every 5 updates (every 500ms instead of 100ms)
+          updateCounter++;
+          if (updateCounter % 5 === 0) {
+            setCurrentTime(position);
+            setAudioProgress(progress);
+            setDuration(currentDuration);
+            progressAnim.setValue(progress / 100);
+          }
+
+          // Check if playback finished
+          if (position >= currentDuration && currentDuration > 0) {
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+            }
+            setIsPlaying(false);
+            setAudioProgress(0);
+            setCurrentTime(0);
+            audioProgressRef.current = 0;
+            audioCurrentTimeRef.current = 0;
+            progressAnim.setValue(0);
+          }
+        } catch (error) {
+          console.log('Error tracking progress:', error);
+        }
+      }, 100);
+
+      return true;
+    } catch (error) {
+      console.log('TrackPlayer error:', error);
+      throw error;
+    }
+  };
+
+  const playVoiceNote = useCallback(async (url: string) => {
+    if (isPlaying) {
+      await stopAudio();
       return;
     }
 
-    const cleanFileURL = cleanUrl(url);
+    try {
+      setAudioProgress(0);
+      setCurrentTime(0);
 
-    // Enable playback in silence mode
-    Sound.setCategory('Playback');
+      // Extract URL and duration from the format "url^duration"
+      const cleanFileURL = getAudioUrl(url);
+      const audioDuration = getAudioDuration(url);
 
-    // For iOS, we need to download the file first
-    if (Platform.OS === 'ios') {
-      const fileName = getFileNameFromUrl(cleanFileURL);
-      const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+      // Build full URL if needed
+      const fullUrl = cleanFileURL.startsWith('http')
+        ? cleanFileURL
+        : `${MediaBaseURL}/${cleanFileURL}`;
 
-      RNFS.downloadFile({
-        fromUrl: cleanFileURL,
-        toFile: filePath,
-        background: true,
-        begin: res => {
-        },
-        progress: res => {
-        },
-      })
-        .promise.then(() => {
+      if (Platform.OS === 'ios') {
+        try {
+          const fileName = `audio_${Date.now()}.m4a`;
+          const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
-          const voiceNote = new Sound(filePath, '', error => {
-            if (error) {
-              console.error('Error loading voice note:', error);
-              console.error('Error details:', {
-                message: error.message,
-                code: error.code,
-                domain: error.domain,
-              });
-              Alert.alert(
-                'Error',
-                'Failed to load voice note. Please try again.',
-              );
-              return;
+          const downloadResult = await RNFS.downloadFile({
+            fromUrl: fullUrl,
+            toFile: filePath,
+            background: true,
+          }).promise;
+
+          if (downloadResult.statusCode === 200) {
+            const fileExists = await RNFS.exists(filePath);
+            if (!fileExists) {
+              throw new Error('Downloaded file does not exist');
             }
 
-            const duration = voiceNote.getDuration();
+            const fileStats = await RNFS.stat(filePath);
+            if (fileStats.size < 1000) {
+              throw new Error('Downloaded file is too small');
+            }
 
-            setDuration(duration);
+            // Use the audio recorder player for iOS playback
+            try {
+              let updateCounter = 0;
+              // Set up event listeners for iOS playback
+              audioRecorderPlayer.current.addPlayBackListener((e) => {
+                if (e.currentPosition >= e.duration) {
+                  // Playback finished
+                  setIsPlaying(false);
+                  setAudioProgress(0);
+                  setCurrentTime(0);
+                  audioProgressRef.current = 0;
+                  audioCurrentTimeRef.current = 0;
+                  progressAnim.setValue(0);
+                  audioRecorderPlayer.current.removePlayBackListener();
+                } else {
+                  // Update refs immediately
+                  audioCurrentTimeRef.current = e.currentPosition / 1000;
+                  audioProgressRef.current = (e.currentPosition / e.duration) * 100;
 
-            // Set volume to maximum
-            voiceNote.setVolume(1.0);
+                  // Update state only every 5 updates (reduce re-renders)
+                  updateCounter++;
+                  if (updateCounter % 5 === 0) {
+                    setCurrentTime(audioCurrentTimeRef.current);
+                    setAudioProgress(audioProgressRef.current);
+                    setDuration(e.duration / 1000);
+                    progressAnim.setValue(audioProgressRef.current / 100);
+                  }
+                }
+              });
 
-            voiceNote.play(success => {
-              if (success) {
-                setIsPlaying(false);
-                progressAnim.setValue(0);
-                setCurrentTime(0);
-              } else {
-                Alert.alert(
-                  'Error',
-                  'Failed to play voice note. Please try again.',
-                );
-                setIsPlaying(false);
+              // Start playback using audioRecorderPlayer
+              await audioRecorderPlayer.current.startPlayer(`file://${filePath}`);
+              setIsPlaying(true);
+
+              // Set duration if available from URL format
+              if (audioDuration > 0) {
+                setDuration(audioDuration);
               }
-            });
-            setIsPlaying(true);
-          });
-          setSound(voiceNote);
-        })
-        .catch(error => {
-          console.error('Error downloading file:', error);
-          Alert.alert(
-            'Error',
-            'Failed to download voice note. Please try again.',
-          );
-        });
-    } else {
-      // Android implementation remains the same
-      const voiceNote = new Sound(cleanFileURL, undefined, error => {
-        if (error) {
-          console.error('Error loading voice note:', error);
-          console.error('Error details:', {
-            message: error.message,
-            code: error.code,
-            domain: error.domain,
-          });
-          Alert.alert('Error', 'Failed to load voice note. Please try again.');
-          return;
-        }
 
-        const duration = voiceNote.getDuration();
-
-        setDuration(duration);
-
-        // Set volume to maximum
-        voiceNote.setVolume(1.0);
-
-        voiceNote.play(success => {
-          if (success) {
-            setIsPlaying(false);
-            progressAnim.setValue(0);
-            setCurrentTime(0);
+            } catch (playbackError) {
+              console.log('iOS playback error:', playbackError);
+              Alert.alert('Error', 'Failed to play voice note. Please try again.');
+              setIsPlaying(false);
+            }
           } else {
-            Alert.alert(
-              'Error',
-              'Failed to play voice note. Please try again.',
-            );
-            setIsPlaying(false);
+            throw new Error(`Download failed with status: ${downloadResult.statusCode}`);
           }
-        });
-        setIsPlaying(true);
-      });
-      setSound(voiceNote);
+        } catch (error) {
+          console.log('iOS audio error:', error);
+          Alert.alert('Error', 'Failed to download voice note. Please try again.');
+          setIsPlaying(false);
+        }
+      } else {
+        // Android implementation - use track player
+        try {
+          await playAudioWithTrackPlayer(fullUrl);
+          // Set duration if available from URL format
+          if (audioDuration > 0) {
+            setDuration(audioDuration);
+          }
+        } catch (error) {
+          console.log('Android playback error:', error);
+          Alert.alert('Error', 'Failed to play voice note. Please try again.');
+          setIsPlaying(false);
+        }
+      }
+    } catch (error) {
+      console.log('General playback error:', error);
+      Alert.alert('Error', 'Failed to play voice note. Please try again.');
     }
-  };
+  }, [isPlaying, stopAudio]);
 
+  // Update progress animation when audioProgress changes
   useEffect(() => {
-    if (isPlaying && sound) {
-      const interval = setInterval(() => {
-        sound.getCurrentTime(seconds => {
-          setCurrentTime(seconds);
-          const progress = seconds / duration;
-          progressAnim.setValue(progress);
-        });
-      }, 100);
-      return () => clearInterval(interval);
-    }
-  }, [isPlaying, sound, duration, progressAnim]);
+    progressAnim.setValue(audioProgress / 100);
+  }, [audioProgress, progressAnim]);
 
   if (item.Type === 'FilePath' && item.FilePath) {
     return (
@@ -364,7 +477,7 @@ const ChatMessageRender = ({item}: {item: Message}) => {
               styles.voiceNoteDuration,
               isOwnMessage && styles.ownVoiceNoteDuration,
             ]}>
-            {formatTime(currentTime)}
+            {Platform.OS == 'ios' ? `${formatTime(currentTime)} / ${formatTime(duration)}` : `${formatTime(duration)} / ${formatTime(currentTime)}`}
           </Text>
           <View style={styles.voiceNoteControls}>
             <View style={styles.progressContainer}>

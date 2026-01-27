@@ -631,9 +631,7 @@ const OrderDetailScreen = ({ navigation, route }: any) => {
 
   const renderDoctorTag = ({ item, index }: { item: any; index: number }) => {
     const selectedItem = item.items[0];
-    console.log("selectedItem", selectedItem);
     const displayCategory = categoriesList.find((item: any) => item.Id == selectedItem?.CatCategoryId);
-    console.log("displayCategory", displayCategory?.Display);
     let imagePath: any = null;
     if (displayCategory?.Display == "CP") {
       imagePath = selectedItem.ServiceProviderImagePath ? `${MediaBaseURL}${selectedItem.ServiceProviderImagePath}` : null;
